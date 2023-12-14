@@ -612,11 +612,13 @@ def postprocess_freesurfer_surfaces(subj_id,
     print(ras_offset)
 
     ## Convert to gifti, adjust for RAS offset, and remove deep vertices
-    for layer_name in layer_names:
+    surfaces_to_process = copy.copy(layer_names)
+    surfaces_to_process.append('inflated')
+    for surface_name in surfaces_to_process:
         for hemi in hemispheres:
             # Construct the original and new file names
-            orig_name = os.path.join(fs_subject_dir, 'surf', f'{hemi}.{layer_name}')
-            new_name = os.path.join(subject_out_dir, f'{hemi}.{layer_name}.gii')
+            orig_name = os.path.join(fs_subject_dir, 'surf', f'{hemi}.{surface_name}')
+            new_name = os.path.join(subject_out_dir, f'{hemi}.{surface_name}.gii')
 
             # Convert the surface file to Gifti format
             subprocess.run(['mris_convert', orig_name, new_name])
@@ -653,30 +655,30 @@ def postprocess_freesurfer_surfaces(subj_id,
             nib.save(g, new_name)
 
     ## Combine hemispheres
-    for layer_name in layer_names:
+    for surface_name in surfaces_to_process:
         # Load left and right hemisphere surfaces
-        lh_fname = os.path.join(subject_out_dir, f'lh.{layer_name}.gii')
+        lh_fname = os.path.join(subject_out_dir, f'lh.{surface_name}.gii')
         lh = nib.load(lh_fname)
-        rh_fname = os.path.join(subject_out_dir, f'rh.{layer_name}.gii')
+        rh_fname = os.path.join(subject_out_dir, f'rh.{surface_name}.gii')
         rh = nib.load(rh_fname)
 
         # Combine the surfaces
         combined = combine_surfaces([lh, rh])
-        combined_fname = os.path.join(subject_out_dir, f'{layer_name}.gii')
+        combined_fname = os.path.join(subject_out_dir, f'{surface_name}.gii')
         nib.save(combined, combined_fname)
 
     ## Downsample surfaces at the same time
     # Get list of surfaces
     in_surfs = []
-    for layer_name in layer_names:
-        in_surf_fname = os.path.join(subject_out_dir, f'{layer_name}.gii')
+    for surface_name in surfaces_to_process:
+        in_surf_fname = os.path.join(subject_out_dir, f'{surface_name}.gii')
         in_surf = nib.load(in_surf_fname)
         in_surfs.append(in_surf)
 
     # Downsample multiple surfaces
     out_surfs = downsample_multiple_surfaces(in_surfs, ds_factor)
-    for layer_name, out_surf in zip(layer_names, out_surfs):
-        out_surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.gii')
+    for surface_name, out_surf in zip(surfaces_to_process, out_surfs):
+        out_surf_path = os.path.join(subject_out_dir, f'{surface_name}.ds.gii')
         nib.save(out_surf, out_surf_path)
 
     ## Compute dipole orientations
