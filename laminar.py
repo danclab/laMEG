@@ -39,13 +39,13 @@ def model_comparison(out_dir, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname,
     f_vals=[]
     for mesh_fname in mesh_fnames:
         if method=='EBB':
-            [_, f_val, _] = invert_ebb(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, 1,
-                                       patch_size=patch_size, n_temp_modes=n_temp_modes, foi=foi, woi=woi,
-                                       mat_eng=mat_eng)
+            [_, f_val] = invert_ebb(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, 1,
+                                    patch_size=patch_size, n_temp_modes=n_temp_modes, foi=foi, woi=woi,
+                                    mat_eng=mat_eng)
         elif method=='MSP':
-            [_, f_val, _] = invert_msp(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, 1,
-                                       priors=priors, patch_size=patch_size, n_temp_modes=n_temp_modes, foi=foi,
-                                       woi=woi, mat_eng=mat_eng)
+            [_, f_val] = invert_msp(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, 1,
+                                    priors=priors, patch_size=patch_size, n_temp_modes=n_temp_modes, foi=foi,
+                                    woi=woi, mat_eng=mat_eng)
         f_vals.append(f_val)
     return f_vals
 

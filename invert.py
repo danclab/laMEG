@@ -9,7 +9,7 @@ from surf import smoothmesh_multilayer_mm
 
 
 def invert_ebb(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_layers, patch_size=5,
-               n_temp_modes=4, foi=[0, 256], woi=[-np.inf, np.inf], mat_eng=None):
+               n_temp_modes=4, foi=[0, 256], woi=[-np.inf, np.inf], mat_eng=None, return_MU=False):
     """
     Run the Empirical Bayesian Beamformer (EBB) source reconstruction algorithm.
 
@@ -30,10 +30,12 @@ def invert_ebb(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_laye
     foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
     woi (list, optional): Window of interest as [start, end]. Default is [-np.inf, np.inf].
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
+    return_MU (boolean, optional): Whether or not to return the matrix needed to reconstruct source activity. Default is
+                                   False
 
     Returns:
     list: A list containing the result filename, the free energy (F), and the matrix needed to reconstruct
-    source activity (MU).
+    source activity (MU; if return_MU is True).
 
     Notes:
     - The function requires MATLAB and DANC_SPM12 to be installed and accessible.
@@ -57,18 +59,26 @@ def invert_ebb(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_laye
     if isinstance(woi, np.ndarray):
         woi = woi.tolist()
 
-    F,MU=mat_eng.invert_ebb(data_fname, coreg_fname, mri_fname, mesh_fname, matlab.double(nas), matlab.double(lpa),
-                            matlab.double(rpa), float(patch_size), float(n_temp_modes), matlab.double(foi),
-                            matlab.double(woi), spm_path, nargout=2)
+    if return_MU:
+        F,MU=mat_eng.invert_ebb(data_fname, coreg_fname, mri_fname, mesh_fname, matlab.double(nas), matlab.double(lpa),
+                                matlab.double(rpa), float(patch_size), float(n_temp_modes), matlab.double(foi),
+                                matlab.double(woi), spm_path, nargout=2)
+        ret_vals=[coreg_fname, F, MU]
+    else:
+        F = mat_eng.invert_ebb(data_fname, coreg_fname, mri_fname, mesh_fname, matlab.double(nas),
+                               matlab.double(lpa),
+                               matlab.double(rpa), float(patch_size), float(n_temp_modes), matlab.double(foi),
+                               matlab.double(woi), spm_path, nargout=1)
+        ret_vals=[coreg_fname, F]
 
     if close_matlab:
         mat_eng.close()
 
-    return [coreg_fname, F, MU]
+    return ret_vals
 
 
 def invert_msp(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_layers, priors=[], patch_size=5,
-               n_temp_modes=4, foi=[0, 256], woi=[-np.inf, np.inf], mat_eng=None):
+               n_temp_modes=4, foi=[0, 256], woi=[-np.inf, np.inf], mat_eng=None, return_MU=False):
     """
     Run the Multiple Sparse Priors (MSP) source reconstruction algorithm.
 
@@ -90,10 +100,12 @@ def invert_msp(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_laye
     foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
     woi (list, optional): Window of interest as [start, end]. Default is [-np.inf, np.inf].
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
+    return_MU (boolean, optional): Whether or not to return the matrix needed to reconstruct source activity. Default is
+                                   False
 
     Returns:
     list: A list containing the result filename, the free energy (F), and the matrix needed to reconstruct
-    source activity (MU).
+    source activity (MU; if return_MU is True).
 
     Notes:
     - The function requires MATLAB and DANC_SPM12 to be installed and accessible.
@@ -119,14 +131,21 @@ def invert_msp(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_laye
     if isinstance(woi, np.ndarray):
         woi = woi.tolist()
 
-    F,MU=mat_eng.invert_msp(data_fname, coreg_fname, mri_fname, mesh_fname, matlab.double(nas), matlab.double(lpa),
-                            matlab.double(rpa), matlab.double(priors), float(patch_size), float(n_temp_modes),
-                            matlab.double(foi), matlab.double(woi), spm_path, nargout=2)
+    if return_MU:
+        F,MU=mat_eng.invert_msp(data_fname, coreg_fname, mri_fname, mesh_fname, matlab.double(nas), matlab.double(lpa),
+                                matlab.double(rpa), matlab.double(priors), float(patch_size), float(n_temp_modes),
+                                matlab.double(foi), matlab.double(woi), spm_path, nargout=2)
+        ret_vals = [coreg_fname, F, MU]
+    else:
+        F = mat_eng.invert_msp(data_fname, coreg_fname, mri_fname, mesh_fname, matlab.double(nas), matlab.double(lpa),
+                               matlab.double(rpa), matlab.double(priors), float(patch_size), float(n_temp_modes),
+                               matlab.double(foi), matlab.double(woi), spm_path, nargout=1)
+        ret_vals = [coreg_fname, F]
 
     if close_matlab:
         mat_eng.close()
 
-    return [coreg_fname, F, MU]
+    return ret_vals
 
 
 def invert_sliding_window(out_dir, prior, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_layers, patch_size=5,
