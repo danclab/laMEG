@@ -1,4 +1,4 @@
-function [F,MU]=invert_msp(data_file, coreg_fname, mri_fname, mesh_fname, ...
+function varargout=invert_msp(data_file, coreg_fname, mri_fname, mesh_fname, ...
     nas, lpa, rpa, priors, patch_size, n_temp_modes, foi, woi, spm_path)
 
 addpath(spm_path);
@@ -93,9 +93,13 @@ batch_idx=batch_idx+1;
 [a,b]=spm_jobman('run', matlabbatch);
 
 % Load inversion - get cross validation error end F
-Drecon=spm_eeg_load(coreg_fname);                
+Drecon=spm_eeg_load(coreg_fname); 
 F=Drecon.inv{1}.inverse.crossF;
+varargout{1}=F;
 
-M=Drecon.inv{1}.inverse.M;
-U=Drecon.inv{1}.inverse.U{1};
-MU=M*U;
+if nargout>1
+    M=Drecon.inv{1}.inverse.M;
+    U=Drecon.inv{1}.inverse.U{1};
+    MU=M*U;
+    varargout{2}=MU;
+end
