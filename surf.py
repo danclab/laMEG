@@ -577,13 +577,12 @@ def postprocess_freesurfer_surfaces(subj_id,
     layers = np.linspace(1, 0, n_surfaces)
 
     ## Create intermediate surfaces if needed
-    layer_names = []
-    for l, layer in enumerate(layers):
+
+    def process_layer(layer, hemispheres, fs_subject_dir):
         if layer == 1:
-            layer_names.append('pial')
+            return 'pial'
         elif layer > 0 and layer < 1:
             layer_name = '{:.3f}'.format(layer)
-            layer_names.append(layer_name)
             for hemi in hemispheres:
                 wm_file = os.path.join(fs_subject_dir, 'surf', '{}.white'.format(hemi))
                 out_file = os.path.join(fs_subject_dir, 'surf', '{}.{}'.format(hemi, layer_name))
@@ -591,8 +590,10 @@ def postprocess_freesurfer_surfaces(subj_id,
                     cmd = ['mris_expand', '-thickness', wm_file, '{}'.format(layer), out_file]
                     print(' '.join(cmd))
                     subprocess.run(cmd)
+            return layer_name
         elif layer == 0:
-            layer_names.append('white')
+            return 'white'
+    layer_names = Parallel(n_jobs=-1)(delayed(process_layer)(layer, hemispheres, fs_subject_dir) for layer in layers)
 
     ## Compute RAS offset
     # Define the path to the MRI file
