@@ -51,8 +51,8 @@ def invert_ebb(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_laye
         close_matlab=True
 
     mesh_base=os.path.split(os.path.splitext(mesh_fname)[0])[-1]
-    data_fname=os.path.split(data_fname)[-1]
-    coreg_fname = os.path.join(out_dir, f'{mesh_base}.{data_fname}')
+    data_base=os.path.split(data_fname)[-1]
+    coreg_fname = os.path.join(out_dir, f'{mesh_base}.{data_base}')
 
     if isinstance(woi, np.ndarray):
         woi = woi.tolist()
@@ -112,8 +112,8 @@ def invert_msp(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_laye
         close_matlab=True
 
     mesh_base=os.path.split(os.path.splitext(mesh_fname)[0])[-1]
-    data_fname=os.path.split(data_fname)[-1]
-    coreg_fname = os.path.join(out_dir, f'{mesh_base}.{data_fname}')
+    data_base=os.path.split(data_fname)[-1]
+    coreg_fname = os.path.join(out_dir, f'{mesh_base}.{data_base}')
 
     priors = [x + 1 for x in priors]
     if isinstance(woi, np.ndarray):
@@ -175,8 +175,8 @@ def invert_sliding_window(out_dir, prior, nas, lpa, rpa, mri_fname, mesh_fname, 
 
     prior = prior+1.0
     mesh_base = os.path.split(os.path.splitext(mesh_fname)[0])[-1]
-    data_fname = os.path.split(data_fname)[-1]
-    coreg_fname = os.path.join(out_dir, f'{mesh_base}.{data_fname}')
+    data_base = os.path.split(data_fname)[-1]
+    coreg_fname = os.path.join(out_dir, f'{mesh_base}.{data_base}')
 
     F,wois = mat_eng.invert_sliding_window(float(prior), data_fname, coreg_fname, mri_fname, mesh_fname, matlab.double(nas),
                                            matlab.double(lpa), matlab.double(rpa), float(patch_size),
