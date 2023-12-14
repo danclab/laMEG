@@ -17,12 +17,38 @@ from csurf import compute_geodesic_distances
 import scipy.io as sio
 
 def _normit(N):
+    """
+    Normalize a numpy array of vectors.
+
+    This function normalizes each row in the array N to have a unit length. If the length of a vector is below a certain
+    threshold (machine epsilon), it is set to 1 to avoid division by zero.
+
+    Parameters:
+    N (ndarray): Array of vectors to be normalized. Each row represents a vector.
+
+    Returns:
+    ndarray: Normalized array of vectors where each row has unit length.
+    """
     normN = np.sqrt(np.sum(N ** 2, axis=1))
     normN[normN < np.finfo(float).eps] = 1
     return N / normN[:, np.newaxis]
 
-
 def _mesh_normal(vertices, faces):
+    """
+    Compute the normals for a mesh defined by vertices and faces.
+
+    This function calculates the normal vectors for each vertex and face in a mesh. The normals are computed based on
+    the cross product of vectors defined by the mesh faces.
+
+    Parameters:
+    vertices (ndarray): Array of vertices of the mesh. Each row represents a vertex.
+    faces (ndarray): Array of faces of the mesh. Each row represents a face with indices to the vertices array.
+
+    Returns:
+    tuple: A tuple containing two ndarrays:
+           - Nv: Normal vectors for each vertex.
+           - Nf: Normal vectors for each face.
+    """
     Nf = np.cross(
         vertices[faces[:, 1], :] - vertices[faces[:, 0], :],
         vertices[faces[:, 2], :] - vertices[faces[:, 0], :])
@@ -43,17 +69,21 @@ def _mesh_normal(vertices, faces):
 
 def mesh_normals(vertices, faces, unit=False):
     """
-    Compute (unit) normals of a surface mesh.
+    Calculate normals for a mesh using Delaunay triangulation or a fallback method.
+
+    This function attempts to compute the normals of a mesh using Delaunay triangulation. If this fails (e.g., due to
+    non-manifold geometry), it falls back to a custom method for normal calculation.
 
     Parameters:
-    M (dict): A dictionary with keys 'faces' and 'vertices' representing the mesh.
-    unit (bool): If True, compute unit normals. Default is False.
+    vertices (ndarray): Array of vertices of the mesh. Each row represents a vertex.
+    faces (ndarray): Array of faces of the mesh. Each row represents a face with indices to the vertices array.
+    unit (bool, optional): If True, the normals are normalized to unit length. Default is False.
 
     Returns:
-    tuple: A tuple (Nv, Nf) where Nv is an array of normals on vertices and
-           Nf is an array of normals on faces.
+    tuple: A tuple containing two ndarrays:
+           - Nv: Normal vectors for each vertex.
+           - Nf: Normal vectors for each face.
     """
-
     try:
         t = Delaunay(vertices)
         Nv = -t.vertex_normal
@@ -249,6 +279,27 @@ def downsample_single_surface(gifti_surf, ds_factor=0.1):
 
 
 def iterative_downsample_single_surface(gifti_surf, ds_factor=0.1):
+    """
+   Iteratively downsample a single surface mesh to a target number of vertices.
+
+   This function reduces the number of vertices in a surface mesh (in GIFTI format) to a specified fraction of its
+   original size. Downsampling is performed iteratively until the target number of vertices is reached or closely
+   approximated.
+
+   Parameters:
+   gifti_surf (nibabel.gifti.GiftiImage): The surface mesh to be downsampled, provided as a GIFTI image object.
+   ds_factor (float, optional): The downsampling factor representing the target fraction of the original number of
+                                vertices. Default is 0.1.
+
+   Returns:
+   nibabel.gifti.GiftiImage: The downsampled surface mesh as a GIFTI image object.
+
+   Notes:
+   - The downsampling process is iterative. In each iteration, the mesh is downsampled by a factor calculated to
+     approach the target number of vertices.
+   - If the calculated downsampling factor in an iteration equals or exceeds 1, the process is terminated to prevent
+     upsampling or infinite loops.
+   """
     current_surf = gifti_surf
     current_vertices = gifti_surf.darrays[0].data.shape[0]
     target_vertices = int(current_vertices*ds_factor)
@@ -680,6 +731,25 @@ def compute_mesh_area(gifti_surf, PF=False):
 
 
 def compute_mesh_distances(vertices, faces):
+    """
+    Compute the pairwise Euclidean distances between connected vertices in a mesh.
+
+    This function calculates the distances between each pair of connected vertices in a mesh defined by its vertices and
+    faces. The result is a sparse matrix where each entry (i, j) represents the distance between vertices i and j.
+
+    Parameters:
+    vertices (ndarray): Array of vertices of the mesh. Each row represents a vertex as a 3D point.
+    faces (ndarray): Array of faces of the mesh. Each row represents a face with indices to the vertices array.
+
+    Returns:
+    csr_matrix: A sparse matrix in Compressed Sparse Row (CSR) format containing the pairwise distances between
+    connected vertices.
+
+    Notes:
+    - The function calculates distances only for directly connected vertices (i.e., vertices that share an edge).
+    - The resulting distance matrix is symmetric, as the distance from vertex i to j is the same as from j to i.
+    - The matrix is sparse, containing non-zero entries only for pairs of connected vertices.
+    """
     # Compute the differences
     d0 = vertices[faces[:, 0], :] - vertices[faces[:, 1], :]
     d1 = vertices[faces[:, 1], :] - vertices[faces[:, 2], :]
