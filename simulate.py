@@ -46,6 +46,7 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
     close_matlab = False
     if mat_eng is None:
         mat_eng = matlab.engine.start_matlab()
+        mat_eng.addpath('./matlab', nargout=0)
         close_matlab = True
 
     sim_fname=mat_eng.simulate(
@@ -114,6 +115,7 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
     close_matlab = False
     if mat_eng is None:
         mat_eng = matlab.engine.start_matlab()
+        mat_eng.addpath('./matlab', nargout=0)
         close_matlab = True
 
     sim_fname=mat_eng.simulate(

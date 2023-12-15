@@ -9,12 +9,6 @@ spm_jobman('initcfg');
 
 Dmesh=spm_eeg_load(data_file);
 
-%% get location to simulate dipole on this mesh
-%simpos=Dmesh.inv{1}.mesh.tess_mni.vert(sim_vertices,:); 
-
-% Make signal have unit variance
-%sim_signals=sim_signals./repmat(std(sim_signals'),size(sim_signals,2),1)';
-
 [Dnew,~]=spm_eeg_simulate({Dmesh}, prefix, sim_vertices, sim_signals,...
     dipole_orientations, sim_woi, [], SNR,...
     [], [], sim_patch_sizes, dipole_moments, []);
