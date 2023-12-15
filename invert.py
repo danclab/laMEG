@@ -50,6 +50,7 @@ def invert_ebb(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_laye
     close_matlab=False
     if mat_eng is None:
         mat_eng = matlab.engine.start_matlab()
+        mat_eng.addpath('./matlab',nargout=0)
         close_matlab=True
 
     mesh_base=os.path.split(os.path.splitext(mesh_fname)[0])[-1]
@@ -121,6 +122,7 @@ def invert_msp(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_laye
     close_matlab=False
     if mat_eng is None:
         mat_eng = matlab.engine.start_matlab()
+        mat_eng.addpath('./matlab', nargout=0)
         close_matlab=True
 
     mesh_base=os.path.split(os.path.splitext(mesh_fname)[0])[-1]
@@ -190,6 +192,7 @@ def invert_sliding_window(out_dir, prior, nas, lpa, rpa, mri_fname, mesh_fname, 
     close_matlab = False
     if mat_eng is None:
         mat_eng = matlab.engine.start_matlab()
+        mat_eng.addpath('./matlab', nargout=0)
         close_matlab = True
 
     prior = prior+1.0
@@ -236,6 +239,7 @@ def load_source_time_series(data_D, inv_D, vertices=[], mat_eng=None):
     close_matlab = False
     if mat_eng is None:
         mat_eng = matlab.engine.start_matlab()
+        mat_eng.addpath('./matlab', nargout=0)
         close_matlab = True
 
     vertices = [x + 1 for x in vertices]
