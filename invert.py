@@ -9,7 +9,8 @@ from surf import smoothmesh_multilayer_mm
 
 
 def invert_ebb(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_layers, patch_size=5,
-               n_temp_modes=4, foi=[0, 256], woi=[-np.inf, np.inf], mat_eng=None, return_MU=False):
+               n_temp_modes=4, foi=[0, 256], woi=[-np.inf, np.inf], n_folds=1, ideal_pc_test=0, mat_eng=None,
+               return_MU=False):
     """
     Run the Empirical Bayesian Beamformer (EBB) source reconstruction algorithm.
 
@@ -29,13 +30,15 @@ def invert_ebb(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_laye
     n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 4.
     foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
     woi (list, optional): Window of interest as [start, end]. Default is [-np.inf, np.inf].
+    n_folds (int): Number of cross validation folds
+    ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integrer number of channels)
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
     return_MU (boolean, optional): Whether or not to return the matrix needed to reconstruct source activity. Default is
                                    False
 
     Returns:
-    list: A list containing the result filename, the free energy (F), and the matrix needed to reconstruct
-    source activity (MU; if return_MU is True).
+    list: A list containing the result filename, the free energy (F), normalized cross validation error (CVerr), and the
+    matrix needed to reconstruct source activity (MU; if return_MU is True).
 
     Notes:
     - The function requires MATLAB and DANC_SPM12 to be installed and accessible.
@@ -47,30 +50,31 @@ def invert_ebb(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_laye
     print(f'Smoothing {mesh_fname}')
     _ = smoothmesh_multilayer_mm(mesh_fname, patch_size, n_layers, n_jobs=-1)
 
-    close_matlab=False
+    close_matlab = False
     if mat_eng is None:
         mat_eng = matlab.engine.start_matlab()
-        mat_eng.addpath('./matlab',nargout=0)
-        close_matlab=True
+        mat_eng.addpath('./matlab', nargout=0)
+        close_matlab = True
 
-    mesh_base=os.path.split(os.path.splitext(mesh_fname)[0])[-1]
-    data_base=os.path.split(data_fname)[-1]
+    mesh_base = os.path.split(os.path.splitext(mesh_fname)[0])[-1]
+    data_base = os.path.split(data_fname)[-1]
     coreg_fname = os.path.join(out_dir, f'{mesh_base}.{data_base}')
 
     if isinstance(woi, np.ndarray):
         woi = woi.tolist()
 
     if return_MU:
-        F,MU=mat_eng.invert_ebb(data_fname, coreg_fname, mri_fname, mesh_fname, matlab.double(nas), matlab.double(lpa),
-                                matlab.double(rpa), float(patch_size), float(n_temp_modes), matlab.double(foi),
-                                matlab.double(woi), spm_path, nargout=2)
-        ret_vals=[coreg_fname, F, MU]
+        F, CVerr, MU = mat_eng.invert_ebb(data_fname, coreg_fname, mri_fname, mesh_fname, matlab.double(nas),
+                                          matlab.double(lpa), matlab.double(rpa), float(patch_size),
+                                          float(n_temp_modes), matlab.double(foi), matlab.double(woi), float(n_folds),
+                                          float(ideal_pc_test), spm_path, nargout=3)
+        ret_vals = [coreg_fname, F, CVerr, MU]
     else:
-        F = mat_eng.invert_ebb(data_fname, coreg_fname, mri_fname, mesh_fname, matlab.double(nas),
-                               matlab.double(lpa),
-                               matlab.double(rpa), float(patch_size), float(n_temp_modes), matlab.double(foi),
-                               matlab.double(woi), spm_path, nargout=1)
-        ret_vals=[coreg_fname, F]
+        F, CVerr = mat_eng.invert_ebb(data_fname, coreg_fname, mri_fname, mesh_fname, matlab.double(nas),
+                                      matlab.double(lpa), matlab.double(rpa), float(patch_size), float(n_temp_modes),
+                                      matlab.double(foi), matlab.double(woi), float(n_folds), float(ideal_pc_test),
+                                      spm_path, nargout=2)
+        ret_vals = [coreg_fname, F, CVerr]
 
     if close_matlab:
         mat_eng.close()
@@ -79,7 +83,8 @@ def invert_ebb(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_laye
 
 
 def invert_msp(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_layers, priors=[], patch_size=5,
-               n_temp_modes=4, foi=[0, 256], woi=[-np.inf, np.inf], mat_eng=None, return_MU=False):
+               n_temp_modes=4, foi=[0, 256], woi=[-np.inf, np.inf], n_folds=1, ideal_pc_test=0, mat_eng=None,
+               return_MU=False):
     """
     Run the Multiple Sparse Priors (MSP) source reconstruction algorithm.
 
@@ -100,13 +105,15 @@ def invert_msp(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_laye
     n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 4.
     foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
     woi (list, optional): Window of interest as [start, end]. Default is [-np.inf, np.inf].
+    n_folds (int): Number of cross validation folds
+    ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integrer number of channels)
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
     return_MU (boolean, optional): Whether or not to return the matrix needed to reconstruct source activity. Default is
                                    False
 
     Returns:
-    list: A list containing the result filename, the free energy (F), and the matrix needed to reconstruct
-    source activity (MU; if return_MU is True).
+    list: A list containing the result filename, the free energy (F), normalized cross validation error (CVerr), and the
+    matrix needed to reconstruct source activity (MU; if return_MU is True).
 
     Notes:
     - The function requires MATLAB and DANC_SPM12 to be installed and accessible.
@@ -119,14 +126,14 @@ def invert_msp(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_laye
     print(f'Smoothing {mesh_fname}')
     _ = smoothmesh_multilayer_mm(mesh_fname, patch_size, n_layers, n_jobs=-1)
 
-    close_matlab=False
+    close_matlab = False
     if mat_eng is None:
         mat_eng = matlab.engine.start_matlab()
         mat_eng.addpath('./matlab', nargout=0)
-        close_matlab=True
+        close_matlab = True
 
-    mesh_base=os.path.split(os.path.splitext(mesh_fname)[0])[-1]
-    data_base=os.path.split(data_fname)[-1]
+    mesh_base = os.path.split(os.path.splitext(mesh_fname)[0])[-1]
+    data_base = os.path.split(data_fname)[-1]
     coreg_fname = os.path.join(out_dir, f'{mesh_base}.{data_base}')
 
     priors = [x + 1 for x in priors]
@@ -134,15 +141,17 @@ def invert_msp(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_laye
         woi = woi.tolist()
 
     if return_MU:
-        F,MU=mat_eng.invert_msp(data_fname, coreg_fname, mri_fname, mesh_fname, matlab.double(nas), matlab.double(lpa),
-                                matlab.double(rpa), matlab.double(priors), float(patch_size), float(n_temp_modes),
-                                matlab.double(foi), matlab.double(woi), spm_path, nargout=2)
-        ret_vals = [coreg_fname, F, MU]
+        F, CVerr, MU = mat_eng.invert_msp(data_fname, coreg_fname, mri_fname, mesh_fname, matlab.double(nas),
+                                          matlab.double(lpa), matlab.double(rpa), matlab.double(priors),
+                                          float(patch_size), float(n_temp_modes), matlab.double(foi),
+                                          matlab.double(woi), float(n_folds), float(ideal_pc_test), spm_path, nargout=3)
+        ret_vals = [coreg_fname, F, CVerr, MU]
     else:
-        F = mat_eng.invert_msp(data_fname, coreg_fname, mri_fname, mesh_fname, matlab.double(nas), matlab.double(lpa),
-                               matlab.double(rpa), matlab.double(priors), float(patch_size), float(n_temp_modes),
-                               matlab.double(foi), matlab.double(woi), spm_path, nargout=1)
-        ret_vals = [coreg_fname, F]
+        F, CVerr = mat_eng.invert_msp(data_fname, coreg_fname, mri_fname, mesh_fname, matlab.double(nas),
+                                      matlab.double(lpa), matlab.double(rpa), matlab.double(priors), float(patch_size),
+                                      float(n_temp_modes), matlab.double(foi), matlab.double(woi), float(n_folds),
+                                      float(ideal_pc_test), spm_path, nargout=2)
+        ret_vals = [coreg_fname, F, CVerr]
 
     if close_matlab:
         mat_eng.close()
@@ -195,15 +204,16 @@ def invert_sliding_window(out_dir, prior, nas, lpa, rpa, mri_fname, mesh_fname, 
         mat_eng.addpath('./matlab', nargout=0)
         close_matlab = True
 
-    prior = prior+1.0
+    prior = prior + 1.0
     mesh_base = os.path.split(os.path.splitext(mesh_fname)[0])[-1]
     data_base = os.path.split(data_fname)[-1]
     coreg_fname = os.path.join(out_dir, f'{mesh_base}.{data_base}')
 
-    F,wois = mat_eng.invert_sliding_window(float(prior), data_fname, coreg_fname, mri_fname, mesh_fname, matlab.double(nas),
-                                           matlab.double(lpa), matlab.double(rpa), float(patch_size),
-                                           float(n_temp_modes), float(win_size), win_overlap, matlab.double(foi),
-                                           spm_path, nargout=2)
+    F, wois = mat_eng.invert_sliding_window(float(prior), data_fname, coreg_fname, mri_fname, mesh_fname,
+                                            matlab.double(nas),
+                                            matlab.double(lpa), matlab.double(rpa), float(patch_size),
+                                            float(n_temp_modes), float(win_size), win_overlap, matlab.double(foi),
+                                            spm_path, nargout=2)
 
     if close_matlab:
         mat_eng.close()
@@ -249,4 +259,3 @@ def load_source_time_series(data_D, inv_D, vertices=[], mat_eng=None):
         mat_eng.close()
 
     return source_ts
-
