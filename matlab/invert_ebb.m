@@ -1,5 +1,6 @@
 function varargout=invert_ebb(data_file, coreg_fname, mri_fname, mesh_fname, ...
-    nas, lpa, rpa, patch_size, n_temp_modes, foi, woi, spm_path)
+    nas, lpa, rpa, patch_size, n_temp_modes, foi, woi, Nfolds,...
+    ideal_pctest, spm_path)
 
 addpath(spm_path);
 
@@ -46,7 +47,7 @@ spm_jobman('run', matlabbatch);
 % Setup spatial modes for cross validation
 [data_dir,fname,ext]=fileparts(coreg_fname);
 spatialmodesname=fullfile(data_dir, sprintf('%s_testmodes.mat',fname));
-[spatialmodesname,Nmodes,pctest]=spm_eeg_inv_prep_modes_xval(coreg_fname, [], spatialmodesname, 1, 0);
+[spatialmodesname,Nmodes,pctest]=spm_eeg_inv_prep_modes_xval(coreg_fname, [], spatialmodesname, Nfolds, ideal_pctest);
 
 clear jobs
 matlabbatch={};
@@ -74,7 +75,7 @@ matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.restrict.loc
 matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.restrict.radius = 32;
 matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.outinv = '';
 matlabbatch{batch_idx}.spm.meeg.source.invertiter.modality = {'All'};
-matlabbatch{batch_idx}.spm.meeg.source.invertiter.crossval = [pctest 1];                                
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.crossval = [pctest Nfolds];                                
 batch_idx=batch_idx+1;
 
 [a,b]=spm_jobman('run', matlabbatch);
@@ -82,11 +83,13 @@ batch_idx=batch_idx+1;
 % Load inversion - get cross validation error end F
 Drecon=spm_eeg_load(coreg_fname); 
 F=Drecon.inv{1}.inverse.crossF;
+CVerr=Drecon.inv{1}.inverse.crosserr./Drecon.inv{1}.inverse.allrms;
 varargout{1}=F;
+varargout{2}=CVerr;
 
 if nargout>1
     M=Drecon.inv{1}.inverse.M;
     U=Drecon.inv{1}.inverse.U{1};
     MU=M*U;
-    varargout{2}=MU;
+    varargout{3}=MU;
 end
