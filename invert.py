@@ -160,7 +160,7 @@ def invert_msp(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_laye
 
 
 def invert_sliding_window(out_dir, prior, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_layers, patch_size=5,
-                          n_temp_modes=4, win_size=10, win_overlap=True, foi=[0, 256], mat_eng=None):
+                          n_temp_modes=1, win_size=10, win_overlap=True, foi=[0, 256], mat_eng=None):
     """
     Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time window.
 
@@ -178,7 +178,7 @@ def invert_sliding_window(out_dir, prior, nas, lpa, rpa, mri_fname, mesh_fname, 
     data_fname (str): Filename of the MEG/EEG data.
     n_layers (int): Number of layers in the mesh.
     patch_size (int, optional): Patch size for mesh smoothing. Default is 5.
-    n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 4.
+    n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 1.
     win_size (int, optional): Size of the sliding window in samples. Default is 10.
     win_overlap (bool, optional): Whether the windows should overlap. Default is True.
     foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].

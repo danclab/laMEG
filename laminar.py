@@ -57,7 +57,7 @@ def model_comparison(out_dir, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname,
 
 
 def sliding_window_model_comparison(out_dir, prior, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, patch_size=5,
-                                    n_temp_modes=4, win_size=10, win_overlap=True, mat_eng=None):
+                                    n_temp_modes=1, win_size=10, win_overlap=True, mat_eng=None):
     """
     Compare model fits across different meshes using a sliding window approach.
 
@@ -74,7 +74,7 @@ def sliding_window_model_comparison(out_dir, prior, nas, lpa, rpa, mri_fname, me
     mesh_fnames (list): List of filenames for different meshes.
     data_fname (str): Filename of the MEG/EEG data.
     patch_size (int, optional): Patch size for mesh smoothing. Default is 5.
-    n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 4.
+    n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 1.
     win_size (int, optional): Size of the sliding window in samples. Default is 10.
     win_overlap (bool, optional): Whether the windows should overlap. Default is True.
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
