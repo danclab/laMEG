@@ -30,14 +30,14 @@ def invert_ebb(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_laye
     n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 4.
     foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
     woi (list, optional): Window of interest as [start, end]. Default is [-np.inf, np.inf].
-    n_folds (int): Number of cross validation folds
-    ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integrer number of channels)
+    n_folds (int): Number of cross validation folds. Must be >1 for cross validation error
+    ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integer number of channels)
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
     return_MU (boolean, optional): Whether or not to return the matrix needed to reconstruct source activity. Default is
                                    False
 
     Returns:
-    list: A list containing the result filename, the free energy (F), normalized cross validation error (CVerr), and the
+    list: A list containing the result filename, the free energy (F), cross validation error (CVerr), and the
     matrix needed to reconstruct source activity (MU; if return_MU is True).
 
     Notes:
@@ -105,14 +105,14 @@ def invert_msp(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_laye
     n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 4.
     foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
     woi (list, optional): Window of interest as [start, end]. Default is [-np.inf, np.inf].
-    n_folds (int): Number of cross validation folds
-    ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integrer number of channels)
+    n_folds (int): Number of cross validation folds. Must be >1 for cross validation error
+    ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integer number of channels)
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
     return_MU (boolean, optional): Whether or not to return the matrix needed to reconstruct source activity. Default is
                                    False
 
     Returns:
-    list: A list containing the result filename, the free energy (F), normalized cross validation error (CVerr), and the
+    list: A list containing the result filename, the free energy (F), cross validation error (CVerr), and the
     matrix needed to reconstruct source activity (MU; if return_MU is True).
 
     Notes:

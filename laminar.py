@@ -10,7 +10,7 @@ def model_comparison(out_dir, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname,
     Compare model fits using different meshes by computing the free energy.
 
     This function runs source reconstruction algorithms (either Empirical Bayesian Beamformer or Multiple Sparse Priors)
-    on a set of meshes and compares their model fits using the free energy metric.
+    on a set of meshes and compares their model fits using the free energy and cross validation error metrics.
 
     Parameters:
     out_dir (str): Output directory for saving results.
@@ -26,8 +26,8 @@ def model_comparison(out_dir, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname,
     woi (list, optional): Window of interest as [start, end]. Default is [-np.inf, np.inf].
     method (str, optional): Source reconstruction method, either 'EBB' or 'MSP'. Default is 'EBB'.
     priors (list, optional): Indices of vertices to be used as priors (only for MSP). Default is an empty list.
-    n_folds (int): Number of cross validation folds
-    ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integrer number of channels)
+    n_folds (int): Number of cross validation folds. Must be >1 for cross validation error
+    ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integer number of channels)
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
 
     Returns:
