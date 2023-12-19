@@ -96,7 +96,7 @@ batch_idx=batch_idx+1;
 % Load inversion - get cross validation error end F
 Drecon=spm_eeg_load(coreg_fname); 
 F=Drecon.inv{1}.inverse.crossF;
-CVerr=Drecon.inv{1}.inverse.crosserr./Drecon.inv{1}.inverse.allrms;
+CVerr=Drecon.inv{1}.inverse.crosserr;
 varargout{1}=F;
 varargout{2}=CVerr;
 
