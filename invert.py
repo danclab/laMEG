@@ -1,5 +1,3 @@
-import json
-
 import os
 import matlab.engine
 import numpy as np
@@ -179,7 +177,8 @@ def invert_sliding_window(out_dir, prior, nas, lpa, rpa, mri_fname, mesh_fname, 
     n_layers (int): Number of layers in the mesh.
     patch_size (int, optional): Patch size for mesh smoothing. Default is 5.
     n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 1.
-    win_size (int, optional): Size of the sliding window in samples. Default is 10.
+    win_size (int, optional): Size of the sliding window in samples. Default is 10. If you increase win_size, you may
+                              have to increase n_temp_modes.
     win_overlap (bool, optional): Whether the windows should overlap. Default is True.
     foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.

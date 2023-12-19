@@ -40,14 +40,14 @@ def model_comparison(out_dir, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname,
     - If `mat_eng` is not provided, the function will start a new MATLAB engine instance.
     - The function will automatically close the MATLAB engine if it was started within the function.
     """
-    f_vals=[]
-    cv_errs=[]
+    f_vals = []
+    cv_errs = []
     for mesh_fname in mesh_fnames:
-        if method=='EBB':
+        if method == 'EBB':
             [_, f_val, cv_err] = invert_ebb(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, 1,
                                             patch_size=patch_size, n_temp_modes=n_temp_modes, foi=foi, woi=woi,
                                             n_folds=n_folds, ideal_pc_test=ideal_pc_test, mat_eng=mat_eng)
-        elif method=='MSP':
+        elif method == 'MSP':
             [_, f_val, cv_err] = invert_msp(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, 1,
                                             priors=priors, patch_size=patch_size, n_temp_modes=n_temp_modes, foi=foi,
                                             woi=woi, n_folds=n_folds, ideal_pc_test=ideal_pc_test, mat_eng=mat_eng)
@@ -75,7 +75,8 @@ def sliding_window_model_comparison(out_dir, prior, nas, lpa, rpa, mri_fname, me
     data_fname (str): Filename of the MEG/EEG data.
     patch_size (int, optional): Patch size for mesh smoothing. Default is 5.
     n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 1.
-    win_size (int, optional): Size of the sliding window in samples. Default is 10.
+    win_size (int, optional): Size of the sliding window in samples. Default is 10. If you increase win_size, you may
+                              have to increase n_temp_modes.
     win_overlap (bool, optional): Whether the windows should overlap. Default is True.
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
 
@@ -89,7 +90,8 @@ def sliding_window_model_comparison(out_dir, prior, nas, lpa, rpa, mri_fname, me
     - The function will automatically close the MATLAB engine if it was started within the function.
     - The prior index is adjusted by adding 1 to align with MATLAB's 1-based indexing.
     """
-    f_vals=[]
+    f_vals = []
+    wois = []
     for mesh_fname in mesh_fnames:
         [_, mesh_fvals, wois] = invert_sliding_window(out_dir, prior, nas, lpa, rpa, mri_fname, mesh_fname, data_fname,
                                                       1, patch_size=patch_size, n_temp_modes=n_temp_modes,
