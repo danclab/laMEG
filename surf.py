@@ -1,4 +1,5 @@
 import os
+import copy
 import subprocess
 from joblib import Parallel, delayed
 
@@ -451,7 +452,7 @@ def combine_surfaces(surfaces):
     return combined_surf
 
 
-def compute_dipole_orientations(method, layer_names, subject_out_dir):
+def compute_dipole_orientations(method, layer_names, subject_out_dir, fixed=True):
     """
     Compute dipole orientations for cortical layers using different methods.
 
@@ -459,6 +460,8 @@ def compute_dipole_orientations(method, layer_names, subject_out_dir):
     method (str): Method for computing dipole orientations ('link_vector', 'ds_surf_norm', 'orig_surf_norm', or 'cps').
     layer_names (list): Names of the cortical layers.
     subject_out_dir (str): Directory where the surface files are stored.
+    fixed (bool, optional): Flag to ensure that orientation of corresponding vertices across layers is the same (True
+                            by default)
 
     Returns:
     numpy.ndarray: An array of dipole orientations for each vertex in each layer.
@@ -491,44 +494,47 @@ def compute_dipole_orientations(method, layer_names, subject_out_dir):
     elif method == 'ds_surf_norm':
         # Method: Use normals of the downsampled surfaces
         orientations = []
-        for layer_name in layer_names:
-            in_surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.gii')
-            surf = nib.load(in_surf_path)
-            vtx_norms, _ = mesh_normals(surf.darrays[0].data, surf.darrays[1].data, unit=True)
+        for l_idx, layer_name in enumerate(layer_names):
+            if l_idx==0 or not fixed:
+                in_surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.gii')
+                surf = nib.load(in_surf_path)
+                vtx_norms, _ = mesh_normals(surf.darrays[0].data, surf.darrays[1].data, unit=True)
             orientations.append(vtx_norms)
         orientations = np.array(orientations)
 
     elif method == 'orig_surf_norm':
         # Method: Use normals of the original surfaces, mapped to downsampled surfaces
         orientations = []
-        for layer_name in layer_names:
-            in_surf_path = os.path.join(subject_out_dir, f'{layer_name}.gii')
-            orig_surf = nib.load(in_surf_path)
-            ds_surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.gii')
-            ds_surf = nib.load(ds_surf_path)
-            kdtree = KDTree(orig_surf.darrays[0].data)
-            _, orig_vert_idx = kdtree.query(ds_surf.darrays[0].data, k=1)
-            vtx_norms, _ = mesh_normals(orig_surf.darrays[0].data, orig_surf.darrays[1].data, unit=True)
+        for l_idx, layer_name in enumerate(layer_names):
+            if l_idx==0 or not fixed:
+                in_surf_path = os.path.join(subject_out_dir, f'{layer_name}.gii')
+                orig_surf = nib.load(in_surf_path)
+                ds_surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.gii')
+                ds_surf = nib.load(ds_surf_path)
+                kdtree = KDTree(orig_surf.darrays[0].data)
+                _, orig_vert_idx = kdtree.query(ds_surf.darrays[0].data, k=1)
+                vtx_norms, _ = mesh_normals(orig_surf.darrays[0].data, orig_surf.darrays[1].data, unit=True)
             orientations.append(vtx_norms[orig_vert_idx, :])
         orientations = np.array(orientations)
 
     elif method == 'cps':
         # Method: Use cortical patch statistics for normals
         orientations = []
-        for layer_name in layer_names:
-            in_surf_path = os.path.join(subject_out_dir, f'{layer_name}.gii')
-            orig_surf = nib.load(in_surf_path)
-            ds_surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.gii')
-            ds_surf = nib.load(ds_surf_path)
-            kdtree = KDTree(ds_surf.darrays[0].data)
-            _, ds_vert_idx = kdtree.query(orig_surf.darrays[0].data, k=1)
-            orig_vtx_norms, _ = mesh_normals(orig_surf.darrays[0].data, orig_surf.darrays[1].data, unit=True)
-            vtx_norms, _ = mesh_normals(ds_surf.darrays[0].data, ds_surf.darrays[1].data, unit = True)
-            for v_idx in range(vtx_norms.shape[0]):
-                orig_idxs=np.where(ds_vert_idx==v_idx)[0]
-                if len(orig_idxs):
-                    vtx_norms[v_idx, :] = np.mean(orig_vtx_norms[orig_idxs, :], axis=0)
-            vtx_norms = _normit(vtx_norms)
+        for l_idx, layer_name in enumerate(layer_names):
+            if l_idx==0 or not fixed:
+                in_surf_path = os.path.join(subject_out_dir, f'{layer_name}.gii')
+                orig_surf = nib.load(in_surf_path)
+                ds_surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.gii')
+                ds_surf = nib.load(ds_surf_path)
+                kdtree = KDTree(ds_surf.darrays[0].data)
+                _, ds_vert_idx = kdtree.query(orig_surf.darrays[0].data, k=1)
+                orig_vtx_norms, _ = mesh_normals(orig_surf.darrays[0].data, orig_surf.darrays[1].data, unit=True)
+                vtx_norms, _ = mesh_normals(ds_surf.darrays[0].data, ds_surf.darrays[1].data, unit = True)
+                for v_idx in range(vtx_norms.shape[0]):
+                    orig_idxs=np.where(ds_vert_idx==v_idx)[0]
+                    if len(orig_idxs):
+                        vtx_norms[v_idx, :] = np.mean(orig_vtx_norms[orig_idxs, :], axis=0)
+                vtx_norms = _normit(vtx_norms)
             orientations.append(vtx_norms)
         orientations = np.array(orientations)
 
@@ -541,6 +547,7 @@ def postprocess_freesurfer_surfaces(subj_id,
                                     n_surfaces=11,
                                     ds_factor=0.1,
                                     orientation='link_vector',
+                                    fix_orientation=True,
                                     remove_deep=True):
     """
     Process and combine FreeSurfer surface meshes for a subject.
@@ -558,6 +565,8 @@ def postprocess_freesurfer_surfaces(subj_id,
     orientation (str, optional): Method to compute orientation vectors ('link_vector' for pial-white link,
                                  'ds_surf_norm' for downsampled surface normals, 'orig_surf_norm' for original
                                  surface normals, and 'cps' for cortical patch statistics).
+    fix_orientation (bool, optional): Flag to ensure that orientation of corresponding vertices across layers is the
+                                      same (True by default)
     remove_deep (bool, optional): Flag to remove vertices located in deep regions (labeled as 'unknown').
 
     Notes:
@@ -682,7 +691,11 @@ def postprocess_freesurfer_surfaces(subj_id,
         nib.save(out_surf, out_surf_path)
 
     ## Compute dipole orientations
-    orientations = compute_dipole_orientations(orientation, layer_names, subject_out_dir)
+    orientations = compute_dipole_orientations(orientation, layer_names, subject_out_dir, fixed=fix_orientation)
+
+    base_fname=f'ds.{orientation}'
+    if fix_orientation:
+        base_fname=f'{base_fname}.fixed'
     for l_idx, layer_name in enumerate(layer_names):
         in_surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.gii')
         surf = nib.load(in_surf_path)
@@ -692,13 +705,13 @@ def postprocess_freesurfer_surfaces(subj_id,
                                                            intent=nib.nifti1.intent_codes['NIFTI_INTENT_VECTOR']))
 
         # Save the modified downsampled surface with link vectors as normals
-        out_surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.{orientation}.gii')
+        out_surf_path = os.path.join(subject_out_dir, f'{layer_name}.{base_fname}.gii')
         nib.save(surf, out_surf_path)
 
     ## Combine layers
     all_surfs = []
     for layer_name in layer_names:
-        surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.{orientation}.gii')
+        surf_path = os.path.join(subject_out_dir, f'{layer_name}.{base_fname}.gii')
         surf = nib.load(surf_path)
         all_surfs.append(surf)
 
