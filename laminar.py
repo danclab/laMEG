@@ -3,9 +3,8 @@ import numpy as np
 from invert import invert_ebb, invert_msp, invert_sliding_window
 
 
-def model_comparison(out_dir, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, patch_size=5, n_temp_modes=4,
-                     foi=[0, 256], woi=[-np.inf, np.inf], method='EBB', priors=[], n_folds=1, ideal_pc_test=0,
-                     mat_eng=None):
+def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, patch_size=5, n_temp_modes=4, foi=[0, 256],
+                     woi=[-np.inf, np.inf], method='EBB', priors=[], n_folds=1, ideal_pc_test=0, mat_eng=None):
     """
     Compare model fits using different meshes by computing the free energy.
 
@@ -13,7 +12,6 @@ def model_comparison(out_dir, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname,
     on a set of meshes and compares their model fits using the free energy and cross validation error metrics.
 
     Parameters:
-    out_dir (str): Output directory for saving results.
     nas (list): NASion fiducial coordinates.
     lpa (list): Left PreAuricular fiducial coordinates.
     rpa (list): Right PreAuricular fiducial coordinates.
@@ -44,19 +42,19 @@ def model_comparison(out_dir, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname,
     cv_errs = []
     for mesh_fname in mesh_fnames:
         if method == 'EBB':
-            [_, f_val, cv_err] = invert_ebb(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, 1,
-                                            patch_size=patch_size, n_temp_modes=n_temp_modes, foi=foi, woi=woi,
-                                            n_folds=n_folds, ideal_pc_test=ideal_pc_test, mat_eng=mat_eng)
+            [f_val, cv_err] = invert_ebb(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, 1,
+                                         patch_size=patch_size, n_temp_modes=n_temp_modes, foi=foi, woi=woi,
+                                         n_folds=n_folds, ideal_pc_test=ideal_pc_test, mat_eng=mat_eng)
         elif method == 'MSP':
-            [_, f_val, cv_err] = invert_msp(out_dir, nas, lpa, rpa, mri_fname, mesh_fname, data_fname, 1,
-                                            priors=priors, patch_size=patch_size, n_temp_modes=n_temp_modes, foi=foi,
-                                            woi=woi, n_folds=n_folds, ideal_pc_test=ideal_pc_test, mat_eng=mat_eng)
+            [f_val, cv_err] = invert_msp(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, 1,
+                                         priors=priors, patch_size=patch_size, n_temp_modes=n_temp_modes, foi=foi,
+                                         woi=woi, n_folds=n_folds, ideal_pc_test=ideal_pc_test, mat_eng=mat_eng)
         f_vals.append(f_val)
         cv_errs.append(cv_err)
     return f_vals, cv_errs
 
 
-def sliding_window_model_comparison(out_dir, prior, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, patch_size=5,
+def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, patch_size=5,
                                     n_temp_modes=1, win_size=10, win_overlap=True, mat_eng=None):
     """
     Compare model fits across different meshes using a sliding window approach.
@@ -65,7 +63,6 @@ def sliding_window_model_comparison(out_dir, prior, nas, lpa, rpa, mri_fname, me
     set of meshes. It compares the model fits for each mesh by computing the free energy in each window.
 
     Parameters:
-    out_dir (str): Output directory for saving results.
     prior (float): Index of the vertex to be used as a prior.
     nas (list): NASion fiducial coordinates.
     lpa (list): Left PreAuricular fiducial coordinates.
@@ -93,8 +90,8 @@ def sliding_window_model_comparison(out_dir, prior, nas, lpa, rpa, mri_fname, me
     f_vals = []
     wois = []
     for mesh_fname in mesh_fnames:
-        [_, mesh_fvals, wois] = invert_sliding_window(out_dir, prior, nas, lpa, rpa, mri_fname, mesh_fname, data_fname,
-                                                      1, patch_size=patch_size, n_temp_modes=n_temp_modes,
-                                                      win_size=win_size, win_overlap=win_overlap, mat_eng=mat_eng)
+        [mesh_fvals, wois] = invert_sliding_window(prior, nas, lpa, rpa, mri_fname, mesh_fname, data_fname,
+                                                   1, patch_size=patch_size, n_temp_modes=n_temp_modes,
+                                                   win_size=win_size, win_overlap=win_overlap, mat_eng=mat_eng)
         f_vals.append(mesh_fvals)
     return f_vals, wois
