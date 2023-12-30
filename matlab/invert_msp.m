@@ -1,4 +1,4 @@
-function varargout=invert_msp(data_file, coreg_fname, mri_fname, mesh_fname, ...
+function varargout=invert_msp(data_file, mri_fname, mesh_fname, ...
     nas, lpa, rpa, priors, patch_size, n_temp_modes, foi, woi, Nfolds,...
     ideal_pctest, spm_path)
 
@@ -8,23 +8,13 @@ addpath(spm_path);
 spm('defaults','eeg');
 spm_jobman('initcfg');
 
-clear jobs
-matlabbatch={};
-batch_idx=1;
-
-% Copy datafile
-matlabbatch{batch_idx}.spm.meeg.other.copy.D = {data_file};
-matlabbatch{batch_idx}.spm.meeg.other.copy.outfile = coreg_fname;
-batch_idx=batch_idx+1;
-spm_jobman('run', matlabbatch);    
-
 % Coregister to mesh
 clear jobs
 matlabbatch={};
 batch_idx=1;
 
 % Coregister simulated dataset to reconstruction mesh
-matlabbatch{batch_idx}.spm.meeg.source.headmodel.D = {coreg_fname};
+matlabbatch{batch_idx}.spm.meeg.source.headmodel.D = {data_file};
 matlabbatch{batch_idx}.spm.meeg.source.headmodel.val = 1;
 matlabbatch{batch_idx}.spm.meeg.source.headmodel.comment = '';
 matlabbatch{batch_idx}.spm.meeg.source.headmodel.meshing.meshes.custom.mri = {[mri_fname ',1']};
@@ -45,9 +35,9 @@ matlabbatch{batch_idx}.spm.meeg.source.headmodel.forward.meg = 'Single Shell';
 spm_jobman('run', matlabbatch);    
 
 % Setup spatial modes for cross validation
-[data_dir,fname,ext]=fileparts(coreg_fname);
+[data_dir,fname,ext]=fileparts(data_file);
 spatialmodesname=fullfile(data_dir, sprintf('%s_testmodes.mat',fname));
-[spatialmodesname,Nmodes,pctest]=spm_eeg_inv_prep_modes_xval(coreg_fname, [], spatialmodesname, Nfolds, ideal_pctest);
+[spatialmodesname,Nmodes,pctest]=spm_eeg_inv_prep_modes_xval(data_file, [], spatialmodesname, Nfolds, ideal_pctest);
 
 % so use all vertices that will be simulated on (plus a few more) as MSP priors
 if length(priors)>0
@@ -62,7 +52,7 @@ matlabbatch={};
 batch_idx=1;
 
 % Source reconstruction
-matlabbatch{batch_idx}.spm.meeg.source.invertiter.D = {coreg_fname};
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.D = {data_file};
 matlabbatch{batch_idx}.spm.meeg.source.invertiter.val = 1;
 matlabbatch{batch_idx}.spm.meeg.source.invertiter.whatconditions.all = 1;
 matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.invfunc = 'Classic';
@@ -94,7 +84,7 @@ batch_idx=batch_idx+1;
 [a,b]=spm_jobman('run', matlabbatch);
 
 % Load inversion - get cross validation error end F
-Drecon=spm_eeg_load(coreg_fname); 
+Drecon=spm_eeg_load(data_file);
 F=Drecon.inv{1}.inverse.crossF;
 CVerr=Drecon.inv{1}.inverse.crosserr;
 varargout{1}=F;

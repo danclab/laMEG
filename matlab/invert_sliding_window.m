@@ -1,4 +1,4 @@
-function [f_vals,wois]=invert_sliding_window(prior, data_file, coreg_fname,...
+function [f_vals,wois]=invert_sliding_window(prior, data_file,...
     mri_fname, mesh_fname, nas, lpa, rpa, patch_size, n_temp_modes, win_size,...
     win_overlap, foi, spm_path)
 
@@ -29,23 +29,13 @@ else
     end
 end
 
-clear jobs
-matlabbatch={};
-batch_idx=1;
-
-% Copy datafile
-matlabbatch{batch_idx}.spm.meeg.other.copy.D = {data_file};
-matlabbatch{batch_idx}.spm.meeg.other.copy.outfile = coreg_fname;
-batch_idx=batch_idx+1;
-spm_jobman('run', matlabbatch);
-
 % Coregister to mesh
 clear jobs
 matlabbatch={};
 batch_idx=1;
 
 % Coregister simulated dataset to reconstruction mesh
-matlabbatch{batch_idx}.spm.meeg.source.headmodel.D = {coreg_fname};
+matlabbatch{batch_idx}.spm.meeg.source.headmodel.D = {data_file};
 matlabbatch{batch_idx}.spm.meeg.source.headmodel.val = 1;
 matlabbatch{batch_idx}.spm.meeg.source.headmodel.comment = '';
 matlabbatch{batch_idx}.spm.meeg.source.headmodel.meshing.meshes.custom.mri = {[mri_fname ',1']};
@@ -66,9 +56,9 @@ matlabbatch{batch_idx}.spm.meeg.source.headmodel.forward.meg = 'Single Shell';
 spm_jobman('run', matlabbatch);    
 
 % Setup spatial modes for cross validation
-[data_dir,fname,ext]=fileparts(coreg_fname);
+[data_dir,fname,ext]=fileparts(data_file);
 spatialmodesname=fullfile(data_dir, sprintf('%s_testmodes.mat',fname));
-[spatialmodesname,Nmodes,pctest]=spm_eeg_inv_prep_modes_xval(coreg_fname, [], spatialmodesname, 1, 0);
+[spatialmodesname,Nmodes,pctest]=spm_eeg_inv_prep_modes_xval(data_file, [], spatialmodesname, 1, 0);
 
 % so use all vertices that will be simulated on (plus a few more) as MSP priors
 Ip=[prior];
@@ -81,7 +71,7 @@ matlabbatch={};
 batch_idx=1;
 
 % Source reconstruction
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.D = {coreg_fname};
+matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.D = {data_file};
 matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.val = 1;
 matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.whatconditions.all = 1;
 matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.invfunc = 'Classic';
