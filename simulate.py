@@ -1,7 +1,7 @@
 import matlab.engine
 import numpy as np
 
-from util import get_spm_path
+from util import get_spm_path, matlab_context
 
 
 def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_moments, sim_patch_sizes, SNR,
@@ -43,28 +43,20 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
     if np.isscalar(sim_patch_sizes):
         sim_patch_sizes=[sim_patch_sizes]
 
-    close_matlab = False
-    if mat_eng is None:
-        mat_eng = matlab.engine.start_matlab()
-        mat_eng.addpath('./matlab', nargout=0)
-        close_matlab = True
-
-    sim_fname=mat_eng.simulate(
-        data_file,
-        prefix,
-        matlab.double(sim_vertices),
-        matlab.double(sim_woi),
-        matlab.double(sim_signals.tolist()),
-        matlab.double([]),
-        matlab.double(dipole_moments),
-        matlab.double(sim_patch_sizes),
-        float(SNR),
-        spm_path,
-        nargout=1
-    )
-
-    if close_matlab:
-        mat_eng.close()
+    with matlab_context(mat_eng) as eng:
+        sim_fname = eng.simulate(
+            data_file,
+            prefix,
+            matlab.double(sim_vertices),
+            matlab.double(sim_woi),
+            matlab.double(sim_signals.tolist()),
+            matlab.double([]),
+            matlab.double(dipole_moments),
+            matlab.double(sim_patch_sizes),
+            float(SNR),
+            spm_path,
+            nargout=1
+        )
 
     return sim_fname
 
@@ -112,27 +104,19 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
     if np.isscalar(sim_patch_sizes):
         sim_patch_sizes=[sim_patch_sizes]
 
-    close_matlab = False
-    if mat_eng is None:
-        mat_eng = matlab.engine.start_matlab()
-        mat_eng.addpath('./matlab', nargout=0)
-        close_matlab = True
-
-    sim_fname=mat_eng.simulate(
-        data_file,
-        prefix,
-        matlab.double(sim_vertices),
-        matlab.double(sim_woi),
-        matlab.double(sim_signals.tolist()),
-        matlab.double(dipole_orientations.tolist()),
-        matlab.double(dipole_moments),
-        matlab.double(sim_patch_sizes),
-        float(SNR),
-        spm_path,
-        nargout=1
-    )
-
-    if close_matlab:
-        mat_eng.close()
+    with matlab_context(mat_eng) as eng:
+        sim_fname=eng.simulate(
+            data_file,
+            prefix,
+            matlab.double(sim_vertices),
+            matlab.double(sim_woi),
+            matlab.double(sim_signals.tolist()),
+            matlab.double(dipole_orientations.tolist()),
+            matlab.double(dipole_moments),
+            matlab.double(sim_patch_sizes),
+            float(SNR),
+            spm_path,
+            nargout=1
+        )
 
     return sim_fname

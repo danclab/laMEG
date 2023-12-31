@@ -1,7 +1,7 @@
 import matlab.engine
 import numpy as np
 
-from util import get_spm_path
+from util import get_spm_path, matlab_context
 from surf import smoothmesh_multilayer_mm
 
 
@@ -45,30 +45,47 @@ def invert_ebb(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_layers, patch
     print(f'Smoothing {mesh_fname}')
     _ = smoothmesh_multilayer_mm(mesh_fname, patch_size, n_layers, n_jobs=-1)
 
-    close_matlab = False
-    if mat_eng is None:
-        mat_eng = matlab.engine.start_matlab()
-        mat_eng.addpath('./matlab', nargout=0)
-        close_matlab = True
-
     if isinstance(woi, np.ndarray):
         woi = woi.tolist()
 
-    if return_MU:
-        F, CVerr, MU = mat_eng.invert_ebb(data_fname, mri_fname, mesh_fname, matlab.double(nas),
-                                          matlab.double(lpa), matlab.double(rpa), float(patch_size),
-                                          float(n_temp_modes), matlab.double(foi), matlab.double(woi), float(n_folds),
-                                          float(ideal_pc_test), spm_path, nargout=3)
-        ret_vals = [F, CVerr, MU]
-    else:
-        F, CVerr = mat_eng.invert_ebb(data_fname, mri_fname, mesh_fname, matlab.double(nas),
-                                      matlab.double(lpa), matlab.double(rpa), float(patch_size), float(n_temp_modes),
-                                      matlab.double(foi), matlab.double(woi), float(n_folds), float(ideal_pc_test),
-                                      spm_path, nargout=2)
-        ret_vals = [F, CVerr]
+    with matlab_context(mat_eng) as eng:
 
-    if close_matlab:
-        mat_eng.close()
+        if return_MU:
+            F, CVerr, MU = eng.invert_ebb(
+                data_fname,
+                mri_fname,
+                mesh_fname,
+                matlab.double(nas),
+                matlab.double(lpa),
+                matlab.double(rpa),
+                float(patch_size),
+                float(n_temp_modes),
+                matlab.double(foi),
+                matlab.double(woi),
+                float(n_folds),
+                float(ideal_pc_test),
+                spm_path,
+                nargout=3
+            )
+            ret_vals = [F, CVerr, MU]
+        else:
+            F, CVerr = eng.invert_ebb(
+                data_fname,
+                mri_fname,
+                mesh_fname,
+                matlab.double(nas),
+                matlab.double(lpa),
+                matlab.double(rpa),
+                float(patch_size),
+                float(n_temp_modes),
+                matlab.double(foi),
+                matlab.double(woi),
+                float(n_folds),
+                float(ideal_pc_test),
+                spm_path,
+                nargout=2
+            )
+            ret_vals = [F, CVerr]
 
     return ret_vals
 
@@ -115,31 +132,49 @@ def invert_msp(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_layers, prior
     print(f'Smoothing {mesh_fname}')
     _ = smoothmesh_multilayer_mm(mesh_fname, patch_size, n_layers, n_jobs=-1)
 
-    close_matlab = False
-    if mat_eng is None:
-        mat_eng = matlab.engine.start_matlab()
-        mat_eng.addpath('./matlab', nargout=0)
-        close_matlab = True
-
     priors = [x + 1 for x in priors]
     if isinstance(woi, np.ndarray):
         woi = woi.tolist()
 
-    if return_MU:
-        F, CVerr, MU = mat_eng.invert_msp(data_fname, mri_fname, mesh_fname, matlab.double(nas),
-                                          matlab.double(lpa), matlab.double(rpa), matlab.double(priors),
-                                          float(patch_size), float(n_temp_modes), matlab.double(foi),
-                                          matlab.double(woi), float(n_folds), float(ideal_pc_test), spm_path, nargout=3)
-        ret_vals = [F, CVerr, MU]
-    else:
-        F, CVerr = mat_eng.invert_msp(data_fname, mri_fname, mesh_fname, matlab.double(nas),
-                                      matlab.double(lpa), matlab.double(rpa), matlab.double(priors), float(patch_size),
-                                      float(n_temp_modes), matlab.double(foi), matlab.double(woi), float(n_folds),
-                                      float(ideal_pc_test), spm_path, nargout=2)
-        ret_vals = [F, CVerr]
-
-    if close_matlab:
-        mat_eng.close()
+    with matlab_context(mat_eng) as eng:
+        if return_MU:
+            F, CVerr, MU = eng.invert_msp(
+                data_fname,
+                mri_fname,
+                mesh_fname,
+                matlab.double(nas),
+                matlab.double(lpa),
+                matlab.double(rpa),
+                matlab.double(priors),
+                float(patch_size),
+                float(n_temp_modes),
+                matlab.double(foi),
+                matlab.double(woi),
+                float(n_folds),
+                float(ideal_pc_test),
+                spm_path,
+                nargout=3
+            )
+            ret_vals = [F, CVerr, MU]
+        else:
+            F, CVerr = eng.invert_msp(
+                data_fname,
+                mri_fname,
+                mesh_fname,
+                matlab.double(nas),
+                matlab.double(lpa),
+                matlab.double(rpa),
+                matlab.double(priors),
+                float(patch_size),
+                float(n_temp_modes),
+                matlab.double(foi),
+                matlab.double(woi),
+                float(n_folds),
+                float(ideal_pc_test),
+                spm_path,
+                nargout=2
+            )
+            ret_vals = [F, CVerr]
 
     return ret_vals
 
@@ -183,22 +218,25 @@ def invert_sliding_window(prior, nas, lpa, rpa, mri_fname, mesh_fname, data_fnam
     print(f'Smoothing {mesh_fname}')
     _ = smoothmesh_multilayer_mm(mesh_fname, patch_size, n_layers, n_jobs=-1)
 
-    close_matlab = False
-    if mat_eng is None:
-        mat_eng = matlab.engine.start_matlab()
-        mat_eng.addpath('./matlab', nargout=0)
-        close_matlab = True
-
     prior = prior + 1.0
 
-    F, wois = mat_eng.invert_sliding_window(float(prior), data_fname, mri_fname, mesh_fname,
-                                            matlab.double(nas),
-                                            matlab.double(lpa), matlab.double(rpa), float(patch_size),
-                                            float(n_temp_modes), float(win_size), win_overlap, matlab.double(foi),
-                                            spm_path, nargout=2)
-
-    if close_matlab:
-        mat_eng.close()
+    with matlab_context(mat_eng) as eng:
+        F, wois = eng.invert_sliding_window(
+            float(prior),
+            data_fname,
+            mri_fname,
+            mesh_fname,
+            matlab.double(nas),
+            matlab.double(lpa),
+            matlab.double(rpa),
+            float(patch_size),
+            float(n_temp_modes),
+            float(win_size),
+            win_overlap,
+            matlab.double(foi),
+            spm_path,
+            nargout=2
+        )
 
     return [F, wois]
 
@@ -229,19 +267,17 @@ def load_source_time_series(data_D, inv_D=None, vertices=[], mat_eng=None):
     """
     spm_path = get_spm_path()
 
-    close_matlab = False
-    if mat_eng is None:
-        mat_eng = matlab.engine.start_matlab()
-        mat_eng.addpath('./matlab', nargout=0)
-        close_matlab = True
-
     vertices = [x + 1 for x in vertices]
     if inv_D is None:
         inv_D = data_D
 
-    source_ts = mat_eng.load_source_time_series(data_D, inv_D, matlab.double(vertices), spm_path, nargout=1)
-
-    if close_matlab:
-        mat_eng.close()
+    with matlab_context(mat_eng) as eng:
+        source_ts = eng.load_source_time_series(
+            data_D,
+            inv_D,
+            matlab.double(vertices),
+            spm_path,
+            nargout=1
+        )
 
     return source_ts
