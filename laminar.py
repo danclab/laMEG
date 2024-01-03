@@ -1,6 +1,7 @@
 import numpy as np
 
 from invert import invert_ebb, invert_msp, invert_sliding_window
+from util import matlab_context
 
 
 def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, patch_size=5, n_temp_modes=4, foi=[0, 256],
@@ -40,17 +41,18 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, patch_si
     """
     f_vals = []
     cv_errs = []
-    for mesh_fname in mesh_fnames:
-        if method == 'EBB':
-            [f_val, cv_err] = invert_ebb(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, 1,
-                                         patch_size=patch_size, n_temp_modes=n_temp_modes, foi=foi, woi=woi,
-                                         n_folds=n_folds, ideal_pc_test=ideal_pc_test, mat_eng=mat_eng)
-        elif method == 'MSP':
-            [f_val, cv_err] = invert_msp(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, 1,
-                                         priors=priors, patch_size=patch_size, n_temp_modes=n_temp_modes, foi=foi,
-                                         woi=woi, n_folds=n_folds, ideal_pc_test=ideal_pc_test, mat_eng=mat_eng)
-        f_vals.append(f_val)
-        cv_errs.append(cv_err)
+    with matlab_context(mat_eng) as eng:
+        for mesh_fname in mesh_fnames:
+            if method == 'EBB':
+                [f_val, cv_err] = invert_ebb(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, 1,
+                                             patch_size=patch_size, n_temp_modes=n_temp_modes, foi=foi, woi=woi,
+                                             n_folds=n_folds, ideal_pc_test=ideal_pc_test, mat_eng=eng)
+            elif method == 'MSP':
+                [f_val, cv_err] = invert_msp(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, 1,
+                                             priors=priors, patch_size=patch_size, n_temp_modes=n_temp_modes, foi=foi,
+                                             woi=woi, n_folds=n_folds, ideal_pc_test=ideal_pc_test, mat_eng=eng)
+            f_vals.append(f_val)
+            cv_errs.append(cv_err)
     return f_vals, cv_errs
 
 
@@ -89,9 +91,10 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
     """
     f_vals = []
     wois = []
-    for mesh_fname in mesh_fnames:
-        [mesh_fvals, wois] = invert_sliding_window(prior, nas, lpa, rpa, mri_fname, mesh_fname, data_fname,
-                                                   1, patch_size=patch_size, n_temp_modes=n_temp_modes,
-                                                   win_size=win_size, win_overlap=win_overlap, mat_eng=mat_eng)
-        f_vals.append(mesh_fvals)
+    with matlab_context(mat_eng) as eng:
+        for mesh_fname in mesh_fnames:
+            [mesh_fvals, wois] = invert_sliding_window(prior, nas, lpa, rpa, mri_fname, mesh_fname, data_fname,
+                                                       1, patch_size=patch_size, n_temp_modes=n_temp_modes,
+                                                       win_size=win_size, win_overlap=win_overlap, mat_eng=eng)
+            f_vals.append(mesh_fvals)
     return f_vals, wois
