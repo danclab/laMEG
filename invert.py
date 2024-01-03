@@ -1,7 +1,7 @@
 import matlab.engine
 import numpy as np
 
-from util import get_spm_path, matlab_context
+from util import get_spm_path, matlab_context, load_meg_sensor_data
 from surf import smoothmesh_multilayer_mm
 
 
@@ -67,7 +67,7 @@ def invert_ebb(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_layers, patch
                 spm_path,
                 nargout=3
             )
-            ret_vals = [F, CVerr, MU]
+            ret_vals = [F, np.array(CVerr), np.array(MU)]
         else:
             F, CVerr = eng.invert_ebb(
                 data_fname,
@@ -85,7 +85,7 @@ def invert_ebb(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_layers, patch
                 spm_path,
                 nargout=2
             )
-            ret_vals = [F, CVerr]
+            ret_vals = [F, np.array(CVerr)]
 
     return ret_vals
 
@@ -155,7 +155,7 @@ def invert_msp(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_layers, prior
                 spm_path,
                 nargout=3
             )
-            ret_vals = [F, CVerr, MU]
+            ret_vals = [F, np.array(CVerr), np.array(MU)]
         else:
             F, CVerr = eng.invert_msp(
                 data_fname,
@@ -174,7 +174,7 @@ def invert_msp(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, n_layers, prior
                 spm_path,
                 nargout=2
             )
-            ret_vals = [F, CVerr]
+            ret_vals = [F, np.array(CVerr)]
 
     return ret_vals
 
@@ -238,10 +238,10 @@ def invert_sliding_window(prior, nas, lpa, rpa, mri_fname, mesh_fname, data_fnam
             nargout=2
         )
 
-    return [F, wois]
+    return [np.array(F), np.array(wois)]
 
 
-def load_source_time_series(data_D, inv_D=None, vertices=[], mat_eng=None):
+def load_source_time_series(data_D, MU=None, inv_D=None, vertices=[], mat_eng=None):
     """
     Load source time series data from specified vertices using precomputed inverse solutions.
 
@@ -267,17 +267,26 @@ def load_source_time_series(data_D, inv_D=None, vertices=[], mat_eng=None):
     """
     spm_path = get_spm_path()
 
-    vertices = [x + 1 for x in vertices]
-    if inv_D is None:
-        inv_D = data_D
+    if MU is None:
+        vertices = [x + 1 for x in vertices]
+        if inv_D is None:
+            inv_D = data_D
 
-    with matlab_context(mat_eng) as eng:
-        source_ts = eng.load_source_time_series(
-            data_D,
-            inv_D,
-            matlab.double(vertices),
-            spm_path,
-            nargout=1
-        )
+        with matlab_context(mat_eng) as eng:
+            source_ts = eng.load_source_time_series(
+                data_D,
+                inv_D,
+                matlab.double(vertices),
+                spm_path,
+                nargout=1
+            )
+    else:
+        sensor_data = load_meg_sensor_data(data_D, mat_eng=mat_eng)
+        v_idx = np.arange(MU.shape[0])
+        if len(vertices):
+            v_idx = np.array(vertices)
+        source_ts = np.zeros((len(v_idx), sensor_data.shape[1], sensor_data.shape[2]))
+        for t in range(sensor_data.shape[2]):
+            source_ts[:,:,t] = MU[v_idx,:] @ sensor_data[:,:,t]
 
     return source_ts
