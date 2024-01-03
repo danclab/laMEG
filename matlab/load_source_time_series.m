@@ -19,4 +19,11 @@ MU=M*U;
 
 megchans=D_data.indchantype('meg','good');
 
-source_ts=MU*D_data(megchans,:,:);
+source_ts = zeros(size(MU, 1), size(D_data, 2), size(D_data, 3));
+
+% Loop over trials
+for trial = 1:size(D_data, 3)
+    % Perform matrix multiplication for each trial
+    source_ts(:, :, trial) = MU * D_data(megchans, :, trial);
+end
+source_ts=single(source_ts);
