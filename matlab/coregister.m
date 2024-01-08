@@ -1,10 +1,12 @@
-function coregister(data_file, mri_fname, mesh_fname, nas, lpa, rpa, spm_path)
+function coregister(data_file, mri_fname, mesh_fname, nas, lpa, rpa, viz, spm_path)
 
 addpath(spm_path);
 
 % Start SPM
 spm('defaults','eeg');
 spm_jobman('initcfg');
+
+spm_get_defaults('cmdline',~viz);
 
 % Coregister to mesh
 clear jobs

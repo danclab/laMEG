@@ -5,7 +5,7 @@ from util import get_spm_path, matlab_context
 
 
 def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_moments, sim_patch_sizes, snr,
-                                   sim_woi=None, mat_eng=None):
+                                   sim_woi=None, viz=True, mat_eng=None):
     """
     Simulate current density data based on specified parameters.
 
@@ -22,6 +22,7 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
                                    list.
     snr (float): Signal-to-noise ratio for the simulation.
     sim_woi (list, optional): Window of interest for the simulation as [start, end]. Default is [-np.inf, np.inf].
+    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
 
     Returns:
@@ -58,6 +59,7 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
             matlab.double(sim_patch_sizes),
             float(snr),
             False,
+            int(viz),
             spm_path,
             nargout=1
         )
@@ -66,7 +68,7 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
 
 
 def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_orientations, dipole_moments,
-                          sim_patch_sizes, snr, sim_woi=None, average_trials=False, mat_eng=None):
+                          sim_patch_sizes, snr, sim_woi=None, average_trials=False, viz=False, mat_eng=None):
     """
     Simulate dipole-based MEG/EEG data based on specified parameters.
 
@@ -86,6 +88,7 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
     snr (float): Signal-to-noise ratio for the simulation.
     sim_woi (list, optional): Window of interest for the simulation as [start, end]. Default is [-np.inf, np.inf].
     average_trials (bool, optional): Whether or not to average the simulated data over trials. Default is False.
+    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
 
     Returns:
@@ -124,6 +127,7 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
             matlab.double(sim_patch_sizes),
             float(snr),
             average_trials,
+            int(viz),
             spm_path,
             nargout=1
         )

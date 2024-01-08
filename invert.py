@@ -5,7 +5,7 @@ from util import get_spm_path, matlab_context, load_meg_sensor_data
 from surf import smoothmesh_multilayer_mm
 
 
-def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, mat_eng=None):
+def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=True, mat_eng=None):
     """
     Run head coregistration.
 
@@ -18,6 +18,7 @@ def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, mat_eng=None):
     mri_fname (str): Filename of the MRI data.
     mesh_fname (str): Filename of the mesh data.
     data_fname (str): Filename of the MEG/EEG data.
+    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
 
     Notes:
@@ -35,6 +36,7 @@ def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, mat_eng=None):
             matlab.double(nas),
             matlab.double(lpa),
             matlab.double(rpa),
+            int(viz),
             spm_path,
             nargout=0
         )
@@ -70,7 +72,7 @@ def compute_gain_matrix(data_fname, out_fname, mat_eng=None):
 
 
 def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, foi=None, woi=None, n_folds=1,
-               ideal_pc_test=0, gain_mat_fname=None, mat_eng=None, return_mu_matrix=False):
+               ideal_pc_test=0, gain_mat_fname=None, viz=True, mat_eng=None, return_mu_matrix=False):
     """
     Run the Empirical Bayesian Beamformer (EBB) source reconstruction algorithm.
 
@@ -90,6 +92,7 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
     ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integer number of channels)
     gain_mat_fname (str, optional): Filename of the precomputed gain matrix. If None, it will be computed. Default is
                                     None
+    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
     return_mu_matrix (boolean, optional): Whether or not to return the matrix needed to reconstruct source activity.
                                           Default is False
@@ -130,6 +133,7 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
                 float(n_folds),
                 float(ideal_pc_test),
                 gain_mat_fname,
+                int(viz),
                 spm_path,
                 nargout=3
             )
@@ -144,6 +148,7 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
                 float(n_folds),
                 float(ideal_pc_test),
                 gain_mat_fname,
+                int(viz),
                 spm_path,
                 nargout=2
             )
@@ -153,7 +158,8 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
 
 
 def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_temp_modes=4, foi=None,
-               woi=None, n_folds=1, ideal_pc_test=0, gain_mat_fname=None, mat_eng=None, return_mu_matrix=False):
+               woi=None, n_folds=1, ideal_pc_test=0, gain_mat_fname=None, viz=True, mat_eng=None,
+               return_mu_matrix=False):
     """
     Run the Multiple Sparse Priors (MSP) source reconstruction algorithm.
 
@@ -174,6 +180,7 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
     ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integer number of channels)
     gain_mat_fname (str, optional): Filename of the precomputed gain matrix. If None, it will be computed. Default is
                                     None
+    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
     return_mu_matrix (boolean, optional): Whether or not to return the matrix needed to reconstruct source activity.
                                           Default is False
@@ -218,6 +225,7 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
                 float(n_folds),
                 float(ideal_pc_test),
                 gain_mat_fname,
+                int(viz),
                 spm_path,
                 nargout=3
             )
@@ -233,6 +241,7 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
                 float(n_folds),
                 float(ideal_pc_test),
                 gain_mat_fname,
+                int(viz),
                 spm_path,
                 nargout=2
             )
@@ -242,7 +251,7 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
 
 
 def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=1, win_size=16,
-                          win_overlap=True, foi=None, hann=True, gain_mat_fname=None, mat_eng=None):
+                          win_overlap=True, foi=None, hann=True, gain_mat_fname=None, viz=True, mat_eng=None):
     """
     Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time window.
 
@@ -264,6 +273,7 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     hann (bool, optional): Whether or not to use Hann windowing. Default is True
     gain_mat_fname (str, optional): Filename of the precomputed gain matrix. If None, it will be computed. Default is
                                     None
+    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
 
     Returns:
@@ -298,6 +308,7 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
             matlab.double(foi),
             int(hann),
             gain_mat_fname,
+            int(viz),
             spm_path,
             nargout=2
         )

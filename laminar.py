@@ -6,7 +6,7 @@ from util import matlab_context
 
 def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, patch_size=5, n_temp_modes=4, foi=None,
                      woi=None, method='EBB', priors=None, n_folds=1, ideal_pc_test=0,
-                     gain_mat_fnames=None, mat_eng=None):
+                     gain_mat_fnames=None, viz=True, mat_eng=None):
     """
     Compare model fits using different meshes by computing the free energy.
 
@@ -30,6 +30,7 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, patch_si
     ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integer number of channels)
     gain_mat_fnames (list, optional): List of filenames of the precomputed gain matrices, one for each mesh in
                                       mesh_fnames. If None, they will be computed. Default is None
+    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
 
     Returns:
@@ -55,17 +56,17 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, patch_si
     cv_errs = []
     with matlab_context(mat_eng) as eng:
         for l_idx, mesh_fname in enumerate(mesh_fnames):
-            coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname)
+            coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=viz, mat_eng=eng)
             if method == 'EBB':
                 [f_val, cv_err] = invert_ebb(mesh_fname, data_fname, 1, patch_size=patch_size,
                                              n_temp_modes=n_temp_modes, foi=foi, woi=woi, n_folds=n_folds,
                                              ideal_pc_test=ideal_pc_test, gain_mat_fname=gain_mat_fnames[l_idx],
-                                             mat_eng=eng)
+                                             viz=viz, mat_eng=eng)
             elif method == 'MSP':
                 [f_val, cv_err] = invert_msp(mesh_fname, data_fname, 1, priors=priors, patch_size=patch_size,
                                              n_temp_modes=n_temp_modes, foi=foi, woi=woi, n_folds=n_folds,
                                              ideal_pc_test=ideal_pc_test, gain_mat_fname=gain_mat_fnames[l_idx],
-                                             mat_eng=eng)
+                                             viz=viz, mat_eng=eng)
             f_vals.append(f_val)
             cv_errs.append(cv_err)
 
@@ -77,7 +78,7 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, patch_si
 
 def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, patch_size=5,
                                     n_temp_modes=1, foi=None, win_size=16, win_overlap=True, hann=True,
-                                    gain_mat_fnames=None, mat_eng=None):
+                                    gain_mat_fnames=None, viz=True, mat_eng=None):
     """
     Compare model fits across different meshes using a sliding window approach.
 
@@ -101,6 +102,7 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
     hann (bool, optional): Whether or not to use Hann windowing. Default is True
     gain_mat_fnames (list, optional): List of filenames of the precomputed gain matrices, one for each mesh in
                                       mesh_fnames. If None, they will be computed. Default is None
+    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
 
     Returns:
@@ -122,12 +124,12 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
     wois = []
     with matlab_context(mat_eng) as eng:
         for l_idx, mesh_fname in enumerate(mesh_fnames):
-            coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname)
+            coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=viz, mat_eng=eng)
 
             [mesh_fvals, wois] = invert_sliding_window(prior, mesh_fname, data_fname, 1, patch_size=patch_size,
                                                        n_temp_modes=n_temp_modes, foi=foi, win_size=win_size,
                                                        win_overlap=win_overlap, hann=hann,
-                                                       gain_mat_fname=gain_mat_fnames[l_idx], mat_eng=eng)
+                                                       gain_mat_fname=gain_mat_fnames[l_idx], viz=viz, mat_eng=eng)
             f_vals.append(mesh_fvals)
 
     f_vals=np.array(f_vals)

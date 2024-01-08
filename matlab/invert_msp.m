@@ -1,11 +1,13 @@
 function varargout=invert_msp(data_file, priors, patch_size, n_temp_modes, foi, woi, Nfolds,...
-    ideal_pctest, gain_mat_fname, spm_path)
+    ideal_pctest, gain_mat_fname, viz, spm_path)
 
 addpath(spm_path);
 
 % Start SPM
 spm('defaults','eeg');
 spm_jobman('initcfg');
+
+spm_get_defaults('cmdline',~viz);
 
 % Setup spatial modes for cross validation
 [data_dir,fname,~]=fileparts(data_file);
@@ -53,7 +55,7 @@ if length(gain_mat_fname)
 end
 matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.outinv = '';
 matlabbatch{batch_idx}.spm.meeg.source.invertiter.modality = {'All'};
-matlabbatch{batch_idx}.spm.meeg.source.invertiter.crossval = [pctest Nfolds];                                
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.crossval = [pctest Nfolds];
 
 spm_jobman('run', matlabbatch);
 
