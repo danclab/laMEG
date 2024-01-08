@@ -4,8 +4,8 @@ import numpy as np
 from util import get_spm_path, matlab_context
 
 
-def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_moments, sim_patch_sizes, SNR,
-                                   sim_woi=[-np.inf, np.inf], mat_eng=None):
+def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_moments, sim_patch_sizes, snr,
+                                   sim_woi=None, mat_eng=None):
     """
     Simulate current density data based on specified parameters.
 
@@ -20,7 +20,7 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
     dipole_moments (list or float): Dipole moments for the simulation. Can be a single float or a list.
     sim_patch_sizes (list or int): Sizes of patches around each vertex for the simulation. Can be a single integer or a
                                    list.
-    SNR (float): Signal-to-noise ratio for the simulation.
+    snr (float): Signal-to-noise ratio for the simulation.
     sim_woi (list, optional): Window of interest for the simulation as [start, end]. Default is [-np.inf, np.inf].
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
 
@@ -33,6 +33,9 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
     - The function will automatically close the MATLAB engine if it was started within the function.
     - Vertex indices and other parameters are adjusted to align with MATLAB's 1-based indexing and data structures.
     """
+    if sim_woi is None:
+        sim_woi = [-np.inf, np.inf]
+
     spm_path = get_spm_path()
 
     if np.isscalar(sim_vertices):
@@ -53,7 +56,8 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
             matlab.double([]),
             matlab.double(dipole_moments),
             matlab.double(sim_patch_sizes),
-            float(SNR),
+            float(snr),
+            False,
             spm_path,
             nargout=1
         )
@@ -61,8 +65,8 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
     return sim_fname
 
 
-def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_orientations, dipole_moments, sim_patch_sizes,
-                          SNR, sim_woi=[-np.inf, np.inf], mat_eng=None):
+def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_orientations, dipole_moments,
+                          sim_patch_sizes, snr, sim_woi=None, average_trials=False, mat_eng=None):
     """
     Simulate dipole-based MEG/EEG data based on specified parameters.
 
@@ -79,8 +83,9 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
     dipole_moments (list or float): Dipole moments for the simulation. Can be a single float or a list.
     sim_patch_sizes (list or int): Sizes of patches around each vertex for the simulation. Can be a single integer or a
                                    list.
-    SNR (float): Signal-to-noise ratio for the simulation.
+    snr (float): Signal-to-noise ratio for the simulation.
     sim_woi (list, optional): Window of interest for the simulation as [start, end]. Default is [-np.inf, np.inf].
+    average_trials (bool, optional): Whether or not to average the simulated data over trials. Default is False.
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
 
     Returns:
@@ -93,6 +98,9 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
     - Vertex indices, dipole orientations, and other parameters are adjusted to align with MATLAB's 1-based indexing and
       data structures.
     """
+
+    if sim_woi is None:
+        sim_woi = [-np.inf, np.inf]
 
     spm_path = get_spm_path()
 
@@ -114,7 +122,8 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
             matlab.double(dipole_orientations.tolist()),
             matlab.double(dipole_moments),
             matlab.double(sim_patch_sizes),
-            float(SNR),
+            float(snr),
+            average_trials,
             spm_path,
             nargout=1
         )

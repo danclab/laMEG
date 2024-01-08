@@ -17,6 +17,7 @@ from scipy.spatial import Delaunay
 from csurf import compute_geodesic_distances
 import scipy.io as sio
 
+
 def _normit(N):
     """
     Normalize a numpy array of vectors.
@@ -33,6 +34,7 @@ def _normit(N):
     normN = np.sqrt(np.sum(N ** 2, axis=1))
     normN[normN < np.finfo(float).eps] = 1
     return N / normN[:, np.newaxis]
+
 
 def _mesh_normal(vertices, faces):
     """
@@ -179,7 +181,8 @@ def remove_vertices(gifti_surf, vertices_to_remove):
     """
 
     # Extract vertices and faces from the gifti object
-    vertices_data = [da for da in gifti_surf.darrays if da.intent == nib.nifti1.intent_codes['NIFTI_INTENT_POINTSET']][0]
+    vertices_data = [da for da in gifti_surf.darrays if da.intent == nib.nifti1.intent_codes['NIFTI_INTENT_POINTSET']][
+        0]
     faces_data = [da for da in gifti_surf.darrays if da.intent == nib.nifti1.intent_codes['NIFTI_INTENT_TRIANGLE']][0]
 
     vertices = vertices_data.data
@@ -303,7 +306,7 @@ def iterative_downsample_single_surface(gifti_surf, ds_factor=0.1):
    """
     current_surf = gifti_surf
     current_vertices = gifti_surf.darrays[0].data.shape[0]
-    target_vertices = int(current_vertices*ds_factor)
+    target_vertices = int(current_vertices * ds_factor)
     current_ds_factor = target_vertices / current_vertices
 
     while current_vertices > target_vertices:
@@ -313,11 +316,12 @@ def iterative_downsample_single_surface(gifti_surf, ds_factor=0.1):
         # Update the current vertices
         current_vertices = current_surf.darrays[0].data.shape[0]
 
-        current_ds_factor = (target_vertices / current_vertices)*1.25
-        if current_ds_factor>=1:
+        current_ds_factor = (target_vertices / current_vertices) * 1.25
+        if current_ds_factor >= 1:
             break
 
     return current_surf
+
 
 def downsample_multiple_surfaces(in_surfs, ds_factor):
     """
@@ -360,10 +364,12 @@ def downsample_multiple_surfaces(in_surfs, ds_factor):
     kdtree = KDTree(primary_surf.darrays[0].data)
     # Calculate the percentage of vertices retained
     decim_orig_dist, orig_vert_idx = kdtree.query(reduced_vertices, k=1)
-    print(f"{(1 - np.mean(decim_orig_dist > 0)) * 100}% of the vertices in the decimated surface belong to the original surface.")
+    print(
+        f"{(1 - np.mean(decim_orig_dist > 0)) * 100}% of the vertices in the decimated surface belong to the original surface.")
 
     reduced_normals = None
-    if len(primary_surf.darrays) > 2 and primary_surf.darrays[2].intent == nib.nifti1.intent_codes['NIFTI_INTENT_VECTOR']:
+    if len(primary_surf.darrays) > 2 and primary_surf.darrays[2].intent == nib.nifti1.intent_codes[
+        'NIFTI_INTENT_VECTOR']:
         reduced_normals = primary_surf.darrays[2].data[orig_vert_idx]
 
     # Save the downsampled primary surface with normals
@@ -495,7 +501,7 @@ def compute_dipole_orientations(method, layer_names, subject_out_dir, fixed=True
         # Method: Use normals of the downsampled surfaces
         orientations = []
         for l_idx, layer_name in enumerate(layer_names):
-            if l_idx==0 or not fixed:
+            if l_idx == 0 or not fixed:
                 in_surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.gii')
                 surf = nib.load(in_surf_path)
                 vtx_norms, _ = mesh_normals(surf.darrays[0].data, surf.darrays[1].data, unit=True)
@@ -506,7 +512,7 @@ def compute_dipole_orientations(method, layer_names, subject_out_dir, fixed=True
         # Method: Use normals of the original surfaces, mapped to downsampled surfaces
         orientations = []
         for l_idx, layer_name in enumerate(layer_names):
-            if l_idx==0 or not fixed:
+            if l_idx == 0 or not fixed:
                 in_surf_path = os.path.join(subject_out_dir, f'{layer_name}.gii')
                 orig_surf = nib.load(in_surf_path)
                 ds_surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.gii')
@@ -521,7 +527,7 @@ def compute_dipole_orientations(method, layer_names, subject_out_dir, fixed=True
         # Method: Use cortical patch statistics for normals
         orientations = []
         for l_idx, layer_name in enumerate(layer_names):
-            if l_idx==0 or not fixed:
+            if l_idx == 0 or not fixed:
                 in_surf_path = os.path.join(subject_out_dir, f'{layer_name}.gii')
                 orig_surf = nib.load(in_surf_path)
                 ds_surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.gii')
@@ -529,9 +535,9 @@ def compute_dipole_orientations(method, layer_names, subject_out_dir, fixed=True
                 kdtree = KDTree(ds_surf.darrays[0].data)
                 _, ds_vert_idx = kdtree.query(orig_surf.darrays[0].data, k=1)
                 orig_vtx_norms, _ = mesh_normals(orig_surf.darrays[0].data, orig_surf.darrays[1].data, unit=True)
-                vtx_norms, _ = mesh_normals(ds_surf.darrays[0].data, ds_surf.darrays[1].data, unit = True)
+                vtx_norms, _ = mesh_normals(ds_surf.darrays[0].data, ds_surf.darrays[1].data, unit=True)
                 for v_idx in range(vtx_norms.shape[0]):
-                    orig_idxs=np.where(ds_vert_idx==v_idx)[0]
+                    orig_idxs = np.where(ds_vert_idx == v_idx)[0]
                     if len(orig_idxs):
                         vtx_norms[v_idx, :] = np.mean(orig_vtx_norms[orig_idxs, :], axis=0)
                 vtx_norms = _normit(vtx_norms)
@@ -602,6 +608,7 @@ def postprocess_freesurfer_surfaces(subj_id,
             return layer_name
         elif layer == 0:
             return 'white'
+
     layer_names = Parallel(n_jobs=-1)(delayed(process_layer)(layer, hemispheres, fs_subject_dir) for layer in layers)
 
     ## Compute RAS offset
@@ -693,9 +700,9 @@ def postprocess_freesurfer_surfaces(subj_id,
     ## Compute dipole orientations
     orientations = compute_dipole_orientations(orientation, layer_names, subject_out_dir, fixed=fix_orientation)
 
-    base_fname=f'ds.{orientation}'
+    base_fname = f'ds.{orientation}'
     if fix_orientation:
-        base_fname=f'{base_fname}.fixed'
+        base_fname = f'{base_fname}.fixed'
     for l_idx, layer_name in enumerate(layer_names):
         in_surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.gii')
         surf = nib.load(in_surf_path)
@@ -774,7 +781,7 @@ def compute_mesh_distances(vertices, faces):
     # Flatten the arrays for creating a COO matrix
     rows = np.hstack([faces[:, 0], faces[:, 1], faces[:, 2]])
     cols = np.hstack([faces[:, 1], faces[:, 2], faces[:, 0]])
-    data = np.sqrt(np.sum(np.vstack([d0**2, d1**2, d2**2]), axis=1))
+    data = np.sqrt(np.sum(np.vstack([d0 ** 2, d1 ** 2, d2 ** 2]), axis=1))
 
     # Create the sparse matrix
     D_coo = coo_matrix((data, (rows, cols)), shape=(vertices.shape[0], vertices.shape[0]))
@@ -849,7 +856,7 @@ def smoothmesh_multilayer_mm(meshname, fwhm, n_layers, redo=False, n_jobs=-1):
     QG = coo_matrix((data, (rows, cols)), shape=(Ns, Ns)).tocsr()
 
     # Add 1 for matlab
-    faces=faces+1
+    faces = faces + 1
 
     sio.savemat(smoothmeshname, {'QG': QG, 'faces': faces}, do_compression=True)
 
