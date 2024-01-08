@@ -363,6 +363,7 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
                 spm_path,
                 nargout=1
             )
+            source_ts = np.array(source_ts)
     else:
         sensor_data = load_meg_sensor_data(data_fname, mat_eng=mat_eng)
         v_idx = np.arange(mu_matrix.shape[0])
