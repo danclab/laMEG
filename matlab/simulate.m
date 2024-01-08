@@ -1,12 +1,14 @@
 function sim_file=simulate(data_file, prefix, sim_vertices, sim_woi,...
     sim_signals, dipole_orientations, dipole_moments, sim_patch_sizes, SNR,...
-    average, spm_path)
+    average, viz, spm_path)
 
 addpath(spm_path);
 
 % Start SPM
 spm('defaults','eeg');
 spm_jobman('initcfg');
+
+spm_get_defaults('cmdline',~viz);
 
 Dmesh=spm_eeg_load(data_file);
 

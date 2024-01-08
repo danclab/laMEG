@@ -1,11 +1,13 @@
 function varargout=invert_ebb(data_file, patch_size, n_temp_modes, foi, woi, Nfolds,...
-    ideal_pctest, gain_mat_fname, spm_path)
+    ideal_pctest, gain_mat_fname, viz, spm_path)
 
 addpath(spm_path);
 
 % Start SPM
 spm('defaults','eeg');
 spm_jobman('initcfg');
+
+spm_get_defaults('cmdline',~viz);
 
 % Setup spatial modes for cross validation
 [data_dir,fname,~]=fileparts(data_file);

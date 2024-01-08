@@ -1,12 +1,14 @@
 function [f_vals,wois]=invert_sliding_window(prior, data_file,...
     patch_size, n_temp_modes, win_size,...
-    win_overlap, foi, hann, gain_mat_fname, spm_path)
+    win_overlap, foi, hann, gain_mat_fname, viz, spm_path)
 
 addpath(spm_path);
 
 % Start SPM
 spm('defaults','eeg');
 spm_jobman('initcfg');
+
+spm_get_defaults('cmdline',~viz);
 
 % Data file to load
 D=spm_eeg_load(data_file);
@@ -71,7 +73,7 @@ if length(gain_mat_fname)
 end
 matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.outinv = '';
 matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.modality = {'All'};
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.crossval = [pctest 1];                                
+matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.crossval = [pctest 1];
 
 [a,~]=spm_jobman('run', matlabbatch);
 % Get F-values for inversion
