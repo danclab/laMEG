@@ -29,10 +29,6 @@ for ind = 1:numel(forward)
     end
 end
 
-if nargin < 3
-    channels = [forward(:).channels];
-end
-
 G     = {};
 label = {};
 for ind = 1:numel(forward)
@@ -53,8 +49,7 @@ for ind = 1:numel(forward)
         norm=[ctx.normals ones(size(ctx.normals,1),1)]*inv(M')';
         norm=norm(:,1:3);
         normN = sqrt(sum(norm.^2,2));
-        bad_idx=find(normN < eps);
-        normN(bad_idx)=1;
+        normN(normN < eps)=1;
         norm = bsxfun(@rdivide,norm,normN);
         norm=double(norm);
     else
@@ -85,12 +80,15 @@ for ind = 1:numel(forward)
 
     spm('Pointer', 'Watch');drawnow;
     spm_progress_bar('Init', nvert, ['Computing ' modality ' leadfields']); drawnow;
-    if nvert > 100, Ibar = floor(linspace(1, nvert,100));
-    else Ibar = [1:nvert]; end
+    if nvert > 100
+        Ibar = floor(linspace(1, nvert,100));
+    else
+        Ibar = 1:nvert;
+    end
 
     PARALLEL=1; %% USE PARFOR
     if ~isequal(ft_voltype(vol), 'interpolate')
-        if PARALLEL==0,
+        if PARALLEL==0
             Gxyz = zeros(length(forward(ind).channels), 3*nvert);
             for i = 1:nvert
 
@@ -123,7 +121,7 @@ for ind = 1:numel(forward)
             Gxyz=shiftdim(Gxyz,1);
             Gxyz=reshape(Gxyz,length(forward(ind).channels),3*nvert);
 
-        end; %% if PARALLEL
+        end %% if PARALLEL
     else
         if siunits
             Gxyz = ft_compute_leadfield(vert, sens, vol, 'dipoleunit', 'nA*m', 'chanunit', units);
