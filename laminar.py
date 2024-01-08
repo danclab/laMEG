@@ -76,7 +76,7 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, patch_si
 
 
 def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, patch_size=5,
-                                    n_temp_modes=1, foi=None, win_size=10, win_overlap=True, hann=True,
+                                    n_temp_modes=1, foi=None, win_size=16, win_overlap=True, hann=True,
                                     gain_mat_fnames=None, mat_eng=None):
     """
     Compare model fits across different meshes using a sliding window approach.
@@ -95,8 +95,8 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
     patch_size (int, optional): Patch size for mesh smoothing. Default is 5.
     n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 1.
     foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
-    win_size (int, optional): Size of the sliding window in samples. Default is 10. If you increase win_size, you may
-                              have to increase n_temp_modes.
+    win_size (float, optional): Size of the sliding window in ms. Default is 16. If you increase win_size, you may
+                                have to increase n_temp_modes.
     win_overlap (bool, optional): Whether the windows should overlap. Default is True.
     hann (bool, optional): Whether or not to use Hann windowing. Default is True
     gain_mat_fnames (list, optional): List of filenames of the precomputed gain matrices, one for each mesh in

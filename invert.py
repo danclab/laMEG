@@ -241,7 +241,7 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
     return ret_vals
 
 
-def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=1, win_size=10,
+def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=1, win_size=16,
                           win_overlap=True, foi=None, hann=True, gain_mat_fname=None, mat_eng=None):
     """
     Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time window.
@@ -257,8 +257,8 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     n_layers (int): Number of layers in the mesh.
     patch_size (int, optional): Patch size for mesh smoothing. Default is 5.
     n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 1.
-    win_size (int, optional): Size of the sliding window in samples. Default is 10. If you increase win_size, you may
-                              have to increase n_temp_modes.
+    win_size (float, optional): Size of the sliding window in ms. Default is 16. If you increase win_size, you may
+                                have to increase n_temp_modes.
     win_overlap (bool, optional): Whether the windows should overlap. Default is True.
     foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
     hann (bool, optional): Whether or not to use Hann windowing. Default is True

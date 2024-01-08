@@ -12,17 +12,19 @@ spm_jobman('initcfg');
 D=spm_eeg_load(data_file);
 
 % Create wois
-times=D.time;
+times=D.time*1000;
+dt=times(2)-times(1);
+win_steps=round(win_size/dt);
 wois=[];
 if win_overlap
     for t_idx=1:length(times)
-        win_l=max(1,ceil(t_idx-win_size/2));
-        win_r=min(length(times),floor(t_idx+win_size/2));
-        woi=[times(win_l) times(win_r)].*1000;
+        win_l=max(1,ceil(t_idx-win_steps/2));
+        win_r=min(length(times),floor(t_idx+win_steps/2));
+        woi=[times(win_l) times(win_r)];
         wois(t_idx,:)=woi;
     end
 else
-    ts=linspace(times(1),times(end),(times(end)-times(1))./(win_size/1000)).*1000;
+    ts=linspace(times(1),times(end),(times(end)-times(1))./win_size);
     wois=[];
     for i=2:length(ts)
         wois(end+1,:)=[ts(i-1) ts(i)];
