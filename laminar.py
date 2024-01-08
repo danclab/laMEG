@@ -76,8 +76,8 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, patch_si
 
 
 def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, patch_size=5,
-                                    n_temp_modes=1, win_size=10, win_overlap=True, hann=True, gain_mat_fnames=None,
-                                    mat_eng=None):
+                                    n_temp_modes=1, foi=None, win_size=10, win_overlap=True, hann=True,
+                                    gain_mat_fnames=None, mat_eng=None):
     """
     Compare model fits across different meshes using a sliding window approach.
 
@@ -94,6 +94,7 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
     data_fname (str): Filename of the MEG/EEG data.
     patch_size (int, optional): Patch size for mesh smoothing. Default is 5.
     n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 1.
+    foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
     win_size (int, optional): Size of the sliding window in samples. Default is 10. If you increase win_size, you may
                               have to increase n_temp_modes.
     win_overlap (bool, optional): Whether the windows should overlap. Default is True.
@@ -112,6 +113,8 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
     - The function will automatically close the MATLAB engine if it was started within the function.
     - The prior index is adjusted by adding 1 to align with MATLAB's 1-based indexing.
     """
+    if foi is None:
+        foi = [0, 256]
     if gain_mat_fnames is None:
         gain_mat_fnames=[None for _ in mesh_fnames]
 
@@ -122,7 +125,7 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
             coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname)
 
             [mesh_fvals, wois] = invert_sliding_window(prior, mesh_fname, data_fname, 1, patch_size=patch_size,
-                                                       n_temp_modes=n_temp_modes, win_size=win_size,
+                                                       n_temp_modes=n_temp_modes, foi=foi, win_size=win_size,
                                                        win_overlap=win_overlap, hann=hann,
                                                        gain_mat_fname=gain_mat_fnames[l_idx], mat_eng=eng)
             f_vals.append(mesh_fvals)
