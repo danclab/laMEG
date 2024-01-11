@@ -80,7 +80,8 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
     data_file (str): Filename or path of the MEG/EEG data file used as a template for simulation.
     prefix (str): Prefix for the output simulated data filename.
     sim_vertices (list or int): Indices of vertices where simulations are centered. Can be a single integer or a list.
-    sim_signals (ndarray): Array of simulated signals.
+    sim_signals (ndarray): Array of simulated signals. Either dipoles x time (signal will be used for each trial), or
+                           dipoles x time x trials (unique signal for each trial)
     dipole_orientations (ndarray): Array of dipole orientations for the simulation.
     dipole_moments (list or float): Dipole moments for the simulation. Can be a single float or a list.
     sim_patch_sizes (list or int): Sizes of patches around each vertex for the simulation. Can be a single integer or a
