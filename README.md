@@ -1,4 +1,4 @@
-# lamiMEG
+# laMEG
 Toolbox for laminar inference with MEG
 
 ## Requirements
