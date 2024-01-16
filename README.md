@@ -3,7 +3,7 @@ Toolbox for laminar inference with MEG
 
 ## Requirements
 * Matlab
-* Matlab python engine (https://fr.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html)
+* [Matlab engine for python](https://fr.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html)
 * nibabel
 * vtk
 * cython
