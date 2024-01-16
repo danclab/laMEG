@@ -10,7 +10,7 @@ Toolbox for laminar inference with MEG
 * numpy
 * scipy
 * matplotlib
-* https://github.com/danclab/DANC_spm12
+* [DANC version of SPM12](https://github.com/danclab/DANC_spm12)
 
 ## Compilation
 python setup.py build_ext --inplace
