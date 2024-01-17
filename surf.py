@@ -683,6 +683,9 @@ def postprocess_freesurfer_surfaces(subj_id,
         lh = nib.load(lh_fname)
         rh_fname = os.path.join(subject_out_dir, f'rh.{surface_name}.gii')
         rh = nib.load(rh_fname)
+        if surface_name == 'inflated':
+            lh_width = np.max(lh.darrays[0].data[:, 0])-np.min(lh.darrays[0].data[:, 0])
+            rh.darrays[0].data[:, 0] = rh.darrays[0].data[:, 0] + np.max(lh.darrays[0].data[:, 0]) + (.5*lh_width)
 
         # Combine the surfaces
         combined = combine_surfaces([lh, rh])

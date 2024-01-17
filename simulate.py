@@ -10,7 +10,8 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
     Simulate current density data based on specified parameters.
 
     This function interfaces with MATLAB to generate simulated MEG/EEG data. It creates simulations based on specified
-    vertices, signals, dipole moments, and patch sizes, incorporating a defined signal-to-noise ratio (SNR).
+    vertices, signals, dipole moments, and patch sizes, incorporating a defined signal-to-noise ratio (SNR). White noise
+    is added at the sensor level to yield the given SNR.
 
     Parameters:
     data_file (str): Filename or path of the MEG/EEG data file used as a template for simulation.
@@ -74,7 +75,8 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
 
     This function interfaces with MATLAB to generate simulated MEG/EEG data with specific dipole configurations. It
     creates simulations based on specified vertices, signals, dipole orientations, moments, and patch sizes,
-    incorporating a defined signal-to-noise ratio (SNR).
+    incorporating a defined signal-to-noise ratio (SNR). White noise is added at the sensor level to yield the given
+    SNR.
 
     Parameters:
     data_file (str): Filename or path of the MEG/EEG data file used as a template for simulation.
