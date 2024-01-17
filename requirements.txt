@@ -1,0 +1,7 @@
+nibabel==3.2.2
+vtk==9.3.0
+cython==3.0.8
+numpy==1.19.5
+scipy==1.5.4
+matplotlib==3.3.4
+k3d
