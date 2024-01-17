@@ -464,10 +464,16 @@ def compute_dipole_orientations(method, layer_names, subject_out_dir, fixed=True
 
     Parameters:
     method (str): Method for computing dipole orientations ('link_vector', 'ds_surf_norm', 'orig_surf_norm', or 'cps').
+                  link_vector: vectors connecting pial vertices to corresponding white matter vertices
+                  ds_surf_norm: surface normal vectors computed from the downsampled surface
+                  orig_surf_norm: surface normal vectors computed from the original (non-downsampled) surface
+                  cps: cortical patch statistics - mean surface normal vectors from connected vertices in the original
+                       (non-downsampled) surface
     layer_names (list): Names of the cortical layers.
     subject_out_dir (str): Directory where the surface files are stored.
     fixed (bool, optional): Flag to ensure that orientation of corresponding vertices across layers is the same (True
-                            by default)
+                            by default). If true, for ds_surf_norm, orig_surf_norm, and cps, orientations computed from
+                            the pial surface are used for all layers.
 
     Returns:
     numpy.ndarray: An array of dipole orientations for each vertex in each layer.
