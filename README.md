@@ -11,6 +11,7 @@ Toolbox for laminar inference with MEG
 * scipy
 * matplotlib
 * [DANC version of SPM12](https://github.com/danclab/DANC_spm12)
+* k3d [for surface visualisation directly in Jupyter Notebook]
 
 ## Compilation
 python setup.py build_ext --inplace
