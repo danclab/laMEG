@@ -1,5 +1,4 @@
 import numpy as np
-import nibabel as nib
 from matplotlib import cm, colors
 import k3d
 import warnings
@@ -115,20 +114,21 @@ def color_map(data, cmap, vmin, vmax, n_bins=1000, vcenter=0, norm="TS"):
     return colors, c_map
 
 
-def show_surface(path, color=[166, 166, 166], grid=False, menu=False, colors=None, info=False):
+def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=False):
     """
     Renders a 3d surface with data (optional). Render is persistent even without a kernel.
     
     Parameters:
-    path (str): path to a *.gii surface file
+    surface (nibabel.gifti.GiftiImage): A Gifti surface mesh
     color (array): basic color of the surface, with absence of the data. Decimal RGB
     grid (bool): toggle grid rendering
     menu (bool): toggle menu with e.g. lighting options
     colors (array): array of vertices x hexadecimal 32bit color value to be rendered on the surface
     info (bool): prints info about the surface
     """
+    if color is None:
+        color = [166, 166, 166]
     color = rgbtoint(color)
-    surface = nib.load(path)
     
     try:
         vertices, faces, _ = surface.agg_data()
