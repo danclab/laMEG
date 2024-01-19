@@ -114,7 +114,7 @@ def color_map(data, cmap, vmin, vmax, n_bins=1000, vcenter=0, norm="TS"):
     return colors, c_map
 
 
-def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=False):
+def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=False, camera_view=None):
     """
     Renders a 3d surface with data (optional). Render is persistent even without a kernel.
     
@@ -136,16 +136,21 @@ def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=
         vertices, faces = surface.agg_data()
     
     mesh = k3d.mesh(vertices, faces, side="double", color=color)
+    cam_autofit = camera_view is None
     plot = k3d.plot(
-        grid_visible=grid, camera_mode="orbit",
-        menu_visibility=menu
+        grid_visible=grid, menu_visibility=menu, camera_auto_fit=cam_autofit
     )
     plot += mesh
     if hasattr(colors, "__iter__"):
         mesh.colors = colors
     else:
         pass
+
+    if camera_view is not None:
+        plot.camera=camera_view
     
     plot.display()
     if info:
         print(vertices.shape[0], "vertices")
+
+    return plot
