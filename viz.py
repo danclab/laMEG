@@ -148,5 +148,4 @@ def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=
     
     plot.display()
     if info:
-        print("file:", path)
         print(vertices.shape[0], "vertices")
