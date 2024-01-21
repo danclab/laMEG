@@ -14,7 +14,7 @@ from vtkmodules.vtkFiltersCore import vtkDecimatePro
 from vtkmodules.util.numpy_support import vtk_to_numpy
 
 from scipy.spatial import Delaunay
-from csurf import compute_geodesic_distances
+from lameg.csurf import compute_geodesic_distances
 import scipy.io as sio
 
 

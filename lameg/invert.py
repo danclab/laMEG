@@ -1,8 +1,8 @@
 import matlab.engine
 import numpy as np
 
-from util import get_spm_path, matlab_context, load_meg_sensor_data
-from surf import smoothmesh_multilayer_mm
+from lameg.util import get_spm_path, matlab_context, load_meg_sensor_data
+from lameg.surf import smoothmesh_multilayer_mm
 
 
 def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=True, mat_eng=None):
@@ -342,8 +342,8 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
       without the need for precomputed inverse solutions.
     - If `mat_eng` is not provided, the function will start a new MATLAB engine instance.
     - The function will automatically close the MATLAB engine if it was started within the function.
-    - Vertex indices are adjusted by adding 1 to each index to align with MATLAB's 1-based indexing when interfacing with
-      MATLAB.
+    - Vertex indices are adjusted by adding 1 to each index to align with MATLAB's 1-based indexing when interfacing
+      with MATLAB.
     """
     if vertices is None:
         vertices = []

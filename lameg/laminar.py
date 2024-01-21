@@ -4,8 +4,8 @@ import elephant
 import neo
 import quantities as pq
 
-from invert import invert_ebb, invert_msp, invert_sliding_window, coregister
-from util import matlab_context
+from lameg.invert import invert_ebb, invert_msp, invert_sliding_window, coregister
+from lameg.util import matlab_context
 
 
 def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='EBB', gain_mat_fnames=None,

@@ -1,17 +1,32 @@
+import os
+import sys
 from setuptools import setup, Extension, find_packages
 from Cython.Build import cythonize
+from setuptools.command.install import install
+import argparse
 
-# Define your extension module
+class CustomInstall(install):
+    def run(self):
+        # Run the standard install process
+        install.run(self)
+
+        # Post-installation: enable k3d for Jupyter
+        os.system("jupyter nbextension install --py --user k3d")
+        os.system("jupyter nbextension enable --py --user k3d")
+
+
+# Extension module
 extensions = [
     Extension(
-        name="laMEG.csurf",
-        sources=["csurf.pyx"],
+        name="lameg.csurf",
+        sources=["lameg/csurf.pyx"],
         # add any necessary compile-time flags here
     )
 ]
 
+
 setup(
-    name='laMEG',
+    name='lameg',
     version='0.1',
     author='DANC lab',
     author_email='james.bonaiuto@isc.cnrs.fr',
@@ -23,9 +38,11 @@ setup(
     packages=find_packages(),
     ext_modules=cythonize(extensions),
     package_data={
-        # Include any package data files here
-        'laMEG': ['*.so', 'matlab/*.m'],
+        'lameg': ['*.so', 'matlab/*.m'],
     },
     include_package_data=True,
     zip_safe=False,
+    cmdclass={
+        'install': CustomInstall,
+    },
 )
