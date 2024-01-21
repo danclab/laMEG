@@ -1,9 +1,7 @@
 import os
-import sys
 from setuptools import setup, Extension, find_packages
 from Cython.Build import cythonize
 from setuptools.command.install import install
-import argparse
 
 class CustomInstall(install):
     def run(self):
