@@ -1,3 +1,4 @@
+import os
 import json
 import matlab.engine
 import numpy as np
@@ -25,7 +26,7 @@ def matlab_context(eng=None):
     close_matlab = False
     if eng is None:
         eng = matlab.engine.start_matlab()
-        eng.addpath('./matlab', nargout=0)
+        eng.addpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), './matlab'), nargout=0)
         close_matlab = True
     try:
         yield eng
@@ -48,7 +49,7 @@ def get_spm_path():
     - It is assumed that the 'settings.json' file is properly formatted and accessible.
     - If the 'settings.json' file or the "spm_path" key is missing, the function will raise an error.
     """
-    with open('settings.json') as settings_file:
+    with open('../settings.json') as settings_file:
         parameters = json.load(settings_file)
     spm_path = parameters["spm_path"]
     return spm_path

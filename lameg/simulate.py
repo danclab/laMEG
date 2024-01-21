@@ -1,7 +1,7 @@
 import matlab.engine
 import numpy as np
 
-from util import get_spm_path, matlab_context
+from lameg.util import get_spm_path, matlab_context
 
 
 def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_moments, sim_patch_sizes, snr,
