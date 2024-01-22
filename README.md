@@ -3,6 +3,7 @@ Toolbox for laminar inference with MEG
 
 ## Requirements
 * Matlab
+* Python version compatible with your version of Matlab [Versions of Python Compatible with MATLAB Products by Release](https://fr.mathworks.com/support/requirements/python-compatibility.html)
 * [Matlab engine for python](https://fr.mathworks.com/help/matlab/matlab_external/install-the-matlab-engine-for-python.html)
 * [DANC version of SPM12](https://github.com/danclab/DANC_spm12)
 
