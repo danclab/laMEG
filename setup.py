@@ -16,8 +16,8 @@ class CustomInstall(install):
 # Extension module
 extensions = [
     Extension(
-        name="lameg.csurf",
-        sources=["lameg/csurf.pyx"],
+        name="lameg.surf",
+        sources=["lameg/surf.pyx"],
         # add any necessary compile-time flags here
     )
 ]
