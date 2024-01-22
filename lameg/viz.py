@@ -1,15 +1,10 @@
+import collections
+
 import numpy as np
 from matplotlib import cm, colors
 import matplotlib.pyplot as plt
 import k3d
 import warnings
-
-"""
-TO DO:
-- printing points
-
-"""
-
 
 warnings.filterwarnings(
     "ignore", message="^.*A coerced copy has been created.*$"
@@ -104,7 +99,7 @@ def color_map(data, cmap, vmin, vmax, n_bins=1000, vcenter=0, norm="TS"):
 
 
 def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=False, camera_view=None,
-                 opacity=1.0):
+                 opacity=1.0, coords=None, coord_size=1, coord_color=None):
     """
     Renders a 3D surface with optional data overlay. The rendering is persistent and does not require an active kernel.
 
@@ -132,6 +127,9 @@ def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=
     """
     if color is None:
         color = [166, 166, 166]
+    if coord_color is None:
+        coord_color = [255, 0, 0]
+
     color = rgbtoint(color)
     
     try:
@@ -149,6 +147,24 @@ def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=
         mesh.colors = colors
     else:
         pass
+
+    if coords is not None:
+        coords = np.array(coords).reshape(-1,3)
+        for c_idx in range(coords.shape[0]):
+            coord = coords[c_idx,:]
+            size = coord_size
+            if isinstance(coord_size, collections.abc.Sequence):
+                size = coord_size[c_idx]
+            color = np.array(coord_color).reshape(-1,3)[c_idx,:]
+            color = list(map(int, color))
+            pt = k3d.points(
+                coord,
+                point_size=size,
+                color=rgbtoint(color)
+            )
+            plot += pt
+
+
 
     if camera_view is not None:
         plot.camera=camera_view
