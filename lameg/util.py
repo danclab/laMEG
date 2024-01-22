@@ -74,13 +74,13 @@ def load_meg_sensor_data(data_fname, mat_eng=None):
     spm_path = get_spm_path()
 
     with matlab_context(mat_eng) as eng:
-        sensor_data = eng.load_meg_sensor_data(
+        sensor_data, ch_names = eng.load_meg_sensor_data(
             data_fname,
             spm_path,
-            nargout=1
+            nargout=2
         )
 
-    return np.array(sensor_data)
+    return np.array(sensor_data), ch_names
 
 
 def get_surface_names(n_layers, surf_path, orientation_method):
