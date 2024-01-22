@@ -49,7 +49,8 @@ def get_spm_path():
     - It is assumed that the 'settings.json' file is properly formatted and accessible.
     - If the 'settings.json' file or the "spm_path" key is missing, the function will raise an error.
     """
-    with open('../settings.json') as settings_file:
+    settings_fname = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settings.json')
+    with open(settings_fname) as settings_file:
         parameters = json.load(settings_file)
     spm_path = parameters["spm_path"]
     return spm_path
