@@ -7,6 +7,9 @@ Toolbox for laminar inference with MEG
 * [DANC version of SPM12](https://github.com/danclab/DANC_spm12)
 
 ## Compilation
+Edit lameg/settings.json and change spm_path to the directory where SPM is located
+
+From the base directory:
 python install.py --matlab_path /path/to/matlab/installation
 
 For example:
