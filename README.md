@@ -2,6 +2,7 @@
 Toolbox for laminar inference with MEG
 
 ## Requirements
+* [FreeSurfer v6.0](https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads), setup and configured (`FREESURFER_HOME` set, `SetUpFreeSurfer.sh` sourced, and `SUBJECTS_DIR` set)
 * Matlab
 * Python version compatible with your version of Matlab: [Versions of Python Compatible with MATLAB Products by Release](https://fr.mathworks.com/support/requirements/python-compatibility.html)
 * [DANC version of SPM12](https://github.com/danclab/DANC_spm12)
