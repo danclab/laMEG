@@ -1,0 +1,361 @@
+USED_LABEL,HEMISPHERE,LABEL_NAME,LONG_NAME,PRIMARY_SECTION,LEVEL_1,LEVEL_2,LEVEL_3,LEVEL_4,LEVEL_5
+L_V1_ROI,L,V1,Primary Visual Cortex,1,1,2,0,0,0
+L_MST_ROI,L,MST,Medial Superior Temporal Area,5,5,15,0,0,0
+L_V6_ROI,L,V6,Sixth Visual Area,3,2,3,18,0,0
+L_V2_ROI,L,V2,Second Visual Area,2,1,2,0,0,0
+L_V3_ROI,L,V3,Third Visual Area,2,2,0,0,0,0
+L_V4_ROI,L,V4,Fourth Visual Area,2,2,3,4,5,0
+L_V8_ROI,L,V8,Eighth Visual Area,4,2,4,5,0,0
+L_4_ROI,L,4,Primary Motor Cortex,6,6,7,8,9,0
+L_3b_ROI,L,3b,Primary Sensory Cortex,6,6,7,9,0,0
+L_FEF_ROI,L,FEF,Frontal Eye Fields,8,6,8,22,0,0
+L_PEF_ROI,L,PEF,Premotor Eye Field,8,6,8,21,22,0
+L_55b_ROI,L,55b,Area 55b,8,6,8,22,0,0
+L_V3A_ROI,L,V3A,Area V3A,3,2,3,0,0,0
+L_RSC_ROI,L,RSC,Retrosplenial Complex,18,13,18,0,0,0
+L_POS2_ROI,L,POS2,Parieto-Occipital Sulcus Area 2,18,16,18,0,0,0
+L_V7_ROI,L,V7,Seventh Visual Area,3,3,0,0,0,0
+L_IPS1_ROI,L,IPS1,Intraparietal Sulcus Area 1,3,3,16,17,0,0
+L_FFC_ROI,L,FFC,Fusiform Face Complex,4,4,5,14,0,0
+L_V3B_ROI,L,V3B,Area V3B,3,3,5,17,0,0
+L_LO1_ROI,L,LO1,Area Lateral Occipital 1,5,2,5,0,0,0
+L_LO2_ROI,L,LO2,Area Lateral Occipital 2,5,2,4,5,0,0
+L_PIT_ROI,L,PIT,Posterior Inferotemporal Complex,4,2,4,5,0,0
+L_MT_ROI,L,MT,Middle Temporal Area,5,5,15,0,0,0
+L_A1_ROI,L,A1,Primary Auditory Cortex,10,10,0,0,0,0
+L_PSL_ROI,L,PSL,Perisylvian Language Area,15,9,10,11,15,17
+L_SFL_ROI,L,SFL,Superior Frontal Language Area,22,7,19,22,0,0
+L_PCV_ROI,L,PCV,Precuneus Visual Area,18,7,16,18,0,0
+L_STV_ROI,L,STV,Superior Temporal Visual Area,15,11,15,17,0,0
+L_7Pm_ROI,L,7Pm,Medial Area 7P,16,16,18,0,0,0
+L_7m_ROI,L,7m,Area 7m,18,16,18,0,0,0
+L_POS1_ROI,L,POS1,Parieto-Occipital Sulcus Area 1,18,18,0,0,0,0
+L_23d_ROI,L,23d,Area 23d,18,18,19,0,0,0
+L_v23ab_ROI,L,v23ab,Area ventral 23 a+b,18,18,0,0,0,0
+L_d23ab_ROI,L,d23ab,Area dorsal 23 a+b,18,18,0,0,0,0
+L_31pv_ROI,L,31pv,Area 31p ventral,18,18,0,0,0,0
+L_5m_ROI,L,5m,Area 5m,7,6,7,0,0,0
+L_5mv_ROI,L,5mv,Area 5m ventral,7,7,16,18,0,0
+L_23c_ROI,L,23c,Area 23c,7,7,18,19,0,0
+L_5L_ROI,L,5L,Area 5L,7,6,7,16,0,0
+L_24dd_ROI,L,24dd,Dorsal Area 24d,7,6,7,18,0,0
+L_24dv_ROI,L,24dv,Ventral Area 24d,7,7,19,0,0,0
+L_7AL_ROI,L,7AL,Lateral Area 7A,16,6,7,16,0,0
+L_SCEF_ROI,L,SCEF,Supplementary and Cingulate Eye Field,7,7,19,22,0,0
+L_6ma_ROI,L,6ma,Area 6m anterior,7,7,8,22,0,0
+L_7Am_ROI,L,7Am,Medial Area 7A,16,7,16,18,0,0
+L_7PL_ROI,L,7PL,Lateral Area 7P,16,16,18,0,0,0
+L_7PC_ROI,L,7PC,Area 7PC,16,6,16,0,0,0
+L_LIPv_ROI,L,LIPv,Area Lateral Intraparietal ventral,16,16,0,0,0,0
+L_VIP_ROI,L,VIP,Ventral Intraparietal Complex,16,16,0,0,0,0
+L_MIP_ROI,L,MIP,Medial Intraparietal Area,16,3,16,17,0,0
+L_1_ROI,L,1,Area 1,6,6,7,9,17,0
+L_2_ROI,L,2,Area 2,6,6,7,16,17,0
+L_3a_ROI,L,3a,Area 3a,6,6,7,9,17,0
+L_6d_ROI,L,6d,Dorsal area 6,8,6,7,8,0,0
+L_6mp_ROI,L,6mp,Area 6mp,7,6,7,8,0,0
+L_6v_ROI,L,6v,Ventral Area 6,8,6,8,9,0,0
+L_p24pr_ROI,L,p24pr,Area Posterior 24 prime,19,7,18,19,0,0
+L_33pr_ROI,L,33pr,Area 33 prime,19,18,19,0,0,0
+L_a24pr_ROI,L,a24pr,Anterior 24 prime,19,19,0,0,0,0
+L_p32pr_ROI,L,p32pr,Area p32 prime,19,7,19,0,0,0
+L_a24_ROI,L,a24,Area a24,19,19,0,0,0,0
+L_d32_ROI,L,d32,Area dorsal 32,19,19,0,0,0,0
+L_8BM_ROI,L,8BM,Area 8BM,19,7,19,22,0,0
+L_p32_ROI,L,p32,Area p32,19,19,20,0,0,0
+L_10r_ROI,L,10r,Area 10r,19,19,20,0,0,0
+L_47m_ROI,L,47m,Area 47m,20,20,21,0,0,0
+L_8Av_ROI,L,8Av,Area 8Av,22,8,22,0,0,0
+L_8Ad_ROI,L,8Ad,Area 8Ad,22,22,0,0,0,0
+L_9m_ROI,L,9m,Area 9 Middle,19,19,20,22,0,0
+L_8BL_ROI,L,8BL,Area 8B Lateral,22,19,22,0,0,0
+L_9p_ROI,L,9p,Area 9 Posterior,22,19,22,0,0,0
+L_10d_ROI,L,10d,Area 10d,20,19,20,22,0,0
+L_8C_ROI,L,8C,Area 8C,22,8,21,22,0,0
+L_44_ROI,L,44,Area 44,21,8,12,21,0,0
+L_45_ROI,L,45,Area 45,21,12,21,0,0,0
+L_47l_ROI,L,47l,Area 47l (47 lateral),21,12,20,21,0,0
+L_a47r_ROI,L,a47r,Area anterior 47r,21,20,21,22,0,0
+L_6r_ROI,L,6r,Rostral Area 6,8,8,9,12,21,0
+L_IFJa_ROI,L,IFJa,Area IFJa,21,8,21,22,0,0
+L_IFJp_ROI,L,IFJp,Area IFJp,21,8,21,22,0,0
+L_IFSp_ROI,L,IFSp,Area IFSp,21,21,22,0,0,0
+L_IFSa_ROI,L,IFSa,Area IFSa,21,21,22,0,0,0
+L_p9-46v_ROI,L,p9-46v,Area posterior 9-46v,22,21,22,0,0,0
+L_46_ROI,L,46,Area 46,22,21,22,0,0,0
+L_a9-46v_ROI,L,a9-46v,Area anterior 9-46v,22,20,21,22,0,0
+L_9-46d_ROI,L,9-46d,Area 9-46d,22,20,22,0,0,0
+L_9a_ROI,L,9a,Area 9 anterior,22,19,20,22,0,0
+L_10v_ROI,L,10v,Area 10v,19,19,20,0,0,0
+L_a10p_ROI,L,a10p,Area anterior 10p,20,20,22,0,0,0
+L_10pp_ROI,L,10pp,Polar 10p,20,19,20,0,0,0
+L_11l_ROI,L,11l,Area 11l,20,20,0,0,0,0
+L_13l_ROI,L,13l,Area 13l,20,20,0,0,0,0
+L_OFC_ROI,L,OFC,Orbital Frontal Complex,20,19,20,0,0,0
+L_47s_ROI,L,47s,Area 47s,20,12,20,0,0,0
+L_LIPd_ROI,L,LIPd,Area Lateral Intraparietal dorsal,16,16,17,0,0,0
+L_6a_ROI,L,6a,Area 6 anterior,8,7,8,22,0,0
+L_i6-8_ROI,L,i6-8,Inferior 6-8 Transitional Area,22,8,22,0,0,0
+L_s6-8_ROI,L,s6-8,Superior 6-8 Transitional Area,22,7,8,22,0,0
+L_43_ROI,L,43,Area 43,9,6,8,9,12,0
+L_OP4_ROI,L,OP4,Area OP4/PV,9,6,9,17,0,0
+L_OP1_ROI,L,OP1,Area OP1/SII,9,9,10,0,0,0
+L_OP2-3_ROI,L,OP2-3,Area OP2-3/VS,9,9,10,12,0,0
+L_52_ROI,L,52,Area 52,10,10,12,0,0,0
+L_RI_ROI,L,RI,RetroInsular Cortex,10,9,10,12,15,0
+L_PFcm_ROI,L,PFcm,Area PFcm,10,9,10,15,17,0
+L_PoI2_ROI,L,PoI2,Posterior Insular Area 2,12,12,0,0,0,0
+L_TA2_ROI,L,TA2,Area TA2,11,10,11,12,0,0
+L_FOP4_ROI,L,FOP4,Frontal Opercular Area 4,12,9,12,21,0,0
+L_MI_ROI,L,MI,Middle Insular Area,12,12,0,0,0,0
+L_Pir_ROI,L,Pir,Pirform Cortex,12,12,14,20,0,0
+L_AVI_ROI,L,AVI,Anterior Ventral Insular Area,12,12,20,21,0,0
+L_AAIC_ROI,L,AAIC,Anterior Agranular Insula Complex,12,12,20,0,0,0
+L_FOP1_ROI,L,FOP1,Frontal Opercular Area 1,9,8,9,12,0,0
+L_FOP3_ROI,L,FOP3,Frontal Opercular Area 3,12,12,0,0,0,0
+L_FOP2_ROI,L,FOP2,Frontal Opercular Area 2,12,9,12,0,0,0
+L_PFt_ROI,L,PFt,Area PFt,17,6,16,17,0,0
+L_AIP_ROI,L,AIP,Anterior Intraparietal Area,16,6,16,17,0,0
+L_EC_ROI,L,EC,Entorhinal Cortex,13,13,0,0,0,0
+L_PreS_ROI,L,PreS,PreSubiculum,13,2,13,18,0,0
+L_H_ROI,L,H,Hippocampus,13,13,0,0,0,0
+L_ProS_ROI,L,ProS,ProStriate Area,18,1,2,13,18,0
+L_PeEc_ROI,L,PeEc,Perirhinal Ectorhinal Cortex,13,13,14,0,0,0
+L_STGa_ROI,L,STGa,Area STGa,11,11,12,14,0,0
+L_PBelt_ROI,L,PBelt,ParaBelt Complex,10,10,11,0,0,0
+L_A5_ROI,L,A5,Auditory 5 Complex,11,11,15,0,0,0
+L_PHA1_ROI,L,PHA1,Parahippocampal Area 1,13,2,4,13,0,0
+L_PHA3_ROI,L,PHA3,Parahippocampal Area 3,13,4,13,14,0,0
+L_STSda_ROI,L,STSda,Area STSd anterior,11,11,14,0,0,0
+L_STSdp_ROI,L,STSdp,Area STSd posterior,11,11,15,0,0,0
+L_STSvp_ROI,L,STSvp,Area STSv posterior,11,11,14,15,0,0
+L_TGd_ROI,L,TGd,Area TG dorsal,14,11,12,13,14,0
+L_TE1a_ROI,L,TE1a,Area TE1 anterior,14,11,14,0,0,0
+L_TE1p_ROI,L,TE1p,Area TE1 posterior,14,5,11,14,0,0
+L_TE2a_ROI,L,TE2a,Area TE2 anterior,14,14,0,0,0,0
+L_TF_ROI,L,TF,Area TF,13,4,13,14,0,0
+L_TE2p_ROI,L,TE2p,Area TE2 posterior,14,4,5,14,0,0
+L_PHT_ROI,L,PHT,Area PHT,14,5,11,14,15,0
+L_PH_ROI,L,PH,Area PH,5,4,5,14,0,0
+L_TPOJ1_ROI,L,TPOJ1,TemporoParietoOccipital Junction 1,15,11,14,15,17,0
+L_TPOJ2_ROI,L,TPOJ2,TemporoParietoOccipital Junction 2,15,5,14,15,17,0
+L_TPOJ3_ROI,L,TPOJ3,TemporoParietoOccipital Junction 3,15,5,15,17,0,0
+L_DVT_ROI,L,DVT,Dorsal Transitional Visual Area,18,2,3,16,18,0
+L_PGp_ROI,L,PGp,Area PGp,17,5,15,17,0,0
+L_IP2_ROI,L,IP2,Area Intraparietal 2,17,16,17,0,0,0
+L_IP1_ROI,L,IP1,Area Intraparietal 1,17,16,17,0,0,0
+L_IP0_ROI,L,IP0,Area Intraparietal 0,17,3,5,16,17,0
+L_PFop_ROI,L,PFop,Area PF opercular,17,6,9,17,0,0
+L_PF_ROI,L,PF,Area PF Complex,17,9,15,17,0,0
+L_PFm_ROI,L,PFm,Area PFm Complex,17,15,17,0,0,0
+L_PGi_ROI,L,PGi,Area PGi,17,15,17,0,0,0
+L_PGs_ROI,L,PGs,Area PGs,17,15,17,0,0,0
+L_V6A_ROI,L,V6A,Area V6A,3,3,18,0,0,0
+L_VMV1_ROI,L,VMV1,Ventromedial Visual Area 1,4,2,4,13,0,0
+L_VMV3_ROI,L,VMV3,Ventromedial Visual Area 3,4,2,4,13,0,0
+L_PHA2_ROI,L,PHA2,Parahippocampal Area 2,13,4,13,0,0,0
+L_V4t_ROI,L,V4t,Area V4t,5,5,0,0,0,0
+L_FST_ROI,L,FST,Area FST,5,5,14,15,0,0
+L_V3CD_ROI,L,V3CD,Area V3CD,5,2,3,5,17,0
+L_LO3_ROI,L,LO3,Area Lateral Occipital 3,5,5,15,17,0,0
+L_VMV2_ROI,L,VMV2,Ventromedial Visual Area 2,4,2,4,13,0,0
+L_31pd_ROI,L,31pd,Area 31pd,18,18,0,0,0,0
+L_31a_ROI,L,31a,Area 31a,18,18,0,0,0,0
+L_VVC_ROI,L,VVC,Ventral Visual Complex,4,4,13,14,0,0
+L_25_ROI,L,25,Area 25,19,19,20,0,0,0
+L_s32_ROI,L,s32,Area s32,19,19,0,0,0,0
+L_pOFC_ROI,L,pOFC,posterior OFC Complex,19,12,19,20,0,0
+L_PoI1_ROI,L,PoI1,Area Posterior Insular 1,12,12,0,0,0,0
+L_Ig_ROI,L,Ig,Insular Granular Complex,12,9,12,0,0,0
+L_FOP5_ROI,L,FOP5,Area Frontal Opercular 5,12,12,21,0,0,0
+L_p10p_ROI,L,p10p,Area posterior 10p,20,20,22,0,0,0
+L_p47r_ROI,L,p47r,Area posterior 47r,21,20,21,22,0,0
+L_TGv_ROI,L,TGv,Area TG Ventral,14,13,14,0,0,0
+L_MBelt_ROI,L,MBelt,Medial Belt Complex,10,10,12,0,0,0
+L_LBelt_ROI,L,LBelt,Lateral Belt Complex,10,10,0,0,0,0
+L_A4_ROI,L,A4,Auditory 4 Complex,11,11,15,0,0,0
+L_STSva_ROI,L,STSva,Area STSv anterior,11,11,14,0,0,0
+L_TE1m_ROI,L,TE1m,Area TE1 Middle,14,11,14,0,0,0
+L_PI_ROI,L,PI,Para-Insular Area,12,11,12,14,0,0
+L_a32pr_ROI,L,a32pr,Area anterior 32 prime,19,19,0,0,0,0
+L_p24_ROI,L,p24,Area posterior 24,19,19,0,0,0,0
+R_V1_ROI,R,V1,Primary Visual Cortex,1,1,2,0,0,0
+R_MST_ROI,R,MST,Medial Superior Temporal Area,5,5,15,0,0,0
+R_V6_ROI,R,V6,Sixth Visual Area,3,2,3,18,0,0
+R_V2_ROI,R,V2,Second Visual Area,2,1,2,0,0,0
+R_V3_ROI,R,V3,Third Visual Area,2,2,0,0,0,0
+R_V4_ROI,R,V4,Fourth Visual Area,2,2,3,4,5,0
+R_V8_ROI,R,V8,Eighth Visual Area,4,2,4,5,0,0
+R_4_ROI,R,4,Primary Motor Cortex,6,6,7,8,9,0
+R_3b_ROI,R,3b,Primary Sensory Cortex,6,6,7,9,0,0
+R_FEF_ROI,R,FEF,Frontal Eye Fields,8,6,8,22,0,0
+R_PEF_ROI,R,PEF,Premotor Eye Field,8,6,8,21,22,0
+R_55b_ROI,R,55b,Area 55b,8,6,8,22,0,0
+R_V3A_ROI,R,V3A,Area V3A,3,2,3,0,0,0
+R_RSC_ROI,R,RSC,Retrosplenial Complex,18,13,18,0,0,0
+R_POS2_ROI,R,POS2,Parieto-Occipital Sulcus Area 2,18,16,18,0,0,0
+R_V7_ROI,R,V7,Seventh Visual Area,3,3,0,0,0,0
+R_IPS1_ROI,R,IPS1,Intraparietal Sulcus Area 1,3,3,16,17,0,0
+R_FFC_ROI,R,FFC,Fusiform Face Complex,4,4,5,14,0,0
+R_V3B_ROI,R,V3B,Area V3B,3,3,5,17,0,0
+R_LO1_ROI,R,LO1,Area Lateral Occipital 1,5,2,5,0,0,0
+R_LO2_ROI,R,LO2,Area Lateral Occipital 2,5,2,4,5,0,0
+R_PIT_ROI,R,PIT,Posterior Inferotemporal Complex,4,2,4,5,0,0
+R_MT_ROI,R,MT,Middle Temporal Area,5,5,15,0,0,0
+R_A1_ROI,R,A1,Primary Auditory Cortex,10,10,0,0,0,0
+R_PSL_ROI,R,PSL,Perisylvian Language Area,15,9,10,11,15,17
+R_SFL_ROI,R,SFL,Superior Frontal Language Area,22,7,19,22,0,0
+R_PCV_ROI,R,PCV,Precuneus Visual Area,18,7,16,18,0,0
+R_STV_ROI,R,STV,Superior Temporal Visual Area,15,11,15,17,0,0
+R_7Pm_ROI,R,7Pm,Medial Area 7P,16,16,18,0,0,0
+R_7m_ROI,R,7m,Area 7m,18,16,18,0,0,0
+R_POS1_ROI,R,POS1,Parieto-Occipital Sulcus Area 1,18,18,0,0,0,0
+R_23d_ROI,R,23d,Area 23d,18,18,19,0,0,0
+R_v23ab_ROI,R,v23ab,Area ventral 23 a+b,18,18,0,0,0,0
+R_d23ab_ROI,R,d23ab,Area dorsal 23 a+b,18,18,0,0,0,0
+R_31pv_ROI,R,31pv,Area 31p ventral,18,18,0,0,0,0
+R_5m_ROI,R,5m,Area 5m,7,6,7,0,0,0
+R_5mv_ROI,R,5mv,Area 5m ventral,7,7,16,18,0,0
+R_23c_ROI,R,23c,Area 23c,7,7,18,19,0,0
+R_5L_ROI,R,5L,Area 5L,7,6,7,16,0,0
+R_24dd_ROI,R,24dd,Dorsal Area 24d,7,6,7,18,0,0
+R_24dv_ROI,R,24dv,Ventral Area 24d,7,7,19,0,0,0
+R_7AL_ROI,R,7AL,Lateral Area 7A,16,6,7,16,0,0
+R_SCEF_ROI,R,SCEF,Supplementary and Cingulate Eye Field,7,7,19,22,0,0
+R_6ma_ROI,R,6ma,Area 6m anterior,7,7,8,22,0,0
+R_7Am_ROI,R,7Am,Medial Area 7A,16,7,16,18,0,0
+R_7PL_ROI,R,7PL,Lateral Area 7P,16,16,18,0,0,0
+R_7PC_ROI,R,7PC,Area 7PC,16,6,16,0,0,0
+R_LIPv_ROI,R,LIPv,Area Lateral Intraparietal ventral,16,16,0,0,0,0
+R_VIP_ROI,R,VIP,Ventral Intraparietal Complex,16,16,0,0,0,0
+R_MIP_ROI,R,MIP,Medial Intraparietal Area,16,3,16,17,0,0
+R_1_ROI,R,1,Area 1,6,6,7,9,17,0
+R_2_ROI,R,2,Area 2,6,6,7,16,17,0
+R_3a_ROI,R,3a,Area 3a,6,6,7,9,17,0
+R_6d_ROI,R,6d,Dorsal area 6,8,6,7,8,0,0
+R_6mp_ROI,R,6mp,Area 6mp,7,6,7,8,0,0
+R_6v_ROI,R,6v,Ventral Area 6,8,6,8,9,0,0
+R_p24pr_ROI,R,p24pr,Area Posterior 24 prime,19,7,18,19,0,0
+R_33pr_ROI,R,33pr,Area 33 prime,19,18,19,0,0,0
+R_a24pr_ROI,R,a24pr,Anterior 24 prime,19,19,0,0,0,0
+R_p32pr_ROI,R,p32pr,Area p32 prime,19,7,19,0,0,0
+R_a24_ROI,R,a24,Area a24,19,19,0,0,0,0
+R_d32_ROI,R,d32,Area dorsal 32,19,19,0,0,0,0
+R_8BM_ROI,R,8BM,Area 8BM,19,7,19,22,0,0
+R_p32_ROI,R,p32,Area p32,19,19,20,0,0,0
+R_10r_ROI,R,10r,Area 10r,19,19,20,0,0,0
+R_47m_ROI,R,47m,Area 47m,20,20,21,0,0,0
+R_8Av_ROI,R,8Av,Area 8Av,22,8,22,0,0,0
+R_8Ad_ROI,R,8Ad,Area 8Ad,22,22,0,0,0,0
+R_9m_ROI,R,9m,Area 9 Middle,19,19,20,22,0,0
+R_8BL_ROI,R,8BL,Area 8B Lateral,22,19,22,0,0,0
+R_9p_ROI,R,9p,Area 9 Posterior,22,19,22,0,0,0
+R_10d_ROI,R,10d,Area 10d,20,19,20,22,0,0
+R_8C_ROI,R,8C,Area 8C,22,8,21,22,0,0
+R_44_ROI,R,44,Area 44,21,8,12,21,0,0
+R_45_ROI,R,45,Area 45,21,12,21,0,0,0
+R_47l_ROI,R,47l,Area 47l (47 lateral),21,12,20,21,0,0
+R_a47r_ROI,R,a47r,Area anterior 47r,21,20,21,22,0,0
+R_6r_ROI,R,6r,Rostral Area 6,8,8,9,12,21,0
+R_IFJa_ROI,R,IFJa,Area IFJa,21,8,21,22,0,0
+R_IFJp_ROI,R,IFJp,Area IFJp,21,8,21,22,0,0
+R_IFSp_ROI,R,IFSp,Area IFSp,21,21,22,0,0,0
+R_IFSa_ROI,R,IFSa,Area IFSa,21,21,22,0,0,0
+R_p9-46v_ROI,R,p9-46v,Area posterior 9-46v,22,21,22,0,0,0
+R_46_ROI,R,46,Area 46,22,21,22,0,0,0
+R_a9-46v_ROI,R,a9-46v,Area anterior 9-46v,22,20,21,22,0,0
+R_9-46d_ROI,R,9-46d,Area 9-46d,22,20,22,0,0,0
+R_9a_ROI,R,9a,Area 9 anterior,22,19,20,22,0,0
+R_10v_ROI,R,10v,Area 10v,19,19,20,0,0,0
+R_a10p_ROI,R,a10p,Area anterior 10p,20,20,22,0,0,0
+R_10pp_ROI,R,10pp,Polar 10p,20,19,20,0,0,0
+R_11l_ROI,R,11l,Area 11l,20,20,0,0,0,0
+R_13l_ROI,R,13l,Area 13l,20,20,0,0,0,0
+R_OFC_ROI,R,OFC,Orbital Frontal Complex,20,19,20,0,0,0
+R_47s_ROI,R,47s,Area 47s,20,12,20,0,0,0
+R_LIPd_ROI,R,LIPd,Area Lateral Intraparietal dorsal,16,16,17,0,0,0
+R_6a_ROI,R,6a,Area 6 anterior,8,7,8,22,0,0
+R_i6-8_ROI,R,i6-8,Inferior 6-8 Transitional Area,22,8,22,0,0,0
+R_s6-8_ROI,R,s6-8,Superior 6-8 Transitional Area,22,7,8,22,0,0
+R_43_ROI,R,43,Area 43,9,6,8,9,12,0
+R_OP4_ROI,R,OP4,Area OP4/PV,9,6,9,17,0,0
+R_OP1_ROI,R,OP1,Area OP1/SII,9,9,10,0,0,0
+R_OP2-3_ROI,R,OP2-3,Area OP2-3/VS,9,9,10,12,0,0
+R_52_ROI,R,52,Area 52,10,10,12,0,0,0
+R_RI_ROI,R,RI,RetroInsular Cortex,10,9,10,12,15,0
+R_PFcm_ROI,R,PFcm,Area PFcm,10,9,10,15,17,0
+R_PoI2_ROI,R,PoI2,Posterior Insular Area 2,12,12,0,0,0,0
+R_TA2_ROI,R,TA2,Area TA2,11,10,11,12,0,0
+R_FOP4_ROI,R,FOP4,Frontal Opercular Area 4,12,9,12,21,0,0
+R_MI_ROI,R,MI,Middle Insular Area,12,12,0,0,0,0
+R_Pir_ROI,R,Pir,Pirform Cortex,12,12,14,20,0,0
+R_AVI_ROI,R,AVI,Anterior Ventral Insular Area,12,12,20,21,0,0
+R_AAIC_ROI,R,AAIC,Anterior Agranular Insula Complex,12,12,20,0,0,0
+R_FOP1_ROI,R,FOP1,Frontal Opercular Area 1,9,8,9,12,0,0
+R_FOP3_ROI,R,FOP3,Frontal Opercular Area 3,12,12,0,0,0,0
+R_FOP2_ROI,R,FOP2,Frontal Opercular Area 2,12,9,12,0,0,0
+R_PFt_ROI,R,PFt,Area PFt,17,6,16,17,0,0
+R_AIP_ROI,R,AIP,Anterior Intraparietal Area,16,6,16,17,0,0
+R_EC_ROI,R,EC,Entorhinal Cortex,13,13,0,0,0,0
+R_PreS_ROI,R,PreS,PreSubiculum,13,2,13,18,0,0
+R_H_ROI,R,H,Hippocampus,13,13,0,0,0,0
+R_ProS_ROI,R,ProS,ProStriate Area,18,1,2,13,18,0
+R_PeEc_ROI,R,PeEc,Perirhinal Ectorhinal Cortex,13,13,14,0,0,0
+R_STGa_ROI,R,STGa,Area STGa,11,11,12,14,0,0
+R_PBelt_ROI,R,PBelt,ParaBelt Complex,10,10,11,0,0,0
+R_A5_ROI,R,A5,Auditory 5 Complex,11,11,15,0,0,0
+R_PHA1_ROI,R,PHA1,Parahippocampal Area 1,13,2,4,13,0,0
+R_PHA3_ROI,R,PHA3,Parahippocampal Area 3,13,4,13,14,0,0
+R_STSda_ROI,R,STSda,Area STSd anterior,11,11,14,0,0,0
+R_STSdp_ROI,R,STSdp,Area STSd posterior,11,11,15,0,0,0
+R_STSvp_ROI,R,STSvp,Area STSv posterior,11,11,14,15,0,0
+R_TGd_ROI,R,TGd,Area TG dorsal,14,11,12,13,14,0
+R_TE1a_ROI,R,TE1a,Area TE1 anterior,14,11,14,0,0,0
+R_TE1p_ROI,R,TE1p,Area TE1 posterior,14,5,11,14,0,0
+R_TE2a_ROI,R,TE2a,Area TE2 anterior,14,14,0,0,0,0
+R_TF_ROI,R,TF,Area TF,13,4,13,14,0,0
+R_TE2p_ROI,R,TE2p,Area TE2 posterior,14,4,5,14,0,0
+R_PHT_ROI,R,PHT,Area PHT,14,5,11,14,15,0
+R_PH_ROI,R,PH,Area PH,5,4,5,14,0,0
+R_TPOJ1_ROI,R,TPOJ1,TemporoParietoOccipital Junction 1,15,11,14,15,17,0
+R_TPOJ2_ROI,R,TPOJ2,TemporoParietoOccipital Junction 2,15,5,14,15,17,0
+R_TPOJ3_ROI,R,TPOJ3,TemporoParietoOccipital Junction 3,15,5,15,17,0,0
+R_DVT_ROI,R,DVT,Dorsal Transitional Visual Area,18,2,3,16,18,0
+R_PGp_ROI,R,PGp,Area PGp,17,5,15,17,0,0
+R_IP2_ROI,R,IP2,Area Intraparietal 2,17,16,17,0,0,0
+R_IP1_ROI,R,IP1,Area Intraparietal 1,17,16,17,0,0,0
+R_IP0_ROI,R,IP0,Area Intraparietal 0,17,3,5,16,17,0
+R_PFop_ROI,R,PFop,Area PF opercular,17,6,9,17,0,0
+R_PF_ROI,R,PF,Area PF Complex,17,9,15,17,0,0
+R_PFm_ROI,R,PFm,Area PFm Complex,17,15,17,0,0,0
+R_PGi_ROI,R,PGi,Area PGi,17,15,17,0,0,0
+R_PGs_ROI,R,PGs,Area PGs,17,15,17,0,0,0
+R_V6A_ROI,R,V6A,Area V6A,3,3,18,0,0,0
+R_VMV1_ROI,R,VMV1,Ventromedial Visual Area 1,4,2,4,13,0,0
+R_VMV3_ROI,R,VMV3,Ventromedial Visual Area 3,4,2,4,13,0,0
+R_PHA2_ROI,R,PHA2,Parahippocampal Area 2,13,4,13,0,0,0
+R_V4t_ROI,R,V4t,Area V4t,5,5,0,0,0,0
+R_FST_ROI,R,FST,Area FST,5,5,14,15,0,0
+R_V3CD_ROI,R,V3CD,Area V3CD,5,2,3,5,17,0
+R_LO3_ROI,R,LO3,Area Lateral Occipital 3,5,5,15,17,0,0
+R_VMV2_ROI,R,VMV2,Ventromedial Visual Area 2,4,2,4,13,0,0
+R_31pd_ROI,R,31pd,Area 31pd,18,18,0,0,0,0
+R_31a_ROI,R,31a,Area 31a,18,18,0,0,0,0
+R_VVC_ROI,R,VVC,Ventral Visual Complex,4,4,13,14,0,0
+R_25_ROI,R,25,Area 25,19,19,20,0,0,0
+R_s32_ROI,R,s32,Area s32,19,19,0,0,0,0
+R_pOFC_ROI,R,pOFC,posterior OFC Complex,19,12,19,20,0,0
+R_PoI1_ROI,R,PoI1,Area Posterior Insular 1,12,12,0,0,0,0
+R_Ig_ROI,R,Ig,Insular Granular Complex,12,9,12,0,0,0
+R_FOP5_ROI,R,FOP5,Area Frontal Opercular 5,12,12,21,0,0,0
+R_p10p_ROI,R,p10p,Area posterior 10p,20,20,22,0,0,0
+R_p47r_ROI,R,p47r,Area posterior 47r,21,20,21,22,0,0
+R_TGv_ROI,R,TGv,Area TG Ventral,14,13,14,0,0,0
+R_MBelt_ROI,R,MBelt,Medial Belt Complex,10,10,12,0,0,0
+R_LBelt_ROI,R,LBelt,Lateral Belt Complex,10,10,0,0,0,0
+R_A4_ROI,R,A4,Auditory 4 Complex,11,11,15,0,0,0
+R_STSva_ROI,R,STSva,Area STSv anterior,11,11,14,0,0,0
+R_TE1m_ROI,R,TE1m,Area TE1 Middle,14,11,14,0,0,0
+R_PI_ROI,R,PI,Para-Insular Area,12,11,12,14,0,0
+R_a32pr_ROI,R,a32pr,Area anterior 32 prime,19,19,0,0,0,0
+R_p24_ROI,R,p24,Area posterior 24,19,19,0,0,0,0
