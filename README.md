@@ -6,7 +6,7 @@ Toolbox for laminar inference with MEG
 * Python version compatible with your version of Matlab: [Versions of Python Compatible with MATLAB Products by Release](https://fr.mathworks.com/support/requirements/python-compatibility.html)
 * [DANC version of SPM12](https://github.com/danclab/DANC_spm12)
 
-## Compilation
+## Installation
 Edit lameg/settings.json and change spm_path to the directory where SPM is located (e.g. /home/bonaiuto/DANC_spm12/spm12)
 
 From the base directory:
