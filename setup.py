@@ -36,7 +36,7 @@ setup(
     packages=find_packages(),
     ext_modules=cythonize(extensions),
     package_data={
-        'lameg': ['*.so', 'matlab/*', 'settings.json'],
+        'lameg': ['*.so', 'matlab/*', 'settings.json', 'assets/*'],
     },
     include_package_data=True,
     zip_safe=False,
