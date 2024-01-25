@@ -56,14 +56,14 @@ def rgbtoint(rgb):
     Returns a 32bit representation of the color as an integer.
     
     Parameters:
-    rgb (array): accepts decimal [R, G, B] array
+    rgb (array): accepts integer [R, G, B] array
     
     Notes:
-    - function requires decimal RGB (values 0-255)
+    - function requires integer RGB (values 0-255)
     """
     color = 0
     for c in rgb:
-        color = (color<<8) + c
+        color = (color << 8) + int(c)
     return color
 
 
