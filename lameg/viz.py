@@ -98,7 +98,7 @@ def color_map(data, cmap, vmin, vmax, n_bins=1000, vcenter=0, norm="TS"):
     return colors, c_map
 
 
-def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=False, camera_view=None,
+def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=False, camera_view=None, height=512,
                  opacity=1.0, coords=None, coord_size=1, coord_color=None):
     """
     Renders a 3D surface with optional data overlay. The rendering is persistent and does not require an active kernel.
@@ -115,6 +115,7 @@ def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=
                              False.
     - camera_view (array, optional): Specifies a camera view for the rendering. If None, an automatic camera view is
                                      set. Default is None.
+    - height (int, optional): Height of the widget in pixels. Default is 512.
     - opacity (float, optional): Sets the opacity of the surface, with 1.0 being fully opaque and 0.0 being fully
                                  transparent. Default is 1.0.
 
@@ -140,7 +141,7 @@ def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=
     mesh = k3d.mesh(vertices, faces, side="double", color=color, opacity=opacity)
     cam_autofit = camera_view is None
     plot = k3d.plot(
-        grid_visible=grid, menu_visibility=menu, camera_auto_fit=cam_autofit
+        grid_visible=grid, menu_visibility=menu, camera_auto_fit=cam_autofit, height=height
     )
     plot += mesh
     if hasattr(colors, "__iter__"):
