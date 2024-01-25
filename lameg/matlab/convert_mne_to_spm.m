@@ -1,18 +1,18 @@
-function convert_mne_to_spm(orig_res4_file, mne_file, output_name, epoched)
+function convert_mne_to_spm(orig_res4_file, mne_file, output_path, output_name, prefix, epoched, spm_path)
 % CONVERT_MNE_TO_SPM  Convert MNE file (fif format) to SPM
 %    convert_mne_to_spm(orig_res4_file, mne_file, epoched)
 %        orig_res4_file = file path of the original data 
 %        mne_file = file path of the MNE (fif file) to convert
 %        epoched = 0 if continuous data, 1 if epoched
 
-%addpath('/home/bonaiuto/spm12')
-addpath('/home/mszul/git/DANC_spm12/spm12')
+
+addpath(spm_path)
 spm('defaults','eeg');
 
 % Create file path for result
 [filepath,name,ext] = fileparts(mne_file);
-% spm_filename=fullfile(filepath, 'spm', sprintf('spm_converted_%s.mat',name));
-spm_filename=output_name
+spm_filename=fullfile(output_path, sprintf('%s%s.mat', prefix, name));
+% spm_filename=output_name
 
 % Setup SPM batch
 clear jobs
@@ -102,7 +102,6 @@ S1.D = D1;
 D1 = spm_eeg_prep(S1);
 
 save(D1);
-
 
 % load(spm_filename);
 % D.sensors=[];
