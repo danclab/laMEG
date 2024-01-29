@@ -123,7 +123,8 @@ def get_surface_names(n_layers, surf_path, orientation_method):
     return layer_fnames
 
 
-def fif_spm_conversion(mne_file, res4_file, output_path, output_name, prefix="spm_", epoched=None, create_path=False, mat_eng=None):
+def fif_spm_conversion(mne_file, res4_file, output_path, output_name, prefix="spm_", epoched=None, create_path=False,
+                       mat_eng=None):
     """
     Converts *.fif file to SPM data format.
     
@@ -139,23 +140,23 @@ def fif_spm_conversion(mne_file, res4_file, output_path, output_name, prefix="sp
     
     Notes:
     """
-    
-    if epoched==None:
+
+    if epoched == None:
         raise ValueError("Please specify if the data is epoched (True) or not (False)")
     else:
         epoched = int(epoched)
-    
+
     spm_path = get_spm_path()
-    
+
     # clean things up for matlab
     mne_file = str(mne_file)
     output_path = str(output_path)
     output_name = str(output_name)
     res4_file = str(res4_file)
-    
+
     if create_path:
         make_directory(output_path)
-    
+
     with matlab_context(mat_eng) as eng:
         eng.convert_mne_to_spm(
             res4_file, mne_file, output_path,
@@ -182,7 +183,7 @@ def check_many(multiple, target, func=None):
     if func in func_dict.keys():
         use_func = func_dict[func]
     elif func == None:
-        raise ValueError("pick function 'all' or 'any'")    
+        raise ValueError("pick function 'all' or 'any'")
     check_ = []
     for i in multiple:
         check_.append(i in target)
@@ -206,14 +207,15 @@ def get_files(target_path, suffix, strings=[""], prefix=None, check="all", depth
     - returns a list of pathlib.Path objects
     """
     path = Path(target_path)
-    if depth=="all":
+    if depth == "all":
         subdirs = [subdir for subdir in path.rglob(suffix) if check_many(strings, str(subdir.name), check)]
         subdirs.sort()
         if isinstance(prefix, str):
-            subdirs = [subdir for subdir in subdirs if path.name.startswith(prefix)] 
+            subdirs = [subdir for subdir in subdirs if path.name.startswith(prefix)]
         return subdirs
     elif depth == "one":
-        subdirs = [subdir for subdir in path.iterdir() if all([subdir.is_file(), subdir.suffix==suffix[1:], check_many(strings, str(subdir.name), check)])]
+        subdirs = [subdir for subdir in path.iterdir() if
+                   all([subdir.is_file(), subdir.suffix == suffix[1:], check_many(strings, str(subdir.name), check)])]
         if isinstance(prefix, str):
             subdirs = [subdir for subdir in subdirs if path.name.startswith(prefix)]
         subdirs.sort()
@@ -257,7 +259,7 @@ def make_directory(root_path, extended_dir, check=False):
         root_path = root_path.joinpath(*extended_dir)
     else:
         root_path = root_path.joinpath(extended_dir)
-    
+
     root_path.mkdir(parents=True, exist_ok=True)
     if all([check, root_path.exists()]):
         return root_path
@@ -267,15 +269,16 @@ def make_directory(root_path, extended_dir, check=False):
 
 def check_maj(list_to_check):
     list_len = len(list_to_check)
-    majority = list_len//2 + 1
+    majority = list_len // 2 + 1
     if len(set(list_to_check[:majority])) == 1:
         return list_to_check[0]
     else:
         item, count = np.unique(list_to_check, return_counts=True)
         return item[np.argmax(count)]
-    
 
-def transform_atlas(paths_annot, paths_fsavg_sphere, paths_fsnat_sphere, surface_path, surface_ds_path, surface_nodeep_path, return_dict=False):
+
+def transform_atlas(paths_annot, paths_fsavg_sphere, paths_fsnat_sphere, surface_path, surface_ds_path,
+                    surface_nodeep_path, return_dict=False):
     '''
     Transform fsaverage *.annot file atlas to vertex labels in the native space downsampled layer.
     
@@ -299,10 +302,10 @@ def transform_atlas(paths_annot, paths_fsavg_sphere, paths_fsnat_sphere, surface
         annots_lr["label_ix"].append(annot_data_lr[ix][0])
         annots_lr["color"].append(annot_data_lr[ix][1])
         annots_lr["label"].append(np.array(annot_data_lr[ix][2]))
-    
+
     fsavg_spheres = [nib.load(i).agg_data()[0] for i in paths_fsavg_sphere]
     fsnat_spheres = [nib.load(i).agg_data()[0] for i in paths_fsnat_sphere]
-    
+
     # mapping atlas labels between fsavereage and fsnative spheres
     nat_annots = []
     for lr in range(len(fsavg_spheres)):
@@ -317,10 +320,10 @@ def transform_atlas(paths_annot, paths_fsavg_sphere, paths_fsnat_sphere, surface
             label = annots_lr["label"][lr][label_index]
             nat_dict_sub[i] = [distance, index, label_indexes, label]
         nat_annots.append(nat_dict_sub)
-    
+
     pial = nib.load(surface_path).agg_data()[0]
     pial_ds = nib.load(surface_ds_path).agg_data()[0]
-    
+
     # mapping fsnative brain to downsampled brain
     pial_tree = KDTree(pial, leaf_size=10)
     pial_2_ds_map = []
@@ -328,25 +331,25 @@ def transform_atlas(paths_annot, paths_fsavg_sphere, paths_fsnat_sphere, surface
         dist, pial_index = pial_tree.query([pial_ds[i]], k=1)
         pial_2_ds_map.append(pial_index)
     pial_2_ds_map = np.array(pial_2_ds_map).flatten()
-    
+
     # concatenating the annotations
     annots_order = np.array(
-        [nat_annots[0][i][3] for i in nat_annots[0].keys()] + 
+        [nat_annots[0][i][3] for i in nat_annots[0].keys()] +
         [nat_annots[1][i][3] for i in nat_annots[1].keys()]
     )
-    
+
     # selecting the annotation for the downsampled pial
     nat_pial_annot = annots_order[pial_2_ds_map]
-    
+
     # removing the DEEP structures
     nodeep = nib.load(surface_nodeep_path).agg_data()[0]
     tree = KDTree(pial_ds, leaf_size=10)
     indices = [tree.query([nodeep[i]], k=1)[1].flatten()[0] for i in range(nodeep.shape[0])]
     nat_pial_annot = nat_pial_annot[indices]
-    
+
     color = np.concatenate(annots_lr["color"])
     labels = np.concatenate(annots_lr["label"])
-    
+
     lab_col_map = {lab: color[ix] for ix, lab in enumerate(labels)}
     mesh_colors = [lab_col_map[lab][:3].flatten() for lab in nat_pial_annot]
     if return_dict:
@@ -355,7 +358,8 @@ def transform_atlas(paths_annot, paths_fsavg_sphere, paths_fsnat_sphere, surface
         return mesh_colors, nat_pial_annot
 
 
-def fsavg_vals_to_native(values, fsavg_sphere_paths, fsnat_sphere_paths, surface_path, surface_ds_path, surface_nodeep_path):
+def fsavg_vals_to_native(values, fsavg_sphere_paths, fsnat_sphere_paths, surface_path, surface_ds_path,
+                         surface_nodeep_path):
     """
     Transform values in fsaverage vertex order that contains values to vertex values in the native space downsampled.
     
@@ -370,12 +374,12 @@ def fsavg_vals_to_native(values, fsavg_sphere_paths, fsnat_sphere_paths, surface
     Notes:
         - values 
     """
-    
+
     fsavg_spheres = [nib.load(i).agg_data()[0] for i in fsavg_sphere_paths]
     fsnat_spheres = [nib.load(i).agg_data()[0] for i in fsnat_sphere_paths]
     pial = nib.load(surface_path).agg_data()[0]
     pial_ds = nib.load(surface_ds_path).agg_data()[0]
-    
+
     # values from fsaverage to fsnative
     fsnat_vx_values = []
     for lr in range(len(fsavg_spheres)):
@@ -385,9 +389,9 @@ def fsavg_vals_to_native(values, fsavg_sphere_paths, fsnat_sphere_paths, surface
             dist, vx_index = tree.query([fsnat_spheres[lr][xyz_ix]], k=1)
             vx_value.append(values[lr][vx_index].flatten())
         fsnat_vx_values.append(np.array(vx_value))
-    
+
     fsnat_vx_values = np.concatenate(fsnat_vx_values)
-    
+
     # mapping fsnative brain to downsampled brain
     pial_tree = KDTree(pial, leaf_size=10)
     pial_2_ds_map = []
@@ -395,20 +399,19 @@ def fsavg_vals_to_native(values, fsavg_sphere_paths, fsnat_sphere_paths, surface
         dist, pial_index = pial_tree.query([pial_ds[i]], k=1)
         pial_2_ds_map.append(pial_index)
     pial_2_ds_map = np.array(pial_2_ds_map).flatten()
-    
+
     # downsampled
     # but maybe mean of neighbouring vertices 
     fsnat_ds_vx_values = fsnat_vx_values[pial_2_ds_map]
-    
+
     # removing deep structures
     nodeep = nib.load(surface_nodeep_path).agg_data()[0]
     tree = KDTree(pial_ds, leaf_size=10)
     indices = [tree.query([nodeep[i]], k=1)[1].flatten()[0] for i in range(nodeep.shape[0])]
-    
-    fsnat_ds_vx_values = fsnat_ds_vx_values[indices]
-    
-    return fsnat_ds_vx_values.flatten()
 
+    fsnat_ds_vx_values = fsnat_ds_vx_values[indices]
+
+    return fsnat_ds_vx_values.flatten()
 
 
 def ttest_rel_corrected(x, correction=0, tail=0, axis=0):
