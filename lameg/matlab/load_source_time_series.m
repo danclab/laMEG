@@ -1,4 +1,4 @@
-function source_ts=load_source_time_series(data_D, inv_D, vertices, spm_path)
+function [source_ts, time]=load_source_time_series(data_D, inv_D, vertices, spm_path)
 
 addpath(spm_path);
 
@@ -7,6 +7,7 @@ spm('defaults','eeg');
 spm_jobman('initcfg');
 
 D_data=spm_eeg_load(data_D);
+time = D_data.time;
 D_inv=spm_eeg_load(inv_D);
 
 if length(vertices)>0
