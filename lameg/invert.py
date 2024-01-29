@@ -333,6 +333,7 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
 
     Returns:
     ndarray: An array containing the extracted source time series data (sources x time x trial).
+    ndarray: An array containing the timestamps
 
     Notes:
     - The function requires MATLAB and DANC_SPM12 to be installed and accessible.
@@ -356,16 +357,16 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
             inv_fname = data_fname
 
         with matlab_context(mat_eng) as eng:
-            source_ts = eng.load_source_time_series(
+            source_ts, time = eng.load_source_time_series(
                 data_fname,
                 inv_fname,
                 matlab.double(vertices),
                 spm_path,
-                nargout=1
+                nargout=2
             )
             source_ts = np.array(source_ts)
     else:
-        sensor_data, _, _ = load_meg_sensor_data(data_fname, mat_eng=mat_eng)
+        sensor_data, time, _ = load_meg_sensor_data(data_fname, mat_eng=mat_eng)
         v_idx = np.arange(mu_matrix.shape[0])
         if len(vertices):
             v_idx = np.array(vertices)
@@ -379,4 +380,4 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
         elif len(sensor_data.shape)==2:
             source_ts = mu_matrix[v_idx, :] @ sensor_data[:, :]
 
-    return source_ts
+    return source_ts, time
