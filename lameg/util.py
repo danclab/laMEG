@@ -69,6 +69,8 @@ def load_meg_sensor_data(data_fname, mat_eng=None):
 
     Returns:
     ndarray: An array containing the MEG sensor data (channels x time x trial).
+    ndarray: An array containing the MEG data timestamps
+    list: A list of channel names
 
     Notes:
     - The function requires MATLAB and DANC_SPM12 to be installed and accessible.
@@ -78,13 +80,13 @@ def load_meg_sensor_data(data_fname, mat_eng=None):
     spm_path = get_spm_path()
 
     with matlab_context(mat_eng) as eng:
-        sensor_data, ch_names = eng.load_meg_sensor_data(
+        sensor_data, time, ch_names = eng.load_meg_sensor_data(
             data_fname,
             spm_path,
-            nargout=2
+            nargout=3
         )
 
-    return np.array(sensor_data), ch_names
+    return np.array(sensor_data), np.squeeze(np.array(time)), ch_names
 
 
 def get_surface_names(n_layers, surf_path, orientation_method):
