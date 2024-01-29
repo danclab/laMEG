@@ -6,6 +6,7 @@ from pathlib import Path
 from contextlib import contextmanager
 import nibabel as nib
 from scipy.spatial import KDTree
+from scipy.stats import t
 
 
 @contextmanager
@@ -407,3 +408,60 @@ def fsavg_vals_to_native(values, fsavg_sphere_paths, fsnat_sphere_paths, surface
     fsnat_ds_vx_values = fsnat_ds_vx_values[indices]
     
     return fsnat_ds_vx_values.flatten()
+
+
+
+def ttest_rel_corrected(x, correction=0, tail=0, axis=0):
+    """
+    Perform a corrected paired t-test on a sample of data.
+
+    This function handles missing data (NaNs) and applies a variance correction to the t-test calculation.
+    It computes the t-statistic and corresponding p-value for the hypothesis test.
+
+    Parameters:
+    x (array_like): A 2-D array containing the sample data. NaN values are allowed and are handled appropriately.
+    correction (float, optional): The correction value to be added to the variance to avoid division by zero issues.
+                                  If set to 0 (default), an automatic correction of 0.01 * max(variance) is applied.
+    tail (int, optional): Specifies the type of t-test to be performed.
+                          0 for a two-tailed test (default), 1 for a right one-tailed test, -1 for a left one-tailed
+                          test.
+    axis (int, optional): Axis along which to perform the t-test. Default is 0.
+
+    Returns:
+    tuple: A tuple containing the t-statistic (float) and the p-value (float) for the test.
+
+    Notes:
+    - The function handles NaNs by computing the sample size, mean, and variance ignoring NaNs.
+    - The degrees of freedom (df) for the t-test is computed as maximum(sample size - 1, 0).
+    - The standard error of the mean (ser) is adjusted with the variance correction.
+    - The p-value is computed based on the specified tail type of the t-test.
+    """
+    # Handle NaNs
+    nans = np.isnan(x)
+    if np.any(nans):
+        samplesize = np.sum(~nans, axis=axis)
+    else:
+        samplesize = x.shape[axis]
+
+    df = np.maximum(samplesize - 1, 0)
+    xmean = np.nanmean(x, axis=axis)
+    varpop = np.nanvar(x, axis=axis)
+
+    # Apply correction
+    if correction == 0:
+        correction = 0.01 * np.max(varpop)
+
+    corrsdpop = np.sqrt(varpop + correction)
+    ser = corrsdpop / np.sqrt(samplesize)
+    tval = (xmean - 0) / ser
+
+    # Compute p-value
+    p = np.inf
+    if tail == 0:  # two-tailed test
+        p = 2 * t.sf(np.abs(tval), df)
+    elif tail == 1:  # right one-tailed test
+        p = t.sf(-tval, df)
+    elif tail == -1:  # left one-tailed test
+        p = t.cdf(tval, df)
+
+    return tval, p
