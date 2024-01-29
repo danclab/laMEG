@@ -365,12 +365,18 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
             )
             source_ts = np.array(source_ts)
     else:
-        sensor_data, _ = load_meg_sensor_data(data_fname, mat_eng=mat_eng)
+        sensor_data, _, _ = load_meg_sensor_data(data_fname, mat_eng=mat_eng)
         v_idx = np.arange(mu_matrix.shape[0])
         if len(vertices):
             v_idx = np.array(vertices)
-        source_ts = np.zeros((len(v_idx), sensor_data.shape[1], sensor_data.shape[2]))
-        for t in range(sensor_data.shape[2]):
-            source_ts[:, :, t] = mu_matrix[v_idx, :] @ sensor_data[:, :, t]
+
+        # Epoched
+        if len(sensor_data.shape)==3:
+            source_ts = np.zeros((len(v_idx), sensor_data.shape[1], sensor_data.shape[2]))
+            for t in range(sensor_data.shape[2]):
+                source_ts[:, :, t] = mu_matrix[v_idx, :] @ sensor_data[:, :, t]
+        # Averaged
+        elif len(sensor_data.shape)==2:
+            source_ts = mu_matrix[v_idx, :] @ sensor_data[:, :]
 
     return source_ts

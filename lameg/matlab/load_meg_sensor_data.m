@@ -1,4 +1,4 @@
-function [sensor_data, ch_names]=load_meg_sensor_data(data_D, spm_path)
+function [sensor_data, time, ch_names]=load_meg_sensor_data(data_D, spm_path)
 
 addpath(spm_path);
 
@@ -12,3 +12,4 @@ megchans=D_data.indchantype('meg','good');
 
 sensor_data = D_data(megchans, :, :);
 ch_names = D_data.chanlabels(megchans);
+time = D_data.time;
