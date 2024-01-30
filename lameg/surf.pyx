@@ -15,6 +15,7 @@ from joblib import Parallel, delayed
 
 import nibabel as nib
 from scipy.spatial import KDTree
+from scipy.spatial import cKDTree
 
 from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkPolyData, vtkCellArray
@@ -637,7 +638,8 @@ def postprocess_freesurfer_surfaces(subj_id,
                                     ds_factor=0.1,
                                     orientation='link_vector',
                                     fix_orientation=True,
-                                    remove_deep=True):
+                                    remove_deep=True,
+                                    n_jobs=-1):
     """
     Process and combine FreeSurfer surface meshes for a subject.
 
@@ -657,6 +659,7 @@ def postprocess_freesurfer_surfaces(subj_id,
     fix_orientation (bool, optional): Flag to ensure that orientation of corresponding vertices across layers is the
                                       same (True by default)
     remove_deep (bool, optional): Flag to remove vertices located in deep regions (labeled as 'unknown').
+    n_jobs (int, optional): Number of parallel processes to run. -1 for all available cores (-1 by default)
 
     Notes:
     - This function assumes the FreeSurfer 'SUBJECTS_DIR' environment variable is set.
@@ -692,7 +695,7 @@ def postprocess_freesurfer_surfaces(subj_id,
         elif layer == 0:
             return 'white'
 
-    layer_names = Parallel(n_jobs=-1)(delayed(process_layer)(layer, hemispheres, fs_subject_dir) for layer in layers)
+    layer_names = Parallel(n_jobs=n_jobs)(delayed(process_layer)(layer, hemispheres, fs_subject_dir) for layer in layers)
 
     ## Compute RAS offset
     # Define the path to the MRI file
@@ -886,6 +889,7 @@ def smoothmesh_multilayer_mm(meshname, fwhm, n_layers, redo=False, n_jobs=-1):
     fwhm (float): Full width at half maximum for smoothing.
     n_layers (int): Number of layers in the mesh.
     redo (bool): Recompute matrices if already exist.
+    n_jobs (int): Number of parallel processes to run
 
     Returns:
     str: Filename of the saved matrix.
@@ -949,35 +953,38 @@ def smoothmesh_multilayer_mm(meshname, fwhm, n_layers, redo=False, n_jobs=-1):
     return smoothmeshname
 
 
-
-def interpolate_data(original_mesh, downsampled_mesh, downsampled_data, adjacency_matrix=None, max_iterations=100):
+def interpolate_data(original_mesh, downsampled_mesh, downsampled_data, adjacency_matrix=None, max_iterations=10):
     if adjacency_matrix is None:
         adjacency_matrix = compute_mesh_adjacency(original_mesh.darrays[1].data)
 
     original_vertices = original_mesh.darrays[0].data
     downsampled_vertices = downsampled_mesh.darrays[0].data
 
+    # Build a KD-tree for the downsampled vertices
+    tree = cKDTree(downsampled_vertices)
+
+    # Preallocate the vertex data array
     vertex_data = np.full(len(original_vertices), np.nan)
 
-    downsampled_dict = {tuple(vertex): i for i, vertex in enumerate(downsampled_vertices)}
+    # Find the nearest neighbor in the downsampled mesh for each vertex in the original mesh
+    distances, indices = tree.query(original_vertices, distance_upper_bound=1e-5)
 
-    for i, vertex in enumerate(original_vertices):
-        if tuple(vertex) in downsampled_dict:
-            vertex_data[i] = downsampled_data[downsampled_dict[tuple(vertex)]]
+    # Set the vertex data for vertices that match (distance is zero or very close)
+    for i, (distance, index) in enumerate(zip(distances, indices)):
+        if distance < 1e-6:  # Adjust this threshold as needed
+            vertex_data[i] = downsampled_data[index]
 
     iteration = 0
     while np.isnan(vertex_data).any() and iteration < max_iterations:
-        for i, vertex in enumerate(original_vertices):
-            if np.isnan(vertex_data[i]):
-                _, neighbors, _ = find(adjacency_matrix[i, :])
-                valid_neighbors = [n for n in neighbors if not np.isnan(vertex_data[n])]
+        for i in np.where(np.isnan(vertex_data))[0]:
+            row, neighbors, _ = find(adjacency_matrix[i, :])
+            valid_neighbors = neighbors[~np.isnan(vertex_data[neighbors])]
 
-                if valid_neighbors:
-                    distances = cdist([vertex], original_vertices[valid_neighbors])[0]
-                    weights = 1 / distances
-                    normalized_weights = weights / weights.sum()
-                    vertex_data[i] = np.dot(normalized_weights, vertex_data[valid_neighbors])
-
+            if valid_neighbors.size > 0:
+                distances = cdist([original_vertices[i]], original_vertices[valid_neighbors])[0]
+                weights = 1 / distances
+                normalized_weights = weights / weights.sum()
+                vertex_data[i] = np.dot(normalized_weights, vertex_data[valid_neighbors])
         iteration += 1
 
     return vertex_data
