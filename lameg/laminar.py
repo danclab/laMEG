@@ -4,8 +4,8 @@ import elephant
 import neo
 import quantities as pq
 
-from lameg.invert import invert_ebb, invert_msp, invert_sliding_window, coregister
-from lameg.util import matlab_context
+from lameg.invert import invert_ebb, invert_msp, invert_sliding_window, coregister, load_source_time_series
+from lameg.util import matlab_context, ttest_rel_corrected
 
 
 def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='EBB', gain_mat_fnames=None,
@@ -168,3 +168,74 @@ def compute_csd(signal, thickness, sfreq, smoothing=None):
         ret_vals.append(smoothed)
 
     return ret_vals
+
+
+def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thresh, mu_matrix=None):
+    """
+    Computes and compares power changes in pial and white matter layers to define
+    regions of interest (ROI) based on significant power shifts.
+
+    This function calculates power changes in the pial and white matter layers during a specified
+    window of interest (WOI) and a baseline window. It identifies ROIs by comparing these changes
+    against a percentile threshold and performs a relative comparison of power changes between
+    the layers to assess laminar differences.
+
+    Parameters:
+    data_fname (str): Filename of the data file containing source time series.
+    woi (tuple): Window of interest, specified as a start and end time (in milliseconds).
+    baseline_woi (tuple): Baseline window of interest for comparison, specified as start and end time (in milliseconds).
+    mesh (nibabel.gifti.GiftiImage): Gifti surface mesh.
+    n_layers (int): Number of layers in the cortical model.
+    perc_thresh (float): Percentile threshold for determining significant changes in power.
+    mu_matrix (ndarray, optional): Lead field matrix (source x sensor). Default is None.
+
+    Returns:
+    tuple: Contains laminar t-statistic, laminar p-value, and indices of vertices considered as ROIs.
+    """
+    verts_per_surf = int(mesh.darrays[0].data.shape[0] / n_layers)
+    pial_vertices = np.arange(verts_per_surf)
+    white_vertices = (n_layers - 1) * verts_per_surf + np.arange(verts_per_surf)
+
+    pial_layer_ts, time = load_source_time_series(
+        data_fname,
+        vertices=pial_vertices,
+        mu_matrix=mu_matrix
+    )
+    white_layer_ts, time = load_source_time_series(
+        data_fname,
+        vertices=white_vertices,
+        mu_matrix=mu_matrix
+    )
+
+    base_t_idx = np.where((time >= baseline_woi[0]) & (time < baseline_woi[1]))[0]
+    exp_t_idx = np.where((time >= woi[0]) & (time < woi[1]))[0]
+
+    # Pial power
+    pial_base_power = np.squeeze(np.var(pial_layer_ts[:, base_t_idx, :], axis=1))
+    pial_exp_power = np.squeeze(np.var(pial_layer_ts[:, exp_t_idx, :], axis=1))
+    pial_power_change = (pial_exp_power - pial_base_power) / pial_base_power
+
+    # White matter power
+    white_base_power = np.squeeze(np.var(white_layer_ts[:, base_t_idx, :], axis=1))
+    white_exp_power = np.squeeze(np.var(white_layer_ts[:, exp_t_idx, :], axis=1))
+    white_power_change = (white_exp_power - white_base_power) / white_base_power
+
+    # Define ROI
+    pial_t_statistic, pial_p_value = ttest_rel_corrected((pial_exp_power - pial_base_power), axis=-1)
+    white_t_statistic, white_p_value = ttest_rel_corrected((white_exp_power - white_base_power), axis=-1)
+
+    pial_thresh = np.percentile(pial_t_statistic, perc_thresh)
+    white_thresh = np.percentile(white_t_statistic, perc_thresh)
+    roi_idx = np.where((pial_t_statistic > pial_thresh) | (white_t_statistic > white_thresh))[0]
+
+    pial_roi_power_change = np.mean(pial_power_change[roi_idx, :], axis=0)
+    white_roi_power_change = np.mean(white_power_change[roi_idx, :], axis=0)
+
+    # Compare power t statistic should be positive (more power in pial layer)
+    laminar_t_statistic, laminar_p_value = ttest_rel_corrected(
+        np.abs(pial_roi_power_change) - np.abs(white_roi_power_change),
+        axis=-1
+    )
+    df = len(pial_roi_power_change)-1
+
+    return laminar_t_statistic, laminar_p_value, df, roi_idx
