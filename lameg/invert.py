@@ -217,7 +217,7 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
         if return_mu_matrix:
             free_energy, cv_err, mu_matrix = eng.invert_msp(
                 data_fname,
-                matlab.double(priors),
+                matlab.int32(priors),
                 float(patch_size),
                 float(n_temp_modes),
                 matlab.double(foi),
@@ -233,7 +233,7 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
         else:
             free_energy, cv_err = eng.invert_msp(
                 data_fname,
-                matlab.double(priors),
+                matlab.int32(priors),
                 float(patch_size),
                 float(n_temp_modes),
                 matlab.double(foi),
@@ -352,19 +352,40 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
     spm_path = get_spm_path()
 
     if mu_matrix is None:
+        # Incrementing vertices by 1 (assuming zero-indexed to one-indexed conversion for MATLAB)
         vertices = [x + 1 for x in vertices]
         if inv_fname is None:
             inv_fname = data_fname
 
+        # Maximum number of vertices to process in one batch
+        batch_size = 20000
+
+        # Initialize an empty list to store source_ts batches
+        source_ts_batches = []
+
         with matlab_context(mat_eng) as eng:
-            source_ts, time = eng.load_source_time_series(
-                data_fname,
-                inv_fname,
-                matlab.double(vertices),
-                spm_path,
-                nargout=2
-            )
-            source_ts = np.array(source_ts)
+            # Process in batches
+            for i in range(0, len(vertices), batch_size):
+                # Extract the current batch of vertices
+                batch_vertices = vertices[i:i + batch_size]
+
+                # Load source time series for the current batch
+                current_source_ts, time = eng.load_source_time_series(
+                    data_fname,
+                    inv_fname,
+                    matlab.int32(batch_vertices),
+                    spm_path,
+                    nargout=2
+                )
+
+                # Convert to numpy array and add to the batches list
+                current_source_ts = np.array(current_source_ts)
+                source_ts_batches.append(current_source_ts)
+
+            # Concatenate along the first dimension (vertices)
+            source_ts = np.concatenate(source_ts_batches, axis=0)
+            # Squeeze time array to remove singleton dimensions
+            time = np.squeeze(np.array(time))
     else:
         sensor_data, time, _ = load_meg_sensor_data(data_fname, mat_eng=mat_eng)
         v_idx = np.arange(mu_matrix.shape[0])
