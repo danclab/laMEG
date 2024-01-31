@@ -52,7 +52,7 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
         sim_fname = eng.simulate(
             data_file,
             prefix,
-            matlab.double(sim_vertices),
+            matlab.int32(sim_vertices),
             matlab.double(sim_woi),
             matlab.double(sim_signals.tolist()),
             matlab.double([]),
@@ -122,7 +122,7 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
         sim_fname=eng.simulate(
             data_file,
             prefix,
-            matlab.double(sim_vertices),
+            matlab.int32(sim_vertices),
             matlab.double(sim_woi),
             matlab.double(sim_signals.tolist()),
             matlab.double(dipole_orientations.tolist()),
