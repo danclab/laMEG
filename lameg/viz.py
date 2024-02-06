@@ -132,6 +132,7 @@ def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=
         coord_color = [255, 0, 0]
 
     color = rgbtoint(color)
+    coord_color = np.array(coord_color).reshape(-1, 3)
     
     try:
         vertices, faces, _ = surface.agg_data()
@@ -156,7 +157,10 @@ def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=
             size = coord_size
             if isinstance(coord_size, collections.abc.Sequence):
                 size = coord_size[c_idx]
-            color = np.array(coord_color).reshape(-1,3)[c_idx,:]
+            if coord_color.shape[0]>1:
+                color = coord_color[c_idx,:]
+            else:
+                color = coord_color[0,:]
             color = list(map(int, color))
             pt = k3d.points(
                 coord,
