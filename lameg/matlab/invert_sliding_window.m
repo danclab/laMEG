@@ -49,33 +49,34 @@ matlabbatch={};
 batch_idx=1;
 
 % Source reconstruction
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.D = {data_file};
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.val = 1;
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.whatconditions.all = 1;
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.invfunc = 'Classic';
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.invtype = 'MSP'; %;
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.wois = wois;
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.foi = foi;
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.hanning = hann;
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.isfixedpatch.fixedpatch.fixedfile = {patchfilename}; % '<UNDEFINED>';
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.isfixedpatch.fixedpatch.fixedrows = [1 Inf]; %'<UNDEFINED>';
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.patchfwhm = -patch_size; %% NB A fiddle here- need to properly quantify
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.mselect = 0;
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.nsmodes = Nmodes;
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.umodes = {spatialmodesname};
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.ntmodes = n_temp_modes;
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.priors.priorsmask = {''};
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.priors.space = 0;
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.restrict.locs = zeros(0, 3);
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.restrict.radius = 32;
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.D = {data_file};
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.val = 1;
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.whatconditions.all = 1;
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.invfunc = 'Classic';
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.invtype = 'MSP'; %;
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.woi = wois;
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.foi = foi;
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.hanning = hann;
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.isfixedpatch.fixedpatch.fixedfile = {patchfilename}; % '<UNDEFINED>';
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.isfixedpatch.fixedpatch.fixedrows = [1 Inf]; %'<UNDEFINED>';
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.patchfwhm = -patch_size; %% NB A fiddle here- need to properly quantify
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.mselect = 0;
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.nsmodes = Nmodes;
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.umodes = {spatialmodesname};
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.ntmodes = n_temp_modes;
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.priors.priorsmask = {''};
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.priors.space = 0;
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.restrict.locs = zeros(0, 3);
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.restrict.radius = 32;
 if length(gain_mat_fname)
-    matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.gain_mat = {gain_mat_fname};
+    matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.gain_mat = {gain_mat_fname};
 end
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.isstandard.custom.outinv = '';
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.modality = {'All'};
-matlabbatch{batch_idx}.spm.meeg.source.invertiter_slidingwindow.crossval = [pctest 1];
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.outinv = '';
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.modality = {'All'};
+matlabbatch{batch_idx}.spm.meeg.source.invertiter.crossval = [pctest 1];
+
 
 [a,~]=spm_jobman('run', matlabbatch);
 % Get F-values for inversion
 Drecon=spm_eeg_load(a{1}.D{1});                
-f_vals=Drecon.inv{1}.inverse.crossF;                  
+f_vals=Drecon.inv{1}.inverse.crossF;

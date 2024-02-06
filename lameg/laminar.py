@@ -110,7 +110,7 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
                                                             mat_eng=eng, **kwargs)
             f_vals.append(mesh_fvals)
 
-    f_vals = np.array(f_vals)
+    f_vals = np.vstack(f_vals)
 
     return f_vals, wois
 
