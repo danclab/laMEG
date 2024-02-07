@@ -8,6 +8,8 @@ function convert_mne_to_spm(orig_res4_file, mne_file, output_path, output_name, 
 
 addpath(spm_path)
 spm('defaults','eeg');
+spm_get_defaults('use_parfor',1);
+spm_get_defaults('mat.format','-v7.3');
 
 % Create file path for result
 [filepath,name,ext] = fileparts(mne_file);

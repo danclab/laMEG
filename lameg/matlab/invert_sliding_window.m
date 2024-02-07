@@ -9,6 +9,8 @@ spm('defaults','eeg');
 spm_jobman('initcfg');
 
 spm_get_defaults('cmdline',~viz);
+spm_get_defaults('use_parfor',1);
+spm_get_defaults('mat.format','-v7.3');
 
 % Data file to load
 D=spm_eeg_load(data_file);
