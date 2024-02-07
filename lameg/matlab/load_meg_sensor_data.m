@@ -6,6 +6,9 @@ addpath(spm_path);
 spm('defaults','eeg');
 spm_jobman('initcfg');
 
+spm_get_defaults('use_parfor',1);
+spm_get_defaults('mat.format','-v7.3');
+
 D_data=spm_eeg_load(data_D);
 
 megchans=D_data.indchantype('meg','good');
