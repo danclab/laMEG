@@ -7,6 +7,8 @@ spm('defaults','eeg');
 spm_jobman('initcfg');
 
 spm_get_defaults('cmdline',~viz);
+spm_get_defaults('use_parfor',1);
+spm_get_defaults('mat.format','-v7.3');
 
 % Coregister to mesh
 clear jobs
