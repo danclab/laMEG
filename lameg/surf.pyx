@@ -631,6 +631,22 @@ def compute_dipole_orientations(method, layer_names, subject_out_dir, fixed=True
     return orientations
 
 
+def create_layer_mesh(layer, hemispheres, fs_subject_dir):
+    if layer == 1:
+        return 'pial'
+    elif layer > 0 and layer < 1:
+        layer_name = '{:.3f}'.format(layer)
+        for hemi in hemispheres:
+            wm_file = os.path.join(fs_subject_dir, 'surf', '{}.white'.format(hemi))
+            out_file = os.path.join(fs_subject_dir, 'surf', '{}.{}'.format(hemi, layer_name))
+            if not os.path.exists(out_file):
+                cmd = ['mris_expand', '-thickness', wm_file, '{}'.format(layer), out_file]
+                print(' '.join(cmd))
+                subprocess.run(cmd)
+        return layer_name
+    elif layer == 0:
+        return 'white'
+
 def postprocess_freesurfer_surfaces(subj_id,
                                     out_dir,
                                     out_fname,
@@ -674,28 +690,10 @@ def postprocess_freesurfer_surfaces(subj_id,
 
     fs_subject_dir = os.path.join(fs_subjects_dir, subj_id)
 
-    subject_out_dir = os.path.join(out_dir, subj_id)
     layers = np.linspace(1, 0, n_surfaces)
 
     ## Create intermediate surfaces if needed
-
-    def process_layer(layer, hemispheres, fs_subject_dir):
-        if layer == 1:
-            return 'pial'
-        elif layer > 0 and layer < 1:
-            layer_name = '{:.3f}'.format(layer)
-            for hemi in hemispheres:
-                wm_file = os.path.join(fs_subject_dir, 'surf', '{}.white'.format(hemi))
-                out_file = os.path.join(fs_subject_dir, 'surf', '{}.{}'.format(hemi, layer_name))
-                if not os.path.exists(out_file):
-                    cmd = ['mris_expand', '-thickness', wm_file, '{}'.format(layer), out_file]
-                    print(' '.join(cmd))
-                    subprocess.run(cmd)
-            return layer_name
-        elif layer == 0:
-            return 'white'
-
-    layer_names = Parallel(n_jobs=n_jobs)(delayed(process_layer)(layer, hemispheres, fs_subject_dir) for layer in layers)
+    layer_names = Parallel(n_jobs=n_jobs)(delayed(create_layer_mesh)(layer, hemispheres, fs_subject_dir) for layer in layers)
 
     ## Compute RAS offset
     # Define the path to the MRI file
@@ -720,7 +718,8 @@ def postprocess_freesurfer_surfaces(subj_id,
         for hemi in hemispheres:
             # Construct the original and new file names
             orig_name = os.path.join(fs_subject_dir, 'surf', f'{hemi}.{surface_name}')
-            new_name = os.path.join(subject_out_dir, f'{hemi}.{surface_name}.gii')
+            new_name = os.path.join(out_dir, f'{hemi}.{surface_name}.gii')
+            rm_deep_name = os.path.join(out_dir, f'{hemi}.{surface_name}.nodeep.gii')
 
             # Convert the surface file to Gifti format
             subprocess.run(['mris_convert', orig_name, new_name])
@@ -737,6 +736,7 @@ def postprocess_freesurfer_surfaces(subj_id,
                 if da.intent == nib.nifti1.intent_codes['NIFTI_INTENT_POINTSET']:
                     da.data += ras_offset
                     n_vertices = da.data.shape[0]
+            nib.save(g, new_name)
 
             annotation = os.path.join(fs_subject_dir, 'label', f'{hemi}.aparc.annot')
             label, ctab, names = nib.freesurfer.read_annot(annotation)
@@ -754,14 +754,14 @@ def postprocess_freesurfer_surfaces(subj_id,
                 g = remove_vertices(g, np.array(vertices_to_remove))
 
             # Save the modified Gifti file
-            nib.save(g, new_name)
+            nib.save(g, rm_deep_name)
 
     ## Combine hemispheres
     for surface_name in surfaces_to_process:
         # Load left and right hemisphere surfaces
-        lh_fname = os.path.join(subject_out_dir, f'lh.{surface_name}.gii')
+        lh_fname = os.path.join(out_dir, f'lh.{surface_name}.nodeep.gii')
         lh = nib.load(lh_fname)
-        rh_fname = os.path.join(subject_out_dir, f'rh.{surface_name}.gii')
+        rh_fname = os.path.join(out_dir, f'rh.{surface_name}.nodeep.gii')
         rh = nib.load(rh_fname)
         if surface_name == 'inflated':
             lh_width = np.max(lh.darrays[0].data[:, 0])-np.min(lh.darrays[0].data[:, 0])
@@ -769,31 +769,31 @@ def postprocess_freesurfer_surfaces(subj_id,
 
         # Combine the surfaces
         combined = combine_surfaces([lh, rh])
-        combined_fname = os.path.join(subject_out_dir, f'{surface_name}.gii')
+        combined_fname = os.path.join(out_dir, f'{surface_name}.gii')
         nib.save(combined, combined_fname)
 
     ## Downsample surfaces at the same time
     # Get list of surfaces
     in_surfs = []
     for surface_name in surfaces_to_process:
-        in_surf_fname = os.path.join(subject_out_dir, f'{surface_name}.gii')
+        in_surf_fname = os.path.join(out_dir, f'{surface_name}.gii')
         in_surf = nib.load(in_surf_fname)
         in_surfs.append(in_surf)
 
     # Downsample multiple surfaces
     out_surfs = downsample_multiple_surfaces(in_surfs, ds_factor)
     for surface_name, out_surf in zip(surfaces_to_process, out_surfs):
-        out_surf_path = os.path.join(subject_out_dir, f'{surface_name}.ds.gii')
+        out_surf_path = os.path.join(out_dir, f'{surface_name}.ds.gii')
         nib.save(out_surf, out_surf_path)
 
     ## Compute dipole orientations
-    orientations = compute_dipole_orientations(orientation, layer_names, subject_out_dir, fixed=fix_orientation)
+    orientations = compute_dipole_orientations(orientation, layer_names, out_dir, fixed=fix_orientation)
 
     base_fname = f'ds.{orientation}'
     if fix_orientation:
         base_fname = f'{base_fname}.fixed'
     for l_idx, layer_name in enumerate(layer_names):
-        in_surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.gii')
+        in_surf_path = os.path.join(out_dir, f'{layer_name}.ds.gii')
         surf = nib.load(in_surf_path)
 
         # Set these link vectors as the normals for the downsampled surface
@@ -801,18 +801,18 @@ def postprocess_freesurfer_surfaces(subj_id,
                                                            intent=nib.nifti1.intent_codes['NIFTI_INTENT_VECTOR']))
 
         # Save the modified downsampled surface with link vectors as normals
-        out_surf_path = os.path.join(subject_out_dir, f'{layer_name}.{base_fname}.gii')
+        out_surf_path = os.path.join(out_dir, f'{layer_name}.{base_fname}.gii')
         nib.save(surf, out_surf_path)
 
     ## Combine layers
     all_surfs = []
     for layer_name in layer_names:
-        surf_path = os.path.join(subject_out_dir, f'{layer_name}.{base_fname}.gii')
+        surf_path = os.path.join(out_dir, f'{layer_name}.{base_fname}.gii')
         surf = nib.load(surf_path)
         all_surfs.append(surf)
 
     combined = combine_surfaces(all_surfs)
-    nib.save(combined, os.path.join(subject_out_dir, out_fname))
+    nib.save(combined, os.path.join(out_dir, out_fname))
 
 
 def compute_mesh_area(gifti_surf, PF=False):
@@ -880,6 +880,26 @@ def compute_mesh_distances(vertices, faces):
     return D_csr
 
 
+def smoothmesh_multilayer_mm_process_vertex(j, fwhm, n_layers, distance_matrix, Ns_per_layer):
+    sigma2 = (fwhm / 2.355) ** 2
+
+    rows_vertex, cols_vertex, data_vertex = [], [], []
+    for l in range(n_layers):
+        D_layer = distance_matrix[l * Ns_per_layer:(l + 1) * Ns_per_layer, l * Ns_per_layer:(l + 1) * Ns_per_layer]
+        source_indices = [j % Ns_per_layer]
+        dist = compute_geodesic_distances(D_layer, source_indices, max_dist=fwhm)
+
+        mask = dist <= fwhm
+        q = np.exp(-(dist[mask] ** 2) / (2 * sigma2))
+        q = q * (q > np.exp(-8))
+        q /= np.sum(q)
+
+        rows_vertex.extend(np.full(sum(mask), l * Ns_per_layer + j % Ns_per_layer))
+        cols_vertex.extend(np.where(mask)[0] + l * Ns_per_layer)
+        data_vertex.extend(q)
+    return rows_vertex, cols_vertex, data_vertex
+
+
 def smoothmesh_multilayer_mm(meshname, fwhm, n_layers, redo=False, n_jobs=-1):
     """
     Compute smoothed matrices for a multilayer mesh.
@@ -912,30 +932,11 @@ def smoothmesh_multilayer_mm(meshname, fwhm, n_layers, redo=False, n_jobs=-1):
     if os.path.exists(smoothmeshname) and not redo:
         return smoothmeshname
 
-    sigma2 = (fwhm / 2.355) ** 2
-
     distance_matrix = compute_mesh_distances(vertices.astype(np.float64), faces)
-
-    def process_vertex(j):
-        rows_vertex, cols_vertex, data_vertex = [], [], []
-        for l in range(n_layers):
-            D_layer = distance_matrix[l * Ns_per_layer:(l + 1) * Ns_per_layer, l * Ns_per_layer:(l + 1) * Ns_per_layer]
-            source_indices = [j % Ns_per_layer]
-            dist = compute_geodesic_distances(D_layer, source_indices, max_dist=fwhm)
-
-            mask = dist <= fwhm
-            q = np.exp(-(dist[mask] ** 2) / (2 * sigma2))
-            q = q * (q > np.exp(-8))
-            q /= np.sum(q)
-
-            rows_vertex.extend(np.full(sum(mask), l * Ns_per_layer + j % Ns_per_layer))
-            cols_vertex.extend(np.where(mask)[0] + l * Ns_per_layer)
-            data_vertex.extend(q)
-        return rows_vertex, cols_vertex, data_vertex
 
     # Parallel computation for each vertex using joblib
     results = Parallel(n_jobs=n_jobs)(
-        delayed(process_vertex)(j) for j in range(Ns_per_layer)
+        delayed(smoothmesh_multilayer_mm_process_vertex)(j, fwhm, n_layers, distance_matrix, Ns_per_layer) for j in range(Ns_per_layer)
     )
 
     # Aggregate results from all vertices
@@ -988,3 +989,51 @@ def interpolate_data(original_mesh, downsampled_mesh, downsampled_data, adjacenc
         iteration += 1
 
     return vertex_data
+
+
+def split_fv(f, v):
+    """
+    Splits faces and vertices into connected pieces based on the connectivity of the faces.
+
+    Parameters:
+    f (np.array): A 2D numpy array of faces, where each row represents a face and each element is an index to a vertex in v.
+    v (np.array): A 2D numpy array of vertices, where each row represents a vertex.
+
+    Returns:
+    list of dicts: A list where each element is a dictionary with keys 'faces' and 'vertices'. Each dictionary represents
+                   a separately connected patch of the mesh.
+
+    Examples:
+    >>> f = np.array([[1, 2, 3], [1, 3, 4], [5, 6, 1], [7, 8, 9], [11, 10, 4]])
+    >>> v = np.array([[2, 4], [2, 8], [8, 4], [8, 0], [0, 4], [2, 6], [2, 2], [4, 2], [4, 0], [5, 2], [5, 0]])
+    >>> split_patches = split_fv(f, v)
+
+    Note: Faces and vertices should be defined such that faces sharing a vertex reference the same vertex number.
+          This function does not explicitly test for duplicate vertices at the same location.
+    """
+    num_faces = f.shape[0]
+    f_sets = np.zeros(num_faces, dtype=np.uint32)
+    current_set = 0
+
+    while np.any(f_sets == 0):
+        current_set += 1
+        next_avail_face = np.where(f_sets == 0)[0][0]
+        open_vertices = f[next_avail_face]
+
+        while open_vertices.size:
+            avail_face_inds = np.where(f_sets == 0)[0]
+            is_member = np.isin(f[avail_face_inds], open_vertices)
+            avail_face_sub = np.where(np.any(is_member, axis=1))[0]
+            f_sets[avail_face_inds[avail_face_sub]] = current_set
+            open_vertices = np.unique(f[avail_face_inds[avail_face_sub]])
+
+    fv_out = []
+    for set_num in range(1, current_set + 1):
+        set_f = f[f_sets == set_num]
+        unique_vertices, new_vertex_indices = np.unique(set_f, return_inverse=True)
+        fv_out.append({
+            'faces': new_vertex_indices.reshape(set_f.shape),
+            'vertices': v[unique_vertices - 1]  # Adjusting indices to zero-based
+        })
+
+    return fv_out

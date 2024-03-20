@@ -106,8 +106,8 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
             coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=viz, mat_eng=eng)
 
             [mesh_fvals, wois] = invert_sliding_window(prior, mesh_fname, data_fname, 1,
-                                                            gain_mat_fname=gain_mat_fnames[l_idx], viz=viz,
-                                                            mat_eng=eng, **kwargs)
+                                                       gain_mat_fname=gain_mat_fnames[l_idx], viz=viz,
+                                                       mat_eng=eng, **kwargs)
             f_vals.append(mesh_fvals)
 
     f_vals = np.vstack(f_vals)
