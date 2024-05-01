@@ -277,141 +277,107 @@ def check_maj(list_to_check):
         return item[np.argmax(count)]
 
 
-def transform_atlas(paths_annot, paths_fsavg_sphere, paths_fsnat_sphere, surface_path, surface_ds_path,
-                    surface_nodeep_path, return_dict=False):
-    '''
-    Transform fsaverage *.annot file atlas to vertex labels in the native space downsampled layer.
-    
+def convert_fsaverage_to_native(subj_id, hemi, vert_idx):
+    """
+    Convert a vertex index from fsaverage to a subject's native surface space.
+
+    This function takes a vertex index from the fsaverage template surface and finds the corresponding
+    vertex index in a subject's native surface space. It loads the fsaverage spherical surface, identifies the
+    coordinates of the given vertex index, and then finds the nearest corresponding vertex on the subject's
+    registered spherical surface. If the hemisphere is right, it adjusts the index by adding the number of vertices
+    in the left hemisphere pial surface so that it matches the combined hemishere mesh. It returns the adjusted vertex
+    index in the subject's native space.
+
     Parameters:
-    paths_annot [list of directories]: list of paths to Freesurfer atlas annotation files for left and right hemispheres
-    paths_fsavg_sphere [list of directories]: list of paths to left and right FSAVERAGE registration spheres (in the asset folder)
-    paths_fsnat_sphere [list of directories]: list of paths to left and right FSNATIVE registration spheres (individual for the subject)
-    surface_path [directory]: path to a high resolution subject surface containing both hemispheres
-    surface_ds_path [directory]: path to a downsampled subject surface containing both hemispheres
-    surface_nodeep_path [directory]: path to a downsampled subject surface containing both hemispheres with corpus callosum removed
-    
-    Notes:
-        - original atlas colours per vertex in format ready for trimesh,
-        - labels per vertex
-        - (optional) label to colour dictionary
-    '''
-    # combining annotation files
-    annot_data_lr = [nib.freesurfer.io.read_annot(i) for i in paths_annot]
-    annots_lr = {i: [] for i in ["label_ix", "color", "label", ]}
-    for ix in range(len(annot_data_lr)):
-        annots_lr["label_ix"].append(annot_data_lr[ix][0])
-        annots_lr["color"].append(annot_data_lr[ix][1])
-        annots_lr["label"].append(np.array(annot_data_lr[ix][2]))
+    subj_id (str): The subject identifier for which the conversion is being performed.
+    hemi (str): Hemisphere specifier ('lh' for left hemisphere, 'rh' for right hemisphere).
+    vert_idx (int): Index of the vertex in the fsaverage surface to be converted.
 
-    fsavg_spheres = [nib.load(i).agg_data()[0] for i in paths_fsavg_sphere]
-    fsnat_spheres = [nib.load(i).agg_data()[0] for i in paths_fsnat_sphere]
+    Returns:
+    int: Index of the vertex on the subject's native surface that corresponds to the input vertex index.
+    """
 
-    # mapping atlas labels between fsavereage and fsnative spheres
-    nat_annots = []
-    for lr in range(len(fsavg_spheres)):
-        tree = KDTree(fsavg_spheres[lr], leaf_size=20)
-        nat_dict_sub = {}
-        for i in range(fsnat_spheres[lr].shape[0]):
-            distance, index = tree.query([fsnat_spheres[lr][i]], k=5)
-            distance = distance.flatten()
-            index = index.flatten()
-            label_indexes = annots_lr["label_ix"][lr][index].flatten()
-            label_index = check_maj(label_indexes)
-            label = annots_lr["label"][lr][label_index]
-            nat_dict_sub[i] = [distance, index, label_indexes, label]
-        nat_annots.append(nat_dict_sub)
+    fs_subjects_dir = os.getenv('SUBJECTS_DIR')
+    fs_subject_dir = os.path.join(fs_subjects_dir, subj_id)
 
-    pial = nib.load(surface_path).agg_data()[0]
-    pial_ds = nib.load(surface_ds_path).agg_data()[0]
-
-    # mapping fsnative brain to downsampled brain
-    pial_tree = KDTree(pial, leaf_size=10)
-    pial_2_ds_map = []
-    for i in range(pial_ds.shape[0]):
-        dist, pial_index = pial_tree.query([pial_ds[i]], k=1)
-        pial_2_ds_map.append(pial_index)
-    pial_2_ds_map = np.array(pial_2_ds_map).flatten()
-
-    # concatenating the annotations
-    annots_order = np.array(
-        [nat_annots[0][i][3] for i in nat_annots[0].keys()] +
-        [nat_annots[1][i][3] for i in nat_annots[1].keys()]
+    # Load fsaverage sphere
+    fsaverage_sphere_vertices, fsaverage_sphere_faces = nib.freesurfer.read_geometry(
+        os.path.join(fs_subjects_dir, 'fsaverage', 'surf', f'{hemi}.sphere.reg')
     )
 
-    # selecting the annotation for the downsampled pial
-    nat_pial_annot = annots_order[pial_2_ds_map]
+    # Get the coordinate of the corresponding vertex on the fsaverage sphere
+    fsave_sphere_coord = fsaverage_sphere_vertices[vert_idx, :]
 
-    # removing the DEEP structures
-    nodeep = nib.load(surface_nodeep_path).agg_data()[0]
-    tree = KDTree(pial_ds, leaf_size=10)
-    indices = [tree.query([nodeep[i]], k=1)[1].flatten()[0] for i in range(nodeep.shape[0])]
-    nat_pial_annot = nat_pial_annot[indices]
+    # Load subject registered sphere
+    subj_sphere = nib.load(os.path.join(fs_subject_dir, 'surf', f'{hemi}.sphere.reg.gii'))
 
-    color = np.concatenate(annots_lr["color"])
-    labels = np.concatenate(annots_lr["label"])
+    # Get the index of the nearest vertex on the subject sphere
+    kdtree = KDTree(subj_sphere.darrays[0].data)
+    dist, subj_v_idx = kdtree.query(fsave_sphere_coord, k=1)
 
-    lab_col_map = {lab: color[ix] for ix, lab in enumerate(labels)}
-    mesh_colors = [lab_col_map[lab][:3].flatten() for lab in nat_pial_annot]
-    if return_dict:
-        return mesh_colors, nat_pial_annot, lab_col_map
-    else:
-        return mesh_colors, nat_pial_annot
+    # Adjust vertex index for right hemishphere
+    if hemi=='rh':
+        lh_vertices, lh_faces = nib.freesurfer.read_geometry(os.path.join(fs_subject_dir, 'surf', 'lh.pial'))
+        subj_v_idx += lh_vertices.shape[0]
+
+    return subj_v_idx
 
 
-def fsavg_vals_to_native(values, fsavg_sphere_paths, fsnat_sphere_paths, surface_path, surface_ds_path,
-                         surface_nodeep_path):
+def convert_native_to_fsaverage(subj_id, subj_coord):
     """
-    Transform values in fsaverage vertex order that contains values to vertex values in the native space downsampled.
-    
+    Convert coordinates from a subject's native surface space to the fsaverage surface space.
+
+    This function maps a vertex coordinate from a subject's native combined pial surface to the corresponding
+    vertex index in the fsaverage template space. It does this by determining which hemisphere the
+    vertex belongs to based on the closest match in the left and right hemispheres' pial surfaces.
+    It then finds the nearest vertex in the subject's registered spherical surface, maps this to the
+    nearest vertex in the fsaverage spherical surface, and returns the index of this fsaverage vertex.
+
     Parameters:
-    paths_annot [list of directories]: list of paths to Freesurfer atlas annotation files for left and right hemispheres
-    paths_fsavg_sphere [list of directories]: list of paths to left and right FSAVERAGE registration spheres (in the asset folder)
-    paths_fsnat_sphere [list of directories]: list of paths to left and right FSNATIVE registration spheres (individual for the subject)
-    surface_path [directory]: path to a high resolution subject surface containing both hemispheres
-    surface_ds_path [directory]: path to a downsampled subject surface containing both hemispheres
-    surface_nodeep_path [directory]: path to a downsampled subject surface containing both hemispheres with corpus callosum removed
-    
-    Notes:
-        - values 
+    subj_id (str): The subject identifier for which the conversion is being performed.
+    subj_coord (array-like): The x, y, z coordinates on the subject's combined hemisphere pial surface to be converted.
+
+    Returns:
+    str: The hemisphere the vertex is found in ('lh' for left hemisphere, 'rh' for right hemisphere).
+    int: Index of the vertex on the fsaverage spherical surface that corresponds to the input coordinates.
     """
+    fs_subjects_dir = os.getenv('SUBJECTS_DIR')
+    fs_subject_dir = os.path.join(fs_subjects_dir, subj_id)
 
-    fsavg_spheres = [nib.load(i).agg_data()[0] for i in fsavg_sphere_paths]
-    fsnat_spheres = [nib.load(i).agg_data()[0] for i in fsnat_sphere_paths]
-    pial = nib.load(surface_path).agg_data()[0]
-    pial_ds = nib.load(surface_ds_path).agg_data()[0]
+    # Figure out hemisphere
+    subj_lh = nib.load(os.path.join(fs_subject_dir, 'surf', 'lh.pial.gii'))
+    lh_vertices = subj_lh.darrays[0].data
+    subj_rh = nib.load(os.path.join(fs_subject_dir, 'surf', 'rh.pial.gii'))
+    rh_vertices = subj_rh.darrays[0].data
 
-    # values from fsaverage to fsnative
-    fsnat_vx_values = []
-    for lr in range(len(fsavg_spheres)):
-        tree = KDTree(fsavg_spheres[lr], leaf_size=20)
-        vx_value = []
-        for xyz_ix in range(fsnat_spheres[lr].shape[0]):
-            dist, vx_index = tree.query([fsnat_spheres[lr][xyz_ix]], k=1)
-            vx_value.append(values[lr][vx_index].flatten())
-        fsnat_vx_values.append(np.array(vx_value))
+    kdtree = KDTree(lh_vertices)
+    lh_dist, lh_vert_idx = kdtree.query(subj_coord, k=1)
 
-    fsnat_vx_values = np.concatenate(fsnat_vx_values)
+    kdtree = KDTree(rh_vertices)
+    rh_dist, rh_vert_idx = kdtree.query(subj_coord, k=1)
 
-    # mapping fsnative brain to downsampled brain
-    pial_tree = KDTree(pial, leaf_size=10)
-    pial_2_ds_map = []
-    for i in range(pial_ds.shape[0]):
-        dist, pial_index = pial_tree.query([pial_ds[i]], k=1)
-        pial_2_ds_map.append(pial_index)
-    pial_2_ds_map = np.array(pial_2_ds_map).flatten()
+    if lh_dist < rh_dist:
+        hemi = 'lh'
+        vert_idx = lh_vert_idx
+    else:
+        hemi = 'rh'
+        vert_idx = rh_vert_idx
 
-    # downsampled
-    # but maybe mean of neighbouring vertices 
-    fsnat_ds_vx_values = fsnat_vx_values[pial_2_ds_map]
+    subj_sphere_vertices, subj_faces = nib.freesurfer.read_geometry(os.path.join(fs_subject_dir, 'surf', f'{hemi}.sphere.reg'))
 
-    # removing deep structures
-    nodeep = nib.load(surface_nodeep_path).agg_data()[0]
-    tree = KDTree(pial_ds, leaf_size=10)
-    indices = [tree.query([nodeep[i]], k=1)[1].flatten()[0] for i in range(nodeep.shape[0])]
+    # Get the coordinate of the corresponding vertex on the registered subject sphere
+    subj_sphere_coord = subj_sphere_vertices[vert_idx, :]
 
-    fsnat_ds_vx_values = fsnat_ds_vx_values[indices]
+    # Load FS-average sphere
+    fsaverage_sphere_vertices, fsaverage_sphere_faces = nib.freesurfer.read_geometry(
+        os.path.join(fs_subjects_dir, 'fsaverage', 'surf', f'{hemi}.sphere.reg')
+    )
 
-    return fsnat_ds_vx_values.flatten()
+    # Get the index of the nearest vertex on the fsaverage sphere
+    kdtree = KDTree(fsaverage_sphere_vertices)
+    dist, fsave_v_idx = kdtree.query(subj_sphere_coord, k=1)
+
+    return hemi, fsave_v_idx
 
 
 def ttest_rel_corrected(x, correction=0, tail=0, axis=0):
