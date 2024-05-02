@@ -1,6 +1,6 @@
 import os
 import json
-import matlab.engine
+# import matlab.engine
 import numpy as np
 from pathlib import Path
 from contextlib import contextmanager
@@ -58,6 +58,13 @@ def get_spm_path():
         parameters = json.load(settings_file)
     spm_path = parameters["spm_path"]
     return spm_path
+
+
+def get_assets():
+    current_path = Path(os.getcwd())
+    asset_path = current_path.joinpath("assets", "big_brain_layer_thickness")
+    get_files(asset_path, "*.gii", strings=["tpl-fsaverage"])
+       
 
 
 def load_meg_sensor_data(data_fname, mat_eng=None):
@@ -434,3 +441,93 @@ def ttest_rel_corrected(x, correction=0, tail=0, axis=0):
         p = t.cdf(tval, df)
 
     return tval, p
+
+
+def calc_prop(x):
+    """
+    from independent thickness to overall proportion, while respecting the zeros
+    """
+    sum_ = np.sum(x)
+    if sum_ == 0.0:
+        return x
+    else:
+        x = np.cumsum(x) / sum_
+        return x
+    
+
+def big_brain_proportional_layer_boundaries(overwrite=False):
+    """
+    Get the proportional layer boundaries (6 values between 0 and 1) from 
+    fsaverage converted Big Brain atlas, included in the laMEG.
+    
+    Function uses the included fsaverage converted Big Brain cortical thickness atlas to calculate
+    normalised distances between cortical layer (from layer 1 to layer 6) boundaries (values between 0 and 1).
+    To speed up the computation, the results are stored in the numpy dictionary.
+    
+    Parameters:
+    overwrite (bool): overwrite the existing file
+    
+    Returns:
+    bb_data (dict): dictionary (keys: "lh", "rh") with arrays containing layer boundaries for each vertex in the hemisphere
+    
+    """
+    
+    current_path = Path(os.getcwd())
+    asset_path = current_path.joinpath("assets", "big_brain_layer_thickness")
+    BBL_file = asset_path.joinpath("proportional_layer_boundaries.npy")
+    if any([not BBL_file.exists(), overwrite]):
+        bb_l_paths = get_files(asset_path, "*.gii", strings=["tpl-fsaverage", "hemi-L"])
+        bb_l_paths.sort()
+        bb_r_paths = get_files(asset_path, "*.gii", strings=["tpl-fsaverage", "hemi-R"])
+        bb_r_paths.sort()
+        bb_data = {
+            "lh": np.array([nib.load(p).agg_data() for p in bb_l_paths]),
+            "rh": np.array([nib.load(p).agg_data() for p in bb_r_paths])
+        }
+        
+        bb_data = {
+           k: np.apply_along_axis(calc_prop, 0, bb_data[k]) for k in bb_data.keys()
+        }
+        np.save(BBL_file, bb_data)
+        return bb_data
+    
+    else:
+        bb_data = np.load(BBL_file, allow_pickle=True).item()
+        return bb_data
+
+
+def get_BB_layer_boundaries(subj_id, subj_coord, ret_annot_loc=False):
+    """
+    Get the cortical layer boundaries based on Big Brain atlas for a specified coordinate
+    in the subject's downsampled combined space.
+    
+    Function maps a vertex coordinate from a subject's native combined pial surface to the corresponding
+    vertex index in the fsaverage template space, in a specific hemisphere. Then, the proportional layer
+    boundaries (6 values between 0 and 1) from fsaverage converted Big Brain atlas are returned (from layer 1 to layer 6).
+    To get the subjects prpportional values, those values have to be multiplied by the observed cortical thickness.
+    
+    Parameters:
+    subj_id (str): The subject identifier for which the conversion is being performed.
+    subj_coord (array-like): The x, y, z coordinates on the subject's combined hemisphere pial surface to be converted.
+    
+    Returns:
+    vert_bb_prop (array-like): proportional layer boundaries (6 values between 0 and 1) from fsaverage converted Big Brain atlas
+    ret_annot_loc (array-like) (optional): locations for the layer labels
+    
+    """
+    # convert subj_coord to native + hemisphere
+    hemi, fsave_v_idx = convert_native_to_fsaverage(subj_id, subj_coord)
+    
+    # compute or read (if the precomputed atlas is present)
+    bb_prop = big_brain_proportional_layer_boundaries()
+    
+    # get the layer boundaries from the fsaverage vertex
+    vert_bb_prop = bb_prop[hemi][fsave_v_idx]
+    
+    if ret_annot_loc:
+        # return the positions for layer labels annotations
+        vert_bb_prop_ = np.insert(vert_bb_prop, 0, 0.0, axis=-1)
+        annot_locs = np.array(list(zip(vert_bb_prop_[:-1], vert_bb_prop_[1:]))).mean(axis=1)
+        return vert_bb_prop, annot_locs
+    else:
+        return vert_bb_prop
