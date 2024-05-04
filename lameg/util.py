@@ -1,6 +1,6 @@
 import os
 import json
-# import matlab.engine
+import matlab
 import numpy as np
 from pathlib import Path
 from contextlib import contextmanager
@@ -471,11 +471,11 @@ def big_brain_proportional_layer_boundaries(overwrite=False):
     bb_data (dict): dictionary (keys: "lh", "rh") with arrays containing layer boundaries for each vertex in the hemisphere
     
     """
-    
-    current_path = Path(os.getcwd())
-    asset_path = current_path.joinpath("assets", "big_brain_layer_thickness")
-    BBL_file = asset_path.joinpath("proportional_layer_boundaries.npy")
-    if any([not BBL_file.exists(), overwrite]):
+
+    asset_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), './assets')
+
+    BBL_file = os.path.join(asset_path, "proportional_layer_boundaries.npy")
+    if any([not os.path.exists(BBL_file), overwrite]):
         bb_l_paths = get_files(asset_path, "*.gii", strings=["tpl-fsaverage", "hemi-L"])
         bb_l_paths.sort()
         bb_r_paths = get_files(asset_path, "*.gii", strings=["tpl-fsaverage", "hemi-R"])
@@ -522,7 +522,7 @@ def get_BB_layer_boundaries(subj_id, subj_coord, ret_annot_loc=False):
     bb_prop = big_brain_proportional_layer_boundaries()
     
     # get the layer boundaries from the fsaverage vertex
-    vert_bb_prop = bb_prop[hemi][fsave_v_idx]
+    vert_bb_prop = bb_prop[hemi][:,fsave_v_idx]
     
     if ret_annot_loc:
         # return the positions for layer labels annotations
