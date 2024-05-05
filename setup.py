@@ -36,7 +36,7 @@ setup(
     packages=find_packages(),
     ext_modules=cythonize(extensions),
     package_data={
-        'lameg': ['*.so', 'matlab/*', 'settings.json', 'assets/*'],
+        'lameg': ['*.so', 'matlab/*', 'settings.json', 'assets/*', 'assets/big_brain_layer_thickness/*'],
     },
     include_package_data=True,
     zip_safe=False,
