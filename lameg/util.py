@@ -496,7 +496,7 @@ def big_brain_proportional_layer_boundaries(overwrite=False):
         return bb_data
 
 
-def get_BB_layer_boundaries(subj_id, subj_coord, ret_annot_loc=False):
+def get_BB_layer_boundaries(subj_id, subj_coord):
     """
     Get the cortical layer boundaries based on Big Brain atlas for a specified coordinate
     in the subject's downsampled combined space.
@@ -512,8 +512,7 @@ def get_BB_layer_boundaries(subj_id, subj_coord, ret_annot_loc=False):
     
     Returns:
     vert_bb_prop (array-like): proportional layer boundaries (6 values between 0 and 1) from fsaverage converted Big Brain atlas
-    ret_annot_loc (array-like) (optional): locations for the layer labels
-    
+
     """
     # convert subj_coord to native + hemisphere
     hemi, fsave_v_idx = convert_native_to_fsaverage(subj_id, subj_coord)
@@ -524,10 +523,4 @@ def get_BB_layer_boundaries(subj_id, subj_coord, ret_annot_loc=False):
     # get the layer boundaries from the fsaverage vertex
     vert_bb_prop = bb_prop[hemi][:,fsave_v_idx]
     
-    if ret_annot_loc:
-        # return the positions for layer labels annotations
-        vert_bb_prop_ = np.insert(vert_bb_prop, 0, 0.0, axis=-1)
-        annot_locs = np.array(list(zip(vert_bb_prop_[:-1], vert_bb_prop_[1:]))).mean(axis=1)
-        return vert_bb_prop, annot_locs
-    else:
-        return vert_bb_prop
+    return vert_bb_prop
