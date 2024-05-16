@@ -402,3 +402,94 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
             source_ts = mu_matrix[v_idx, :] @ sensor_data[:, :]
 
     return source_ts, time
+
+
+def load_source_power(data_fname, woi=None, mu_matrix=None, inv_fname=None, vertices=None, mat_eng=None):
+    """
+    Load source time series data from specified vertices using precomputed inverse solutions or a lead field matrix.
+
+    This function interfaces with MATLAB to extract time series data from specific vertices, based on precomputed
+    inverse solutions, or computes the source time series using a provided lead field matrix.
+
+    Parameters:
+    data_fname (str): Filename or path of the MEG/EEG data file.
+    mu_matrix (ndarray, optional): Lead field matrix (source x sensor). Default is None.
+    inv_fname (str, optional): Filename or path of the file containing the inverse solutions. Default is None.
+    vertices (list of int, optional): List of vertex indices from which to extract time series data. Default is None,
+                                      which implies all vertices will be used.
+    mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
+
+    Returns:
+    ndarray: An array containing the extracted source time series data (sources x time x trial).
+    ndarray: An array containing the timestamps
+
+    Notes:
+    - The function requires MATLAB and DANC_SPM12 to be installed and accessible.
+    - If 'inv_fname' is not provided, and 'mu_matrix' is None, the inverse solution from the MEG/EEG data file specified
+      by 'data_fname' will be used.
+    - If 'mu_matrix' is provided, the function will compute the source time series directly using the lead field matrix,
+      without the need for precomputed inverse solutions.
+    - If `mat_eng` is not provided, the function will start a new MATLAB engine instance.
+    - The function will automatically close the MATLAB engine if it was started within the function.
+    - Vertex indices are adjusted by adding 1 to each index to align with MATLAB's 1-based indexing when interfacing
+      with MATLAB.
+    """
+    if vertices is None:
+        vertices = []
+    if woi is None:
+        woi = []
+
+    spm_path = get_spm_path()
+
+    if mu_matrix is None:
+        # Incrementing vertices by 1 (assuming zero-indexed to one-indexed conversion for MATLAB)
+        vertices = [x + 1 for x in vertices]
+        if inv_fname is None:
+            inv_fname = data_fname
+
+        # Maximum number of vertices to process in one batch
+        batch_size = 20000
+
+        # Initialize an empty list to store source_ts batches
+        source_power_batches = []
+
+        with matlab_context(mat_eng) as eng:
+            # Process in batches
+            for i in range(0, len(vertices), batch_size):
+                # Extract the current batch of vertices
+                batch_vertices = vertices[i:i + batch_size]
+
+                # Load source time series for the current batch
+                current_source_power = eng.load_source_power(
+                    data_fname,
+                    inv_fname,
+                    matlab.double(woi),
+                    matlab.int32(batch_vertices),
+                    spm_path,
+                    nargout=2
+                )
+
+                # Convert to numpy array and add to the batches list
+                current_source_power = np.array(current_source_power)
+                source_power_batches.append(current_source_power)
+
+            # Concatenate along the first dimension (vertices)
+            source_power = np.concatenate(source_power_batches, axis=0)
+    else:
+        sensor_data, time, _ = load_meg_sensor_data(data_fname, mat_eng=mat_eng)
+        v_idx = np.arange(mu_matrix.shape[0])
+        if len(vertices):
+            v_idx = np.array(vertices)
+        if len(woi):
+            t_idx=(time>=woi[0]) & (time<=woi[1])
+            sensor_data = sensor_data[:,t_idx]
+        # Epoched
+        if len(sensor_data.shape)==3:
+            source_power = np.zeros((len(v_idx), sensor_data.shape[2]))
+            for t in range(sensor_data.shape[2]):
+                source_power[:, t] = np.var(mu_matrix[v_idx, :] @ sensor_data[:, :, t],axis=-1)
+        # Averaged
+        elif len(sensor_data.shape)==2:
+            source_power = np.var(mu_matrix[v_idx, :] @ sensor_data[:, :],axis=-1)
+
+    return source_power
