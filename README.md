@@ -12,8 +12,8 @@ Edit `lameg/settings.json` and change `spm_path` to the directory where SPM is l
 
 From the base directory, run:
 
-    python install.py --matlab_path /matlab_path
+    python install.py -m /matlab_path
 
 where `/matlab_path` is the path to your installed Matlab (the path containing `extern/engines/python`). For example:
 
-    python install.py --matlab_path /usr/local/MATLAB/R2018a/
+    python install.py -m /usr/local/MATLAB/R2018a/
