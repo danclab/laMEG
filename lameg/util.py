@@ -316,7 +316,7 @@ def convert_fsaverage_to_native(subj_id, hemi, vert_idx):
     fsave_sphere_coord = fsaverage_sphere_vertices[vert_idx, :]
 
     # Load subject registered sphere
-    subj_sphere = nib.load(os.path.join(fs_subject_dir, 'surf', f'{hemi}.sphere.reg.gii'))
+    subj_sphere = nib.load(os.path.join(fs_subject_dir, 'surf', f'{hemi}.sphere.reg'))
 
     # Get the index of the nearest vertex on the subject sphere
     kdtree = KDTree(subj_sphere.darrays[0].data)
@@ -330,7 +330,7 @@ def convert_fsaverage_to_native(subj_id, hemi, vert_idx):
     return subj_v_idx
 
 
-def convert_native_to_fsaverage(subj_id, subj_coord):
+def convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord):
     """
     Convert coordinates from a subject's native surface space to the fsaverage surface space.
 
@@ -342,6 +342,7 @@ def convert_native_to_fsaverage(subj_id, subj_coord):
 
     Parameters:
     subj_id (str): The subject identifier for which the conversion is being performed.
+    subj_surf_dir (str): The path containing the laMEG-processed subject surfaces
     subj_coord (array-like): The x, y, z coordinates on the subject's combined hemisphere pial surface to be converted.
 
     Returns:
@@ -352,9 +353,9 @@ def convert_native_to_fsaverage(subj_id, subj_coord):
     fs_subject_dir = os.path.join(fs_subjects_dir, subj_id)
 
     # Figure out hemisphere
-    subj_lh = nib.load(os.path.join(fs_subject_dir, 'surf', 'lh.pial.gii'))
+    subj_lh = nib.load(os.path.join(subj_surf_dir, 'lh.pial.gii'))
     lh_vertices = subj_lh.darrays[0].data
-    subj_rh = nib.load(os.path.join(fs_subject_dir, 'surf', 'rh.pial.gii'))
+    subj_rh = nib.load(os.path.join(subj_surf_dir, 'rh.pial.gii'))
     rh_vertices = subj_rh.darrays[0].data
 
     kdtree = KDTree(lh_vertices)
@@ -496,7 +497,7 @@ def big_brain_proportional_layer_boundaries(overwrite=False):
         return bb_data
 
 
-def get_BB_layer_boundaries(subj_id, subj_coord):
+def get_BB_layer_boundaries(subj_id, subj_surf_dir, subj_coord):
     """
     Get the cortical layer boundaries based on Big Brain atlas for a specified coordinate
     in the subject's downsampled combined space.
@@ -508,6 +509,7 @@ def get_BB_layer_boundaries(subj_id, subj_coord):
     
     Parameters:
     subj_id (str): The subject identifier for which the conversion is being performed.
+    subj_surf_dir (str): The path containing the laMEG-processed subject surfaces
     subj_coord (array-like): The x, y, z coordinates on the subject's combined hemisphere pial surface to be converted.
     
     Returns:
@@ -515,7 +517,7 @@ def get_BB_layer_boundaries(subj_id, subj_coord):
 
     """
     # convert subj_coord to native + hemisphere
-    hemi, fsave_v_idx = convert_native_to_fsaverage(subj_id, subj_coord)
+    hemi, fsave_v_idx = convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord)
     
     # compute or read (if the precomputed atlas is present)
     bb_prop = big_brain_proportional_layer_boundaries()
