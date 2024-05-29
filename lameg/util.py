@@ -130,7 +130,7 @@ def get_surface_names(n_layers, surf_path, orientation_method):
     return layer_fnames
 
 
-def fif_spm_conversion(mne_file, res4_file, output_path, output_name, prefix="spm_", epoched=None, create_path=False,
+def fif_spm_conversion(mne_file, res4_file, output_path, prefix="spm_", epoched=None, create_path=False,
                        mat_eng=None):
     """
     Converts *.fif file to SPM data format.
@@ -139,7 +139,6 @@ def fif_spm_conversion(mne_file, res4_file, output_path, output_name, prefix="sp
     mne_file (str or pathlib.Path or os.Path): path to the "*-raw.fif" or "*-epo.fif" file
     res4_file (str or pathlib.Path or os.Path): location of the sensor position data. *.res4 for CTF
     output_path (str or pathlib.Path or os.Path): location of the converted file
-    output_name (str): a core name of the output file, excluding the extension and path
     prefix (str): a string appended to the output_name after conversion. Default: "spm_"
     epoched (bool): Specify if the data is epoched (True) or not (False), default None will raise an error
     create_path (bool): if True create the non-existent subdirectories of the output path
@@ -158,7 +157,6 @@ def fif_spm_conversion(mne_file, res4_file, output_path, output_name, prefix="sp
     # clean things up for matlab
     mne_file = str(mne_file)
     output_path = str(output_path)
-    output_name = str(output_name)
     res4_file = str(res4_file)
 
     if create_path:
@@ -167,7 +165,7 @@ def fif_spm_conversion(mne_file, res4_file, output_path, output_name, prefix="sp
     with matlab_context(mat_eng) as eng:
         eng.convert_mne_to_spm(
             res4_file, mne_file, output_path,
-            output_name, prefix, epoched, spm_path,
+            prefix, epoched, spm_path,
             nargout=0
         )
 
