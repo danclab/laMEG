@@ -13,6 +13,8 @@ import copy
 import subprocess
 from joblib import Parallel, delayed
 
+from collections import defaultdict
+
 import nibabel as nib
 from scipy.spatial import KDTree
 from scipy.spatial import cKDTree
@@ -293,6 +295,30 @@ def remove_vertices(gifti_surf, vertices_to_remove):
     return new_gifti
 
 
+def find_non_manifold_edges(faces):
+    """Identify non-manifold edges in the mesh."""
+    edge_faces = defaultdict(list)
+
+    for i, (v1, v2, v3) in enumerate(faces):
+        for edge in [(v1, v2), (v2, v3), (v3, v1)]:
+            edge_faces[tuple(sorted(edge))].append(i)
+
+    non_manifold_edges = {edge: fcs for edge, fcs in edge_faces.items() if len(fcs) > 2}
+    return non_manifold_edges
+
+def fix_non_manifold_edges(vertices, faces):
+    """Attempt to fix non-manifold edges by removing conflicting faces."""
+    non_manifold_edges = find_non_manifold_edges(faces)
+    conflicting_faces = set()
+    for faces_list in non_manifold_edges.values():
+        # Here, we simply remove all faces involved, but you might choose a more sophisticated strategy
+        conflicting_faces.update(faces_list)
+
+    # Create a new face list excluding the conflicting faces
+    new_faces = np.array([face for i, face in enumerate(faces) if i not in conflicting_faces], dtype=np.int32)
+    return vertices, new_faces
+
+
 def downsample_single_surface(gifti_surf, ds_factor=0.1):
     """
     Downsample a Gifti surface using the VTK library.
@@ -398,6 +424,12 @@ def iterative_downsample_single_surface(gifti_surf, ds_factor=0.1):
         if current_ds_factor >= 1:
             break
 
+    # Remove non-manifold edges
+    ds_vertices = current_surf.darrays[0].data
+    ds_faces = current_surf.darrays[1].data
+    nonmani_vertices, nonmani_faces = fix_non_manifold_edges(ds_vertices, ds_faces)
+    current_surf = create_surf_gifti(nonmani_vertices, nonmani_faces)
+
     return current_surf
 
 
@@ -462,7 +494,12 @@ def downsample_multiple_surfaces(in_surfs, ds_factor):
         if len(surf.darrays) > 2 and surf.darrays[2].intent == nib.nifti1.intent_codes['NIFTI_INTENT_VECTOR']:
             reduced_normals = surf.darrays[2].data[orig_vert_idx]
 
-        ds_surf = create_surf_gifti(surf.darrays[0].data[orig_vert_idx, :], reduced_faces, normals=reduced_normals)
+        surf_verts=surf.darrays[0].data[orig_vert_idx, :]
+        surf_faces=ds_primary_surf.darrays[1].data
+
+        nonmani_vertices, nonmani_faces = fix_non_manifold_edges(reduced_vertices, reduced_faces)
+
+        ds_surf = create_surf_gifti(nonmani_vertices, nonmani_faces, normals=reduced_normals)
         out_surfs.append(ds_surf)
     return out_surfs
 
