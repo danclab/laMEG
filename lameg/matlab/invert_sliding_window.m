@@ -1,6 +1,6 @@
 function [f_vals,wois]=invert_sliding_window(prior, data_file,...
     patch_size, n_temp_modes, win_size,...
-    win_overlap, foi, hann, gain_mat_fname, viz, spm_path)
+    win_overlap, foi, hann, viz, spm_path)
 
 addpath(spm_path);
 
@@ -70,9 +70,6 @@ matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.priors.prior
 matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.priors.space = 0;
 matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.restrict.locs = zeros(0, 3);
 matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.restrict.radius = 32;
-if length(gain_mat_fname)
-    matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.gain_mat = {gain_mat_fname};
-end
 matlabbatch{batch_idx}.spm.meeg.source.invertiter.isstandard.custom.outinv = '';
 matlabbatch{batch_idx}.spm.meeg.source.invertiter.modality = {'All'};
 matlabbatch{batch_idx}.spm.meeg.source.invertiter.crossval = [pctest 1];

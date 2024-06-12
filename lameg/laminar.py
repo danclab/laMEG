@@ -8,8 +8,7 @@ from lameg.invert import invert_ebb, invert_msp, invert_sliding_window, coregist
 from lameg.util import matlab_context, ttest_rel_corrected
 
 
-def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='EBB', gain_mat_fnames=None,
-                     viz=True, mat_eng=None, **kwargs):
+def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='EBB', viz=True, mat_eng=None, **kwargs):
     """
     Compare model fits using different meshes by computing the free energy.
 
@@ -24,8 +23,6 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
     mesh_fnames (list): List of filenames for different meshes.
     data_fname (str): Filename of the MEG/EEG data.
     method (str, optional): Source reconstruction method, either 'EBB' or 'MSP'. Default is 'EBB'.
-    gain_mat_fnames (list, optional): List of filenames of the precomputed gain matrices, one for each mesh in
-                                      mesh_fnames. If None, they will be computed. Default is None
     viz (boolean, optional): Whether or not to show SPM visualization. Default is True
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
     **kwargs: Additional keyword arguments are passed directly to the source reconstruction functions (invert_ebb or
@@ -41,8 +38,6 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
     - If `mat_eng` is not provided, the function will start a new MATLAB engine instance.
     - The function will automatically close the MATLAB engine if it was started within the function.
     """
-    if gain_mat_fnames is None:
-        gain_mat_fnames=[None for _ in mesh_fnames]
 
     f_vals = []
     cv_errs = []
@@ -50,11 +45,9 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
         for l_idx, mesh_fname in enumerate(mesh_fnames):
             coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=viz, mat_eng=eng)
             if method == 'EBB':
-                [f_val, cv_err] = invert_ebb(mesh_fname, data_fname, 1, gain_mat_fname=gain_mat_fnames[l_idx],
-                                             viz=viz, mat_eng=eng, **kwargs)
+                [f_val, cv_err] = invert_ebb(mesh_fname, data_fname, 1, viz=viz, mat_eng=eng, **kwargs)
             elif method == 'MSP':
-                [f_val, cv_err] = invert_msp(mesh_fname, data_fname, 1, gain_mat_fname=gain_mat_fnames[l_idx],
-                                             viz=viz, mat_eng=eng, **kwargs)
+                [f_val, cv_err] = invert_msp(mesh_fname, data_fname, 1, viz=viz, mat_eng=eng, **kwargs)
             f_vals.append(f_val)
             cv_errs.append(cv_err)
 
@@ -64,8 +57,8 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
     return f_vals, cv_errs
 
 
-def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, gain_mat_fnames=None,
-                                    viz=True, mat_eng=None, **kwargs):
+def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, viz=True, mat_eng=None,
+                                    **kwargs):
     """
     Compare model fits across different meshes using a sliding window approach.
 
@@ -80,8 +73,6 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
     mri_fname (str): Filename of the MRI data.
     mesh_fnames (list): List of filenames for different meshes.
     data_fname (str): Filename of the MEG/EEG data.
-    gain_mat_fnames (list, optional): List of filenames of the precomputed gain matrices, one for each mesh in
-                                      mesh_fnames. If None, they will be computed. Default is None
     viz (boolean, optional): Whether or not to show SPM visualization. Default is True
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
     **kwargs: Additional keyword arguments are passed directly to the invert_sliding_window function.
@@ -96,8 +87,6 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
     - The function will automatically close the MATLAB engine if it was started within the function.
     - The prior index is adjusted by adding 1 to align with MATLAB's 1-based indexing.
     """
-    if gain_mat_fnames is None:
-        gain_mat_fnames = [None for _ in mesh_fnames]
 
     f_vals = []
     wois = []
@@ -106,8 +95,7 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
             coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=viz, mat_eng=eng)
 
             [mesh_fvals, wois] = invert_sliding_window(prior, mesh_fname, data_fname, 1,
-                                                       gain_mat_fname=gain_mat_fnames[l_idx], viz=viz,
-                                                       mat_eng=eng, **kwargs)
+                                                       viz=viz, mat_eng=eng, **kwargs)
             f_vals.append(mesh_fvals)
 
     f_vals = np.vstack(f_vals)
