@@ -4,11 +4,11 @@ import elephant
 import neo
 import quantities as pq
 
-from lameg.invert import invert_ebb, invert_msp, invert_sliding_window, coregister, load_source_time_series
-from lameg.util import matlab_context, ttest_rel_corrected
+from lameg.invert import invert_ebb, coregister, load_source_time_series#, invert_msp, invert_sliding_window
+from lameg.util import ttest_rel_corrected
 
 
-def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='EBB', viz=True, mat_eng=None, **kwargs):
+def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='EBB', viz=True, **kwargs):
     """
     Compare model fits using different meshes by computing the free energy.
 
@@ -24,7 +24,6 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
     data_fname (str): Filename of the MEG/EEG data.
     method (str, optional): Source reconstruction method, either 'EBB' or 'MSP'. Default is 'EBB'.
     viz (boolean, optional): Whether or not to show SPM visualization. Default is True
-    mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
     **kwargs: Additional keyword arguments are passed directly to the source reconstruction functions (invert_ebb or
               invert_msp).
 
@@ -34,22 +33,18 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
 
     Notes:
     - Free energy is used as a measure of model fit, with higher values indicating better fit.
-    - The function requires MATLAB and DANC_SPM12 to be installed and accessible.
-    - If `mat_eng` is not provided, the function will start a new MATLAB engine instance.
-    - The function will automatically close the MATLAB engine if it was started within the function.
     """
 
     f_vals = []
     cv_errs = []
-    with matlab_context(mat_eng) as eng:
-        for l_idx, mesh_fname in enumerate(mesh_fnames):
-            coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=viz, mat_eng=eng)
-            if method == 'EBB':
-                [f_val, cv_err] = invert_ebb(mesh_fname, data_fname, 1, viz=viz, mat_eng=eng, **kwargs)
-            elif method == 'MSP':
-                [f_val, cv_err] = invert_msp(mesh_fname, data_fname, 1, viz=viz, mat_eng=eng, **kwargs)
-            f_vals.append(f_val)
-            cv_errs.append(cv_err)
+    for l_idx, mesh_fname in enumerate(mesh_fnames):
+        coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=viz)
+        if method == 'EBB':
+            [f_val, cv_err] = invert_ebb(mesh_fname, data_fname, 1, viz=viz, **kwargs)
+        # elif method == 'MSP':
+        #     [f_val, cv_err] = invert_msp(mesh_fname, data_fname, 1, viz=viz, mat_eng=eng, **kwargs)
+        f_vals.append(f_val)
+        cv_errs.append(cv_err)
 
     f_vals = np.array(f_vals)
     cv_errs = np.array(cv_errs)
@@ -57,50 +52,50 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
     return f_vals, cv_errs
 
 
-def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, viz=True, mat_eng=None,
-                                    **kwargs):
-    """
-    Compare model fits across different meshes using a sliding window approach.
-
-    This function runs source reconstruction using the Multiple Sparse Priors (MSP) method in sliding time windows on a
-    set of meshes. It compares the model fits for each mesh by computing the free energy in each window.
-
-    Parameters:
-    prior (float): Index of the vertex to be used as a prior.
-    nas (list): NASion fiducial coordinates.
-    lpa (list): Left PreAuricular fiducial coordinates.
-    rpa (list): Right PreAuricular fiducial coordinates.
-    mri_fname (str): Filename of the MRI data.
-    mesh_fnames (list): List of filenames for different meshes.
-    data_fname (str): Filename of the MEG/EEG data.
-    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
-    mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
-    **kwargs: Additional keyword arguments are passed directly to the invert_sliding_window function.
-
-    Returns:
-    tuple: A tuple containing a list of free energy values for each mesh and the windows of interest (wois).
-
-    Notes:
-    - Free energy is used as a measure of model fit, with higher values indicating better fit.
-    - The function requires MATLAB and SPM12 to be installed and accessible.
-    - If `mat_eng` is not provided, the function will start a new MATLAB engine instance.
-    - The function will automatically close the MATLAB engine if it was started within the function.
-    - The prior index is adjusted by adding 1 to align with MATLAB's 1-based indexing.
-    """
-
-    f_vals = []
-    wois = []
-    with matlab_context(mat_eng) as eng:
-        for l_idx, mesh_fname in enumerate(mesh_fnames):
-            coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=viz, mat_eng=eng)
-
-            [mesh_fvals, wois] = invert_sliding_window(prior, mesh_fname, data_fname, 1,
-                                                       viz=viz, mat_eng=eng, **kwargs)
-            f_vals.append(mesh_fvals)
-
-    f_vals = np.vstack(f_vals)
-
-    return f_vals, wois
+# def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, viz=True, mat_eng=None,
+#                                     **kwargs):
+#     """
+#     Compare model fits across different meshes using a sliding window approach.
+#
+#     This function runs source reconstruction using the Multiple Sparse Priors (MSP) method in sliding time windows on a
+#     set of meshes. It compares the model fits for each mesh by computing the free energy in each window.
+#
+#     Parameters:
+#     prior (float): Index of the vertex to be used as a prior.
+#     nas (list): NASion fiducial coordinates.
+#     lpa (list): Left PreAuricular fiducial coordinates.
+#     rpa (list): Right PreAuricular fiducial coordinates.
+#     mri_fname (str): Filename of the MRI data.
+#     mesh_fnames (list): List of filenames for different meshes.
+#     data_fname (str): Filename of the MEG/EEG data.
+#     viz (boolean, optional): Whether or not to show SPM visualization. Default is True
+#     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
+#     **kwargs: Additional keyword arguments are passed directly to the invert_sliding_window function.
+#
+#     Returns:
+#     tuple: A tuple containing a list of free energy values for each mesh and the windows of interest (wois).
+#
+#     Notes:
+#     - Free energy is used as a measure of model fit, with higher values indicating better fit.
+#     - The function requires MATLAB and SPM12 to be installed and accessible.
+#     - If `mat_eng` is not provided, the function will start a new MATLAB engine instance.
+#     - The function will automatically close the MATLAB engine if it was started within the function.
+#     - The prior index is adjusted by adding 1 to align with MATLAB's 1-based indexing.
+#     """
+#
+#     f_vals = []
+#     wois = []
+#     with matlab_context(mat_eng) as eng:
+#         for l_idx, mesh_fname in enumerate(mesh_fnames):
+#             coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=viz, mat_eng=eng)
+#
+#             [mesh_fvals, wois] = invert_sliding_window(prior, mesh_fname, data_fname, 1,
+#                                                        viz=viz, mat_eng=eng, **kwargs)
+#             f_vals.append(mesh_fvals)
+#
+#     f_vals = np.vstack(f_vals)
+#
+#     return f_vals, wois
 
 
 def compute_csd(signal, thickness, sfreq, smoothing=None):
