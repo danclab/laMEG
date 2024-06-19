@@ -1,11 +1,15 @@
-import matlab.engine
+import os
+import tempfile
+
 import numpy as np
+import h5py
+import spm_standalone
+from scipy.io import savemat
 
-from lameg.util import get_spm_path, matlab_context
-
+import matlab
 
 def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_moments, sim_patch_sizes, snr,
-                                   sim_woi=None, viz=True, mat_eng=None):
+                                   sim_woi=None):
     """
     Simulate current density data based on specified parameters.
 
@@ -23,53 +27,44 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
                                    list.
     snr (float): Signal-to-noise ratio for the simulation.
     sim_woi (list, optional): Window of interest for the simulation as [start, end]. Default is [-np.inf, np.inf].
-    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
-    mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
 
     Returns:
     str: Filename of the generated simulated data.
-
-    Notes:
-    - The function requires MATLAB and DANC_SPM12 to be installed and accessible.
-    - If `mat_eng` is not provided, the function will start a new MATLAB engine instance.
-    - The function will automatically close the MATLAB engine if it was started within the function.
-    - Vertex indices and other parameters are adjusted to align with MATLAB's 1-based indexing and data structures.
     """
     if sim_woi is None:
         sim_woi = [-np.inf, np.inf]
 
-    spm_path = get_spm_path()
-
     if np.isscalar(sim_vertices):
         sim_vertices=[sim_vertices]
-    sim_vertices=[x+1 for x in sim_vertices]
     if np.isscalar(dipole_moments):
         dipole_moments=[dipole_moments]
     if np.isscalar(sim_patch_sizes):
         sim_patch_sizes=[sim_patch_sizes]
 
-    with matlab_context(mat_eng) as eng:
-        sim_fname = eng.simulate(
-            data_file,
-            prefix,
-            matlab.int32(sim_vertices),
-            matlab.double(sim_woi),
-            matlab.double(sim_signals.tolist()),
-            matlab.double([]),
-            matlab.double(dipole_moments),
-            matlab.double(sim_patch_sizes),
-            float(snr),
-            False,
-            int(viz),
-            spm_path,
-            nargout=1
-        )
+    with h5py.File(data_file, 'r') as file:
+        verts = file[file['D']['other']['inv'][0][0]]['mesh']['tess_mni']['vert'][()].T
+
+    sim_coords = np.zeros((len(sim_vertices),3))
+    for c_idx,i in enumerate(sim_vertices):
+        sim_coords[c_idx,:]=verts[i, :]
+
+    spm = spm_standalone.initialize()
+
+    spm.spm_eeg_simulate(data_file, prefix, matlab.double(sim_coords.tolist()), matlab.double(sim_signals.tolist()),
+                         matlab.double([]), matlab.double(sim_woi), matlab.double([]), float(snr), matlab.double([]),
+                         matlab.double([]), matlab.double(sim_patch_sizes), matlab.double(dipole_moments), nargout=0)
+
+    data_dir = os.path.dirname(data_file)
+    data_fname = os.path.split(os.path.splitext(data_file)[0])[1]
+    sim_fname= os.path.join(data_dir, f'{prefix}{data_fname}.mat')
+
+    spm.terminate()
 
     return sim_fname
 
 
 def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_orientations, dipole_moments,
-                          sim_patch_sizes, snr, sim_woi=None, average_trials=False, viz=False, mat_eng=None):
+                          sim_patch_sizes, snr, sim_woi=None, average_trials=False):
     """
     Simulate dipole-based MEG/EEG data based on specified parameters.
 
@@ -91,48 +86,68 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
     snr (float): Signal-to-noise ratio for the simulation.
     sim_woi (list, optional): Window of interest for the simulation as [start, end]. Default is [-np.inf, np.inf].
     average_trials (bool, optional): Whether or not to average the simulated data over trials. Default is False.
-    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
-    mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
 
     Returns:
     str: Filename of the generated simulated data.
-
-    Notes:
-    - The function requires MATLAB and DANC_SPM12 to be installed and accessible.
-    - If `mat_eng` is not provided, the function will start a new MATLAB engine instance.
-    - The function will automatically close the MATLAB engine if it was started within the function.
-    - Vertex indices, dipole orientations, and other parameters are adjusted to align with MATLAB's 1-based indexing and
-      data structures.
     """
 
     if sim_woi is None:
         sim_woi = [-np.inf, np.inf]
 
-    spm_path = get_spm_path()
-
     if np.isscalar(sim_vertices):
         sim_vertices=[sim_vertices]
-    sim_vertices = [x + 1 for x in sim_vertices]
+
     if np.isscalar(dipole_moments):
         dipole_moments=[dipole_moments]
+
     if np.isscalar(sim_patch_sizes):
         sim_patch_sizes=[sim_patch_sizes]
 
-    with matlab_context(mat_eng) as eng:
-        sim_fname=eng.simulate(
-            data_file,
-            prefix,
-            matlab.int32(sim_vertices),
-            matlab.double(sim_woi),
-            matlab.double(sim_signals.tolist()),
-            matlab.double(dipole_orientations.tolist()),
-            matlab.double(dipole_moments),
-            matlab.double(sim_patch_sizes),
-            float(snr),
-            average_trials,
-            int(viz),
-            spm_path,
-            nargout=1
-        )
+    with h5py.File(data_file, 'r') as file:
+        verts = file[file['D']['other']['inv'][0][0]]['mesh']['tess_mni']['vert'][()].T
+
+    sim_coords = np.zeros((len(sim_vertices), 3))
+    for c_idx, i in enumerate(sim_vertices):
+        sim_coords[c_idx, :] = verts[i, :]
+
+    spm = spm_standalone.initialize()
+
+    spm.spm_eeg_simulate(data_file, prefix, matlab.double(sim_coords.tolist()), matlab.double(sim_signals.tolist()),
+                         matlab.double(dipole_orientations.tolist()), matlab.double(sim_woi), matlab.double([]),
+                         float(snr), matlab.double([]), matlab.double([]), matlab.double(sim_patch_sizes),
+                         matlab.double(dipole_moments), nargout=0)
+
+    data_dir = os.path.dirname(data_file)
+    data_fname = os.path.split(os.path.splitext(data_file)[0])[1]
+    sim_fname = os.path.join(data_dir, f'{prefix}{data_fname}.mat')
+
+    if average_trials:
+        cfg = {
+            "spm": {
+                "meeg": {
+                    "averaging": {
+                        "average": {
+                            "D": np.asarray([sim_fname], dtype="object"),
+                            "userobust": {
+                                "standard": 0
+                            },
+                            "plv": 0,
+                            "prefix": 'm'
+                        }
+                    }
+                }
+            }
+        }
+
+        cfg = {"matlabbatch": [cfg]}
+        f, name = tempfile.mkstemp(suffix=".mat")
+        savemat(f, cfg)
+        spm.spm_standalone("eval",
+                           f"load('{name}'); spm('defaults', 'EEG'); spm_get_defaults('cmdline',1); spm_jobman('run', matlabbatch);",
+                           nargout=0)
+        os.remove(name)
+        sim_fname = os.path.join(data_dir, f'm{prefix}{data_fname}.mat')
+
+    spm.terminate()
 
     return sim_fname
