@@ -10,6 +10,23 @@ def install_package():
     subprocess.check_call([sys.executable, "-m", "pip", "install", "."])
 
 
+def install_spm():
+    # Change to the directory containing the spm package
+    spm_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'spm')
+    os.chdir(spm_dir)
+    # Install the spm package
+    subprocess.check_call([sys.executable, "setup.py", "install"])
+    # Change back to the original directory
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
+
+def download_matlab_runtime(url, save_path):
+    # Create the directory if it doesn't exist
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    # Download the file using wget
+    subprocess.check_call(['wget', '-c', url, '-O', save_path])
+
+
 def extract_matlab_runtime(zip_path, extract_to):
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         # Create target directory if it doesn't exist
@@ -39,9 +56,6 @@ def install_matlab_runtime(install_dir):
     # Ensure the install script has execute permissions
     if not os.path.exists(install_script):
         raise FileNotFoundError(f"The install script was not found in {install_dir}")
-
-    # os.chmod(install_script,
-    #          os.stat(install_script).st_mode | 0o111)  # Add execute permissions for user, group, and others
 
     # Run the installation command with the destination folder
     subprocess.check_call(
@@ -85,6 +99,9 @@ def main():
     # Install the package first
     install_package()
 
+    # Install standalone SPM
+    install_spm()
+
     # Locate the installed package directory after ensuring installation is complete
     # Force Python to recognize new packages
     importlib.invalidate_caches()
@@ -92,7 +109,12 @@ def main():
     # Attempt to locate the installed package directory
     package_dir = get_installed_package_dir('lameg')
 
-    matlab_runtime_zip = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'MATLAB_Runtime_R2019a_Update_9_glnxa64.zip')
+    matlab_runtime_zip = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                      'MATLAB_Runtime_R2019a_Update_9_glnxa64.zip')
+    matlab_download_url = 'https://ssd.mathworks.com/supportfiles/downloads/R2019a/Release/9/deployment_files/installer/complete/glnxa64/MATLAB_Runtime_R2019a_Update_9_glnxa64.zip'
+
+    # Download MATLAB Runtime
+    download_matlab_runtime(matlab_download_url, matlab_runtime_zip)
     matlab_runtime_extract_dir = os.path.join(package_dir, 'matlab_runtime')
 
     conda_env_path = os.path.dirname(os.path.dirname(sys.executable))
@@ -107,6 +129,7 @@ def main():
     create_activate_script(matlab_runtime_path, conda_env_path)
     create_deactivate_script(conda_env_path)
 
+    os.remove(matlab_runtime_zip)
 
 
 if __name__ == "__main__":

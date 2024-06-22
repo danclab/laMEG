@@ -1,18 +1,16 @@
 import h5py
-# import matlab.engine
 import numpy as np
 from scipy.io import savemat
 from scipy.sparse import csc_matrix
 import tempfile
 import os
 
-# from lameg.util import get_spm_path, matlab_context, load_meg_sensor_data
-from lameg.util import load_meg_sensor_data
+from lameg.util import load_meg_sensor_data, spm_context, batch
 from lameg.surf import smoothmesh_multilayer_mm
-import spm_standalone
+import matlab
 
 
-def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=True):
+def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=True, spm_instance=None):
     """
     Run head coregistration.
 
@@ -26,7 +24,13 @@ def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=True):
     mesh_fname (str): Filename of the mesh data.
     data_fname (str): Filename of the MEG/EEG data.
     viz (boolean, optional): Whether or not to show SPM visualization. Default is True
+    spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
+
+    Notes:
+        - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
+        - The function will automatically close the standalone SPM instance if it was started within the function.
     """
+
     # Define the structured dtype for 'specification' with nested 'type'
     spec_dtype = np.dtype([('type', 'O')])
 
@@ -87,19 +91,11 @@ def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=True):
         }
 
     }
-    cfg = {"matlabbatch": [cfg]}
-    f, name = tempfile.mkstemp(suffix=".mat")
-    savemat(f, cfg)
-    spm = spm_standalone.initialize()
-    spm.spm_standalone("eval",
-                       f"load('{name}'); spm('defaults', 'EEG'); spm_get_defaults('cmdline',{int(not viz)}); spm_jobman('run', matlabbatch);",
-                       nargout=0)
-    os.remove(name)
-    spm.terminate()
+    batch(cfg, viz=viz, spm_instance=spm_instance)
 
 
-def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, foi=None, woi=None, n_folds=1,
-               ideal_pc_test=0, viz=True, return_mu_matrix=False):
+def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, foi=None, woi=None, hann_windowing=False,
+               n_folds=1, ideal_pc_test=0, viz=True, return_mu_matrix=False, spm_instance=None):
     """
     Run the Empirical Bayesian Beamformer (EBB) source reconstruction algorithm.
 
@@ -115,21 +111,22 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
     n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 4.
     foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
     woi (list, optional): Window of interest as [start, end]. Default is [-np.inf, np.inf].
+    hann_windowing (int, option): Whether or not to perform Hann windowing. Default is False
     n_folds (int): Number of cross validation folds. Must be >1 for cross validation error
     ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integer number of channels)
     viz (boolean, optional): Whether or not to show SPM visualization. Default is True
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
     return_mu_matrix (boolean, optional): Whether or not to return the matrix needed to reconstruct source activity.
                                           Default is False
+    spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
 
     Returns:
     list: A list containing the free energy, cross validation error (cv_err), and the matrix needed to reconstruct
     source activity (mu_matrix; if return_mu_matrix is True).
 
     Notes:
-    - The function requires MATLAB and DANC_SPM12 to be installed and accessible.
-    - If `mat_eng` is not provided, the function will start a new MATLAB engine instance.
-    - The function will automatically close the MATLAB engine if it was started within the function.
+        - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
+        - The function will automatically close the standalone SPM instance if it was started within the function.
     """
     if woi is None:
         woi = [-np.inf, np.inf]
@@ -143,10 +140,13 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
     data_dir, fname_with_ext = os.path.split(data_fname)
     fname, _ = os.path.splitext(fname_with_ext)
 
-    # Construct new file name with added '_testmodes.mat'
-    spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
-    spm = spm_standalone.initialize()
-    spatialmodename,Nmodes,pctest = spm.spm_eeg_inv_prep_modes_xval(data_fname, [], spatialmodesname, n_folds, ideal_pc_test, nargout=3)
+    with spm_context(spm_instance) as spm:
+        # Construct new file name with added '_testmodes.mat'
+        spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
+        spatialmodename, Nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(data_fname, matlab.double([]),
+                                                                          spatialmodesname,
+                                                                          float(n_folds), float(ideal_pc_test),
+                                                                          nargout=3)
 
     cfg = {
         "spm": {
@@ -164,7 +164,7 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
                                 "invtype": 'EBB',
                                 "woi": np.array(woi, dtype=float),
                                 "foi": np.array(foi, dtype=float),
-                                "hanning": float(0),
+                                "hanning": float(hann_windowing),
                                 "isfixedpatch": {
                                     "randpatch": {
                                         "npatches": float(512),
@@ -180,10 +180,6 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
                                     "priorsmask": np.asarray([''], dtype="object"),
                                     "space": 0
                                 },
-                                "restrict": {
-                                    "locs": np.zeros((0, 3), dtype=float),
-                                    "radius": float(32)
-                                },
                                 "outinv": '',
                             }
                         },
@@ -194,18 +190,11 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
             }
         }
     }
-
-    cfg = {"matlabbatch": [cfg]}
-    f, name = tempfile.mkstemp(suffix=".mat")
-    savemat(f, cfg)
-    spm.spm_standalone("eval",
-                       f"load('{name}'); matlabbatch{{1}}.spm.meeg.source.invertiter.isstandard.custom.restrict.locs=zeros(0,3); spm('defaults', 'EEG'); spm_get_defaults('cmdline',{int(not viz)}); spm_jobman('run', matlabbatch);",
-                       nargout=0)
-    os.remove(name)
+    batch(cfg, viz=viz, spm_instance=spm_instance)
 
     with h5py.File(data_fname, 'r') as file:
-        free_energy=file[file['D']['other']['inv'][0][0]]['inverse']['crossF'][()]
-        cv_err=file[file['D']['other']['inv'][0][0]]['inverse']['crosserr'][()]
+        free_energy = np.squeeze(file[file['D']['other']['inv'][0][0]]['inverse']['crossF'][()])
+        cv_err = np.squeeze(file[file['D']['other']['inv'][0][0]]['inverse']['crosserr'][()])
 
         m_data = file[file['D']['other']['inv'][0][0]]['inverse']['M']['data'][()]
         m_ir = file[file['D']['other']['inv'][0][0]]['inverse']['M']['ir'][()]
@@ -223,152 +212,263 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
         return [free_energy, cv_err, mu_matrix]
 
 
-#
-# def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_temp_modes=4, foi=None,
-#                woi=None, n_folds=1, ideal_pc_test=0, viz=True, mat_eng=None, return_mu_matrix=False):
-#     """
-#     Run the Multiple Sparse Priors (MSP) source reconstruction algorithm.
-#
-#     This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data. It involves mesh
-#     smoothing and running the MSP algorithm in MATLAB. The MEG/EEG data must already be coregistered with the given
-#     mesh.
-#
-#     Parameters:
-#     mesh_fname (str): Filename of the mesh data.
-#     data_fname (str): Filename of the MEG/EEG data.
-#     n_layers (int): Number of layers in the mesh.
-#     priors (list, optional): Indices of vertices to be used as priors. Default is an empty list.
-#     patch_size (int, optional): Patch size for mesh smoothing. Default is 5.
-#     n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 4.
-#     foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
-#     woi (list, optional): Window of interest as [start, end]. Default is [-np.inf, np.inf].
-#     n_folds (int): Number of cross validation folds. Must be >1 for cross validation error
-#     ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integer number of channels)
-#     viz (boolean, optional): Whether or not to show SPM visualization. Default is True
-#     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
-#     return_mu_matrix (boolean, optional): Whether or not to return the matrix needed to reconstruct source activity.
-#                                           Default is False
-#
-#     Returns:
-#     list: A list containing the free energy, cross validation error (cv_err), and the matrix needed to reconstruct
-#           source activity (mu_matrix; if return_mu_matrix is True).
-#
-#     Notes:
-#     - The function requires MATLAB and DANC_SPM12 to be installed and accessible.
-#     - If `mat_eng` is not provided, the function will start a new MATLAB engine instance.
-#     - The function will automatically close the MATLAB engine if it was started within the function.
-#     - Priors are adjusted by adding 1 to each index to align with MATLAB's 1-based indexing.
-#     """
-#     if foi is None:
-#         foi = [0, 256]
-#     if priors is None:
-#         priors = []
-#     if woi is None:
-#         woi = [-np.inf, np.inf]
-#
-#     spm_path = get_spm_path()
-#
-#     print(f'Smoothing {mesh_fname}')
-#     _ = smoothmesh_multilayer_mm(mesh_fname, patch_size, n_layers, n_jobs=-1)
-#
-#     priors = [x + 1 for x in priors]
-#     if isinstance(woi, np.ndarray):
-#         woi = woi.tolist()
-#
-#     with matlab_context(mat_eng) as eng:
-#         if return_mu_matrix:
-#             free_energy, cv_err, mu_matrix = eng.invert_msp(
-#                 data_fname,
-#                 matlab.int32(priors),
-#                 float(patch_size),
-#                 float(n_temp_modes),
-#                 matlab.double(foi),
-#                 matlab.double(woi),
-#                 float(n_folds),
-#                 float(ideal_pc_test),
-#                 int(viz),
-#                 spm_path,
-#                 nargout=3
-#             )
-#             ret_vals = [free_energy, np.array(cv_err), np.array(mu_matrix)]
-#         else:
-#             free_energy, cv_err = eng.invert_msp(
-#                 data_fname,
-#                 matlab.int32(priors),
-#                 float(patch_size),
-#                 float(n_temp_modes),
-#                 matlab.double(foi),
-#                 matlab.double(woi),
-#                 float(n_folds),
-#                 float(ideal_pc_test),
-#                 int(viz),
-#                 spm_path,
-#                 nargout=2
-#             )
-#             ret_vals = [free_energy, np.array(cv_err)]
-#
-#     return ret_vals
-#
-#
-# def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=1, win_size=16,
-#                           win_overlap=True, foi=None, hann=True, viz=True, mat_eng=None):
-#     """
-#     Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time window.
-#
-#     This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data within sliding time
-#     windows. It involves mesh smoothing and running the MSP algorithm in MATLAB for each time window. The MEG/EEG data
-#     must already be coregistered with the given mesh.
-#
-#     Parameters:
-#     prior (float): Index of the vertex to be used as a prior.
-#     mesh_fname (str): Filename of the mesh data.
-#     data_fname (str): Filename of the MEG/EEG data.
-#     n_layers (int): Number of layers in the mesh.
-#     patch_size (int, optional): Patch size for mesh smoothing. Default is 5.
-#     n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 1.
-#     win_size (float, optional): Size of the sliding window in ms. Default is 16. If you increase win_size, you may
-#                                 have to increase n_temp_modes.
-#     win_overlap (bool, optional): Whether the windows should overlap. Default is True.
-#     foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
-#     hann (bool, optional): Whether or not to use Hann windowing. Default is True
-#     viz (boolean, optional): Whether or not to show SPM visualization. Default is True
-#     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
-#
-#     Returns:
-#     list: A list containing the free energy time series (free_energy), and the windows of interest (wois).
-#
-#     Notes:
-#     - The function requires MATLAB and DANC_SPM12 to be installed and accessible.
-#     - If `mat_eng` is not provided, the function will start a new MATLAB engine instance.
-#     - The function will automatically close the MATLAB engine if it was started within the function.
-#     - The prior index is adjusted by adding 1 to align with MATLAB's 1-based indexing.
-#     """
-#     if foi is None:
-#         foi = [0, 256]
-#
-#     spm_path = get_spm_path()
-#
-#     print(f'Smoothing {mesh_fname}')
-#     _ = smoothmesh_multilayer_mm(mesh_fname, patch_size, n_layers, n_jobs=-1)
-#
-#     prior = prior + 1.0
-#
-#     with matlab_context(mat_eng) as eng:
-#         free_energy, wois = eng.invert_sliding_window(
-#             float(prior),
-#             data_fname,
-#             float(patch_size),
-#             float(n_temp_modes),
-#             float(win_size),
-#             win_overlap,
-#             matlab.double(foi),
-#             int(hann),
-#             int(viz),
-#             spm_path,
-#             nargout=2
-#         )
-#
-#     return [np.array(free_energy), np.array(wois)]
+def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_temp_modes=4, foi=None,
+               woi=None, hann_windowing=False, n_folds=1, ideal_pc_test=0, viz=True, return_mu_matrix=False,
+               spm_instance=None):
+    """
+    Run the Multiple Sparse Priors (MSP) source reconstruction algorithm.
+
+    This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data. It involves mesh
+    smoothing and running the MSP algorithm in MATLAB. The MEG/EEG data must already be coregistered with the given
+    mesh.
+
+    Parameters:
+    mesh_fname (str): Filename of the mesh data.
+    data_fname (str): Filename of the MEG/EEG data.
+    n_layers (int): Number of layers in the mesh.
+    priors (list, optional): Indices of vertices to be used as priors. Default is an empty list.
+    patch_size (int, optional): Patch size for mesh smoothing. Default is 5.
+    n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 4.
+    foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
+    woi (list, optional): Window of interest as [start, end]. Default is [-np.inf, np.inf].
+    hann_windowing (int, option): Whether or not to perform Hann windowing. Default is False
+    n_folds (int): Number of cross validation folds. Must be >1 for cross validation error
+    ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integer number of channels)
+    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
+    return_mu_matrix (boolean, optional): Whether or not to return the matrix needed to reconstruct source activity.
+                                          Default is False
+    spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
+
+    Returns:
+    list: A list containing the free energy, cross validation error (cv_err), and the matrix needed to reconstruct
+          source activity (mu_matrix; if return_mu_matrix is True).
+
+    Notes:
+        - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
+        - The function will automatically close the standalone SPM instance if it was started within the function.
+        - Priors are adjusted by adding 1 to each index to align with MATLAB's 1-based indexing.
+    """
+    if foi is None:
+        foi = [0, 256]
+    if priors is None:
+        priors = []
+    if woi is None:
+        woi = [-np.inf, np.inf]
+
+    print(f'Smoothing {mesh_fname}')
+    _ = smoothmesh_multilayer_mm(mesh_fname, patch_size, n_layers, n_jobs=-1)
+
+    priors = [x + 1 for x in priors]
+    if isinstance(woi, np.ndarray):
+        woi = woi.tolist()
+
+    # Extract directory name and file name without extension
+    data_dir, fname_with_ext = os.path.split(data_fname)
+    fname, _ = os.path.splitext(fname_with_ext)
+
+    with spm_context(spm_instance) as spm:
+        # Construct new file name with added '_testmodes.mat'
+        spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
+        spatialmodename, Nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(data_fname, matlab.double([]), spatialmodesname,
+                                                                          float(n_folds), float(ideal_pc_test), nargout=3)
+
+    cfg = {
+        "spm": {
+            "meeg": {
+                "source": {
+                    "invertiter": {
+                        "D": np.asarray([data_fname], dtype="object"),
+                        "val": 1,
+                        "whatconditions": {
+                            "all": 1
+                        },
+                        "isstandard": {
+                            "custom": {
+                                "invfunc": 'Classic',
+                                "invtype": 'MSP',
+                                "woi": np.array(woi, dtype=float),
+                                "foi": np.array(foi, dtype=float),
+                                "hanning": float(hann_windowing),
+                                "patchfwhm": -float(patch_size),
+                                "mselect": float(0),
+                                "nsmodes": float(Nmodes),
+                                "umodes": np.asarray([spatialmodename], dtype="object"),
+                                "ntmodes": float(n_temp_modes),
+                                "priors": {
+                                    "priorsmask": np.asarray([''], dtype="object"),
+                                    "space": 0
+                                },
+                                "outinv": '',
+                            }
+                        },
+                        "modality": np.asarray(['All'], dtype="object"),
+                        "crossval": np.asarray([pctest, n_folds], dtype=float)
+                    }
+                }
+            }
+        }
+    }
+    if len(priors) > 0:
+        patchfilename = os.path.join(data_dir, 'patch.mat')
+        savemat(patchfilename, {'Ip': priors})
+
+        cfg['spm']['meeg']['source']['invertiter']['isstandard']['custom']['isfixedpatch'] = {
+            "fixedpatch": {
+                "fixedfile": np.asarray([patchfilename], dtype="object"),
+                "fixedrows": np.array([1, np.inf], dtype=float)
+            }
+        }
+    else:
+        cfg['spm']['meeg']['source']['invertiter']['isstandard']['custom']['isfixedpatch'] = {
+            "randpatch": {
+                "npatches": float(512),
+                "niter": float(1)
+            }
+        }
+
+    batch(cfg, viz=viz, spm_instance=spm_instance)
+
+    with h5py.File(data_fname, 'r') as file:
+        free_energy = np.squeeze(file[file['D']['other']['inv'][0][0]]['inverse']['crossF'][()])
+        cv_err = np.squeeze(file[file['D']['other']['inv'][0][0]]['inverse']['crosserr'][()])
+
+        m_data = file[file['D']['other']['inv'][0][0]]['inverse']['M']['data'][()]
+        m_ir = file[file['D']['other']['inv'][0][0]]['inverse']['M']['ir'][()]
+        m_jc = file[file['D']['other']['inv'][0][0]]['inverse']['M']['jc'][()]
+        U = file[file[file['D']['other']['inv'][0][0]]['inverse']['U'][0][0]][()]
+
+    if not return_mu_matrix:
+        return [free_energy, cv_err]
+    else:
+        # Reconstruct the sparse matrix
+        num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
+        num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
+        M = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
+        mu_matrix = (M @ U)
+        return [free_energy, cv_err, mu_matrix]
+
+
+def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=1, win_size=16,
+                          win_overlap=True, foi=None, hann_windowing=True, viz=True, spm_instance=None):
+    """
+    Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time window.
+
+    This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data within sliding time
+    windows. It involves mesh smoothing and running the MSP algorithm in MATLAB for each time window. The MEG/EEG data
+    must already be coregistered with the given mesh.
+
+    Parameters:
+    prior (float): Index of the vertex to be used as a prior.
+    mesh_fname (str): Filename of the mesh data.
+    data_fname (str): Filename of the MEG/EEG data.
+    n_layers (int): Number of layers in the mesh.
+    patch_size (int, optional): Patch size for mesh smoothing. Default is 5.
+    n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 1.
+    win_size (float, optional): Size of the sliding window in ms. Default is 16. If you increase win_size, you may
+                                have to increase n_temp_modes.
+    win_overlap (bool, optional): Whether the windows should overlap. Default is True.
+    foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
+    hann_windowing (bool, optional): Whether or not to use Hann windowing. Default is True
+    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
+    spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
+
+    Returns:
+    list: A list containing the free energy time series (free_energy), and the windows of interest (wois).
+
+    Notes:
+        - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
+        - The function will automatically close the standalone SPM instance if it was started within the function.
+        - The prior index is adjusted by adding 1 to align with MATLAB's 1-based indexing.
+    """
+    if foi is None:
+        foi = [0, 256]
+
+    print(f'Smoothing {mesh_fname}')
+    _ = smoothmesh_multilayer_mm(mesh_fname, patch_size, n_layers, n_jobs=-1)
+
+    prior = prior + 1.0
+
+    _, time, _ = load_meg_sensor_data(data_fname)
+
+    time = time * 1000  # Convert time to milliseconds
+    dt = time[1] - time[0]  # Compute the difference in time between steps
+    win_steps = int(round(win_size / dt))  # Calculate the number of steps in each window
+
+    wois = []
+    if win_overlap:
+        for t_idx in range(len(time)):
+            win_l = max(0, int(np.ceil(t_idx - win_steps / 2)))  # Adjust index for Python's 0-based indexing
+            win_r = min(len(time) - 1, int(np.floor(t_idx + win_steps / 2)))  # Ensure the index is within the range
+            woi = [time[win_l], time[win_r]]
+            wois.append(woi)  # Append the window of interest
+    else:
+        ts = np.linspace(time[0], time[-1], int((time[-1] - time[0]) / win_size + 1))
+        for i in range(1, len(ts)):
+            wois.append([ts[i - 1], ts[i]])
+    wois = np.array(wois, dtype=float)
+
+    # Extract directory name and file name without extension
+    data_dir, fname_with_ext = os.path.split(data_fname)
+    fname, _ = os.path.splitext(fname_with_ext)
+
+    with spm_context(spm_instance) as spm:
+        # Construct new file name with added '_testmodes.mat'
+        spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
+        spatialmodename, Nmodes, _ = spm.spm_eeg_inv_prep_modes_xval(data_fname, [], spatialmodesname, 1,
+                                                                     0, nargout=3)
+
+    patchfilename = os.path.join(data_dir, 'patch.mat')
+    savemat(patchfilename, {'Ip': np.array([prior], dtype=float)})
+
+    cfg = {
+        "spm": {
+            "meeg": {
+                "source": {
+                    "invertiter": {
+                        "D": np.asarray([data_fname], dtype="object"),
+                        "val": 1,
+                        "whatconditions": {
+                            "all": 1
+                        },
+                        "isstandard": {
+                            "custom": {
+                                "invfunc": 'Classic',
+                                "invtype": 'MSP',
+                                "woi": wois,
+                                "foi": np.array(foi, dtype=float),
+                                "hanning": float(hann_windowing),
+                                "isfixedpatch": {
+                                    "fixedpatch": {
+                                        "fixedfile": np.asarray([patchfilename], dtype=object),
+                                        "fixedrows": np.array([1, np.inf], dtype=float)
+                                    }
+                                },
+                                "patchfwhm": -float(patch_size),
+                                "mselect": float(0),
+                                "nsmodes": float(Nmodes),
+                                "umodes": np.asarray([spatialmodename], dtype="object"),
+                                "ntmodes": float(n_temp_modes),
+                                "priors": {
+                                    "priorsmask": np.asarray([''], dtype="object"),
+                                    "space": 0
+                                },
+                                "outinv": '',
+                            }
+                        },
+                        "modality": np.asarray(['All'], dtype="object"),
+                        "crossval": np.asarray([0, 1], dtype=float)
+                    }
+                }
+            }
+        }
+    }
+
+    batch(cfg, viz=viz, spm_instance=spm_instance)
+
+    with h5py.File(data_fname, 'r') as file:
+        free_energy = np.squeeze(file[file['D']['other']['inv'][0][0]]['inverse']['crossF'][()])
+
+    return [free_energy, wois]
 
 
 def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices=None):

@@ -3,13 +3,14 @@ import tempfile
 
 import numpy as np
 import h5py
-import spm_standalone
 from scipy.io import savemat
 
 import matlab
+from lameg.util import spm_context
+
 
 def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_moments, sim_patch_sizes, snr,
-                                   sim_woi=None):
+                                   sim_woi=None, spm_instance=None):
     """
     Simulate current density data based on specified parameters.
 
@@ -27,9 +28,14 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
                                    list.
     snr (float): Signal-to-noise ratio for the simulation.
     sim_woi (list, optional): Window of interest for the simulation as [start, end]. Default is [-np.inf, np.inf].
+    spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
 
     Returns:
     str: Filename of the generated simulated data.
+
+    Notes:
+        - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
+        - The function will automatically close the standalone SPM instance if it was started within the function.
     """
     if sim_woi is None:
         sim_woi = [-np.inf, np.inf]
@@ -48,23 +54,20 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
     for c_idx,i in enumerate(sim_vertices):
         sim_coords[c_idx,:]=verts[i, :]
 
-    spm = spm_standalone.initialize()
-
-    spm.spm_eeg_simulate(data_file, prefix, matlab.double(sim_coords.tolist()), matlab.double(sim_signals.tolist()),
-                         matlab.double([]), matlab.double(sim_woi), matlab.double([]), float(snr), matlab.double([]),
-                         matlab.double([]), matlab.double(sim_patch_sizes), matlab.double(dipole_moments), nargout=0)
+    with spm_context(spm_instance) as spm:
+        spm.spm_eeg_simulate(data_file, prefix, matlab.double(sim_coords.tolist()), matlab.double(sim_signals.tolist()),
+                             matlab.double([]), matlab.double(sim_woi), matlab.double([]), float(snr), matlab.double([]),
+                             matlab.double([]), matlab.double(sim_patch_sizes), matlab.double(dipole_moments), nargout=0)
 
     data_dir = os.path.dirname(data_file)
     data_fname = os.path.split(os.path.splitext(data_file)[0])[1]
     sim_fname= os.path.join(data_dir, f'{prefix}{data_fname}.mat')
 
-    spm.terminate()
-
     return sim_fname
 
 
 def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_orientations, dipole_moments,
-                          sim_patch_sizes, snr, sim_woi=None, average_trials=False):
+                          sim_patch_sizes, snr, sim_woi=None, average_trials=False, spm_instance=None):
     """
     Simulate dipole-based MEG/EEG data based on specified parameters.
 
@@ -86,9 +89,14 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
     snr (float): Signal-to-noise ratio for the simulation.
     sim_woi (list, optional): Window of interest for the simulation as [start, end]. Default is [-np.inf, np.inf].
     average_trials (bool, optional): Whether or not to average the simulated data over trials. Default is False.
+    spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
 
     Returns:
     str: Filename of the generated simulated data.
+
+    Notes:
+        - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
+        - The function will automatically close the standalone SPM instance if it was started within the function.
     """
 
     if sim_woi is None:
@@ -110,44 +118,41 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
     for c_idx, i in enumerate(sim_vertices):
         sim_coords[c_idx, :] = verts[i, :]
 
-    spm = spm_standalone.initialize()
+    with spm_context(spm_instance) as spm:
+        spm.spm_eeg_simulate(data_file, prefix, matlab.double(sim_coords.tolist()), matlab.double(sim_signals.tolist()),
+                             matlab.double(dipole_orientations.tolist()), matlab.double(sim_woi), matlab.double([]),
+                             float(snr), matlab.double([]), matlab.double([]), matlab.double(sim_patch_sizes),
+                             matlab.double(dipole_moments), nargout=0)
 
-    spm.spm_eeg_simulate(data_file, prefix, matlab.double(sim_coords.tolist()), matlab.double(sim_signals.tolist()),
-                         matlab.double(dipole_orientations.tolist()), matlab.double(sim_woi), matlab.double([]),
-                         float(snr), matlab.double([]), matlab.double([]), matlab.double(sim_patch_sizes),
-                         matlab.double(dipole_moments), nargout=0)
+        data_dir = os.path.dirname(data_file)
+        data_fname = os.path.split(os.path.splitext(data_file)[0])[1]
+        sim_fname = os.path.join(data_dir, f'{prefix}{data_fname}.mat')
 
-    data_dir = os.path.dirname(data_file)
-    data_fname = os.path.split(os.path.splitext(data_file)[0])[1]
-    sim_fname = os.path.join(data_dir, f'{prefix}{data_fname}.mat')
-
-    if average_trials:
-        cfg = {
-            "spm": {
-                "meeg": {
-                    "averaging": {
-                        "average": {
-                            "D": np.asarray([sim_fname], dtype="object"),
-                            "userobust": {
-                                "standard": 0
-                            },
-                            "plv": 0,
-                            "prefix": 'm'
+        if average_trials:
+            cfg = {
+                "spm": {
+                    "meeg": {
+                        "averaging": {
+                            "average": {
+                                "D": np.asarray([sim_fname], dtype="object"),
+                                "userobust": {
+                                    "standard": 0
+                                },
+                                "plv": 0,
+                                "prefix": 'm'
+                            }
                         }
                     }
                 }
             }
-        }
 
-        cfg = {"matlabbatch": [cfg]}
-        f, name = tempfile.mkstemp(suffix=".mat")
-        savemat(f, cfg)
-        spm.spm_standalone("eval",
-                           f"load('{name}'); spm('defaults', 'EEG'); spm_get_defaults('cmdline',1); spm_jobman('run', matlabbatch);",
-                           nargout=0)
-        os.remove(name)
-        sim_fname = os.path.join(data_dir, f'm{prefix}{data_fname}.mat')
-
-    spm.terminate()
+            cfg = {"matlabbatch": [cfg]}
+            f, name = tempfile.mkstemp(suffix=".mat")
+            savemat(f, cfg)
+            spm.spm_standalone("eval",
+                               f"load('{name}'); spm('defaults', 'EEG'); spm_get_defaults('cmdline',1); spm_jobman('run', matlabbatch);",
+                               nargout=0)
+            os.remove(name)
+            sim_fname = os.path.join(data_dir, f'm{prefix}{data_fname}.mat')
 
     return sim_fname

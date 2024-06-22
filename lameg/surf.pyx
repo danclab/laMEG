@@ -497,7 +497,7 @@ def downsample_multiple_surfaces(in_surfs, ds_factor):
         surf_verts=surf.darrays[0].data[orig_vert_idx, :]
         surf_faces=ds_primary_surf.darrays[1].data
 
-        nonmani_vertices, nonmani_faces = fix_non_manifold_edges(reduced_vertices, reduced_faces)
+        nonmani_vertices, nonmani_faces = fix_non_manifold_edges(surf_verts, reduced_faces)
 
         ds_surf = create_surf_gifti(nonmani_vertices, nonmani_faces, normals=reduced_normals)
         out_surfs.append(ds_surf)

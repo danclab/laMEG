@@ -1,11 +1,57 @@
 import os
-import json
+import tempfile
+
 import numpy as np
 import h5py
 from pathlib import Path
+from contextlib import contextmanager
 import nibabel as nib
+from scipy.io import savemat
 from scipy.spatial import KDTree
 from scipy.stats import t
+import spm_standalone
+
+
+@contextmanager
+def spm_context(spm=None):
+    """
+    Context manager for handling standalone SPM instances.
+
+    Parameters:
+    spm (spm_standalone, optional): An existing standalone instance. Default is None.
+
+    Yields:
+    spm_standalone: A standalone SPM instance for use within the context.
+
+    Notes:
+    - If 'spm' is None, the function starts a new standalone SPM instance.
+    - The new standalone SPM instance will be closed automatically upon exiting the context.
+    - If 'spm' is provided, it will be used as is and not closed automatically.
+    - This function is intended for use in a 'with' statement to ensure proper management of standalone SPM resources.
+    """
+    # Start standalone SPM
+    close_spm = False
+    if spm is None:
+        spm = spm_standalone.initialize()
+        close_spm = True
+    try:
+        yield spm
+    finally:
+        # Close standalone SPM
+        if close_spm:
+            spm.terminate()
+
+
+def batch(cfg, viz=True, spm_instance=None):
+    cfg = {"matlabbatch": [cfg]}
+    f, name = tempfile.mkstemp(suffix=".mat")
+    savemat(f, cfg)
+
+    with spm_context(spm_instance) as spm:
+        spm.spm_standalone("eval",
+                           f"load('{name}'); spm('defaults', 'EEG'); spm_get_defaults('cmdline',{int(not viz)}); spm_get_defaults('use_parfor', 1); spm_get_defaults('mat.format','-v7.3'); spm_jobman('run', matlabbatch);",
+                           nargout=0)
+    os.remove(name)
 
 
 def get_assets():
@@ -105,44 +151,43 @@ def get_surface_names(n_layers, surf_path, orientation_method):
     return layer_fnames
 
 
-# def fif_spm_conversion(mne_file, res4_file, output_path, prefix="spm_", epoched=None, create_path=False,
-#                        mat_eng=None):
-#     """
-#     Converts *.fif file to SPM data format.
-#
-#     Parameters:
-#     mne_file (str or pathlib.Path or os.Path): path to the "*-raw.fif" or "*-epo.fif" file
-#     res4_file (str or pathlib.Path or os.Path): location of the sensor position data. *.res4 for CTF
-#     output_path (str or pathlib.Path or os.Path): location of the converted file
-#     prefix (str): a string appended to the output_name after conversion. Default: "spm_"
-#     epoched (bool): Specify if the data is epoched (True) or not (False), default None will raise an error
-#     create_path (bool): if True create the non-existent subdirectories of the output path
-#     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
-#
-#     Notes:
-#     """
-#
-#     if epoched == None:
-#         raise ValueError("Please specify if the data is epoched (True) or not (False)")
-#     else:
-#         epoched = int(epoched)
-#
-#     spm_path = get_spm_path()
-#
-#     # clean things up for matlab
-#     mne_file = str(mne_file)
-#     output_path = str(output_path)
-#     res4_file = str(res4_file)
-#
-#     if create_path:
-#         make_directory(output_path)
-#
-#     with matlab_context(mat_eng) as eng:
-#         eng.convert_mne_to_spm(
-#             res4_file, mne_file, output_path,
-#             prefix, epoched, spm_path,
-#             nargout=0
-#         )
+def fif_spm_conversion(mne_file, res4_file, output_path, prefix="spm_", epoched=None, create_path=False,
+                       spm_instance=None):
+    """
+    Converts *.fif file to SPM data format.
+
+    Parameters:
+    mne_file (str or pathlib.Path or os.Path): path to the "*-raw.fif" or "*-epo.fif" file
+    res4_file (str or pathlib.Path or os.Path): location of the sensor position data. *.res4 for CTF
+    output_path (str or pathlib.Path or os.Path): location of the converted file
+    prefix (str): a string appended to the output_name after conversion. Default: "spm_"
+    epoched (bool): Specify if the data is epoched (True) or not (False), default None will raise an error
+    create_path (bool): if True create the non-existent subdirectories of the output path
+    spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
+
+    Notes:
+        - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
+        - The function will automatically close the standalone SPM instance if it was started within the function.
+    """
+
+    if epoched == None:
+        raise ValueError("Please specify if the data is epoched (True) or not (False)")
+    else:
+        epoched = int(epoched)
+
+    # clean things up for matlab
+    mne_file = str(mne_file)
+    output_path = str(output_path)
+    res4_file = str(res4_file)
+
+    if create_path:
+        make_directory(output_path)
+
+    with spm_context(spm_instance) as spm:
+        spm.convert_mne_to_spm(
+                res4_file, mne_file, output_path,
+                prefix, float(epoched), nargout=0
+            )
 
 
 def check_many(multiple, target, func=None):
