@@ -42,7 +42,7 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
     f_vals = []
     cv_errs = []
     for l_idx, mesh_fname in enumerate(mesh_fnames):
-        coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=viz)
+        coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=viz, spm_instance=spm_instance)
         if method == 'EBB':
             [f_val, cv_err] = invert_ebb(mesh_fname, data_fname, 1, viz=viz, spm_instance=spm_instance, **kwargs)
         elif method == 'MSP':
