@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 
@@ -30,16 +31,36 @@ def spm_context(spm=None):
     - This function is intended for use in a 'with' statement to ensure proper management of standalone SPM resources.
     """
     # Start standalone SPM
+    settings_fname = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settings.json')
+    with open(settings_fname) as settings_file:
+        parameters = json.load(settings_file)
+
     close_spm = False
     if spm is None:
         spm = spm_standalone.initialize()
+        spm.spm_standalone(
+            "eval",
+            f"""
+            try
+                parpool({parameters['num_workers']});
+            catch ME
+            end
+            """,
+            nargout=0
+        )
         close_spm = True
     try:
         yield spm
     finally:
         # Close standalone SPM
         if close_spm:
+            spm.spm_standalone(
+                "eval",
+                "delete(gcp('nocreate'));",
+                nargout=0
+            )
             spm.terminate()
+            del spm
 
 
 def batch(cfg, viz=True, spm_instance=None):
@@ -48,9 +69,11 @@ def batch(cfg, viz=True, spm_instance=None):
     savemat(f, cfg)
 
     with spm_context(spm_instance) as spm:
-        spm.spm_standalone("eval",
-                           f"load('{name}'); spm('defaults', 'EEG'); spm_get_defaults('cmdline',{int(not viz)}); spm_jobman('run', matlabbatch);",
-                           nargout=0)
+        spm.spm_standalone(
+            "eval",
+            f"load('{name}'); spm('defaults', 'EEG'); spm_get_defaults('cmdline',{int(not viz)}); spm_jobman('run', matlabbatch);",
+            nargout=0
+        )
     os.remove(name)
 
 
