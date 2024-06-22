@@ -23,8 +23,9 @@ def install_spm():
 def download_matlab_runtime(url, save_path):
     # Create the directory if it doesn't exist
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    # Download the file using wget
-    subprocess.check_call(['wget', '-c', url, '-O', save_path])
+    if not os.path.exists(save_path):
+        # Download the file using wget
+        subprocess.check_call(['wget', '-c', url, '-O', save_path])
 
 
 def extract_matlab_runtime(zip_path, extract_to):
