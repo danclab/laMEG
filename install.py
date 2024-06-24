@@ -1,3 +1,4 @@
+import glob
 import os
 import site
 import subprocess
@@ -11,8 +12,18 @@ def install_package():
 
 
 def install_spm():
-    # Change to the directory containing the spm package
     spm_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'spm')
+
+    # Change to the directory containing the spm package standalone
+    if not os.path.exists(os.path.join(spm_dir, 'spm_standalone', 'spm_standalone.ctf')):
+        os.chdir(os.path.join(spm_dir, 'spm_standalone'))
+        # Combine file parts into ctf file and remove parts
+        subprocess.check_call(['bysp', 'c', 'spm_standalone.ctf'])
+        files = glob.glob(os.path.join(spm_dir, 'spm_standalone', 'spm_standalone.ctf.*.part'))
+        for file in files:
+            os.remove(file)
+
+    # Change to the directory containing the spm package
     os.chdir(spm_dir)
     # Install the spm package
     subprocess.check_call([sys.executable, "setup.py", "install"])
@@ -100,12 +111,11 @@ def main():
     # Install the package first
     install_package()
 
-    # Install standalone SPM
-    install_spm()
-
-    # Locate the installed package directory after ensuring installation is complete
     # Force Python to recognize new packages
     importlib.invalidate_caches()
+
+    # Install standalone SPM
+    install_spm()
 
     # Attempt to locate the installed package directory
     package_dir = get_installed_package_dir('lameg')
