@@ -1,100 +1,144 @@
-import os
 import json
-import matlab.engine
+import os
+import tempfile
+
 import numpy as np
+import h5py
 from pathlib import Path
 from contextlib import contextmanager
 import nibabel as nib
+from scipy.io import savemat
 from scipy.spatial import KDTree
 from scipy.stats import t
+import spm_standalone
 
 
 @contextmanager
-def matlab_context(eng=None):
+def spm_context(spm=None):
     """
-    Context manager for handling MATLAB engine instances.
+    Context manager for handling standalone SPM instances.
 
     Parameters:
-    eng (matlab.engine.MatlabEngine, optional): An existing MATLAB engine instance. Default is None.
+    spm (spm_standalone, optional): An existing standalone instance. Default is None.
 
     Yields:
-    matlab.engine.MatlabEngine: A MATLAB engine instance for use within the context.
+    spm_standalone: A standalone SPM instance for use within the context.
 
     Notes:
-    - If 'eng' is None, the function starts a new MATLAB engine and adds './matlab' to its path.
-    - The new MATLAB engine instance will be closed automatically upon exiting the context.
-    - If 'eng' is provided, it will be used as is and not closed automatically.
-    - This function is intended for use in a 'with' statement to ensure proper management of MATLAB engine resources.
+    - If 'spm' is None, the function starts a new standalone SPM instance.
+    - The new standalone SPM instance will be closed automatically upon exiting the context.
+    - If 'spm' is provided, it will be used as is and not closed automatically.
+    - This function is intended for use in a 'with' statement to ensure proper management of standalone SPM resources.
     """
-    # Start MATLAB engine
-    close_matlab = False
-    if eng is None:
-        eng = matlab.engine.start_matlab()
-        eng.addpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), './matlab'), nargout=0)
-        close_matlab = True
-    try:
-        yield eng
-    finally:
-        # Close MATLAB engine
-        if close_matlab:
-            eng.quit()
-
-
-def get_spm_path():
-    """
-    Retrieve the path to the SPM (Statistical Parametric Mapping) software from a settings file.
-
-    Returns:
-    str: The path to the SPM software.
-
-    Notes:
-    - The function reads from a 'settings.json' file expected to be in the current working directory.
-    - The 'settings.json' file must contain a key "spm_path" with the path to the SPM software as its value.
-    - It is assumed that the 'settings.json' file is properly formatted and accessible.
-    - If the 'settings.json' file or the "spm_path" key is missing, the function will raise an error.
-    """
+    # Start standalone SPM
     settings_fname = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settings.json')
     with open(settings_fname) as settings_file:
         parameters = json.load(settings_file)
-    spm_path = parameters["spm_path"]
-    return spm_path
+
+    close_spm = False
+    if spm is None:
+        spm = spm_standalone.initialize()
+        spm.spm_standalone(
+            "eval",
+            f"""
+            try
+                parpool({parameters['num_workers']});
+            catch ME
+            end
+            """,
+            nargout=0
+        )
+        close_spm = True
+    try:
+        yield spm
+    finally:
+        # Close standalone SPM
+        if close_spm:
+            spm.spm_standalone(
+                "eval",
+                "delete(gcp('nocreate'));",
+                nargout=0
+            )
+            spm.terminate()
+            del spm
+
+
+def batch(cfg, viz=True, spm_instance=None):
+    cfg = {"matlabbatch": [cfg]}
+    f, name = tempfile.mkstemp(suffix=".mat")
+    savemat(f, cfg)
+
+    with spm_context(spm_instance) as spm:
+        spm.spm_standalone(
+            "eval",
+            f"load('{name}'); spm('defaults', 'EEG'); spm_get_defaults('cmdline',{int(not viz)}); spm_jobman('run', matlabbatch);",
+            nargout=0
+        )
+    os.remove(name)
 
 
 def get_assets():
     current_path = Path(os.getcwd())
     asset_path = current_path.joinpath("assets", "big_brain_layer_thickness")
     get_files(asset_path, "*.gii", strings=["tpl-fsaverage"])
-       
 
 
-def load_meg_sensor_data(data_fname, mat_eng=None):
+def load_meg_sensor_data(data_fname):
     """
     Load sensor data from a MEG dataset.
 
     Parameters:
     data_fname (str): Filename or path of the MEG/EEG data file.
-    mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
 
     Returns:
     ndarray: An array containing the MEG sensor data (channels x time x trial).
     ndarray: An array containing the MEG data timestamps
     list: A list of channel names
-
-    Notes:
-    - The function requires MATLAB and DANC_SPM12 to be installed and accessible.
-    - If `mat_eng` is not provided, the function will start a new MATLAB engine instance.
-    - The function will automatically close the MATLAB engine if it was started within the function.
     """
-    spm_path = get_spm_path()
 
-    with matlab_context(mat_eng) as eng:
-        sensor_data, time, ch_names = eng.load_meg_sensor_data(
-            data_fname,
-            spm_path,
-            nargout=3
-        )
+    good_meg_channels = []  # List to store the indices of good MEG channels
+    ch_names = []
 
-    return np.array(sensor_data), np.squeeze(np.array(time)), ch_names
+    with h5py.File(data_fname, 'r') as file:
+        time_onset = file['D']['timeOnset'][()][0, 0]
+        fs = file['D']['Fsample'][()][0, 0]
+        n_samples = int(file['D']['Nsamples'][()][0, 0])
+        n_chans = file['D']['channels']['type'][:].shape[0]
+        chan_bad = np.array([int(file[file['D']['channels']['bad'][:][i, 0]][()][0, 0]) for i in range(n_chans)])
+
+        for i in range(n_chans):
+            chan_type_data = file[file['D']['channels']['type'][:][i, 0]][()]
+            chan_type = ''.join(chr(code) for code in chan_type_data)
+
+            chan_name_data = file[file['D']['channels']['label'][:][i, 0]][()]
+            chan_name = ''.join(chr(code) for code in chan_name_data)
+
+            # Check if the channel type includes 'MEG' and the channel is not marked as bad
+            if 'MEG' in chan_type and chan_bad[i] == 0:
+                good_meg_channels.append(i)  # Add the channel index to the list
+                ch_names.append(chan_name)
+
+        # Access dimensions, convert to tuple of ints assuming it's 2D and transpose if necessary
+        data_dims = tuple(int(dim) for dim in file['D']['data']['dim'][:, 0])
+
+        # Get filename stored as integers and convert to string
+        data_fname_data = file['D']['data']['fname'][:]
+        data_filename = ''.join(chr(code) for code in data_fname_data)
+
+    good_meg_channels = np.array(good_meg_channels)
+
+    # Read binary data using extracted filename
+    with open(data_filename, 'rb') as file:
+        dtype = np.dtype('<f4')
+        # Read the data assuming type float32; adjust dtype if necessary
+        data_array = np.fromfile(file, dtype=dtype)
+
+        # Reshape data according to extracted dimensions
+        sensor_data = data_array.reshape(data_dims, order='F')[good_meg_channels, :]
+
+    time = np.arange(n_samples) / fs + time_onset
+
+    return sensor_data, time, ch_names
 
 
 def get_surface_names(n_layers, surf_path, orientation_method):
@@ -131,10 +175,10 @@ def get_surface_names(n_layers, surf_path, orientation_method):
 
 
 def fif_spm_conversion(mne_file, res4_file, output_path, prefix="spm_", epoched=None, create_path=False,
-                       mat_eng=None):
+                       spm_instance=None):
     """
     Converts *.fif file to SPM data format.
-    
+
     Parameters:
     mne_file (str or pathlib.Path or os.Path): path to the "*-raw.fif" or "*-epo.fif" file
     res4_file (str or pathlib.Path or os.Path): location of the sensor position data. *.res4 for CTF
@@ -142,17 +186,17 @@ def fif_spm_conversion(mne_file, res4_file, output_path, prefix="spm_", epoched=
     prefix (str): a string appended to the output_name after conversion. Default: "spm_"
     epoched (bool): Specify if the data is epoched (True) or not (False), default None will raise an error
     create_path (bool): if True create the non-existent subdirectories of the output path
-    mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
-    
+    spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
+
     Notes:
+        - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
+        - The function will automatically close the standalone SPM instance if it was started within the function.
     """
 
     if epoched == None:
         raise ValueError("Please specify if the data is epoched (True) or not (False)")
     else:
         epoched = int(epoched)
-
-    spm_path = get_spm_path()
 
     # clean things up for matlab
     mne_file = str(mne_file)
@@ -162,12 +206,11 @@ def fif_spm_conversion(mne_file, res4_file, output_path, prefix="spm_", epoched=
     if create_path:
         make_directory(output_path)
 
-    with matlab_context(mat_eng) as eng:
-        eng.convert_mne_to_spm(
-            res4_file, mne_file, output_path,
-            prefix, epoched, spm_path,
-            nargout=0
-        )
+    with spm_context(spm_instance) as spm:
+        spm.convert_mne_to_spm(
+                res4_file, mne_file, output_path,
+                prefix, float(epoched), nargout=0
+            )
 
 
 def check_many(multiple, target, func=None):

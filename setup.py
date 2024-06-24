@@ -25,7 +25,7 @@ extensions = [
 
 setup(
     name='lameg',
-    version='0.1',
+    version='0.2',
     author='DANC lab',
     author_email='james.bonaiuto@isc.cnrs.fr',
     description='A toolbox for laminar inference with MEG',
