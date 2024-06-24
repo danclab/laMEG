@@ -3,17 +3,27 @@ Toolbox for laminar inference with MEG
 
 ## Requirements
 * [FreeSurfer v6.0](https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads), setup and configured (`FREESURFER_HOME` set, `SetUpFreeSurfer.sh` sourced, and `SUBJECTS_DIR` set)
-* Matlab
-* Python version compatible with your version of Matlab: [Versions of Python Compatible with MATLAB Products by Release](https://fr.mathworks.com/support/requirements/python-compatibility.html)
-* [DANC fork of SPM-dev](https://github.com/danclab/spm)
+* Python version 3.6
+* Anaconda (or miniconda)
 
 ## Installation
-Edit `lameg/settings.json` and change `spm_path` to the directory where SPM is located (e.g. `/home/bonaiuto/DANC_spm12/spm12`)
+1. Create a conda environment:
 
-From the base directory, run:
+       conda create -n <env name> python=3.6.13
 
-    python install.py -m /matlab_path
+   replacing '<env name>' with the name of the environment you would like to create (i.e. 'lameg')
 
-where `/matlab_path` is the path to your installed Matlab (the path containing `extern/engines/python`). For example:
+2. Activate the environment:
 
-    python install.py -m /usr/local/MATLAB/R2018a/
+       conda activate <env name>
+
+   replacing '<env name>' with name of the environment you created. 
+
+3. To install laMEG, from the base directory, run:
+
+       python install.py
+
+4. Before using, deactivate and reactivate the environment
+
+       conda deactivate
+       conda activate <env name>
