@@ -1,15 +1,10 @@
-function convert_mne_to_spm(orig_res4_file, mne_file, output_path, prefix, epoched, spm_path)
+function convert_mne_to_spm(orig_res4_file, mne_file, output_path, prefix, epoched)
 % CONVERT_MNE_TO_SPM  Convert MNE file (fif format) to SPM
 %    convert_mne_to_spm(orig_res4_file, mne_file, epoched)
 %        orig_res4_file = file path of the original data 
 %        mne_file = file path of the MNE (fif file) to convert
 %        epoched = 0 if continuous data, 1 if epoched
 
-
-addpath(spm_path)
-spm('defaults','eeg');
-spm_get_defaults('use_parfor',1);
-spm_get_defaults('mat.format','-v7.3');
 
 % Create file path for result
 [filepath,name,ext] = fileparts(mne_file);
