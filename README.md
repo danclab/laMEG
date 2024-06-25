@@ -1,6 +1,11 @@
 # laMEG
 Toolbox for laminar inference with MEG
 
+## Operating system
+* Windows: no
+* Mac: no
+* Linux: yes
+  
 ## Requirements
 * [FreeSurfer v6.0](https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads), setup and configured (`FREESURFER_HOME` set, `SetUpFreeSurfer.sh` sourced, and `SUBJECTS_DIR` set)
 * Python version 3.6
