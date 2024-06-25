@@ -1,11 +1,13 @@
 import os
+import platform
+import numpy
 from setuptools import setup, Extension, find_packages
 from Cython.Build import cythonize
 from setuptools.command.install import install
 
 class CustomInstall(install):
     def run(self):
-        # Run the standard install process
+        # Run the standard installation process
         install.run(self)
 
         # Post-installation: enable k3d for Jupyter
@@ -18,6 +20,7 @@ extensions = [
     Extension(
         name="lameg.surf",
         sources=["lameg/surf.pyx"],
+        include_dirs=[numpy.get_include()],
         # add any necessary compile-time flags here
     )
 ]
@@ -33,10 +36,13 @@ setup(
     long_description_content_type='text/markdown',
     url='https://github.com/danclab/laMEG',
     install_requires=open('requirements.txt').read().splitlines(),
-    packages=find_packages(),
+    packages=find_packages(include=['lameg', 'lameg.*']),
     ext_modules=cythonize(extensions),
     package_data={
         'lameg': ['*.so', 'matlab/*', 'settings.json', 'assets/*', 'assets/big_brain_layer_thickness/*'],
+    },
+    exclude_package_data={
+        'lameg': ['assets/big_brain_layer_thickness/*', 'matlab/*'],
     },
     include_package_data=True,
     zip_safe=False,

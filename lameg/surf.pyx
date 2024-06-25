@@ -6,6 +6,8 @@
 # cython: initializedcheck=False
 import numpy as np
 cimport numpy as cnp
+# Initialize NumPy C-API. Very important!
+cnp.import_array()
 from scipy.sparse import coo_matrix
 
 import os
