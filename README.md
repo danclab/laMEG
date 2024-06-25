@@ -11,13 +11,13 @@ Toolbox for laminar inference with MEG
 
        conda create -n <env name> python=3.6.13
 
-   replacing '<env name>' with the name of the environment you would like to create (i.e. 'lameg')
+   replacing &lt;env name&gt; with the name of the environment you would like to create (i.e. 'lameg')
 
 2. Activate the environment:
 
        conda activate <env name>
 
-   replacing '<env name>' with name of the environment you created. 
+   replacing &lt;env name&gt; with name of the environment you created. 
 
 3. To install laMEG, from the base directory, run:
 
