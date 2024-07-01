@@ -2,8 +2,8 @@
 Toolbox for laminar inference with MEG
 
 ## Operating system
-* Windows: no
-* Mac: no
+* Windows: may work, but not supported
+* Mac: may work, but not tested
 * Linux: yes
   
 ## Requirements
