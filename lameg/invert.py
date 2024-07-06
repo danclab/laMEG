@@ -16,8 +16,8 @@ from scipy.io import savemat
 from scipy.sparse import csc_matrix
 
 from lameg.util import load_meg_sensor_data, spm_context, batch
-from lameg.surf import smoothmesh_multilayer_mm
-import matlab
+from lameg.surf import smoothmesh_multilayer_mm # pylint: disable=no-name-in-module
+import matlab # pylint: disable=wrong-import-order
 
 
 def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=True, spm_instance=None):
