@@ -141,8 +141,8 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
     snr (float): Signal-to-noise ratio for the simulation.
     sim_woi (list, optional): Window of interest for the simulation as [start, end]. Default is
                               [-np.inf, np.inf].
-    average_trials (bool, optional): Whether or not to average the simulated data over trials.
-                                     Default is False.
+    average_trials (bool, optional): Whether to average the simulated data over trials. Default is
+                                     False.
     spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
 
     Returns:
@@ -213,8 +213,8 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
             }
 
             cfg = {"matlabbatch": [cfg]}
-            f, name = tempfile.mkstemp(suffix=".mat")
-            savemat(f, cfg)
+            file, name = tempfile.mkstemp(suffix=".mat")
+            savemat(file, cfg)
             spm.spm_standalone(
                 (
                     "eval",
