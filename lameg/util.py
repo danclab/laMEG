@@ -1,3 +1,17 @@
+"""
+This module provides tools for interfacing with SPM (Statistical Parametric Mapping) software,
+managing MEG sensor data, and working with neuroimaging data in various formats such as NIfTI,
+GIFTI, and MATLAB files. It includes functions for batch processing in SPM, converting data
+formats, loading and processing sensor data, and working with anatomical structures through
+cortical mesh analysis.
+
+Key functionalities include:
+- Context management for SPM operations.
+- Batch processing for neuroimaging tasks.
+- Loading MEG sensor data and managing related file operations.
+- Utility functions for anatomical and spatial data transformations.
+"""
+
 import json
 import os
 import tempfile
