@@ -26,15 +26,18 @@ jobs:
 
     - name: Install dependencies and build package
       run: |
-        python install.py
+        source activate myenv
+        python install.py --no_matlab_runtime
       shell: bash -l {0}
 
     - name: Lint with pylint
       run: |
+        source activate myenv
         pylint --rcfile=${{ github.workspace }}/.pylintrc --disable=too-many-arguments,too-many-locals $(git ls-files '*.py')
       shell: bash -l {0}
 
     - name: Test with pytest
       run: |
+        source activate myenv
         pytest
       shell: bash -l {0}
