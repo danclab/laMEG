@@ -20,28 +20,25 @@ jobs:
         activate-environment: myenv
         auto-activate-base: false
 
-    - name: Activate Conda environment
-      run: |
-        echo "Activating Conda environment..."
-        conda activate myenv
-
-    - name: Check Python version
-      run: |
-        which python
-        python --version
+    - name: Initialize Conda
+      run: conda init bash
 
     - name: Install dependencies
       run: |
         conda install numpy=1.19.5 cython pip pylint pytest
+        conda list
 
     - name: Build and install laMEG package
+      shell: bash -l {0}
       run: |
-        conda run -n myenv python install.py
+        python install.py
 
     - name: Lint with pylint
+      shell: bash -l {0}
       run: |
-        conda run -n myenv pylint --rcfile=${{ github.workspace }}/.pylintrc --disable=too-many-arguments,too-many-locals $(git ls-files '*.py')
+        pylint --rcfile=${{ github.workspace }}/.pylintrc --disable=too-many-arguments,too-many-locals $(git ls-files '*.py')
 
     - name: Test with pytest
+      shell: bash -l {0}
       run: |
-        conda run -n myenv pytest
+        pytest
