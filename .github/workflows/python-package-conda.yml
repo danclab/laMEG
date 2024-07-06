@@ -1,0 +1,34 @@
+name: Build and Test Python Package with Conda
+
+on: [push]
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+    strategy:
+      max-parallel: 5
+      matrix:
+        python-version: ["3.7"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Miniconda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        activate-environment: myenv
+        auto-activate-base: false
+
+    - name: Install dependencies and build package
+      run: |
+        conda activate myenv
+        python install.py
+      shell: bash -l {0}
+
+    - name: Lint with pylint
+      run: |
+        conda activate myenv
+        conda install pylint
+        pylint --rcfile=${{ github.workspace }}/.pylintrc --disable=too-many-arguments,too-many-locals $(git ls-files '*.py')
+      shell: bash -l {0}

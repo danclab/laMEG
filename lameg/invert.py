@@ -1,20 +1,31 @@
+"""
+This module provides tools for the coregistration, and source reconstruction of MEG/EEG data
+utilizing MATLAB and SPM (Statistical Parametric Mapping) functionalities.
+Key operations include:
+
+- Coregistration of head models with MRI and mesh data.
+- Empirical Bayesian Beamformer (EBB) and Multiple Sparse Priors (MSP) source reconstruction
+  algorithms.
+- Utility function for loading source data after source reconstruction.
+"""
+
+import os
 import h5py
 import numpy as np
 from scipy.io import savemat
 from scipy.sparse import csc_matrix
-import tempfile
-import os
 
 from lameg.util import load_meg_sensor_data, spm_context, batch
-from lameg.surf import smoothmesh_multilayer_mm
-import matlab
+from lameg.surf import smoothmesh_multilayer_mm # pylint: disable=no-name-in-module
+import matlab # pylint: disable=wrong-import-order
 
 
 def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=True, spm_instance=None):
     """
     Run head coregistration.
 
-    This function interfaces with MATLAB to perform head coregistration on MEG/EEG data using an MRI and mesh
+    This function interfaces with MATLAB to perform head coregistration on MEG/EEG data using an
+    MRI and mesh
 
     Parameters:
     nas (list): NASion fiducial coordinates.
@@ -28,7 +39,8 @@ def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=True, spm_i
 
     Notes:
         - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
-        - The function will automatically close the standalone SPM instance if it was started within the function.
+        - The function will automatically close the standalone SPM instance if it was started
+          within the function.
     """
 
     # Define the structured dtype for 'specification' with nested 'type'
@@ -94,14 +106,15 @@ def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=True, spm_i
     batch(cfg, viz=viz, spm_instance=spm_instance)
 
 
-def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, foi=None, woi=None, hann_windowing=False,
-               n_folds=1, ideal_pc_test=0, viz=True, return_mu_matrix=False, spm_instance=None):
+def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, foi=None, woi=None,
+               hann_windowing=False, n_folds=1, ideal_pc_test=0, viz=True, return_mu_matrix=False,
+               spm_instance=None):
     """
     Run the Empirical Bayesian Beamformer (EBB) source reconstruction algorithm.
 
-    This function interfaces with MATLAB to perform EBB source reconstruction on MEG/EEG data. It involves mesh
-    smoothing and running the EBB algorithm in MATLAB. The MEG/EEG data must already be coregistered with the given
-    mesh.
+    This function interfaces with MATLAB to perform EBB source reconstruction on MEG/EEG data.
+    It involves mesh smoothing and running the EBB algorithm in MATLAB. The MEG/EEG data must
+    already be coregistered with the given mesh.
 
     Parameters:
     mesh_fname (str): Filename of the mesh data.
@@ -113,20 +126,22 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
     woi (list, optional): Window of interest as [start, end]. Default is [-np.inf, np.inf].
     hann_windowing (int, option): Whether or not to perform Hann windowing. Default is False
     n_folds (int): Number of cross validation folds. Must be >1 for cross validation error
-    ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integer number of channels)
+    ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integer
+                           number of channels)
     viz (boolean, optional): Whether or not to show SPM visualization. Default is True
     mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
-    return_mu_matrix (boolean, optional): Whether or not to return the matrix needed to reconstruct source activity.
-                                          Default is False
+    return_mu_matrix (boolean, optional): Whether or not to return the matrix needed to reconstruct
+                                          source activity. Default is False
     spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
 
     Returns:
-    list: A list containing the free energy, cross validation error (cv_err), and the matrix needed to reconstruct
-    source activity (mu_matrix; if return_mu_matrix is True).
+    list: A list containing the free energy, cross validation error (cv_err), and the matrix needed
+          to reconstruct source activity (mu_matrix; if return_mu_matrix is True).
 
     Notes:
         - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
-        - The function will automatically close the standalone SPM instance if it was started within the function.
+        - The function will automatically close the standalone SPM instance if it was started
+          within the function.
     """
     if woi is None:
         woi = [-np.inf, np.inf]
@@ -143,10 +158,14 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
     with spm_context(spm_instance) as spm:
         # Construct new file name with added '_testmodes.mat'
         spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
-        spatialmodename, Nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(data_fname, matlab.double([]),
-                                                                          spatialmodesname,
-                                                                          float(n_folds), float(ideal_pc_test),
-                                                                          nargout=3)
+        spatialmodename, nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(
+            data_fname,
+            matlab.double([]),
+            spatialmodesname,
+            float(n_folds),
+            float(ideal_pc_test),
+            nargout=3
+        )
 
     cfg = {
         "spm": {
@@ -173,7 +192,7 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
                                 },
                                 "patchfwhm": -float(patch_size),
                                 "mselect": float(0),
-                                "nsmodes": float(Nmodes),
+                                "nsmodes": float(nmodes),
                                 "umodes": np.asarray([spatialmodename], dtype="object"),
                                 "ntmodes": float(n_temp_modes),
                                 "priors": {
@@ -193,34 +212,36 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
     batch(cfg, viz=viz, spm_instance=spm_instance)
 
     with h5py.File(data_fname, 'r') as file:
-        free_energy = np.squeeze(file[file['D']['other']['inv'][0][0]]['inverse']['crossF'][()])
-        cv_err = np.squeeze(file[file['D']['other']['inv'][0][0]]['inverse']['crosserr'][()])
+        inverse_struct = file[file['D']['other']['inv'][0][0]]['inverse']
 
-        m_data = file[file['D']['other']['inv'][0][0]]['inverse']['M']['data'][()]
-        m_ir = file[file['D']['other']['inv'][0][0]]['inverse']['M']['ir'][()]
-        m_jc = file[file['D']['other']['inv'][0][0]]['inverse']['M']['jc'][()]
-        U = file[file[file['D']['other']['inv'][0][0]]['inverse']['U'][0][0]][()]
+        free_energy = np.squeeze(inverse_struct['crossF'][()])
+        cv_err = np.squeeze(inverse_struct['crosserr'][()])
+
+        m_data = inverse_struct['M']['data'][()]
+        m_ir = inverse_struct['M']['ir'][()]
+        m_jc = inverse_struct['M']['jc'][()]
+        data_reduction_mat = file[inverse_struct['U'][0][0]][()]
 
     if not return_mu_matrix:
         return [free_energy, cv_err]
-    else:
-        # Reconstruct the sparse matrix
-        num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
-        num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
-        M = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
-        mu_matrix = (M @ U)
-        return [free_energy, cv_err, mu_matrix]
+
+    # Reconstruct the sparse matrix
+    num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
+    num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
+    weighting_mat = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
+    mu_matrix = weighting_mat @ data_reduction_mat
+    return [free_energy, cv_err, mu_matrix]
 
 
-def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_temp_modes=4, foi=None,
-               woi=None, hann_windowing=False, n_folds=1, ideal_pc_test=0, viz=True, return_mu_matrix=False,
-               spm_instance=None):
+def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_temp_modes=4,
+               foi=None, woi=None, hann_windowing=False, n_folds=1, ideal_pc_test=0, viz=True,
+               return_mu_matrix=False, spm_instance=None):
     """
     Run the Multiple Sparse Priors (MSP) source reconstruction algorithm.
 
-    This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data. It involves mesh
-    smoothing and running the MSP algorithm in MATLAB. The MEG/EEG data must already be coregistered with the given
-    mesh.
+    This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data.
+    It involves mesh smoothing and running the MSP algorithm in MATLAB. The MEG/EEG data must
+    already be coregistered with the given mesh.
 
     Parameters:
     mesh_fname (str): Filename of the mesh data.
@@ -233,19 +254,21 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
     woi (list, optional): Window of interest as [start, end]. Default is [-np.inf, np.inf].
     hann_windowing (int, option): Whether or not to perform Hann windowing. Default is False
     n_folds (int): Number of cross validation folds. Must be >1 for cross validation error
-    ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integer number of channels)
+    ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integer
+                           number of channels)
     viz (boolean, optional): Whether or not to show SPM visualization. Default is True
-    return_mu_matrix (boolean, optional): Whether or not to return the matrix needed to reconstruct source activity.
-                                          Default is False
+    return_mu_matrix (boolean, optional): Whether or not to return the matrix needed to reconstruct
+                                          source activity. Default is False
     spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
 
     Returns:
-    list: A list containing the free energy, cross validation error (cv_err), and the matrix needed to reconstruct
-          source activity (mu_matrix; if return_mu_matrix is True).
+    list: A list containing the free energy, cross validation error (cv_err), and the matrix
+          needed to reconstruct source activity (mu_matrix; if return_mu_matrix is True).
 
     Notes:
         - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
-        - The function will automatically close the standalone SPM instance if it was started within the function.
+        - The function will automatically close the standalone SPM instance if it was started
+          within the function.
         - Priors are adjusted by adding 1 to each index to align with MATLAB's 1-based indexing.
     """
     if foi is None:
@@ -269,8 +292,14 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
     with spm_context(spm_instance) as spm:
         # Construct new file name with added '_testmodes.mat'
         spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
-        spatialmodename, Nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(data_fname, matlab.double([]), spatialmodesname,
-                                                                          float(n_folds), float(ideal_pc_test), nargout=3)
+        spatialmodename, nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(
+            data_fname,
+            matlab.double([]),
+            spatialmodesname,
+            float(n_folds),
+            float(ideal_pc_test),
+            nargout=3
+        )
 
     cfg = {
         "spm": {
@@ -291,7 +320,7 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
                                 "hanning": float(hann_windowing),
                                 "patchfwhm": -float(patch_size),
                                 "mselect": float(0),
-                                "nsmodes": float(Nmodes),
+                                "nsmodes": float(nmodes),
                                 "umodes": np.asarray([spatialmodename], dtype="object"),
                                 "ntmodes": float(n_temp_modes),
                                 "priors": {
@@ -329,33 +358,37 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
     batch(cfg, viz=viz, spm_instance=spm_instance)
 
     with h5py.File(data_fname, 'r') as file:
-        free_energy = np.squeeze(file[file['D']['other']['inv'][0][0]]['inverse']['crossF'][()])
-        cv_err = np.squeeze(file[file['D']['other']['inv'][0][0]]['inverse']['crosserr'][()])
+        inverse_struct = file[file['D']['other']['inv'][0][0]]['inverse']
 
-        m_data = file[file['D']['other']['inv'][0][0]]['inverse']['M']['data'][()]
-        m_ir = file[file['D']['other']['inv'][0][0]]['inverse']['M']['ir'][()]
-        m_jc = file[file['D']['other']['inv'][0][0]]['inverse']['M']['jc'][()]
-        U = file[file[file['D']['other']['inv'][0][0]]['inverse']['U'][0][0]][()]
+        free_energy = np.squeeze(inverse_struct['crossF'][()])
+        cv_err = np.squeeze(inverse_struct['crosserr'][()])
+
+        m_data = inverse_struct['M']['data'][()]
+        m_ir = inverse_struct['M']['ir'][()]
+        m_jc = inverse_struct['M']['jc'][()]
+        data_reduction_mat = file[inverse_struct['U'][0][0]][()]
 
     if not return_mu_matrix:
         return [free_energy, cv_err]
-    else:
-        # Reconstruct the sparse matrix
-        num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
-        num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
-        M = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
-        mu_matrix = (M @ U)
-        return [free_energy, cv_err, mu_matrix]
+
+    # Reconstruct the sparse matrix
+    num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
+    num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
+    weighting_mat = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
+    mu_matrix = weighting_mat @ data_reduction_mat
+    return [free_energy, cv_err, mu_matrix]
 
 
-def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=1, win_size=16,
-                          win_overlap=True, foi=None, hann_windowing=True, viz=True, spm_instance=None):
+def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=1,
+                          win_size=16, win_overlap=True, foi=None, hann_windowing=True, viz=True,
+                          spm_instance=None):
     """
     Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time window.
 
-    This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data within sliding time
-    windows. It involves mesh smoothing and running the MSP algorithm in MATLAB for each time window. The MEG/EEG data
-    must already be coregistered with the given mesh.
+    This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data
+    within sliding time windows. It involves mesh smoothing and running the MSP algorithm in
+    MATLAB for each time window. The MEG/EEG data must already be coregistered with the given
+    mesh.
 
     Parameters:
     prior (float): Index of the vertex to be used as a prior.
@@ -364,8 +397,8 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     n_layers (int): Number of layers in the mesh.
     patch_size (int, optional): Patch size for mesh smoothing. Default is 5.
     n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 1.
-    win_size (float, optional): Size of the sliding window in ms. Default is 16. If you increase win_size, you may
-                                have to increase n_temp_modes.
+    win_size (float, optional): Size of the sliding window in ms. Default is 16. If you increase
+                                win_size, you may have to increase n_temp_modes.
     win_overlap (bool, optional): Whether the windows should overlap. Default is True.
     foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
     hann_windowing (bool, optional): Whether or not to use Hann windowing. Default is True
@@ -373,11 +406,13 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
 
     Returns:
-    list: A list containing the free energy time series (free_energy), and the windows of interest (wois).
+    list: A list containing the free energy time series (free_energy), and the windows of interest
+          (wois).
 
     Notes:
         - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
-        - The function will automatically close the standalone SPM instance if it was started within the function.
+        - The function will automatically close the standalone SPM instance if it was started
+          within the function.
         - The prior index is adjusted by adding 1 to align with MATLAB's 1-based indexing.
     """
     if foi is None:
@@ -391,20 +426,20 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     _, time, _ = load_meg_sensor_data(data_fname)
 
     time = time * 1000  # Convert time to milliseconds
-    dt = time[1] - time[0]  # Compute the difference in time between steps
-    win_steps = int(round(win_size / dt))  # Calculate the number of steps in each window
+    time_step = time[1] - time[0]  # Compute the difference in time between steps
+    win_steps = int(round(win_size / time_step))  # Calculate the number of steps in each window
 
     wois = []
     if win_overlap:
         for t_idx in range(len(time)):
-            win_l = max(0, int(np.ceil(t_idx - win_steps / 2)))  # Adjust index for Python's 0-based indexing
-            win_r = min(len(time) - 1, int(np.floor(t_idx + win_steps / 2)))  # Ensure the index is within the range
+            win_l = max(0, int(np.ceil(t_idx - win_steps / 2)))
+            win_r = min(len(time) - 1, int(np.floor(t_idx + win_steps / 2)))
             woi = [time[win_l], time[win_r]]
-            wois.append(woi)  # Append the window of interest
+            wois.append(woi)
     else:
-        ts = np.linspace(time[0], time[-1], int((time[-1] - time[0]) / win_size + 1))
-        for i in range(1, len(ts)):
-            wois.append([ts[i - 1], ts[i]])
+        time_steps = np.linspace(time[0], time[-1], int((time[-1] - time[0]) / win_size + 1))
+        for i in range(1, len(time_steps)):
+            wois.append([time_steps[i - 1], time_steps[i]])
     wois = np.array(wois, dtype=float)
 
     # Extract directory name and file name without extension
@@ -414,8 +449,14 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     with spm_context(spm_instance) as spm:
         # Construct new file name with added '_testmodes.mat'
         spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
-        spatialmodename, Nmodes, _ = spm.spm_eeg_inv_prep_modes_xval(data_fname, [], spatialmodesname, 1,
-                                                                     0, nargout=3)
+        spatialmodename, nmodes, _ = spm.spm_eeg_inv_prep_modes_xval(
+            data_fname,
+            [],
+            spatialmodesname,
+            1,
+            0,
+            nargout=3
+        )
 
     patchfilename = os.path.join(data_dir, 'patch.mat')
     savemat(patchfilename, {'Ip': np.array([prior], dtype=float)})
@@ -445,7 +486,7 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
                                 },
                                 "patchfwhm": -float(patch_size),
                                 "mselect": float(0),
-                                "nsmodes": float(Nmodes),
+                                "nsmodes": float(nmodes),
                                 "umodes": np.asarray([spatialmodename], dtype="object"),
                                 "ntmodes": float(n_temp_modes),
                                 "priors": {
@@ -473,51 +514,57 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
 
 def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices=None):
     """
-    Load source time series data from specified vertices using precomputed inverse solutions or a lead field matrix.
+    Load source time series data from specified vertices using precomputed inverse solutions or a
+    lead field matrix.
 
-    This function interfaces with MATLAB to extract time series data from specific vertices, based on precomputed
-    inverse solutions, or computes the source time series using a provided lead field matrix.
+    This function interfaces with MATLAB to extract time series data from specific vertices, based
+    on precomputed inverse solutions, or computes the source time series using a provided lead
+    field matrix.
 
     Parameters:
     data_fname (str): Filename or path of the MEG/EEG data file.
     mu_matrix (ndarray, optional): Lead field matrix (source x sensor). Default is None.
-    inv_fname (str, optional): Filename or path of the file containing the inverse solutions. Default is None.
-    vertices (list of int, optional): List of vertex indices from which to extract time series data. Default is None,
-                                      which implies all vertices will be used.
+    inv_fname (str, optional): Filename or path of the file containing the inverse solutions.
+                               Default is None.
+    vertices (list of int, optional): List of vertex indices from which to extract time series
+                                      data. Default is None, which implies all vertices will be
+                                      used.
 
     Returns:
     ndarray: An array containing the extracted source time series data (sources x time x trial).
     ndarray: An array containing the timestamps
 
     Notes:
-    - If 'inv_fname' is not provided, and 'mu_matrix' is None, the inverse solution from the MEG/EEG data file specified
-      by 'data_fname' will be used.
-    - If 'mu_matrix' is provided, the function will compute the source time series directly using the lead field matrix,
-      without the need for precomputed inverse solutions.
+    - If 'inv_fname' is not provided, and 'mu_matrix' is None, the inverse solution from the
+      MEG/EEG data file specified by 'data_fname' will be used.
+    - If 'mu_matrix' is provided, the function will compute the source time series directly using
+      the lead field matrix, without the need for precomputed inverse solutions.
     """
 
-    sensor_data, time, ch_names = load_meg_sensor_data(data_fname)
+    sensor_data, time, _ = load_meg_sensor_data(data_fname)
 
     if mu_matrix is None:
         if inv_fname is None:
             inv_fname = data_fname
 
         with h5py.File(inv_fname, 'r') as file:
-            if not 'inv' in file['D']['other']:
+            if 'inv' not in file['D']['other']:
                 print('Error: source inversion has not been run on this dataset')
                 return None, None, None
 
-            m_data = file[file['D']['other']['inv'][0][0]]['inverse']['M']['data'][()]
-            m_ir = file[file['D']['other']['inv'][0][0]]['inverse']['M']['ir'][()]
-            m_jc = file[file['D']['other']['inv'][0][0]]['inverse']['M']['jc'][()]
-            U = file[file[file['D']['other']['inv'][0][0]]['inverse']['U'][0][0]][()]
+            inverse_struct=file[file['D']['other']['inv'][0][0]]['inverse']
+            m_data = inverse_struct['M']['data'][()]
+            m_ir = inverse_struct['M']['ir'][()]
+            m_jc = inverse_struct['M']['jc'][()]
+            data_reduction_mat = file[inverse_struct['U'][0][0]][()]
+
         # Reconstruct the sparse matrix
         num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
         num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
-        M = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
+        weighting_mat = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
         if vertices is not None:
-            M = M[vertices, :]
-        mu_matrix = (M @ U)
+            weighting_mat = weighting_mat[vertices, :]
+        mu_matrix = weighting_mat @ data_reduction_mat
 
     else:
         if vertices is not None:
