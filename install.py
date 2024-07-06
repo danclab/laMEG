@@ -5,6 +5,7 @@ Python packages, download and install the MATLAB runtime, install the SPM softwa
 configure the necessary environment variables for the system.
 """
 
+import argparse
 import glob
 import os
 import site
@@ -169,8 +170,14 @@ def get_installed_package_dir(package_name):
 def main():
     """
     Main function to orchestrate the setup process.
-    Handles installation, setup, and cleanup of necessary components.
+    Handles installation, setup, and cleanup of necessary components, with an optional flag to skip
+    MATLAB Runtime download and installation.
     """
+    parser = argparse.ArgumentParser(description='Set up the required environment and dependencies.')
+    parser.add_argument('--no_matlab_runtime', action='store_true',
+                        help='Skip downloading and installing the MATLAB Runtime.')
+
+    args = parser.parse_args()
 
     # Install the package first
     install_package()
@@ -181,34 +188,35 @@ def main():
     # Install standalone SPM
     install_spm()
 
-    # Attempt to locate the installed package directory
-    package_dir = get_installed_package_dir('lameg')
+    if not args.no_matlab_runtime:
+        # Attempt to locate the installed package directory
+        package_dir = get_installed_package_dir('lameg')
 
-    matlab_runtime_zip = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                                      'MATLAB_Runtime_R2019a_Update_9_glnxa64.zip')
-    matlab_download_url = (
-        'https://ssd.mathworks.com/supportfiles/downloads/R2019a/Release/9/'
-        'deployment_files/installer/complete/glnxa64/'
-        'MATLAB_Runtime_R2019a_Update_9_glnxa64.zip'
-    )
+        matlab_runtime_zip = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                          'MATLAB_Runtime_R2019a_Update_9_glnxa64.zip')
+        matlab_download_url = (
+            'https://ssd.mathworks.com/supportfiles/downloads/R2019a/Release/9/'
+            'deployment_files/installer/complete/glnxa64/'
+            'MATLAB_Runtime_R2019a_Update_9_glnxa64.zip'
+        )
 
-    # Download MATLAB Runtime
-    download_matlab_runtime(matlab_download_url, matlab_runtime_zip)
-    matlab_runtime_extract_dir = os.path.join(package_dir, 'matlab_runtime')
+        # Download MATLAB Runtime
+        download_matlab_runtime(matlab_download_url, matlab_runtime_zip)
+        matlab_runtime_extract_dir = os.path.join(package_dir, 'matlab_runtime')
 
-    conda_env_path = os.path.dirname(os.path.dirname(sys.executable))
+        conda_env_path = os.path.dirname(os.path.dirname(sys.executable))
 
-    # Extract MATLAB Runtime
-    extracted_path = extract_matlab_runtime(matlab_runtime_zip, matlab_runtime_extract_dir)
+        # Extract MATLAB Runtime
+        extracted_path = extract_matlab_runtime(matlab_runtime_zip, matlab_runtime_extract_dir)
 
-    # Install MATLAB Runtime
-    matlab_runtime_path = install_matlab_runtime(extracted_path)
+        # Install MATLAB Runtime
+        matlab_runtime_path = install_matlab_runtime(extracted_path)
 
-    # Set environment variables in Conda environment scripts
-    create_activate_script(matlab_runtime_path, conda_env_path)
-    create_deactivate_script(conda_env_path)
+        # Set environment variables in Conda environment scripts
+        create_activate_script(matlab_runtime_path, conda_env_path)
+        create_deactivate_script(conda_env_path)
 
-    os.remove(matlab_runtime_zip)
+        os.remove(matlab_runtime_zip)
 
 
 if __name__ == "__main__":
