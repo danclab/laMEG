@@ -282,8 +282,8 @@ def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thr
     white_power_change = (white_exp_power - white_base_power) / white_base_power
 
     # Define ROI
-    pial_t_statistic, _ = ttest_rel_corrected((pial_exp_power - pial_base_power), axis=-1)
-    white_t_statistic, _ = ttest_rel_corrected((white_exp_power - white_base_power), axis=-1)
+    pial_t_statistic, _, _ = ttest_rel_corrected((pial_exp_power - pial_base_power), axis=-1)
+    white_t_statistic, _, _ = ttest_rel_corrected((white_exp_power - white_base_power), axis=-1)
 
     pial_thresh = np.percentile(pial_t_statistic, perc_thresh)
     white_thresh = np.percentile(white_t_statistic, perc_thresh)
@@ -293,10 +293,9 @@ def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thr
     white_roi_power_change = np.mean(white_power_change[roi_idx, :], axis=0)
 
     # Compare power t statistic should be positive (more power in pial layer)
-    laminar_t_statistic, laminar_p_value = ttest_rel_corrected(
+    laminar_t_statistic, deg_of_freedom, laminar_p_value = ttest_rel_corrected(
         np.abs(pial_roi_power_change) - np.abs(white_roi_power_change),
         axis=-1
     )
-    deg_of_freedom = len(pial_roi_power_change)-1
 
     return laminar_t_statistic, laminar_p_value, deg_of_freedom, roi_idx
