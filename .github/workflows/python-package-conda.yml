@@ -16,29 +16,25 @@ jobs:
     - name: Set up Miniconda
       uses: conda-incubator/setup-miniconda@v2
       with:
-        python-version: ${{ matrix.python-version }}
         activate-environment: myenv
         auto-activate-base: false
 
-    - name: Initialize Conda
-      run: conda init bash
-
-    - name: Install dependencies
+    - name: Create and activate environment
       run: |
-        conda install numpy=1.19.5 cython pip pylint pytest
-        conda list
+        conda create -n myenv python=3.7 numpy=1.19.5 cython pip pylint pytest -y
+        echo "source activate myenv" >> $GITHUB_ENV
 
-    - name: Build and install laMEG package
-      shell: bash -l {0}
+    - name: Install dependencies and build package
       run: |
         python install.py
+      shell: bash -l {0}
 
     - name: Lint with pylint
-      shell: bash -l {0}
       run: |
         pylint --rcfile=${{ github.workspace }}/.pylintrc --disable=too-many-arguments,too-many-locals $(git ls-files '*.py')
+      shell: bash -l {0}
 
     - name: Test with pytest
-      shell: bash -l {0}
       run: |
         pytest
+      shell: bash -l {0}
