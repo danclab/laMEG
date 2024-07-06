@@ -17,27 +17,28 @@ jobs:
       uses: conda-incubator/setup-miniconda@v2
       with:
         activate-environment: myenv
+        python-version: ${{ matrix.python-version }}
         auto-activate-base: false
 
     - name: Create and activate environment
       run: |
         conda create -n myenv python=3.7 numpy=1.19.5 cython pip pylint pytest -y
-        echo "source activate myenv" >> $GITHUB_ENV
+        echo "conda activate myenv" >> $BASH_ENV
 
     - name: Install dependencies and build package
       run: |
-        source activate myenv
+        conda activate myenv
         python install.py --no_matlab_runtime
       shell: bash -l {0}
 
     - name: Lint with pylint
       run: |
-        source activate myenv
+        conda activate myenv
         pylint --rcfile=${{ github.workspace }}/.pylintrc --disable=too-many-arguments,too-many-locals $(git ls-files '*.py')
       shell: bash -l {0}
 
     - name: Test with pytest
       run: |
-        source activate myenv
+        conda activate myenv
         pytest
       shell: bash -l {0}
