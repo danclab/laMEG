@@ -137,6 +137,8 @@ def compute_csd(signal, thickness, sfreq, smoothing=None):
         sig, th,
         method = "StandardCSD"
     ).as_array().T
+    csd[:2,:]=0
+    csd[-2:,:]=0
 
     ret_vals=[csd]
 
