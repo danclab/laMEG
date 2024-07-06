@@ -20,15 +20,9 @@ jobs:
         activate-environment: myenv
         auto-activate-base: false
 
-    - name: Create and activate custom Conda environment
-      run: |
-        conda create --name myenv python=${{ matrix.python-version }} --yes
-        echo "conda activate myenv" >> $GITHUB_ENV
-
     - name: Install dependencies and laMEG package
       run: |
         conda install pip
-        python -m pip install --upgrade pip
         python install.py --no_matlab_runtime
 
     - name: Lint with pylint
