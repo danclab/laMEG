@@ -26,6 +26,7 @@ jobs:
         conda init
     - name: Install laMEG package
       run: |
+        conda init
         conda activate lameg
         python install.py --no_matlab_runtime
     - name: Lint with pylint
