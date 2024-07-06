@@ -22,7 +22,7 @@ jobs:
 
     - name: Install dependencies and laMEG package
       run: |
-        conda install pip
+        conda install numpy=1.19.5 cython pip
         python install.py --no_matlab_runtime
 
     - name: Lint with pylint
