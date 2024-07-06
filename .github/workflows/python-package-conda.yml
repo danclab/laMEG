@@ -20,9 +20,12 @@ jobs:
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         echo $CONDA/bin >> $GITHUB_PATH
+    - name: Create environment
+      run: |
+        conda create -n lameg python=${{ matrix.python-version }}
+        conda activate lameg
     - name: Install laMEG package
       run: |
-        python -m pip install --upgrade pip
         python install.py --no_matlab_runtime
     - name: Lint with pylint
       run: |
