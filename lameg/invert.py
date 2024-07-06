@@ -158,7 +158,7 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
     with spm_context(spm_instance) as spm:
         # Construct new file name with added '_testmodes.mat'
         spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
-        spatialmodename, Nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(
+        spatialmodename, nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(
             data_fname,
             matlab.double([]),
             spatialmodesname,
@@ -192,7 +192,7 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
                                 },
                                 "patchfwhm": -float(patch_size),
                                 "mselect": float(0),
-                                "nsmodes": float(Nmodes),
+                                "nsmodes": float(nmodes),
                                 "umodes": np.asarray([spatialmodename], dtype="object"),
                                 "ntmodes": float(n_temp_modes),
                                 "priors": {
@@ -222,13 +222,13 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
 
     if not return_mu_matrix:
         return [free_energy, cv_err]
-    else:
-        # Reconstruct the sparse matrix
-        num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
-        num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
-        M = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
-        mu_matrix = (M @ U)
-        return [free_energy, cv_err, mu_matrix]
+
+    # Reconstruct the sparse matrix
+    num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
+    num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
+    M = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
+    mu_matrix = M @ U
+    return [free_energy, cv_err, mu_matrix]
 
 
 def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_temp_modes=4,
@@ -290,7 +290,7 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
     with spm_context(spm_instance) as spm:
         # Construct new file name with added '_testmodes.mat'
         spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
-        spatialmodename, Nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(
+        spatialmodename, nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(
             data_fname,
             matlab.double([]),
             spatialmodesname,
@@ -318,7 +318,7 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
                                 "hanning": float(hann_windowing),
                                 "patchfwhm": -float(patch_size),
                                 "mselect": float(0),
-                                "nsmodes": float(Nmodes),
+                                "nsmodes": float(nmodes),
                                 "umodes": np.asarray([spatialmodename], dtype="object"),
                                 "ntmodes": float(n_temp_modes),
                                 "priors": {
@@ -366,13 +366,13 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
 
     if not return_mu_matrix:
         return [free_energy, cv_err]
-    else:
-        # Reconstruct the sparse matrix
-        num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
-        num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
-        M = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
-        mu_matrix = (M @ U)
-        return [free_energy, cv_err, mu_matrix]
+
+    # Reconstruct the sparse matrix
+    num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
+    num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
+    M = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
+    mu_matrix = M @ U
+    return [free_energy, cv_err, mu_matrix]
 
 
 def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=1,
@@ -445,7 +445,7 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     with spm_context(spm_instance) as spm:
         # Construct new file name with added '_testmodes.mat'
         spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
-        spatialmodename, Nmodes, _ = spm.spm_eeg_inv_prep_modes_xval(
+        spatialmodename, nmodes, _ = spm.spm_eeg_inv_prep_modes_xval(
             data_fname,
             [],
             spatialmodesname,
@@ -482,7 +482,7 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
                                 },
                                 "patchfwhm": -float(patch_size),
                                 "mselect": float(0),
-                                "nsmodes": float(Nmodes),
+                                "nsmodes": float(nmodes),
                                 "umodes": np.asarray([spatialmodename], dtype="object"),
                                 "ntmodes": float(n_temp_modes),
                                 "priors": {
@@ -557,7 +557,7 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
         M = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
         if vertices is not None:
             M = M[vertices, :]
-        mu_matrix = (M @ U)
+        mu_matrix = M @ U
 
     else:
         if vertices is not None:
