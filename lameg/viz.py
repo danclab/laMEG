@@ -1,19 +1,23 @@
 """
 This module provides tools for converting and visualizing numerical data into color-coded formats.
-It includes functions for mapping data to RGB and hexadecimal color values, performing color normalization,
-and rendering 3D surface visualizations using K3D. Additional utilities are included for plotting
-Current Source Density (CSD) data and handling color transformations.
+It includes functions for mapping data to RGB and hexadecimal color values, performing color
+normalization, and rendering 3D surface visualizations using K3D. Additional utilities are included
+for plotting Current Source Density (CSD) data and handling color transformations.
 
 Functions:
-- data_to_rgb: Converts numerical data into RGB or RGBA color arrays based on a specified colormap and normalization.
+- data_to_rgb: Converts numerical data into RGB or RGBA color arrays based on a specified colormap
+  and normalization.
 - rgbtoint: Converts RGB color lists to a single 32-bit integer color representation.
 - color_map: Maps numerical data to hexadecimal color values suitable for use in visualizations.
-- show_surface: Renders 3D surfaces with optional vertex coloring and interactive features using K3D.
+- show_surface: Renders 3D surfaces with optional vertex coloring and interactive features using
+  K3D.
 - plot_csd: Plots Current Source Density (CSD) data as a 2D image over a specified time range.
 
 Utilities:
-- The module supports various color normalizations including linear, logarithmic, and diverging scales.
-- Includes handling of edge cases and data-specific adjustments to enhance the quality of visual outputs.
+- The module supports various color normalizations including linear, logarithmic, and diverging
+  scales.
+- Includes handling of edge cases and data-specific adjustments to enhance the quality of visual
+  outputs.
 """
 
 import collections
@@ -57,7 +61,7 @@ def data_to_rgb(data, n_bins, cmap, vmin, vmax, vcenter=0.0, ret_map=False, norm
     for br_ix, bin_range in enumerate(bin_ranges):
         map_c = (data >= bin_range[0]) & (data <= bin_range[1])
         color_mapped[map_c,:] = scalar_map.to_rgba(bins[1:][br_ix])
-    
+
     if not ret_map:
         return color_mapped
     return color_mapped, scalar_map
@@ -110,7 +114,7 @@ def color_map(data, cmap, vmin, vmax, n_bins=1000, vcenter=0, norm="TS"):
     return map_colors, c_map
 
 
-def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=False,
+def show_surface(surface, color=None, grid=False, menu=False, vertex_colors=None, info=False,
                  camera_view=None, height=512, opacity=1.0, coords=None, coord_size=1,
                  coord_color=None):
     """
@@ -124,9 +128,9 @@ def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=
     - grid (bool, optional): Toggles the rendering of a grid. Default is False.
     - menu (bool, optional): Toggles the display of a menu with options such as lighting
                              adjustments. Default is False.
-    - colors (array, optional): An array of vertex colors specified as hexadecimal 32-bit color
-                                values. Each color corresponds to a vertex on the surface. Default
-                                is None.
+    - vertex_colors (array, optional): An array of vertex colors specified as hexadecimal 32-bit
+                                       color values. Each color corresponds to a vertex on the
+                                       surface. Default is None.
     - info (bool, optional): If True, prints information about the surface, such as the number of
                              vertices. Default is False.
     - camera_view (array, optional): Specifies a camera view for the rendering. If None, an
@@ -149,20 +153,20 @@ def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=
 
     color = rgbtoint(color)
     coord_color = np.array(coord_color).reshape(-1, 3)
-    
+
     try:
         vertices, faces, _ = surface.agg_data()
     except ValueError:
         vertices, faces = surface.agg_data()
-    
+
     mesh = k3d.mesh(vertices, faces, side="double", color=color, opacity=opacity)
     cam_autofit = camera_view is None
     plot = k3d.plot(
         grid_visible=grid, menu_visibility=menu, camera_auto_fit=cam_autofit, height=height
     )
     plot += mesh
-    if hasattr(colors, "__iter__"):
-        mesh.colors = colors
+    if hasattr(vertex_colors, "__iter__"):
+        mesh.colors = vertex_colors
     else:
         pass
 
@@ -189,7 +193,7 @@ def show_surface(surface, color=None, grid=False, menu=False, colors=None, info=
 
     if camera_view is not None:
         plot.camera=camera_view
-    
+
     plot.display()
     if info:
         print(vertices.shape[0], "vertices")
