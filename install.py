@@ -173,7 +173,8 @@ def main():
     Handles installation, setup, and cleanup of necessary components, with an optional flag to skip
     MATLAB Runtime download and installation.
     """
-    parser = argparse.ArgumentParser(description='Set up the required environment and dependencies.')
+    parser = argparse.ArgumentParser(description=('Set up the required environment and '
+                                                 'dependencies.'))
     parser.add_argument('--no_matlab_runtime', action='store_true',
                         help='Skip downloading and installing the MATLAB Runtime.')
 
