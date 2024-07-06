@@ -218,7 +218,7 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
         m_data = file[file['D']['other']['inv'][0][0]]['inverse']['M']['data'][()]
         m_ir = file[file['D']['other']['inv'][0][0]]['inverse']['M']['ir'][()]
         m_jc = file[file['D']['other']['inv'][0][0]]['inverse']['M']['jc'][()]
-        U = file[file[file['D']['other']['inv'][0][0]]['inverse']['U'][0][0]][()]
+        data_reduction_mat = file[file[file['D']['other']['inv'][0][0]]['inverse']['U'][0][0]][()]
 
     if not return_mu_matrix:
         return [free_energy, cv_err]
@@ -226,8 +226,8 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
     # Reconstruct the sparse matrix
     num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
     num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
-    M = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
-    mu_matrix = M @ U
+    weighting_mat = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
+    mu_matrix = weighting_mat @ data_reduction_mat
     return [free_energy, cv_err, mu_matrix]
 
 
@@ -362,7 +362,7 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
         m_data = file[file['D']['other']['inv'][0][0]]['inverse']['M']['data'][()]
         m_ir = file[file['D']['other']['inv'][0][0]]['inverse']['M']['ir'][()]
         m_jc = file[file['D']['other']['inv'][0][0]]['inverse']['M']['jc'][()]
-        U = file[file[file['D']['other']['inv'][0][0]]['inverse']['U'][0][0]][()]
+        data_reduction_mat = file[file[file['D']['other']['inv'][0][0]]['inverse']['U'][0][0]][()]
 
     if not return_mu_matrix:
         return [free_energy, cv_err]
@@ -370,8 +370,8 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
     # Reconstruct the sparse matrix
     num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
     num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
-    M = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
-    mu_matrix = M @ U
+    weighting_mat = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
+    mu_matrix = weighting_mat @ data_reduction_mat
     return [free_energy, cv_err, mu_matrix]
 
 
@@ -422,8 +422,8 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     _, time, _ = load_meg_sensor_data(data_fname)
 
     time = time * 1000  # Convert time to milliseconds
-    dt = time[1] - time[0]  # Compute the difference in time between steps
-    win_steps = int(round(win_size / dt))  # Calculate the number of steps in each window
+    time_step = time[1] - time[0]  # Compute the difference in time between steps
+    win_steps = int(round(win_size / time_step))  # Calculate the number of steps in each window
 
     wois = []
     if win_overlap:
@@ -433,9 +433,9 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
             woi = [time[win_l], time[win_r]]
             wois.append(woi)
     else:
-        ts = np.linspace(time[0], time[-1], int((time[-1] - time[0]) / win_size + 1))
-        for i in range(1, len(ts)):
-            wois.append([ts[i - 1], ts[i]])
+        time_steps = np.linspace(time[0], time[-1], int((time[-1] - time[0]) / win_size + 1))
+        for i in range(1, len(time_steps)):
+            wois.append([time_steps[i - 1], time_steps[i]])
     wois = np.array(wois, dtype=float)
 
     # Extract directory name and file name without extension
@@ -536,28 +536,28 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
       the lead field matrix, without the need for precomputed inverse solutions.
     """
 
-    sensor_data, time, ch_names = load_meg_sensor_data(data_fname)
+    sensor_data, time, _ = load_meg_sensor_data(data_fname)
 
     if mu_matrix is None:
         if inv_fname is None:
             inv_fname = data_fname
 
         with h5py.File(inv_fname, 'r') as file:
-            if not 'inv' in file['D']['other']:
+            if 'inv' not in file['D']['other']:
                 print('Error: source inversion has not been run on this dataset')
                 return None, None, None
 
             m_data = file[file['D']['other']['inv'][0][0]]['inverse']['M']['data'][()]
             m_ir = file[file['D']['other']['inv'][0][0]]['inverse']['M']['ir'][()]
             m_jc = file[file['D']['other']['inv'][0][0]]['inverse']['M']['jc'][()]
-            U = file[file[file['D']['other']['inv'][0][0]]['inverse']['U'][0][0]][()]
+            data_reduction_mat = file[file[file['D']['other']['inv'][0][0]]['inverse']['U'][0][0]][()]
         # Reconstruct the sparse matrix
         num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
         num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
-        M = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
+        weighting_mat = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
         if vertices is not None:
-            M = M[vertices, :]
-        mu_matrix = M @ U
+            weighting_mat = weighting_mat[vertices, :]
+        mu_matrix = weighting_mat @ data_reduction_mat
 
     else:
         if vertices is not None:
