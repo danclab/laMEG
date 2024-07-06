@@ -1,3 +1,8 @@
+"""
+This module configures the installation setup for the laMEG package, facilitating its installation
+and post-installation steps. It should not be called directly, but rather from install.py
+"""
+
 import os
 import numpy
 from Cython.Build import cythonize
@@ -5,9 +10,14 @@ from setuptools import setup, Extension, find_packages
 from setuptools.command.install import install
 
 class CustomInstall(install):
+    """
+    This class customizes the installation process for the laMEG package.
+    It extends the standard installation process to include post-installation
+    steps, such as enabling k3d Jupyter extensions.
+    """
     def run(self):
         # Run the standard installation process
-        install.run(self)
+        super().run()
 
         # Post-installation: enable k3d for Jupyter
         os.system("jupyter nbextension install --py --user k3d")
