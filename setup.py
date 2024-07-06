@@ -34,6 +34,13 @@ extensions = [
     )
 ]
 
+# Read the long description from the README.md
+with open('README.md', 'r', encoding="utf-8") as f:
+    long_description = f.read()
+
+# Read the requirements from the requirements.txt
+with open('requirements.txt', 'r', encoding="utf-8") as f:
+    install_requires = f.read().splitlines()
 
 setup(
     name='lameg',
@@ -41,10 +48,10 @@ setup(
     author='DANC lab',
     author_email='james.bonaiuto@isc.cnrs.fr',
     description='A toolbox for laminar inference with MEG',
-    long_description=open('README.md', 'r', encoding="utf-8").read(),
+    long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/danclab/laMEG',
-    install_requires=open('requirements.txt', 'r', encoding="utf-8").read().splitlines(),
+    install_requires=install_requires,
     packages=find_packages(include=['lameg', 'lameg.*']),
     ext_modules=cythonize(extensions),
     package_data={
