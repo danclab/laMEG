@@ -21,7 +21,6 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
         activate-environment: myenv
-        environment-file: environment.yml
         auto-activate-base: false
     - name: Install dependencies
       run: |
