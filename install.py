@@ -1,3 +1,9 @@
+"""
+This module automates the installation and setup process for MATLAB and SPM (Statistical Parametric Mapping)
+on a Linux system. It includes functions to install Python packages, download and install the MATLAB runtime,
+install the SPM software, and configure the necessary environment variables for the system.
+"""
+
 import glob
 import os
 import site
@@ -8,10 +14,18 @@ import zipfile
 
 
 def install_package():
+    """
+    Installs the current directory as a pip package.
+    This function assumes the directory contains a setup.py file.
+    """
     subprocess.check_call([sys.executable, "-m", "pip", "install", "."])
 
 
 def install_spm():
+    """
+    Installs the SPM standalone package from a combined CTF file,
+    assumes that the SPM standalone package is present in a subdirectory relative to this script.
+    """
     spm_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'spm')
 
     # Change to the directory containing the spm package standalone
@@ -32,6 +46,11 @@ def install_spm():
 
 
 def download_matlab_runtime(url, save_path):
+    """
+    Downloads the MATLAB runtime from a specified URL to a specified path,
+    ensuring the directory structure is created if it does not exist.
+    """
+
     # Create the directory if it doesn't exist
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     if not os.path.exists(save_path):
@@ -40,6 +59,11 @@ def download_matlab_runtime(url, save_path):
 
 
 def extract_matlab_runtime(zip_path, extract_to):
+    """
+    Extracts the MATLAB runtime from a zip file to a specified directory,
+    sets executable permissions where necessary.
+    """
+
     with zipfile.ZipFile(zip_path, 'r') as zip_ref:
         # Create target directory if it doesn't exist
         os.makedirs(extract_to, exist_ok=True)
@@ -62,6 +86,11 @@ def extract_matlab_runtime(zip_path, extract_to):
 
 
 def install_matlab_runtime(install_dir):
+    """
+    Runs the MATLAB runtime installer script in silent mode with predetermined settings,
+    ensuring all necessary files are properly installed.
+    """
+
     install_script = os.path.join(install_dir, 'install')
     destination_dir = os.path.join(install_dir, 'MATLAB_Runtime')
 
@@ -71,22 +100,42 @@ def install_matlab_runtime(install_dir):
 
     # Run the installation command with the destination folder
     subprocess.check_call(
-        [install_script, '-mode', 'silent', '-agreeToLicense', 'yes', '-destinationFolder', destination_dir])
+        [
+            install_script,
+            '-mode',
+            'silent',
+            '-agreeToLicense',
+            'yes',
+            '-destinationFolder',
+            destination_dir])
     return destination_dir
 
 
 def create_activate_script(matlab_runtime_path, conda_env_path):
+    """
+    Creates a script to set environment variables necessary for MATLAB to function correctly,
+    to be activated with the Conda environment.
+    """
+
     activate_script_dir = os.path.join(conda_env_path, "etc", "conda", "activate.d")
     os.makedirs(activate_script_dir, exist_ok=True)
     activate_script_path = os.path.join(activate_script_dir, "env_vars.sh")
     with open(activate_script_path, "w") as f:
         f.write(f'export MATLAB_RUNTIME_DIR="{matlab_runtime_path}"\n')
         f.write(
-            'export LD_LIBRARY_PATH="${MATLAB_RUNTIME_DIR}/v96/runtime/glnxa64:${MATLAB_RUNTIME_DIR}/v96/bin/glnxa64:${MATLAB_RUNTIME_DIR}/v96/sys/os/glnxa64:$LD_LIBRARY_PATH"\n')
+            'export LD_LIBRARY_PATH="${MATLAB_RUNTIME_DIR}/v96/runtime/glnxa64:'
+            '${MATLAB_RUNTIME_DIR}/v96/bin/glnxa64:'
+            '${MATLAB_RUNTIME_DIR}/v96/sys/os/glnxa64:'
+            '$LD_LIBRARY_PATH"\n'
+        )
         f.write('export XAPPLRESDIR="${MATLAB_RUNTIME_DIR}/v96/X11/app-defaults"\n')
 
 
 def create_deactivate_script(conda_env_path):
+    """
+    Creates a script to unset environment variables when the Conda environment is deactivated.
+    """
+
     deactivate_script_dir = os.path.join(conda_env_path, "etc", "conda", "deactivate.d")
     os.makedirs(deactivate_script_dir, exist_ok=True)
     deactivate_script_path = os.path.join(deactivate_script_dir, "env_vars.sh")
@@ -97,7 +146,11 @@ def create_deactivate_script(conda_env_path):
 
 
 def get_installed_package_dir(package_name):
-    """Check all known site-packages directories for the installed package."""
+    """
+    Searches for an installed package within site-packages directories and returns its path.
+    Raises an exception if the package is not found.
+    """
+
     site_packages = site.getsitepackages()
     for site_package in site_packages:
         potential_path = os.path.join(site_package, package_name)
@@ -108,6 +161,11 @@ def get_installed_package_dir(package_name):
 
 
 def main():
+    """
+    Main function to orchestrate the setup process.
+    Handles installation, setup, and cleanup of necessary components.
+    """
+
     # Install the package first
     install_package()
 
@@ -122,7 +180,11 @@ def main():
 
     matlab_runtime_zip = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                       'MATLAB_Runtime_R2019a_Update_9_glnxa64.zip')
-    matlab_download_url = 'https://ssd.mathworks.com/supportfiles/downloads/R2019a/Release/9/deployment_files/installer/complete/glnxa64/MATLAB_Runtime_R2019a_Update_9_glnxa64.zip'
+    matlab_download_url = (
+        'https://ssd.mathworks.com/supportfiles/downloads/R2019a/Release/9/'
+        'deployment_files/installer/complete/glnxa64/'
+        'MATLAB_Runtime_R2019a_Update_9_glnxa64.zip'
+    )
 
     # Download MATLAB Runtime
     download_matlab_runtime(matlab_download_url, matlab_runtime_zip)
