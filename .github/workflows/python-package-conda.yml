@@ -24,9 +24,9 @@ jobs:
       run: |
         conda create -n lameg python=${{ matrix.python-version }}
         conda init
-        conda activate lameg
     - name: Install laMEG package
       run: |
+        conda activate lameg
         python install.py --no_matlab_runtime
     - name: Lint with pylint
       run: |
