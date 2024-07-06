@@ -1,14 +1,23 @@
+"""
+This module configures the installation setup for the laMEG package, facilitating its installation
+and post-installation steps. It should not be called directly, but rather from install.py
+"""
+
 import os
-import platform
 import numpy
-from setuptools import setup, Extension, find_packages
 from Cython.Build import cythonize
+from setuptools import setup, Extension, find_packages
 from setuptools.command.install import install
 
 class CustomInstall(install):
+    """
+    This class customizes the installation process for the laMEG package.
+    It extends the standard installation process to include post-installation
+    steps, such as enabling k3d Jupyter extensions.
+    """
     def run(self):
         # Run the standard installation process
-        install.run(self)
+        super().run()
 
         # Post-installation: enable k3d for Jupyter
         os.system("jupyter nbextension install --py --user k3d")
@@ -25,6 +34,13 @@ extensions = [
     )
 ]
 
+# Read the long description from the README.md
+with open('README.md', 'r', encoding="utf-8") as f:
+    long_description = f.read()
+
+# Read the requirements from the requirements.txt
+with open('requirements.txt', 'r', encoding="utf-8") as f:
+    install_requires = f.read().splitlines()
 
 setup(
     name='lameg',
@@ -32,14 +48,20 @@ setup(
     author='DANC lab',
     author_email='james.bonaiuto@isc.cnrs.fr',
     description='A toolbox for laminar inference with MEG',
-    long_description=open('README.md').read(),
+    long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/danclab/laMEG',
-    install_requires=open('requirements.txt').read().splitlines(),
+    install_requires=install_requires,
     packages=find_packages(include=['lameg', 'lameg.*']),
     ext_modules=cythonize(extensions),
     package_data={
-        'lameg': ['*.so', 'matlab/*', 'settings.json', 'assets/*', 'assets/big_brain_layer_thickness/*'],
+        'lameg': [
+            '*.so',
+            'matlab/*',
+            'settings.json',
+            'assets/*',
+            'assets/big_brain_layer_thickness/*'
+        ],
     },
     exclude_package_data={
         'lameg': ['assets/big_brain_layer_thickness/*', 'matlab/*'],

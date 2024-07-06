@@ -1,11 +1,25 @@
+"""
+This module provides tools for interfacing with SPM (Statistical Parametric Mapping) software,
+managing MEG sensor data, and working with neuroimaging data in various formats such as NIfTI,
+GIFTI, and MATLAB files. It includes functions for batch processing in SPM, converting data
+formats, loading and processing sensor data, and working with anatomical structures through
+cortical mesh analysis.
+
+Key functionalities include:
+- Context management for SPM operations.
+- Batch processing for neuroimaging tasks.
+- Loading MEG sensor data and managing related file operations.
+- Utility functions for anatomical and spatial data transformations.
+"""
+
 import json
 import os
 import tempfile
+from pathlib import Path
+from contextlib import contextmanager
 
 import numpy as np
 import h5py
-from pathlib import Path
-from contextlib import contextmanager
 import nibabel as nib
 from scipy.io import savemat
 from scipy.spatial import KDTree
@@ -28,11 +42,12 @@ def spm_context(spm=None):
     - If 'spm' is None, the function starts a new standalone SPM instance.
     - The new standalone SPM instance will be closed automatically upon exiting the context.
     - If 'spm' is provided, it will be used as is and not closed automatically.
-    - This function is intended for use in a 'with' statement to ensure proper management of standalone SPM resources.
+    - This function is intended for use in a 'with' statement to ensure proper management of
+      standalone SPM resources.
     """
     # Start standalone SPM
     settings_fname = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settings.json')
-    with open(settings_fname) as settings_file:
+    with open(settings_fname, 'r', encoding="utf-8") as settings_file:
         parameters = json.load(settings_file)
 
     close_spm = False
@@ -64,23 +79,68 @@ def spm_context(spm=None):
 
 
 def batch(cfg, viz=True, spm_instance=None):
+    """
+    Execute a batch processing job in SPM (Statistical Parametric Mapping) using MATLAB.
+
+    This function prepares a configuration for an SPM batch job, saves it to a temporary MATLAB
+    file, and executes it within an SPM instance. The function is capable of running any batch
+    configuration passed to it as long as it adheres to SPM's batch configuration structure.
+    After processing, it cleans up by deleting the temporary file used for the job.
+
+    Parameters:
+    cfg (dict): A dictionary containing the configuration settings for the SPM job. The dictionary
+                should follow the structure required by SPM's matlabbatch system.
+    viz (bool, optional): If True, the SPM GUI will display progress and results, allowing user
+                          interaction. If False, the process runs entirely in the background.
+                          Defaults to True.
+    spm_instance (optional): An instance of an SPM session. If None, a new SPM session is created
+                             and used for the job. Defaults to None.
+
+    Returns:
+    None: This function does not return any value but executes the MATLAB SPM commands specified
+          in the configuration.
+
+    Examples:
+    To run an SPM job with a given configuration, you might call the function as follows:
+
+    ```python
+    cfg = {
+        'spm.stats.fmri_spec.dir': ['/path/to/output'],
+        'spm.stats.fmri_spec.timing.units': 'secs',
+        'spm.stats.fmri_spec.sess': {
+            'scans': ['scan1.nii', 'scan2.nii'],
+            'cond': {
+                'name': 'ExampleCondition',
+                'onset': [10, 30],
+                'duration': [1, 1],
+            },
+            'multi': {'regress': {'name': 'movement', 'val': [1, 0, 1, 0]}}
+        }
+    }
+    batch(cfg, viz=False)
+    ```
+
+    Notes:
+    - The temporary MATLAB file is created in the system's default temp directory.
+    - This function assumes that an SPM and MATLAB environment is properly set up and accessible
+      through the provided `spm_instance` or through a default SPM environment.
+    """
     cfg = {"matlabbatch": [cfg]}
-    f, name = tempfile.mkstemp(suffix=".mat")
-    savemat(f, cfg)
+    file, name = tempfile.mkstemp(suffix=".mat")
+    savemat(file, cfg)
 
     with spm_context(spm_instance) as spm:
         spm.spm_standalone(
-            "eval",
-            f"load('{name}'); spm('defaults', 'EEG'); spm_get_defaults('cmdline',{int(not viz)}); spm_jobman('run', matlabbatch);",
+            (
+                "eval",
+                f"load('{name}'); "
+                f"spm('defaults', 'EEG'); "
+                f"spm_get_defaults('cmdline',{int(not viz)}); "
+                f"spm_jobman('run', matlabbatch);"
+            ),
             nargout=0
         )
     os.remove(name)
-
-
-def get_assets():
-    current_path = Path(os.getcwd())
-    asset_path = current_path.joinpath("assets", "big_brain_layer_thickness")
-    get_files(asset_path, "*.gii", strings=["tpl-fsaverage"])
 
 
 def load_meg_sensor_data(data_fname):
@@ -101,10 +161,11 @@ def load_meg_sensor_data(data_fname):
 
     with h5py.File(data_fname, 'r') as file:
         time_onset = file['D']['timeOnset'][()][0, 0]
-        fs = file['D']['Fsample'][()][0, 0]
+        fsample = file['D']['Fsample'][()][0, 0]
         n_samples = int(file['D']['Nsamples'][()][0, 0])
         n_chans = file['D']['channels']['type'][:].shape[0]
-        chan_bad = np.array([int(file[file['D']['channels']['bad'][:][i, 0]][()][0, 0]) for i in range(n_chans)])
+        chan_bad = np.array([int(file[file['D']['channels']['bad'][:][i, 0]][()][0, 0])
+                             for i in range(n_chans)])
 
         for i in range(n_chans):
             chan_type_data = file[file['D']['channels']['type'][:][i, 0]][()]
@@ -136,7 +197,7 @@ def load_meg_sensor_data(data_fname):
         # Reshape data according to extracted dimensions
         sensor_data = data_array.reshape(data_dims, order='F')[good_meg_channels, :]
 
-    time = np.arange(n_samples) / fs + time_onset
+    time = np.arange(n_samples) / fsample + time_onset
 
     return sensor_data, time, ch_names
 
@@ -151,52 +212,62 @@ def get_surface_names(n_layers, surf_path, orientation_method):
     - orientation_method (str): The method used for orientation in the naming of mesh files.
 
     Returns:
-    - list: A list of strings, where each string is the full file path to a mesh layer file. The list
-            order corresponds to the layers' order, starting from the outermost layer (pial surface)
-            to the innermost layer (white matter surface).
+    - list: A list of strings, where each string is the full file path to a mesh layer file. The
+            list order corresponds to the layers' order, starting from the outermost layer (pial
+            surface) to the innermost layer (white matter surface).
 
     This function assumes a specific naming convention for the mesh files. The outermost layer is
     named as 'pial', the innermost as 'white', and the intermediate layers are named based on their
-    relative position between 1 (pial) and 0 (white), with the position formatted to three decimal places.
+    relative position between 1 (pial) and 0 (white), with the position formatted to three decimal
+    places.
     Each filename also includes an orientation method specifier.
     """
     # Get name of each mesh that makes up the layers of the multilayer mesh
     layers = np.linspace(1, 0, n_layers)
     layer_fnames = []
-    for l, layer in enumerate(layers):
+    for layer in layers:
         if layer == 1:
-            layer_fnames.append(os.path.join(surf_path, f'pial.ds.{orientation_method}.gii'))
-        elif layer > 0 and layer < 1:
-            layer_name = '{:.3f}'.format(layer)
-            layer_fnames.append(os.path.join(surf_path, f'{layer_name}.ds.{orientation_method}.gii'))
+            layer_fnames.append(
+                os.path.join(surf_path, f'pial.ds.{orientation_method}.gii')
+            )
         elif layer == 0:
-            layer_fnames.append(os.path.join(surf_path, f'white.ds.{orientation_method}.gii'))
+            layer_fnames.append(
+                os.path.join(surf_path, f'white.ds.{orientation_method}.gii')
+            )
+        else:
+            layer_name = f'{layer:.3f}'
+            layer_fnames.append(
+                os.path.join(surf_path, f'{layer_name}.ds.{orientation_method}.gii')
+            )
+
     return layer_fnames
 
 
-def fif_spm_conversion(mne_file, res4_file, output_path, prefix="spm_", epoched=None, create_path=False,
-                       spm_instance=None):
+def fif_spm_conversion(mne_file, res4_file, output_path, prefix="spm_", epoched=None,
+                       create_path=False, spm_instance=None):
     """
     Converts *.fif file to SPM data format.
 
     Parameters:
     mne_file (str or pathlib.Path or os.Path): path to the "*-raw.fif" or "*-epo.fif" file
-    res4_file (str or pathlib.Path or os.Path): location of the sensor position data. *.res4 for CTF
+    res4_file (str or pathlib.Path or os.Path): location of the sensor position data. *.res4 for
+                                                CTF
     output_path (str or pathlib.Path or os.Path): location of the converted file
     prefix (str): a string appended to the output_name after conversion. Default: "spm_"
-    epoched (bool): Specify if the data is epoched (True) or not (False), default None will raise an error
+    epoched (bool): Specify if the data is epoched (True) or not (False), default None will raise
+                    an error
     create_path (bool): if True create the non-existent subdirectories of the output path
     spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
 
     Notes:
         - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
-        - The function will automatically close the standalone SPM instance if it was started within the function.
+        - The function will automatically close the standalone SPM instance if it was started
+          within the function.
     """
 
-    if epoched == None:
+    if epoched is None:
         raise ValueError("Please specify if the data is epoched (True) or not (False)")
-    else:
-        epoched = int(epoched)
+    epoched = int(epoched)
 
     # clean things up for matlab
     mne_file = str(mne_file)
@@ -204,7 +275,7 @@ def fif_spm_conversion(mne_file, res4_file, output_path, prefix="spm_", epoched=
     res4_file = str(res4_file)
 
     if create_path:
-        make_directory(output_path)
+        make_directory(output_path, None)
 
     with spm_context(spm_instance) as spm:
         spm.convert_mne_to_spm(
@@ -228,9 +299,9 @@ def check_many(multiple, target, func=None):
     func_dict = {
         "all": all, "any": any
     }
-    if func in func_dict.keys():
+    if func in func_dict:
         use_func = func_dict[func]
-    elif func == None:
+    elif func is None:
         raise ValueError("pick function 'all' or 'any'")
     check_ = []
     for i in multiple:
@@ -238,7 +309,7 @@ def check_many(multiple, target, func=None):
     return use_func(check_)
 
 
-def get_files(target_path, suffix, strings=[""], prefix=None, check="all", depth="all"):
+def get_files(target_path, suffix, strings=(""), prefix=None, check="all", depth="all"):
     """
     Returns a list of the files with specific extension, prefix and name containing
     specific strings. Either all files in the directory or in this directory.
@@ -256,21 +327,27 @@ def get_files(target_path, suffix, strings=[""], prefix=None, check="all", depth
     """
     path = Path(target_path)
     if depth == "all":
-        subdirs = [subdir for subdir in path.rglob(suffix) if check_many(strings, str(subdir.name), check)]
+        subdirs = [subdir for subdir in path.rglob(suffix)
+                   if check_many(strings, str(subdir.name), check)]
         subdirs.sort()
         if isinstance(prefix, str):
             subdirs = [subdir for subdir in subdirs if path.name.startswith(prefix)]
         return subdirs
-    elif depth == "one":
+    if depth == "one":
         subdirs = [subdir for subdir in path.iterdir() if
-                   all([subdir.is_file(), subdir.suffix == suffix[1:], check_many(strings, str(subdir.name), check)])]
+                   all([
+                       subdir.is_file(),
+                       subdir.suffix == suffix[1:],
+                       check_many(strings, str(subdir.name), check)
+                   ])]
         if isinstance(prefix, str):
             subdirs = [subdir for subdir in subdirs if path.name.startswith(prefix)]
         subdirs.sort()
         return subdirs
+    return []
 
 
-def get_directories(target_path, strings=[""], check="all", depth="all"):
+def get_directories(target_path, strings=(""), check="all", depth="all"):
     """
     Returns a list of directories in the path (or all subdirectories) containing
     specified strings.
@@ -285,9 +362,11 @@ def get_directories(target_path, strings=[""], check="all", depth="all"):
     path = Path(target_path)
     subdirs = []
     if depth == "all":
-        subdirs = [subdir for subdir in path.glob("**/") if check_many(strings, str(subdir), check)]
+        subdirs = [subdir for subdir in path.glob("**/")
+                   if check_many(strings, str(subdir), check)]
     elif depth == "one":
-        subdirs = [subdir for subdir in path.iterdir() if subdir.is_dir() if check_many(strings, str(subdir), check)]
+        subdirs = [subdir for subdir in path.iterdir() if subdir.is_dir()
+                   if check_many(strings, str(subdir), check)]
     subdirs.sort()
     return subdirs
 
@@ -309,32 +388,52 @@ def make_directory(root_path, extended_dir, check=False):
         root_path = root_path.joinpath(extended_dir)
 
     root_path.mkdir(parents=True, exist_ok=True)
-    if all([check, root_path.exists()]):
+    if not check and all([check, root_path.exists()]):
         return root_path
-    elif check:
-        return root_path.exists()
+    return root_path.exists()
 
 
 def check_maj(list_to_check):
+    """
+    Determine the majority element in a given list.
+
+    This function checks if there is a majority element in the first half-plus-one elements of the
+    list. If all elements in this subset are the same, it returns that element as the majority. If
+    not, it calculates the most frequent element in the entire list and returns it.
+
+    Parameters:
+    list_to_check (list): A list of elements among which to find the majority element.
+
+    Returns:
+    The element that appears most frequently in the list. If the majority is found in the first half
+    of the list, that element is returned immediately.
+
+    Raises:
+    ValueError: If the input list is empty.
+
+    Notes:
+    - If multiple elements have the same maximum frequency, the function returns the first one
+      encountered in the list.
+    """
     list_len = len(list_to_check)
     majority = list_len // 2 + 1
     if len(set(list_to_check[:majority])) == 1:
         return list_to_check[0]
-    else:
-        item, count = np.unique(list_to_check, return_counts=True)
-        return item[np.argmax(count)]
+    item, count = np.unique(list_to_check, return_counts=True)
+    return item[np.argmax(count)]
 
 
 def convert_fsaverage_to_native(subj_id, hemi, vert_idx):
     """
     Convert a vertex index from fsaverage to a subject's native surface space.
 
-    This function takes a vertex index from the fsaverage template surface and finds the corresponding
-    vertex index in a subject's native surface space. It loads the fsaverage spherical surface, identifies the
-    coordinates of the given vertex index, and then finds the nearest corresponding vertex on the subject's
-    registered spherical surface. If the hemisphere is right, it adjusts the index by adding the number of vertices
-    in the left hemisphere pial surface so that it matches the combined hemishere mesh. It returns the adjusted vertex
-    index in the subject's native space.
+    This function takes a vertex index from the fsaverage template surface and finds the
+    corresponding vertex index in a subject's native surface space. It loads the fsaverage
+    spherical surface, identifies the coordinates of the given vertex index, and then finds the
+    nearest corresponding vertex on the subject's registered spherical surface. If the hemisphere
+    is right, it adjusts the index by adding the number of vertices in the left hemisphere pial
+    surface so that it matches the combined hemishere mesh. It returns the adjusted vertex index in
+    the subject's native space.
 
     Parameters:
     subj_id (str): The subject identifier for which the conversion is being performed.
@@ -342,14 +441,15 @@ def convert_fsaverage_to_native(subj_id, hemi, vert_idx):
     vert_idx (int): Index of the vertex in the fsaverage surface to be converted.
 
     Returns:
-    int: Index of the vertex on the subject's native surface that corresponds to the input vertex index.
+    int: Index of the vertex on the subject's native surface that corresponds to the input vertex
+         index.
     """
 
     fs_subjects_dir = os.getenv('SUBJECTS_DIR')
     fs_subject_dir = os.path.join(fs_subjects_dir, subj_id)
 
     # Load fsaverage sphere
-    fsaverage_sphere_vertices, fsaverage_sphere_faces = nib.freesurfer.read_geometry(
+    fsaverage_sphere_vertices, _ = nib.freesurfer.read_geometry(
         os.path.join(fs_subjects_dir, 'fsaverage', 'surf', f'{hemi}.sphere.reg')
     )
 
@@ -361,11 +461,13 @@ def convert_fsaverage_to_native(subj_id, hemi, vert_idx):
 
     # Get the index of the nearest vertex on the subject sphere
     kdtree = KDTree(subj_sphere.darrays[0].data)
-    dist, subj_v_idx = kdtree.query(fsave_sphere_coord, k=1)
+    _, subj_v_idx = kdtree.query(fsave_sphere_coord, k=1)
 
     # Adjust vertex index for right hemishphere
     if hemi=='rh':
-        lh_vertices, lh_faces = nib.freesurfer.read_geometry(os.path.join(fs_subject_dir, 'surf', 'lh.pial'))
+        lh_vertices, _ = nib.freesurfer.read_geometry(
+            os.path.join(fs_subject_dir, 'surf', 'lh.pial')
+        )
         subj_v_idx += lh_vertices.shape[0]
 
     return subj_v_idx
@@ -375,20 +477,24 @@ def convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord):
     """
     Convert coordinates from a subject's native surface space to the fsaverage surface space.
 
-    This function maps a vertex coordinate from a subject's native combined pial surface to the corresponding
-    vertex index in the fsaverage template space. It does this by determining which hemisphere the
-    vertex belongs to based on the closest match in the left and right hemispheres' pial surfaces.
-    It then finds the nearest vertex in the subject's registered spherical surface, maps this to the
-    nearest vertex in the fsaverage spherical surface, and returns the index of this fsaverage vertex.
+    This function maps a vertex coordinate from a subject's native combined pial surface to the
+    corresponding vertex index in the fsaverage template space. It does this by determining which
+    hemisphere the vertex belongs to based on the closest match in the left and right hemispheres'
+    pial surfaces. It then finds the nearest vertex in the subject's registered spherical surface,
+    maps this to the nearest vertex in the fsaverage spherical surface, and returns the index of
+    this fsaverage vertex.
 
     Parameters:
     subj_id (str): The subject identifier for which the conversion is being performed.
     subj_surf_dir (str): The path containing the laMEG-processed subject surfaces
-    subj_coord (array-like): The x, y, z coordinates on the subject's combined hemisphere pial surface to be converted.
+    subj_coord (array-like): The x, y, z coordinates on the subject's combined hemisphere pial
+                             surface to be converted.
 
     Returns:
-    str: The hemisphere the vertex is found in ('lh' for left hemisphere, 'rh' for right hemisphere).
-    int: Index of the vertex on the fsaverage spherical surface that corresponds to the input coordinates.
+    str: The hemisphere the vertex is found in ('lh' for left hemisphere, 'rh' for right
+         hemisphere).
+    int: Index of the vertex on the fsaverage spherical surface that corresponds to the input
+         coordinates.
     """
     fs_subjects_dir = os.getenv('SUBJECTS_DIR')
     fs_subject_dir = os.path.join(fs_subjects_dir, subj_id)
@@ -412,58 +518,65 @@ def convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord):
         hemi = 'rh'
         vert_idx = rh_vert_idx
 
-    subj_sphere_vertices, subj_faces = nib.freesurfer.read_geometry(os.path.join(fs_subject_dir, 'surf', f'{hemi}.sphere.reg'))
+    subj_sphere_vertices, _ = nib.freesurfer.read_geometry(
+        os.path.join(fs_subject_dir, 'surf', f'{hemi}.sphere.reg')
+    )
 
     # Get the coordinate of the corresponding vertex on the registered subject sphere
     subj_sphere_coord = subj_sphere_vertices[vert_idx, :]
 
     # Load FS-average sphere
-    fsaverage_sphere_vertices, fsaverage_sphere_faces = nib.freesurfer.read_geometry(
+    fsaverage_sphere_vertices, _ = nib.freesurfer.read_geometry(
         os.path.join(fs_subjects_dir, 'fsaverage', 'surf', f'{hemi}.sphere.reg')
     )
 
     # Get the index of the nearest vertex on the fsaverage sphere
     kdtree = KDTree(fsaverage_sphere_vertices)
-    dist, fsave_v_idx = kdtree.query(subj_sphere_coord, k=1)
+    _, fsave_v_idx = kdtree.query(subj_sphere_coord, k=1)
 
     return hemi, fsave_v_idx
 
 
-def ttest_rel_corrected(x, correction=0, tail=0, axis=0):
+def ttest_rel_corrected(data, correction=0, tail=0, axis=0):
     """
     Perform a corrected paired t-test on a sample of data.
 
-    This function handles missing data (NaNs) and applies a variance correction to the t-test calculation.
+    This function handles missing data (NaNs) and applies a variance correction to the t-test
+    calculation.
     It computes the t-statistic and corresponding p-value for the hypothesis test.
 
     Parameters:
-    x (array_like): A 2-D array containing the sample data. NaN values are allowed and are handled appropriately.
-    correction (float, optional): The correction value to be added to the variance to avoid division by zero issues.
-                                  If set to 0 (default), an automatic correction of 0.01 * max(variance) is applied.
+    data (array_like): A 2-D array containing the sample data. NaN values are allowed and are
+                       handled appropriately.
+    correction (float, optional): The correction value to be added to the variance to avoid
+                                  division by zero issues. If set to 0 (default), an automatic
+                                  correction of 0.01 * max(variance) is applied.
     tail (int, optional): Specifies the type of t-test to be performed.
-                          0 for a two-tailed test (default), 1 for a right one-tailed test, -1 for a left one-tailed
-                          test.
+                          0 for a two-tailed test (default), 1 for a right one-tailed test, -1 for
+                          a left one-tailed test.
     axis (int, optional): Axis along which to perform the t-test. Default is 0.
 
     Returns:
-    tuple: A tuple containing the t-statistic (float) and the p-value (float) for the test.
+    tuple: A tuple containing the t-statistic (float), degrees of freedom (int), and the p-value
+           (float) for the test.
 
     Notes:
     - The function handles NaNs by computing the sample size, mean, and variance ignoring NaNs.
-    - The degrees of freedom (df) for the t-test is computed as maximum(sample size - 1, 0).
+    - The degrees of freedom (deg_of_freedom) for the t-test is computed as
+      maximum(sample size - 1, 0).
     - The standard error of the mean (ser) is adjusted with the variance correction.
     - The p-value is computed based on the specified tail type of the t-test.
     """
     # Handle NaNs
-    nans = np.isnan(x)
+    nans = np.isnan(data)
     if np.any(nans):
         samplesize = np.sum(~nans, axis=axis)
     else:
-        samplesize = x.shape[axis]
+        samplesize = data.shape[axis]
 
-    df = np.maximum(samplesize - 1, 0)
-    xmean = np.nanmean(x, axis=axis)
-    varpop = np.nanvar(x, axis=axis)
+    deg_of_freedom = np.maximum(samplesize - 1, 0)
+    xmean = np.nanmean(data, axis=axis)
+    varpop = np.nanvar(data, axis=axis)
 
     # Apply correction
     if correction == 0:
@@ -474,28 +587,27 @@ def ttest_rel_corrected(x, correction=0, tail=0, axis=0):
     tval = (xmean - 0) / ser
 
     # Compute p-value
-    p = np.inf
+    p_val = np.inf
     if tail == 0:  # two-tailed test
-        p = 2 * t.sf(np.abs(tval), df)
+        p_val = 2 * t.sf(np.abs(tval), deg_of_freedom)
     elif tail == 1:  # right one-tailed test
-        p = t.sf(-tval, df)
+        p_val = t.sf(-tval, deg_of_freedom)
     elif tail == -1:  # left one-tailed test
-        p = t.cdf(tval, df)
+        p_val = t.cdf(tval, deg_of_freedom)
 
-    return tval, p
+    return tval, deg_of_freedom, p_val
 
 
-def calc_prop(x):
+def calc_prop(vec):
     """
     from independent thickness to overall proportion, while respecting the zeros
     """
-    sum_ = np.sum(x)
+    sum_ = np.sum(vec)
     if sum_ == 0.0:
-        return x
-    else:
-        x = np.cumsum(x) / sum_
-        return x
-    
+        return vec
+    vec = np.cumsum(vec) / sum_
+    return vec
+
 
 def big_brain_proportional_layer_boundaries(overwrite=False):
     """
@@ -503,21 +615,22 @@ def big_brain_proportional_layer_boundaries(overwrite=False):
     fsaverage converted Big Brain atlas, included in the laMEG.
     
     Function uses the included fsaverage converted Big Brain cortical thickness atlas to calculate
-    normalised distances between cortical layer (from layer 1 to layer 6) boundaries (values between 0 and 1).
-    To speed up the computation, the results are stored in the numpy dictionary.
+    normalised distances between cortical layer (from layer 1 to layer 6) boundaries (values
+    between 0 and 1). To speed up the computation, the results are stored in the numpy dictionary.
     
     Parameters:
     overwrite (bool): overwrite the existing file
     
     Returns:
-    bb_data (dict): dictionary (keys: "lh", "rh") with arrays containing layer boundaries for each vertex in the hemisphere
+    bb_data (dict): dictionary (keys: "lh", "rh") with arrays containing layer boundaries for each
+                    vertex in the hemisphere
     
     """
 
     asset_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), './assets')
 
-    BBL_file = os.path.join(asset_path, "proportional_layer_boundaries.npy")
-    if any([not os.path.exists(BBL_file), overwrite]):
+    bbl_file = os.path.join(asset_path, "proportional_layer_boundaries.npy")
+    if any([not os.path.exists(bbl_file), overwrite]):
         bb_l_paths = get_files(asset_path, "*.gii", strings=["tpl-fsaverage", "hemi-L"])
         bb_l_paths.sort()
         bb_r_paths = get_files(asset_path, "*.gii", strings=["tpl-fsaverage", "hemi-R"])
@@ -526,44 +639,46 @@ def big_brain_proportional_layer_boundaries(overwrite=False):
             "lh": np.array([nib.load(p).agg_data() for p in bb_l_paths]),
             "rh": np.array([nib.load(p).agg_data() for p in bb_r_paths])
         }
-        
+
         bb_data = {
-           k: np.apply_along_axis(calc_prop, 0, bb_data[k]) for k in bb_data.keys()
+           key: np.apply_along_axis(calc_prop, 0, value) for key, value in bb_data.items()
         }
-        np.save(BBL_file, bb_data)
-        return bb_data
-    
-    else:
-        bb_data = np.load(BBL_file, allow_pickle=True).item()
+        np.save(bbl_file, bb_data)
         return bb_data
 
+    bb_data = np.load(bbl_file, allow_pickle=True).item()
+    return bb_data
 
-def get_BB_layer_boundaries(subj_id, subj_surf_dir, subj_coord):
+
+def get_bigbrain_layer_boundaries(subj_id, subj_surf_dir, subj_coord):
     """
-    Get the cortical layer boundaries based on Big Brain atlas for a specified coordinate
-    in the subject's downsampled combined space.
+    Get the cortical layer boundaries based on Big Brain atlas for a specified coordinate in the
+    subject's downsampled combined space.
     
-    Function maps a vertex coordinate from a subject's native combined pial surface to the corresponding
-    vertex index in the fsaverage template space, in a specific hemisphere. Then, the proportional layer
-    boundaries (6 values between 0 and 1) from fsaverage converted Big Brain atlas are returned (from layer 1 to layer 6).
-    To get the subjects prpportional values, those values have to be multiplied by the observed cortical thickness.
+    Function maps a vertex coordinate from a subject's native combined pial surface to the
+    corresponding vertex index in the fsaverage template space, in a specific hemisphere. Then,
+    the proportional layer boundaries (6 values between 0 and 1) from fsaverage converted Big
+    Brain atlas are returned (from layer 1 to layer 6). To get the subjects prpportional values,
+    those values have to be multiplied by the observed cortical thickness.
     
     Parameters:
     subj_id (str): The subject identifier for which the conversion is being performed.
     subj_surf_dir (str): The path containing the laMEG-processed subject surfaces
-    subj_coord (array-like): The x, y, z coordinates on the subject's combined hemisphere pial surface to be converted.
+    subj_coord (array-like): The x, y, z coordinates on the subject's combined hemisphere pial
+                             surface to be converted.
     
     Returns:
-    vert_bb_prop (array-like): proportional layer boundaries (6 values between 0 and 1) from fsaverage converted Big Brain atlas
+    vert_bb_prop (array-like): proportional layer boundaries (6 values between 0 and 1) from
+                               fsaverage converted Big Brain atlas
 
     """
     # convert subj_coord to native + hemisphere
     hemi, fsave_v_idx = convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord)
-    
+
     # compute or read (if the precomputed atlas is present)
     bb_prop = big_brain_proportional_layer_boundaries()
-    
+
     # get the layer boundaries from the fsaverage vertex
     vert_bb_prop = bb_prop[hemi][:,fsave_v_idx]
-    
+
     return vert_bb_prop
