@@ -16,14 +16,14 @@ jobs:
     - name: Set up Miniconda
       uses: conda-incubator/setup-miniconda@v2
       with:
-        activate-environment: myenv
         python-version: ${{ matrix.python-version }}
+        activate-environment: myenv
         auto-activate-base: false
 
-    - name: Create and activate environment
+    - name: Create environment
       run: |
         conda create -n myenv python=3.7 numpy=1.19.5 cython pip pylint pytest -y
-        echo "conda activate myenv" >> $BASH_ENV
+      shell: bash -l {0}
 
     - name: Install dependencies and build package
       run: |
