@@ -20,9 +20,6 @@ jobs:
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         echo $CONDA/bin >> $GITHUB_PATH
-    - name: Install dependencies
-      run: |
-        conda env update --name base
     - name: Install laMEG package
       run: |
         python -m pip install --upgrade pip
