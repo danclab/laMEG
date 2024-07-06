@@ -20,15 +20,10 @@ jobs:
         activate-environment: myenv
         auto-activate-base: false
 
-#    - name: Create environment
-#      run: |
-#        conda create -n myenv python=3.7 numpy=1.19.5 cython pip pylint pytest -y
-#      shell: bash -l {0}
-
     - name: Install dependencies and build package
       run: |
         conda activate myenv
-        python install.py --no_matlab_runtime
+        python install.py
       shell: bash -l {0}
 
     - name: Lint with pylint
