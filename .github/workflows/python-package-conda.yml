@@ -23,6 +23,7 @@ jobs:
     - name: Create environment
       run: |
         conda create -n lameg python=${{ matrix.python-version }}
+        conda init
         conda activate lameg
     - name: Install laMEG package
       run: |
