@@ -8,7 +8,7 @@ jobs:
     strategy:
       max-parallel: 5
       matrix:
-        python-version: ["3.7"]
+        python-version: ["3.6"]
 
     steps:
     - uses: actions/checkout@v4
@@ -20,14 +20,12 @@ jobs:
       run: |
         # $CONDA is an environment variable pointing to the root of the miniconda directory
         echo $CONDA/bin >> $GITHUB_PATH
-    - name: Create environment
+    - name: Install dependencies
       run: |
-        conda create -n lameg python=${{ matrix.python-version }}
-        conda init
+        conda install python=${{ matrix.python-version }}
     - name: Install laMEG package
       run: |
-        conda init
-        conda activate lameg
+        python -m pip install --upgrade pip
         python install.py --no_matlab_runtime
     - name: Lint with pylint
       run: |
