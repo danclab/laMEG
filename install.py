@@ -1,7 +1,8 @@
 """
-This module automates the installation and setup process for MATLAB and SPM (Statistical Parametric Mapping)
-on a Linux system. It includes functions to install Python packages, download and install the MATLAB runtime,
-install the SPM software, and configure the necessary environment variables for the system.
+This module automates the installation and setup process for MATLAB and SPM
+(Statistical Parametric Mapping) on a Linux system. It includes functions to install
+Python packages, download and install the MATLAB runtime, install the SPM software, and
+configure the necessary environment variables for the system.
 """
 
 import glob
@@ -120,15 +121,15 @@ def create_activate_script(matlab_runtime_path, conda_env_path):
     activate_script_dir = os.path.join(conda_env_path, "etc", "conda", "activate.d")
     os.makedirs(activate_script_dir, exist_ok=True)
     activate_script_path = os.path.join(activate_script_dir, "env_vars.sh")
-    with open(activate_script_path, "w") as f:
-        f.write(f'export MATLAB_RUNTIME_DIR="{matlab_runtime_path}"\n')
-        f.write(
+    with open(activate_script_path, "w", encoding="utf-8") as out_file:
+        out_file.write(f'export MATLAB_RUNTIME_DIR="{matlab_runtime_path}"\n')
+        out_file.write(
             'export LD_LIBRARY_PATH="${MATLAB_RUNTIME_DIR}/v96/runtime/glnxa64:'
             '${MATLAB_RUNTIME_DIR}/v96/bin/glnxa64:'
             '${MATLAB_RUNTIME_DIR}/v96/sys/os/glnxa64:'
             '$LD_LIBRARY_PATH"\n'
         )
-        f.write('export XAPPLRESDIR="${MATLAB_RUNTIME_DIR}/v96/X11/app-defaults"\n')
+        out_file.write('export XAPPLRESDIR="${MATLAB_RUNTIME_DIR}/v96/X11/app-defaults"\n')
 
 
 def create_deactivate_script(conda_env_path):
@@ -139,10 +140,10 @@ def create_deactivate_script(conda_env_path):
     deactivate_script_dir = os.path.join(conda_env_path, "etc", "conda", "deactivate.d")
     os.makedirs(deactivate_script_dir, exist_ok=True)
     deactivate_script_path = os.path.join(deactivate_script_dir, "env_vars.sh")
-    with open(deactivate_script_path, "w") as f:
-        f.write('unset MATLAB_RUNTIME_DIR\n')
-        f.write('unset LD_LIBRARY_PATH\n')
-        f.write('unset XAPPLRESDIR\n')
+    with open(deactivate_script_path, "w", encoding="utf-8") as out_file:
+        out_file.write('unset MATLAB_RUNTIME_DIR\n')
+        out_file.write('unset LD_LIBRARY_PATH\n')
+        out_file.write('unset XAPPLRESDIR\n')
 
 
 def get_installed_package_dir(package_name):
@@ -156,7 +157,12 @@ def get_installed_package_dir(package_name):
         potential_path = os.path.join(site_package, package_name)
         if os.path.isdir(potential_path):
             return potential_path
-    raise Exception(f"Package {package_name} not found in site-packages directories: {site_packages}")
+    raise FileNotFoundError(
+        (
+            f"Package {package_name} not found in site-packages directories: "
+            f"{site_packages}"
+        )
+    )
 
 
 
