@@ -20,17 +20,28 @@ jobs:
         activate-environment: myenv
         auto-activate-base: false
 
-    - name: Install dependencies and laMEG package
+    - name: Activate Conda environment
       run: |
+        echo "Activating Conda environment..."
         conda activate myenv
-        python install.py --no_matlab_runtime
+
+    - name: Check Python version
+      run: |
+        which python
+        python --version
+
+    - name: Install dependencies
+      run: |
+        conda install numpy=1.19.5 cython pip pylint pytest
+
+    - name: Build and install laMEG package
+      run: |
+        conda run -n myenv python install.py
 
     - name: Lint with pylint
       run: |
-        pip install pylint
-        pylint --rcfile=${{ github.workspace }}/.pylintrc --disable=too-many-arguments,too-many-locals $(git ls-files '*.py')
+        conda run -n myenv pylint --rcfile=${{ github.workspace }}/.pylintrc --disable=too-many-arguments,too-many-locals $(git ls-files '*.py')
 
     - name: Test with pytest
       run: |
-        pip install pytest
-        pytest
+        conda run -n myenv pytest
