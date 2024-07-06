@@ -212,13 +212,15 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
     batch(cfg, viz=viz, spm_instance=spm_instance)
 
     with h5py.File(data_fname, 'r') as file:
-        free_energy = np.squeeze(file[file['D']['other']['inv'][0][0]]['inverse']['crossF'][()])
-        cv_err = np.squeeze(file[file['D']['other']['inv'][0][0]]['inverse']['crosserr'][()])
+        inverse_struct = file[file['D']['other']['inv'][0][0]]['inverse']
 
-        m_data = file[file['D']['other']['inv'][0][0]]['inverse']['M']['data'][()]
-        m_ir = file[file['D']['other']['inv'][0][0]]['inverse']['M']['ir'][()]
-        m_jc = file[file['D']['other']['inv'][0][0]]['inverse']['M']['jc'][()]
-        data_reduction_mat = file[file[file['D']['other']['inv'][0][0]]['inverse']['U'][0][0]][()]
+        free_energy = np.squeeze(inverse_struct['crossF'][()])
+        cv_err = np.squeeze(inverse_struct['crosserr'][()])
+
+        m_data = inverse_struct['M']['data'][()]
+        m_ir = inverse_struct['M']['ir'][()]
+        m_jc = inverse_struct['M']['jc'][()]
+        data_reduction_mat = file[inverse_struct['U'][0][0]][()]
 
     if not return_mu_matrix:
         return [free_energy, cv_err]
@@ -356,13 +358,15 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
     batch(cfg, viz=viz, spm_instance=spm_instance)
 
     with h5py.File(data_fname, 'r') as file:
-        free_energy = np.squeeze(file[file['D']['other']['inv'][0][0]]['inverse']['crossF'][()])
-        cv_err = np.squeeze(file[file['D']['other']['inv'][0][0]]['inverse']['crosserr'][()])
+        inverse_struct = file[file['D']['other']['inv'][0][0]]['inverse']
 
-        m_data = file[file['D']['other']['inv'][0][0]]['inverse']['M']['data'][()]
-        m_ir = file[file['D']['other']['inv'][0][0]]['inverse']['M']['ir'][()]
-        m_jc = file[file['D']['other']['inv'][0][0]]['inverse']['M']['jc'][()]
-        data_reduction_mat = file[file[file['D']['other']['inv'][0][0]]['inverse']['U'][0][0]][()]
+        free_energy = np.squeeze(inverse_struct['crossF'][()])
+        cv_err = np.squeeze(inverse_struct['crosserr'][()])
+
+        m_data = inverse_struct['M']['data'][()]
+        m_ir = inverse_struct['M']['ir'][()]
+        m_jc = inverse_struct['M']['jc'][()]
+        data_reduction_mat = file[inverse_struct['U'][0][0]][()]
 
     if not return_mu_matrix:
         return [free_energy, cv_err]
@@ -523,7 +527,8 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
     inv_fname (str, optional): Filename or path of the file containing the inverse solutions.
                                Default is None.
     vertices (list of int, optional): List of vertex indices from which to extract time series
-                                      data. Default is None, which implies all vertices will be used.
+                                      data. Default is None, which implies all vertices will be
+                                      used.
 
     Returns:
     ndarray: An array containing the extracted source time series data (sources x time x trial).
@@ -547,10 +552,12 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
                 print('Error: source inversion has not been run on this dataset')
                 return None, None, None
 
-            m_data = file[file['D']['other']['inv'][0][0]]['inverse']['M']['data'][()]
-            m_ir = file[file['D']['other']['inv'][0][0]]['inverse']['M']['ir'][()]
-            m_jc = file[file['D']['other']['inv'][0][0]]['inverse']['M']['jc'][()]
-            data_reduction_mat = file[file[file['D']['other']['inv'][0][0]]['inverse']['U'][0][0]][()]
+            inverse_struct=file[file['D']['other']['inv'][0][0]]['inverse']
+            m_data = inverse_struct['M']['data'][()]
+            m_ir = inverse_struct['M']['ir'][()]
+            m_jc = inverse_struct['M']['jc'][()]
+            data_reduction_mat = file[inverse_struct['U'][0][0]][()]
+
         # Reconstruct the sparse matrix
         num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
         num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
