@@ -1,8 +1,7 @@
 import os
-import platform
 import numpy
-from setuptools import setup, Extension, find_packages
 from Cython.Build import cythonize
+from setuptools import setup, Extension, find_packages
 from setuptools.command.install import install
 
 class CustomInstall(install):
@@ -32,14 +31,20 @@ setup(
     author='DANC lab',
     author_email='james.bonaiuto@isc.cnrs.fr',
     description='A toolbox for laminar inference with MEG',
-    long_description=open('README.md').read(),
+    long_description=open('README.md', 'r', encoding="utf-8").read(),
     long_description_content_type='text/markdown',
     url='https://github.com/danclab/laMEG',
-    install_requires=open('requirements.txt').read().splitlines(),
+    install_requires=open('requirements.txt', 'r', encoding="utf-8").read().splitlines(),
     packages=find_packages(include=['lameg', 'lameg.*']),
     ext_modules=cythonize(extensions),
     package_data={
-        'lameg': ['*.so', 'matlab/*', 'settings.json', 'assets/*', 'assets/big_brain_layer_thickness/*'],
+        'lameg': [
+            '*.so',
+            'matlab/*',
+            'settings.json',
+            'assets/*',
+            'assets/big_brain_layer_thickness/*'
+        ],
     },
     exclude_package_data={
         'lameg': ['assets/big_brain_layer_thickness/*', 'matlab/*'],
