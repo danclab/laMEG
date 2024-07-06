@@ -7,9 +7,9 @@ for analyzing laminar current source density and comparing regional brain activi
 across different conditions or layers.
 
 The module leverages external libraries such as NumPy, SciPy, neo, quantities,
-and proprietary tools like MATLAB alongside the SPM toolkit to process and analyze the neuroimaging data.
+and proprietary tools like MATLAB alongside the SPM toolkit.
 Functions provided allow for complex workflows such as sliding window analysis
-for dynamic source reconstruction and laminar analysis for studying fine-grained cortical activity.
+for dynamic source reconstruction and laminar analysis for studying laminar cortical activity.
 
 Key functionalities include:
 - Coregistration of MEG/EEG data with MRI and mesh models.
@@ -24,7 +24,8 @@ import elephant
 import neo
 import quantities as pq
 
-from lameg.invert import invert_ebb, coregister, load_source_time_series, invert_msp, invert_sliding_window
+from lameg.invert import (invert_ebb, coregister, load_source_time_series, invert_msp,
+                          invert_sliding_window)
 from lameg.util import ttest_rel_corrected
 
 
@@ -217,8 +218,8 @@ def compute_csd(signal, thickness, sfreq, smoothing=None):
         smoothed = []
         layer_x = np.linspace(0, 1, num=layers)
         smooth_x = np.linspace(0, 1, num=500)
-        for t in range(time):
-            interp_function = interp1d(layer_x, csd[:, t], kind=smoothing)
+        for t_idx in range(time):
+            interp_function = interp1d(layer_x, csd[:, t_idx], kind=smoothing)
             interp_y = interp_function(smooth_x)
             smoothed.append(interp_y)
         smoothed = np.array(smoothed).T
