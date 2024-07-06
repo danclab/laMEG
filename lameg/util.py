@@ -146,7 +146,7 @@ def load_meg_sensor_data(data_fname):
 
     with h5py.File(data_fname, 'r') as file:
         time_onset = file['D']['timeOnset'][()][0, 0]
-        fs = file['D']['Fsample'][()][0, 0]
+        fsample = file['D']['Fsample'][()][0, 0]
         n_samples = int(file['D']['Nsamples'][()][0, 0])
         n_chans = file['D']['channels']['type'][:].shape[0]
         chan_bad = np.array([int(file[file['D']['channels']['bad'][:][i, 0]][()][0, 0])
@@ -182,7 +182,7 @@ def load_meg_sensor_data(data_fname):
         # Reshape data according to extracted dimensions
         sensor_data = data_array.reshape(data_dims, order='F')[good_meg_channels, :]
 
-    time = np.arange(n_samples) / fs + time_onset
+    time = np.arange(n_samples) / fsample + time_onset
 
     return sensor_data, time, ch_names
 
@@ -210,13 +210,13 @@ def get_surface_names(n_layers, surf_path, orientation_method):
     # Get name of each mesh that makes up the layers of the multilayer mesh
     layers = np.linspace(1, 0, n_layers)
     layer_fnames = []
-    for l, layer in enumerate(layers):
+    for layer in layers:
         if layer == 1:
             layer_fnames.append(
                 os.path.join(surf_path, f'pial.ds.{orientation_method}.gii')
             )
-        elif layer > 0 and layer < 1:
-            layer_name = '{:.3f}'.format(layer)
+        elif not (not (layer > 0) or not (layer < 1)):
+            layer_name = f'{layer:.3f}'
             layer_fnames.append(
                 os.path.join(surf_path, f'{layer_name}.ds.{orientation_method}.gii')
             )
@@ -249,10 +249,9 @@ def fif_spm_conversion(mne_file, res4_file, output_path, prefix="spm_", epoched=
           within the function.
     """
 
-    if epoched == None:
+    if epoched is None:
         raise ValueError("Please specify if the data is epoched (True) or not (False)")
-    else:
-        epoched = int(epoched)
+    epoched = int(epoched)
 
     # clean things up for matlab
     mne_file = str(mne_file)
@@ -260,7 +259,7 @@ def fif_spm_conversion(mne_file, res4_file, output_path, prefix="spm_", epoched=
     res4_file = str(res4_file)
 
     if create_path:
-        make_directory(output_path)
+        make_directory(output_path, None)
 
     with spm_context(spm_instance) as spm:
         spm.convert_mne_to_spm(
@@ -286,7 +285,7 @@ def check_many(multiple, target, func=None):
     }
     if func in func_dict.keys():
         use_func = func_dict[func]
-    elif func == None:
+    elif func is None:
         raise ValueError("pick function 'all' or 'any'")
     check_ = []
     for i in multiple:
@@ -318,7 +317,7 @@ def get_files(target_path, suffix, strings=[""], prefix=None, check="all", depth
         if isinstance(prefix, str):
             subdirs = [subdir for subdir in subdirs if path.name.startswith(prefix)]
         return subdirs
-    elif depth == "one":
+    if depth == "one":
         subdirs = [subdir for subdir in path.iterdir() if
                    all([
                        subdir.is_file(),
@@ -329,6 +328,7 @@ def get_files(target_path, suffix, strings=[""], prefix=None, check="all", depth
             subdirs = [subdir for subdir in subdirs if path.name.startswith(prefix)]
         subdirs.sort()
         return subdirs
+    return []
 
 
 def get_directories(target_path, strings=[""], check="all", depth="all"):
@@ -379,6 +379,27 @@ def make_directory(root_path, extended_dir, check=False):
 
 
 def check_maj(list_to_check):
+    """
+    Determine the majority element in a given list.
+
+    This function checks if there is a majority element in the first half-plus-one elements of the list.
+    If all elements in this subset are the same, it returns that element as the majority. If not, it
+    calculates the most frequent element in the entire list and returns it.
+
+    Parameters:
+    list_to_check (list): A list of elements among which to find the majority element.
+
+    Returns:
+    The element that appears most frequently in the list. If the majority is found in the first half
+    of the list, that element is returned immediately.
+
+    Raises:
+    ValueError: If the input list is empty.
+
+    Notes:
+    - If multiple elements have the same maximum frequency, the function returns the first one encountered
+      in the list.
+    """
     list_len = len(list_to_check)
     majority = list_len // 2 + 1
     if len(set(list_to_check[:majority])) == 1:
