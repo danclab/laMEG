@@ -21,4 +21,4 @@ jobs:
         python install.py --no_matlab_runtime
     - name: Analysing the code with pylint
       run: |
-        pylint --rcfile ./.pylintrc --disable=too-many-arguments,too-many-locals $(git ls-files '*.py')
+        pylint --rcfile ./.pylintrc --ignore=spm --disable=too-many-arguments,too-many-locals $(git ls-files '*.py')

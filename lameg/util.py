@@ -33,7 +33,7 @@ def spm_context(spm=None):
     """
     # Start standalone SPM
     settings_fname = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settings.json')
-    with open(settings_fname) as settings_file:
+    with open(settings_fname, 'r', encoding="utf-8") as settings_file:
         parameters = json.load(settings_file)
 
     close_spm = False
@@ -65,9 +65,54 @@ def spm_context(spm=None):
 
 
 def batch(cfg, viz=True, spm_instance=None):
+    """
+    Execute a batch processing job in SPM (Statistical Parametric Mapping) using MATLAB.
+
+    This function prepares a configuration for an SPM batch job, saves it to a temporary MATLAB file,
+    and executes it within an SPM instance. The function is capable of running any batch configuration
+    passed to it as long as it adheres to SPM's batch configuration structure. After processing, it cleans up
+    by deleting the temporary file used for the job.
+
+    Parameters:
+    cfg (dict): A dictionary containing the configuration settings for the SPM job. The dictionary
+                should follow the structure required by SPM's matlabbatch system.
+    viz (bool, optional): If True, the SPM GUI will display progress and results, allowing user interaction.
+                          If False, the process runs entirely in the background. Defaults to True.
+    spm_instance (optional): An instance of an SPM session. If None, a new SPM session is created
+                             and used for the job. Defaults to None.
+
+    Returns:
+    None: This function does not return any value but executes the MATLAB SPM commands specified
+          in the configuration.
+
+    Examples:
+    To run an SPM job with a given configuration, you might call the function as follows:
+
+    ```python
+    cfg = {
+        'spm.stats.fmri_spec.dir': ['/path/to/output'],
+        'spm.stats.fmri_spec.timing.units': 'secs',
+        'spm.stats.fmri_spec.sess': {
+            'scans': ['scan1.nii', 'scan2.nii'],
+            'cond': {
+                'name': 'ExampleCondition',
+                'onset': [10, 30],
+                'duration': [1, 1],
+            },
+            'multi': {'regress': {'name': 'movement', 'val': [1, 0, 1, 0]}}
+        }
+    }
+    batch(cfg, viz=False)
+    ```
+
+    Notes:
+    - The temporary MATLAB file is created in the system's default temp directory.
+    - This function assumes that an SPM and MATLAB environment is properly set up and accessible
+      through the provided `spm_instance` or through a default SPM environment.
+    """
     cfg = {"matlabbatch": [cfg]}
-    f, name = tempfile.mkstemp(suffix=".mat")
-    savemat(f, cfg)
+    file, name = tempfile.mkstemp(suffix=".mat")
+    savemat(file, cfg)
 
     with spm_context(spm_instance) as spm:
         spm.spm_standalone(
@@ -81,12 +126,6 @@ def batch(cfg, viz=True, spm_instance=None):
             nargout=0
         )
     os.remove(name)
-
-
-def get_assets():
-    current_path = Path(os.getcwd())
-    asset_path = current_path.joinpath("assets", "big_brain_layer_thickness")
-    get_files(asset_path, "*.gii", strings=["tpl-fsaverage"])
 
 
 def load_meg_sensor_data(data_fname):
@@ -532,7 +571,7 @@ def calc_prop(x):
     else:
         x = np.cumsum(x) / sum_
         return x
-    
+
 
 def big_brain_proportional_layer_boundaries(overwrite=False):
     """
@@ -564,13 +603,13 @@ def big_brain_proportional_layer_boundaries(overwrite=False):
             "lh": np.array([nib.load(p).agg_data() for p in bb_l_paths]),
             "rh": np.array([nib.load(p).agg_data() for p in bb_r_paths])
         }
-        
+
         bb_data = {
            k: np.apply_along_axis(calc_prop, 0, bb_data[k]) for k in bb_data.keys()
         }
         np.save(BBL_file, bb_data)
         return bb_data
-    
+
     else:
         bb_data = np.load(BBL_file, allow_pickle=True).item()
         return bb_data
@@ -600,11 +639,11 @@ def get_bigbrain_layer_boundaries(subj_id, subj_surf_dir, subj_coord):
     """
     # convert subj_coord to native + hemisphere
     hemi, fsave_v_idx = convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord)
-    
+
     # compute or read (if the precomputed atlas is present)
     bb_prop = big_brain_proportional_layer_boundaries()
-    
+
     # get the layer boundaries from the fsaverage vertex
     vert_bb_prop = bb_prop[hemi][:,fsave_v_idx]
-    
+
     return vert_bb_prop
