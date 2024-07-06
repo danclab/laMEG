@@ -1,11 +1,11 @@
 import json
 import os
 import tempfile
+from pathlib import Path
+from contextlib import contextmanager
 
 import numpy as np
 import h5py
-from pathlib import Path
-from contextlib import contextmanager
 import nibabel as nib
 from scipy.io import savemat
 from scipy.spatial import KDTree
@@ -68,16 +68,17 @@ def batch(cfg, viz=True, spm_instance=None):
     """
     Execute a batch processing job in SPM (Statistical Parametric Mapping) using MATLAB.
 
-    This function prepares a configuration for an SPM batch job, saves it to a temporary MATLAB file,
-    and executes it within an SPM instance. The function is capable of running any batch configuration
-    passed to it as long as it adheres to SPM's batch configuration structure. After processing, it cleans up
-    by deleting the temporary file used for the job.
+    This function prepares a configuration for an SPM batch job, saves it to a temporary MATLAB
+    file, and executes it within an SPM instance. The function is capable of running any batch
+    configuration passed to it as long as it adheres to SPM's batch configuration structure.
+    After processing, it cleans up by deleting the temporary file used for the job.
 
     Parameters:
     cfg (dict): A dictionary containing the configuration settings for the SPM job. The dictionary
                 should follow the structure required by SPM's matlabbatch system.
-    viz (bool, optional): If True, the SPM GUI will display progress and results, allowing user interaction.
-                          If False, the process runs entirely in the background. Defaults to True.
+    viz (bool, optional): If True, the SPM GUI will display progress and results, allowing user
+                          interaction. If False, the process runs entirely in the background.
+                          Defaults to True.
     spm_instance (optional): An instance of an SPM session. If None, a new SPM session is created
                              and used for the job. Defaults to None.
 
@@ -215,15 +216,16 @@ def get_surface_names(n_layers, surf_path, orientation_method):
             layer_fnames.append(
                 os.path.join(surf_path, f'pial.ds.{orientation_method}.gii')
             )
-        elif not (not (layer > 0) or not (layer < 1)):
-            layer_name = f'{layer:.3f}'
-            layer_fnames.append(
-                os.path.join(surf_path, f'{layer_name}.ds.{orientation_method}.gii')
-            )
         elif layer == 0:
             layer_fnames.append(
                 os.path.join(surf_path, f'white.ds.{orientation_method}.gii')
             )
+        else:
+            layer_name = f'{layer:.3f}'
+            layer_fnames.append(
+                os.path.join(surf_path, f'{layer_name}.ds.{orientation_method}.gii')
+            )
+
     return layer_fnames
 
 
@@ -283,7 +285,7 @@ def check_many(multiple, target, func=None):
     func_dict = {
         "all": all, "any": any
     }
-    if func in func_dict.keys():
+    if func in func_dict:
         use_func = func_dict[func]
     elif func is None:
         raise ValueError("pick function 'all' or 'any'")
@@ -293,7 +295,7 @@ def check_many(multiple, target, func=None):
     return use_func(check_)
 
 
-def get_files(target_path, suffix, strings=[""], prefix=None, check="all", depth="all"):
+def get_files(target_path, suffix, strings=(""), prefix=None, check="all", depth="all"):
     """
     Returns a list of the files with specific extension, prefix and name containing
     specific strings. Either all files in the directory or in this directory.
@@ -331,7 +333,7 @@ def get_files(target_path, suffix, strings=[""], prefix=None, check="all", depth
     return []
 
 
-def get_directories(target_path, strings=[""], check="all", depth="all"):
+def get_directories(target_path, strings=(""), check="all", depth="all"):
     """
     Returns a list of directories in the path (or all subdirectories) containing
     specified strings.
@@ -372,19 +374,18 @@ def make_directory(root_path, extended_dir, check=False):
         root_path = root_path.joinpath(extended_dir)
 
     root_path.mkdir(parents=True, exist_ok=True)
-    if all([check, root_path.exists()]):
+    if not check and all([check, root_path.exists()]):
         return root_path
-    elif check:
-        return root_path.exists()
+    return root_path.exists()
 
 
 def check_maj(list_to_check):
     """
     Determine the majority element in a given list.
 
-    This function checks if there is a majority element in the first half-plus-one elements of the list.
-    If all elements in this subset are the same, it returns that element as the majority. If not, it
-    calculates the most frequent element in the entire list and returns it.
+    This function checks if there is a majority element in the first half-plus-one elements of the
+    list. If all elements in this subset are the same, it returns that element as the majority. If
+    not, it calculates the most frequent element in the entire list and returns it.
 
     Parameters:
     list_to_check (list): A list of elements among which to find the majority element.
@@ -397,16 +398,15 @@ def check_maj(list_to_check):
     ValueError: If the input list is empty.
 
     Notes:
-    - If multiple elements have the same maximum frequency, the function returns the first one encountered
-      in the list.
+    - If multiple elements have the same maximum frequency, the function returns the first one
+      encountered in the list.
     """
     list_len = len(list_to_check)
     majority = list_len // 2 + 1
     if len(set(list_to_check[:majority])) == 1:
         return list_to_check[0]
-    else:
-        item, count = np.unique(list_to_check, return_counts=True)
-        return item[np.argmax(count)]
+    item, count = np.unique(list_to_check, return_counts=True)
+    return item[np.argmax(count)]
 
 
 def convert_fsaverage_to_native(subj_id, hemi, vert_idx):
@@ -435,7 +435,7 @@ def convert_fsaverage_to_native(subj_id, hemi, vert_idx):
     fs_subject_dir = os.path.join(fs_subjects_dir, subj_id)
 
     # Load fsaverage sphere
-    fsaverage_sphere_vertices, fsaverage_sphere_faces = nib.freesurfer.read_geometry(
+    fsaverage_sphere_vertices, _ = nib.freesurfer.read_geometry(
         os.path.join(fs_subjects_dir, 'fsaverage', 'surf', f'{hemi}.sphere.reg')
     )
 
@@ -447,11 +447,11 @@ def convert_fsaverage_to_native(subj_id, hemi, vert_idx):
 
     # Get the index of the nearest vertex on the subject sphere
     kdtree = KDTree(subj_sphere.darrays[0].data)
-    dist, subj_v_idx = kdtree.query(fsave_sphere_coord, k=1)
+    _, subj_v_idx = kdtree.query(fsave_sphere_coord, k=1)
 
     # Adjust vertex index for right hemishphere
     if hemi=='rh':
-        lh_vertices, lh_faces = nib.freesurfer.read_geometry(
+        lh_vertices, _ = nib.freesurfer.read_geometry(
             os.path.join(fs_subject_dir, 'surf', 'lh.pial')
         )
         subj_v_idx += lh_vertices.shape[0]
@@ -504,7 +504,7 @@ def convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord):
         hemi = 'rh'
         vert_idx = rh_vert_idx
 
-    subj_sphere_vertices, subj_faces = nib.freesurfer.read_geometry(
+    subj_sphere_vertices, _ = nib.freesurfer.read_geometry(
         os.path.join(fs_subject_dir, 'surf', f'{hemi}.sphere.reg')
     )
 
@@ -512,18 +512,18 @@ def convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord):
     subj_sphere_coord = subj_sphere_vertices[vert_idx, :]
 
     # Load FS-average sphere
-    fsaverage_sphere_vertices, fsaverage_sphere_faces = nib.freesurfer.read_geometry(
+    fsaverage_sphere_vertices, _ = nib.freesurfer.read_geometry(
         os.path.join(fs_subjects_dir, 'fsaverage', 'surf', f'{hemi}.sphere.reg')
     )
 
     # Get the index of the nearest vertex on the fsaverage sphere
     kdtree = KDTree(fsaverage_sphere_vertices)
-    dist, fsave_v_idx = kdtree.query(subj_sphere_coord, k=1)
+    _, fsave_v_idx = kdtree.query(subj_sphere_coord, k=1)
 
     return hemi, fsave_v_idx
 
 
-def ttest_rel_corrected(x, correction=0, tail=0, axis=0):
+def ttest_rel_corrected(data, correction=0, tail=0, axis=0):
     """
     Perform a corrected paired t-test on a sample of data.
 
@@ -532,8 +532,8 @@ def ttest_rel_corrected(x, correction=0, tail=0, axis=0):
     It computes the t-statistic and corresponding p-value for the hypothesis test.
 
     Parameters:
-    x (array_like): A 2-D array containing the sample data. NaN values are allowed and are
-                    handled appropriately.
+    data (array_like): A 2-D array containing the sample data. NaN values are allowed and are
+                       handled appropriately.
     correction (float, optional): The correction value to be added to the variance to avoid
                                   division by zero issues. If set to 0 (default), an automatic
                                   correction of 0.01 * max(variance) is applied.
@@ -543,24 +543,26 @@ def ttest_rel_corrected(x, correction=0, tail=0, axis=0):
     axis (int, optional): Axis along which to perform the t-test. Default is 0.
 
     Returns:
-    tuple: A tuple containing the t-statistic (float) and the p-value (float) for the test.
+    tuple: A tuple containing the t-statistic (float), degrees of freedom (int), and the p-value
+           (float) for the test.
 
     Notes:
     - The function handles NaNs by computing the sample size, mean, and variance ignoring NaNs.
-    - The degrees of freedom (df) for the t-test is computed as maximum(sample size - 1, 0).
+    - The degrees of freedom (deg_of_freedom) for the t-test is computed as
+      maximum(sample size - 1, 0).
     - The standard error of the mean (ser) is adjusted with the variance correction.
     - The p-value is computed based on the specified tail type of the t-test.
     """
     # Handle NaNs
-    nans = np.isnan(x)
+    nans = np.isnan(data)
     if np.any(nans):
         samplesize = np.sum(~nans, axis=axis)
     else:
-        samplesize = x.shape[axis]
+        samplesize = data.shape[axis]
 
-    df = np.maximum(samplesize - 1, 0)
-    xmean = np.nanmean(x, axis=axis)
-    varpop = np.nanvar(x, axis=axis)
+    deg_of_freedom = np.maximum(samplesize - 1, 0)
+    xmean = np.nanmean(data, axis=axis)
+    varpop = np.nanvar(data, axis=axis)
 
     # Apply correction
     if correction == 0:
@@ -571,27 +573,26 @@ def ttest_rel_corrected(x, correction=0, tail=0, axis=0):
     tval = (xmean - 0) / ser
 
     # Compute p-value
-    p = np.inf
+    p_val = np.inf
     if tail == 0:  # two-tailed test
-        p = 2 * t.sf(np.abs(tval), df)
+        p_val = 2 * t.sf(np.abs(tval), deg_of_freedom)
     elif tail == 1:  # right one-tailed test
-        p = t.sf(-tval, df)
+        p_val = t.sf(-tval, deg_of_freedom)
     elif tail == -1:  # left one-tailed test
-        p = t.cdf(tval, df)
+        p_val = t.cdf(tval, deg_of_freedom)
 
-    return tval, p
+    return tval, deg_of_freedom, p_val
 
 
-def calc_prop(x):
+def calc_prop(vec):
     """
     from independent thickness to overall proportion, while respecting the zeros
     """
-    sum_ = np.sum(x)
+    sum_ = np.sum(vec)
     if sum_ == 0.0:
-        return x
-    else:
-        x = np.cumsum(x) / sum_
-        return x
+        return vec
+    vec = np.cumsum(vec) / sum_
+    return vec
 
 
 def big_brain_proportional_layer_boundaries(overwrite=False):
@@ -614,8 +615,8 @@ def big_brain_proportional_layer_boundaries(overwrite=False):
 
     asset_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), './assets')
 
-    BBL_file = os.path.join(asset_path, "proportional_layer_boundaries.npy")
-    if any([not os.path.exists(BBL_file), overwrite]):
+    bbl_file = os.path.join(asset_path, "proportional_layer_boundaries.npy")
+    if any([not os.path.exists(bbl_file), overwrite]):
         bb_l_paths = get_files(asset_path, "*.gii", strings=["tpl-fsaverage", "hemi-L"])
         bb_l_paths.sort()
         bb_r_paths = get_files(asset_path, "*.gii", strings=["tpl-fsaverage", "hemi-R"])
@@ -626,14 +627,13 @@ def big_brain_proportional_layer_boundaries(overwrite=False):
         }
 
         bb_data = {
-           k: np.apply_along_axis(calc_prop, 0, bb_data[k]) for k in bb_data.keys()
+           key: np.apply_along_axis(calc_prop, 0, value) for key, value in bb_data.items()
         }
-        np.save(BBL_file, bb_data)
+        np.save(bbl_file, bb_data)
         return bb_data
 
-    else:
-        bb_data = np.load(BBL_file, allow_pickle=True).item()
-        return bb_data
+    bb_data = np.load(bbl_file, allow_pickle=True).item()
+    return bb_data
 
 
 def get_bigbrain_layer_boundaries(subj_id, subj_surf_dir, subj_coord):
