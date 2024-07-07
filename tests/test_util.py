@@ -34,7 +34,7 @@ def test_check_many():
         check_many(multiple,target)
     except ValueError:
         val_error=True
-    assert(val_error)
+    assert val_error
 
     multiple=['x','y']
     target='x'
