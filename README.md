@@ -1,6 +1,8 @@
 # laMEG
 Toolbox for laminar inference with MEG
 
+[![Build and Test Python Package with Conda](https://github.com/danclab/laMEG/actions/workflows/python-package-conda.yml/badge.svg)](https://github.com/danclab/laMEG/actions/workflows/python-package-conda.yml)
+
 ## Operating system
 * Windows: may work, but not supported
 * Mac: may work, but not tested
