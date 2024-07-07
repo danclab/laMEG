@@ -131,13 +131,13 @@ def batch(cfg, viz=True, spm_instance=None):
 
     with spm_context(spm_instance) as spm:
         spm.spm_standalone(
-            (
-                "eval",
-                f"load('{name}'); "
-                f"spm('defaults', 'EEG'); "
-                f"spm_get_defaults('cmdline',{int(not viz)}); "
-                f"spm_jobman('run', matlabbatch);"
-            ),
+            "eval",
+            f"""
+            load('{name}'); 
+            spm('defaults', 'EEG');
+            spm_get_defaults('cmdline',{int(not viz)}); 
+            spm_jobman('run', matlabbatch);
+            """,
             nargout=0
         )
     os.remove(name)

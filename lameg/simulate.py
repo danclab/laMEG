@@ -216,13 +216,13 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
             file, name = tempfile.mkstemp(suffix=".mat")
             savemat(file, cfg)
             spm.spm_standalone(
-                (
-                    "eval",
-                    f"load('{name}'); "
-                    f"spm('defaults', 'EEG'); "
-                    f"spm_get_defaults('cmdline',1); "
-                    f"spm_jobman('run', matlabbatch);"
-                ),
+                "eval",
+                f"""
+                load('{name}'); 
+                spm('defaults', 'EEG'); 
+                spm_get_defaults('cmdline',1); 
+                spm_jobman('run', matlabbatch);
+                """,
                 nargout=0
             )
             os.remove(name)
