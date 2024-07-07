@@ -3,7 +3,7 @@ Toolbox for laminar inference with MEG
 
 [![Build and Test Python Package with Conda](https://github.com/danclab/laMEG/actions/workflows/python-package-conda.yml/badge.svg)](https://github.com/danclab/laMEG/actions/workflows/python-package-conda.yml)
 [![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen)](https://github.com/pylint-dev/pylint)
-[![](https://img.shields.io/badge/Python-3.7%7C3.8%7C3.9-blue.svg)](https://www.python.org/downloads/)
+[![](https://img.shields.io/badge/Python-3.7-blue.svg)](https://www.python.org/downloads/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 ## Operating system
@@ -13,7 +13,7 @@ Toolbox for laminar inference with MEG
   
 ## Requirements
 * [FreeSurfer v6.0](https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads), setup and configured (`FREESURFER_HOME` set, `SetUpFreeSurfer.sh` sourced, and `SUBJECTS_DIR` set)
-* Python version 3.7 - 3.9
+* Python version 3.7
 * Anaconda (or miniconda)
 
 ## Installation
