@@ -26,6 +26,11 @@ import numpy as np
 from matplotlib import cm, colors
 import matplotlib.pyplot as plt
 import k3d
+import warnings
+
+warnings.filterwarnings(
+    "ignore", message="^.*A coerced copy has been created.*$"
+)
 
 
 def data_to_rgb(data, n_bins, cmap, vmin, vmax, vcenter=0.0, ret_map=False, norm="TS"):
