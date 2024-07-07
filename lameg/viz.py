@@ -21,12 +21,12 @@ Utilities:
 """
 
 import collections
+import warnings
 
 import numpy as np
 from matplotlib import cm, colors
 import matplotlib.pyplot as plt
 import k3d
-import warnings
 
 warnings.filterwarnings(
     "ignore", message="^.*A coerced copy has been created.*$"
