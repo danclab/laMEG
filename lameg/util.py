@@ -301,7 +301,7 @@ def check_many(multiple, target, func=None):
     }
     if func in func_dict:
         use_func = func_dict[func]
-    elif func is None:
+    else:
         raise ValueError("pick function 'all' or 'any'")
     check_ = []
     for i in multiple:

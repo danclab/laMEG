@@ -76,6 +76,8 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
             spm_instance=spm_instance
         )
 
+        f_val = np.nan
+        cv_err = np.nan
         if method == 'EBB':
             [f_val, cv_err] = invert_ebb(
                 mesh_fname,
