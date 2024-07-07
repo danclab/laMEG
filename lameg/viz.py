@@ -59,6 +59,9 @@ def data_to_rgb(data, n_bins, cmap, vmin, vmax, vcenter=0.0, ret_map=False, norm
         divnorm = colors.Normalize(vmin=vmin, vmax=vmax)
     elif norm == "LOG":
         divnorm = colors.LogNorm(vmin=vmin, vmax=vmax, clip=True)
+    else:
+        raise ValueError("norm must be TS, N, or LOG")
+
     scalar_map = cm.ScalarMappable(divnorm, cmap=cmap)
     bins = np.histogram_bin_edges(data, bins=n_bins)
     bin_ranges = list(zip(bins[:-1], bins[1:]))
