@@ -696,7 +696,7 @@ def get_fiducial_coords(subj_id, fname):
     Returns:
     tuple: A tuple containing the NAS, LPA, and RPA coordinates as lists of floats.
     """
-    with open(fname, 'r') as file:
+    with open(fname, 'r', encoding="utf-8") as file:
         reader = csv.DictReader(file, delimiter='\t')
         for row in reader:
             if row['subj_id'] == subj_id:
