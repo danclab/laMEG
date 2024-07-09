@@ -13,6 +13,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Cache MATLAB Runtime
+      uses: actions/cache@v2
+      with:
+        path: spm/MATLAB_Runtime_R2019a_Update_9_glnxa64.zip
+        key: MATLAB-Runtime-${{ hashFiles('**/install.py') }}
+
     - name: Set up Miniconda
       uses: conda-incubator/setup-miniconda@v2
       with:
