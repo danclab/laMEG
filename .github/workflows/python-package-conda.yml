@@ -19,6 +19,18 @@ jobs:
         path: spm/MATLAB_Runtime_R2019a_Update_9_glnxa64.zip
         key: MATLAB-Runtime-${{ hashFiles('**/install.py') }}
 
+    - name: Cache Test Data
+      uses: actions/cache@v2
+      with:
+        path: ./test_data
+        key: test_data-${{ github.sha }}
+
+    - name: Download and Extract Test Data
+      run: |
+        wget https://osf.io/fh9us/download -O test_data.tar.gz
+        tar -xzvf test_data.tar.gz
+      if: steps.cache-test_data.outputs.cache-hit != 'true'
+
     - name: Set up Miniconda
       uses: conda-incubator/setup-miniconda@v2
       with:
