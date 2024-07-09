@@ -1,7 +1,56 @@
 """
 This module contains the unit tests for the `utils` module from the `lameg` package.
 """
-from lameg.util import check_many
+from lameg.util import check_many, spm_context
+from spm import spm_standalone
+
+
+def test_spm_context():
+    """
+    Test the spm_context to ensure proper execution and capture stdout
+    """
+    # Check opening new instance with context manager
+    with spm_context() as spm:
+        assert spm.name == 'spm_standalone'
+
+        x = spm.spm(
+            "Version",
+            nargout=1
+        )
+        assert x == 'SPM (dev)'
+
+    # Check that instance is terminated
+    x = spm.spm(
+        "Version",
+        nargout=1
+    )
+
+    # Check using existing instance with context manager
+    spm_instance = spm_standalone.initialize()
+    with spm_context(spm_instance) as spm:
+        assert spm.name == 'spm_standalone'
+
+        x = spm.spm(
+            "Version",
+            nargout=1
+        )
+        assert x == 'SPM (dev)'
+
+    # Check that not terminated
+    x = spm.spm(
+        "Version",
+        nargout=1
+    )
+    assert x == 'SPM (dev)'
+
+    spm_instance.terminate()
+
+    # Check that terminated
+    x = spm.spm(
+        "Version",
+        nargout=1
+    )
+
 
 def test_check_many():
     """
