@@ -63,9 +63,6 @@ setup(
             'assets/big_brain_layer_thickness/*'
         ],
     },
-    exclude_package_data={
-        'lameg': ['assets/big_brain_layer_thickness/*', 'matlab/*'],
-    },
     include_package_data=True,
     zip_safe=False,
     cmdclass={
