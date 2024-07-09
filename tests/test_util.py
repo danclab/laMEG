@@ -1,7 +1,9 @@
 """
 This module contains the unit tests for the `utils` module from the `lameg` package.
 """
-from lameg.util import check_many, spm_context
+import numpy as np
+
+from lameg.util import check_many, spm_context, big_brain_proportional_layer_boundaries
 from spm import spm_standalone
 
 
@@ -90,7 +92,7 @@ def test_check_many():
     target = 'xy'
     val_error = False
     try:
-        check_many(multiple,target)
+        check_many(multiple, target)
     except ValueError:
         val_error = True
     assert val_error
@@ -114,3 +116,49 @@ def test_check_many():
     multiple = ['x', 'y']
     target = 'z'
     assert not check_many(multiple, target, func='all')
+
+
+def test_big_brain_proportional_layer_boundaries():
+    """
+    Tests the big_brain_proportional_layer_boundaries function to ensure it returns accurate and expected
+    layer boundary data for both left hemisphere (lh) and right hemisphere (rh).
+
+    This function performs the following checks:
+    - Asserts that the 'lh' and 'rh' keys exist in the returned dictionary.
+    - Asserts that the shape of the arrays for 'lh' and 'rh' is correct, verifying the number of layers (6)
+      and the expected number of vertices (163842).
+    - Checks that the first column of each hemisphere's data closely matches a predefined expected
+      array of layer boundary values, with a tolerance for maximum absolute difference set to less than 1e-6.
+
+    The function is called twice to verify the consistency of outputs:
+    - First with the `overwrite` parameter set to False.
+    - Then with the `overwrite` parameter set to True.
+
+    Raises:
+        AssertionError: If any of the assertions fail, indicating that the expected data structure
+        or values are incorrect or missing.
+    """
+
+    bb_data = big_brain_proportional_layer_boundaries(overwrite=False)
+
+    assert 'lh' in bb_data
+    assert bb_data['lh'].shape[0] == 6 and bb_data['lh'].shape[1] == 163842
+    expected = np.array([0.07864515, 0.13759026, 0.3424378, 0.4091583, 0.64115983, 1])
+    assert np.max(np.abs(bb_data['lh'][:, 0] - expected)) < 1e-6
+
+    assert 'rh' in bb_data
+    assert bb_data['rh'].shape[0] == 6 and bb_data['rh'].shape[1] == 163842
+    expected = np.array([0.07103447, 0.15451714, 0.46817848, 0.53011256, 0.7344828, 1.])
+    assert np.max(np.abs(bb_data['rh'][:, 0] - expected)) < 1e-6
+
+    bb_data = big_brain_proportional_layer_boundaries(overwrite=True)
+
+    assert 'lh' in bb_data
+    assert bb_data['lh'].shape[0] == 6 and bb_data['lh'].shape[1] == 163842
+    expected = np.array([0.07864515, 0.13759026, 0.3424378, 0.4091583, 0.64115983, 1])
+    assert np.max(np.abs(bb_data['lh'][:, 0] - expected)) < 1e-6
+
+    assert 'rh' in bb_data
+    assert bb_data['rh'].shape[0] == 6 and bb_data['rh'].shape[1] == 163842
+    expected = np.array([0.07103447, 0.15451714, 0.46817848, 0.53011256, 0.7344828, 1.])
+    assert np.max(np.abs(bb_data['rh'][:, 0] - expected)) < 1e-6
