@@ -16,7 +16,7 @@ jobs:
     - name: Cache MATLAB Runtime
       uses: actions/cache@v2
       with:
-        path: MATLAB_Runtime_R2019a_Update_9_glnxa64.zip
+        path: ./MATLAB_Runtime_R2019a_Update_9_glnxa64.zip
         key: MATLAB-Runtime-${{ hashFiles('**/install.py') }}
 
     - name: Cache Test Data

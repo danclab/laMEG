@@ -232,8 +232,6 @@ def main():
         create_activate_script(matlab_runtime_path, conda_env_path)
         create_deactivate_script(conda_env_path)
 
-        os.remove(matlab_runtime_zip)
-
     if not args.no_test_data:
         test_data_zip = os.path.join(base_dir, 'test_data.tar.gz')
         test_data_download_url = 'https://osf.io/fh9us/download'
