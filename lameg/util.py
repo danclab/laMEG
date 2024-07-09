@@ -394,36 +394,6 @@ def make_directory(root_path, extended_dir, check=False):
     return root_path.exists()
 
 
-def check_maj(list_to_check):
-    """
-    Determine the majority element in a given list.
-
-    This function checks if there is a majority element in the first half-plus-one elements of the
-    list. If all elements in this subset are the same, it returns that element as the majority. If
-    not, it calculates the most frequent element in the entire list and returns it.
-
-    Parameters:
-    list_to_check (list): A list of elements among which to find the majority element.
-
-    Returns:
-    The element that appears most frequently in the list. If the majority is found in the first half
-    of the list, that element is returned immediately.
-
-    Raises:
-    ValueError: If the input list is empty.
-
-    Notes:
-    - If multiple elements have the same maximum frequency, the function returns the first one
-      encountered in the list.
-    """
-    list_len = len(list_to_check)
-    majority = list_len // 2 + 1
-    if len(set(list_to_check[:majority])) == 1:
-        return list_to_check[0]
-    item, count = np.unique(list_to_check, return_counts=True)
-    return item[np.argmax(count)]
-
-
 def convert_fsaverage_to_native(subj_id, hemi, vert_idx):
     """
     Convert a vertex index from fsaverage to a subject's native surface space.
