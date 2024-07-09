@@ -120,15 +120,16 @@ def test_check_many():
 
 def test_big_brain_proportional_layer_boundaries():
     """
-    Tests the big_brain_proportional_layer_boundaries function to ensure it returns accurate and expected
-    layer boundary data for both left hemisphere (lh) and right hemisphere (rh).
+    Tests the big_brain_proportional_layer_boundaries function to ensure it returns accurate and
+    expected layer boundary data for both left hemisphere (lh) and right hemisphere (rh).
 
     This function performs the following checks:
     - Asserts that the 'lh' and 'rh' keys exist in the returned dictionary.
-    - Asserts that the shape of the arrays for 'lh' and 'rh' is correct, verifying the number of layers (6)
-      and the expected number of vertices (163842).
+    - Asserts that the shape of the arrays for 'lh' and 'rh' is correct, verifying the number of
+      layers (6) and the expected number of vertices (163842).
     - Checks that the first column of each hemisphere's data closely matches a predefined expected
-      array of layer boundary values, with a tolerance for maximum absolute difference set to less than 1e-6.
+      array of layer boundary values, with a tolerance for maximum absolute difference set to less
+      than 1e-6.
 
     The function is called twice to verify the consistency of outputs:
     - First with the `overwrite` parameter set to False.
