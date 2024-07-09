@@ -12,6 +12,7 @@ Key functionalities include:
 - Utility functions for anatomical and spatial data transformations.
 """
 
+import csv
 import json
 import os
 import tempfile
@@ -682,3 +683,26 @@ def get_bigbrain_layer_boundaries(subj_id, subj_surf_dir, subj_coord):
     vert_bb_prop = bb_prop[hemi][:,fsave_v_idx]
 
     return vert_bb_prop
+
+
+def get_fiducial_coords(subj_id, fname):
+    """
+    Fetches fiducial coordinates from a tab-separated values (TSV) file for a given subject ID.
+
+    Parameters:
+    subj_id (str): The subject ID to look for in the file.
+    fname (str): Path to the TSV file.
+
+    Returns:
+    tuple: A tuple containing the NAS, LPA, and RPA coordinates as lists of floats.
+    """
+    with open(fname, 'r') as file:
+        reader = csv.DictReader(file, delimiter='\t')
+        for row in reader:
+            if row['subj_id'] == subj_id:
+                nas = [float(i) for i in row['nas'].split(',')]
+                lpa = [float(i) for i in row['lpa'].split(',')]
+                rpa = [float(i) for i in row['rpa'].split(',')]
+                return nas, lpa, rpa
+
+    return None, None, None  # Return None for each if no matching subj_id is found
