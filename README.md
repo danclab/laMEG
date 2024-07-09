@@ -1,5 +1,4 @@
-# laMEG 
-![laMEG](./lameg/assets/logo.png?raw=true "Title")
+<img src="./lameg/assets/logo.png?raw=true" alt="laMEG" title="Title" width="300" height="200"/>
 Toolbox for laminar inference with MEG
 
 [![Build and Test Python Package with Conda](https://github.com/danclab/laMEG/actions/workflows/python-package-conda.yml/badge.svg)](https://github.com/danclab/laMEG/actions/workflows/python-package-conda.yml)
