@@ -5,7 +5,8 @@ from unittest.mock import mock_open, patch
 
 import numpy as np
 
-from lameg.util import check_many, spm_context, big_brain_proportional_layer_boundaries, get_fiducial_coords
+from lameg.util import (check_many, spm_context, big_brain_proportional_layer_boundaries,
+                        get_fiducial_coords)
 from spm import spm_standalone
 
 
@@ -181,9 +182,9 @@ def test_get_fiducial_coords():
                "subj2\t10.0,11.0,12.0\t13.0,14.0,15.0\t16.0,17.0,18.0\n"
 
     # Use mock_open to simulate file reading operations
-    m = mock_open(read_data=tsv_data)
+    m_file = mock_open(read_data=tsv_data)
 
-    with patch('builtins.open', m):
+    with patch('builtins.open', m_file):
         nas, lpa, rpa = get_fiducial_coords('subj1', 'dummy_filename.tsv')
 
     # Assert the expected outputs
@@ -192,7 +193,7 @@ def test_get_fiducial_coords():
     assert rpa == [7.0, 8.0, 9.0], "RPA coordinates do not match expected values"
 
     # Also, you might want to test the case where the subject ID is not found
-    with patch('builtins.open', m):
+    with patch('builtins.open', m_file):
         nas, lpa, rpa = get_fiducial_coords('subj3', 'dummy_filename.tsv')
 
     assert nas is None and lpa is None and rpa is None, ("Should return None for all coordinates if"
@@ -204,5 +205,5 @@ def test_get_fiducial_coords():
     rpa_target = np.array([76.02110531729883, 18.9467849625573, -25.779407159603114])
 
     assert np.sum(np.abs(nas - nas_target)) < 1e-6
-    assert np.sum(np.abs(lpa - rpa_target)) < 1e-6
-    assert np.sum(np.abs(lpa - rpa_target)) < 1e-6
+    assert np.sum(np.abs(lpa - lpa_target)) < 1e-6
+    assert np.sum(np.abs(rpa - rpa_target)) < 1e-6
