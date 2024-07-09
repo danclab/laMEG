@@ -5,9 +5,10 @@ Toolbox for laminar inference with MEG
 [![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen)](https://github.com/pylint-dev/pylint)
 [![](https://img.shields.io/badge/Python-3.7-blue.svg)](https://www.python.org/downloads/)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+![Repo Size](https://img.shields.io/github/repo-size/danclab/laMEG)
 
 ## Operating system
-* Windows: may work, but not supported
+* Windows: not supported by FreeSurfer
 * Mac: may work, but not tested
 * Linux: yes
   
@@ -37,7 +38,7 @@ Toolbox for laminar inference with MEG
 
        python install.py --no_matlab_runtime
 
-4. Before using, deactivate and reactivate the environment
+4. Before using, deactivate and reactivate the environment for changes to environment variables to take effect:
 
        conda deactivate
        conda activate <env name>
