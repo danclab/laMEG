@@ -13,43 +13,53 @@ def test_spm_context():
     with spm_context() as spm:
         assert spm.name == 'spm_standalone'
 
-        x = spm.spm(
+        ver = spm.spm(
             "Version",
             nargout=1
         )
-        assert x == 'SPM (dev)'
+        assert ver == 'SPM (dev)'
 
     # Check that instance is terminated
-    x = spm.spm(
-        "Version",
-        nargout=1
-    )
+    terminated = False
+    try:
+        ver = spm.spm(
+            "Version",
+            nargout=1
+        )
+    except RuntimeError:
+        terminated = True
+    assert terminated
 
     # Check using existing instance with context manager
     spm_instance = spm_standalone.initialize()
     with spm_context(spm_instance) as spm:
         assert spm.name == 'spm_standalone'
 
-        x = spm.spm(
+        ver = spm.spm(
             "Version",
             nargout=1
         )
-        assert x == 'SPM (dev)'
+        assert ver == 'SPM (dev)'
 
     # Check that not terminated
-    x = spm.spm(
+    ver = spm.spm(
         "Version",
         nargout=1
     )
-    assert x == 'SPM (dev)'
+    assert ver == 'SPM (dev)'
 
     spm_instance.terminate()
 
     # Check that terminated
-    x = spm.spm(
-        "Version",
-        nargout=1
-    )
+    terminated = False
+    try:
+        ver = spm.spm(
+            "Version",
+            nargout=1
+        )
+    except RuntimeError:
+        terminated = True
+    assert terminated
 
 
 def test_check_many():
@@ -76,20 +86,20 @@ def test_check_many():
         None
     """
 
-    multiple=['x']
-    target='xy'
-    val_error=False
+    multiple = ['x']
+    target = 'xy'
+    val_error = False
     try:
         check_many(multiple,target)
     except ValueError:
-        val_error=True
+        val_error = True
     assert val_error
 
-    multiple=['x','y']
-    target='x'
+    multiple = ['x', 'y']
+    target = 'x'
     assert check_many(multiple, target, func='any')
 
-    multiple = ['x','y']
+    multiple = ['x', 'y']
     target = 'z'
     assert not check_many(multiple, target, func='any')
 
