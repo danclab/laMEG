@@ -242,7 +242,7 @@ def main():
         download_file(test_data_download_url, test_data_zip)
 
         # Extract test data
-        extract_test_data(test_data_zip)
+        extract_test_data(test_data_zip, base_dir)
 
 
 
