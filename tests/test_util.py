@@ -8,7 +8,8 @@ from unittest.mock import mock_open, patch, MagicMock
 import numpy as np
 
 from lameg.util import (check_many, spm_context, big_brain_proportional_layer_boundaries,
-                        get_fiducial_coords, get_files, get_directories, make_directory, calc_prop, batch)
+                        get_fiducial_coords, get_files, get_directories, make_directory,
+                        calc_prop, batch)
 from spm import spm_standalone
 
 
@@ -74,7 +75,11 @@ def test_batch():
     Test the spm batch functionality
     """
     test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
-    mri_fname = os.path.join(test_data_path, 'sub-104/mri/s2023-02-28_13-33-133958-00001-00224-1.nii')
+    mri_fname = os.path.join(
+        test_data_path,
+        'sub-104/mri/s2023-02-28_13-33-133958-00001-00224-1.nii'
+    )
+
     with spm_context() as spm:
         cfg = {
             "spm": {
