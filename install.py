@@ -234,7 +234,7 @@ def main():
 
     if not args.no_test_data:
         test_data_zip = os.path.join(base_dir, 'test_data.tar.gz')
-        test_data_download_url = 'https://osf.io/fh9us/download'
+        test_data_download_url = 'https://osf.io/3jrcq/download'
 
         # Download test data
         download_file(test_data_download_url, test_data_zip)

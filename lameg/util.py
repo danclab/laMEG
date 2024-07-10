@@ -263,19 +263,18 @@ def get_surface_names(n_layers, surf_path, orientation_method):
     layers = np.linspace(1, 0, n_layers)
     layer_fnames = []
     for layer in layers:
+
         if layer == 1:
-            layer_fnames.append(
-                os.path.join(surf_path, f'pial.ds.{orientation_method}.gii')
-            )
+            fname = os.path.join(surf_path, f'pial.ds.{orientation_method}.gii')
         elif layer == 0:
-            layer_fnames.append(
-                os.path.join(surf_path, f'white.ds.{orientation_method}.gii')
-            )
+            fname = os.path.join(surf_path, f'white.ds.{orientation_method}.gii')
         else:
-            layer_name = f'{layer:.3f}'
-            layer_fnames.append(
-                os.path.join(surf_path, f'{layer_name}.ds.{orientation_method}.gii')
-            )
+            fname = os.path.join(surf_path, f'{layer:.3f}.ds.{orientation_method}.gii')
+
+        if fname is not None and os.path.exists(fname):
+            layer_fnames.append(fname)
+        else:
+            raise FileNotFoundError(f"Unable to locate {fname}. Check surf_path")
 
     return layer_fnames
 
@@ -460,10 +459,12 @@ def convert_fsaverage_to_native(subj_id, hemi, vert_idx):
     fsave_sphere_coord = fsaverage_sphere_vertices[vert_idx, :]
 
     # Load subject registered sphere
-    subj_sphere = nib.load(os.path.join(fs_subject_dir, 'surf', f'{hemi}.sphere.reg'))
+    subj_sphere_vertices, _ = nib.freesurfer.read_geometry(
+        os.path.join(fs_subject_dir, 'surf', f'{hemi}.sphere.reg')
+    )
 
     # Get the index of the nearest vertex on the subject sphere
-    kdtree = KDTree(subj_sphere.darrays[0].data)
+    kdtree = KDTree(subj_sphere_vertices)
     _, subj_v_idx = kdtree.query(fsave_sphere_coord, k=1)
 
     # Adjust vertex index for right hemishphere
