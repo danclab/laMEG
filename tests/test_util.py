@@ -9,7 +9,7 @@ import numpy as np
 
 from lameg.util import (check_many, spm_context, big_brain_proportional_layer_boundaries,
                         get_fiducial_coords, get_files, get_directories, make_directory,
-                        calc_prop, batch)
+                        calc_prop, batch, load_meg_sensor_data)
 from spm import spm_standalone
 
 
@@ -91,6 +91,60 @@ def test_batch():
             }
         }
         batch(cfg, spm_instance=spm)
+
+
+def test_load_meg_sensor_data():
+    """
+    Tests the `load_meg_sensor_data` function to ensure it correctly loads and processes MEG
+    dataset files.
+
+    This test function handles two cases:
+    1. Testing with a .mat file saved in the MATLAB v7.3 format.
+    2. Testing with a .mat file saved in a format prior to MATLAB v7.3.
+
+    For each case, it checks:
+    - The shape of the loaded data array to ensure it matches expected dimensions.
+    - The range and spacing of the time array to confirm correct timing information.
+    - The accuracy of the first few data points against a pre-defined target array.
+
+    Assertions are used to verify:
+    - Data dimensions to confirm correct data loading and reshaping.
+    - Time array values to ensure correct conversion and alignment with expected sample timings.
+    - Specific data values to validate data integrity and correct numeric processing.
+
+    Raises:
+        AssertionError: If any of the checked conditions fail, indicating an issue with the data
+        loading or processing.
+    """
+
+    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
+
+    # Test one that is v7.3
+    filename = os.path.join(
+        test_data_path,
+        'sub-104/meg/ses-01/spm/spm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
+    )
+    data, time, ch_names = load_meg_sensor_data(filename)
+    assert data.shape[0] == 274 and data.shape[1] == 601 and data.shape[2] == 60
+    assert (np.min(time) == -0.5 and np.max(time) == 0.5 and
+            np.abs(np.diff(time)[0]-0.001666666667) < 1e-6)
+    assert ch_names[0] == 'MLC11'
+    target = np.array([127.983536, 6.9637985, -12.615336, 76.55547, 13.708231, -137.579, 90.26142,
+                       -19.759878, 70.513176, 82.06577])
+    assert np.mean(np.abs(data[0,0,:10]-target)) < 1e-5
+
+    # Test one that is prior to v7.3
+    filename = os.path.join(test_data_path,
+                            'sub-104/meg/ses-01/spm/'
+                            'pspm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat')
+    data, time, ch_names = load_meg_sensor_data(filename)
+    assert data.shape[0] == 274 and data.shape[1] == 121 and data.shape[2] == 60
+    assert (np.abs(np.min(time)- -0.09999999999999) < 1e-6 and np.abs(np.max(time)-0.1) < 1e-6 and
+            np.abs(np.diff(time)[0] - 0.001666666667) < 1e-6)
+    assert ch_names[0] == 'MLC11'
+    target = np.array([35.541718, 116.940315, -17.433748, 132.34103, 44.1114, 88.78001, -68.96891,
+                       8.402161, -80.73266, -18.521292])
+    assert np.mean(np.abs(data[0, 0, :10] - target)) < 1e-5
 
 
 def test_check_many():

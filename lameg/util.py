@@ -22,7 +22,7 @@ from contextlib import contextmanager
 import numpy as np
 import h5py
 import nibabel as nib
-from scipy.io import savemat
+from scipy.io import savemat, loadmat
 from scipy.spatial import KDTree
 from scipy.stats import t
 import spm_standalone
@@ -160,32 +160,68 @@ def load_meg_sensor_data(data_fname):
     good_meg_channels = []  # List to store the indices of good MEG channels
     ch_names = []
 
-    with h5py.File(data_fname, 'r') as file:
-        time_onset = file['D']['timeOnset'][()][0, 0]
-        fsample = file['D']['Fsample'][()][0, 0]
-        n_samples = int(file['D']['Nsamples'][()][0, 0])
-        n_chans = file['D']['channels']['type'][:].shape[0]
-        chan_bad = np.array([int(file[file['D']['channels']['bad'][:][i, 0]][()][0, 0])
-                             for i in range(n_chans)])
+    try:
+        with h5py.File(data_fname, 'r') as file:
+            time_onset = file['D']['timeOnset'][()][0, 0]
+            fsample = file['D']['Fsample'][()][0, 0]
+            n_samples = int(file['D']['Nsamples'][()][0, 0])
+            n_chans = file['D']['channels']['type'][:].shape[0]
+            chan_bad = np.array([int(file[file['D']['channels']['bad'][:][i, 0]][()][0, 0])
+                                 for i in range(n_chans)])
+
+            for i in range(n_chans):
+                chan_type_data = file[file['D']['channels']['type'][:][i, 0]][()]
+                chan_type = ''.join(chr(code) for code in chan_type_data)
+
+                chan_name_data = file[file['D']['channels']['label'][:][i, 0]][()]
+                chan_name = ''.join(chr(code) for code in chan_name_data)
+
+                # Check if the channel type includes 'MEG' and the channel is not marked as bad
+                if 'MEG' in chan_type and chan_bad[i] == 0:
+                    good_meg_channels.append(i)  # Add the channel index to the list
+                    ch_names.append(chan_name)
+
+            # Access dimensions, convert to tuple of ints assuming it's 2D and transpose if
+            # necessary
+            data_dims = tuple(int(dim) for dim in file['D']['data']['dim'][:, 0])
+
+            # Get filename stored as integers and convert to string
+            data_fname_data = file['D']['data']['fname'][:]
+            data_filename = ''.join(chr(code) for code in data_fname_data)
+    except OSError:
+        mat_contents = loadmat(data_fname)
+        # Assuming these fields exist; update these as per actual .mat file structure
+        time_onset = mat_contents['D'][0][0]['timeOnset'][0,0]
+        fsample = mat_contents['D'][0][0]['Fsample'][0,0]
+        n_samples = mat_contents['D'][0][0]['Nsamples'][0,0]
+        n_chans = mat_contents['D'][0][0]['channels'].shape[1]
+        chan_bad = np.array([int(channel[0][0])
+                             for channel in mat_contents['D'][0][0]['channels'][:]['bad'][0, :]])
 
         for i in range(n_chans):
-            chan_type_data = file[file['D']['channels']['type'][:][i, 0]][()]
-            chan_type = ''.join(chr(code) for code in chan_type_data)
-
-            chan_name_data = file[file['D']['channels']['label'][:][i, 0]][()]
-            chan_name = ''.join(chr(code) for code in chan_name_data)
-
+            chan_type = mat_contents['D'][0][0]['channels'][:]['type'][0,i][0]
+            chan_name = mat_contents['D'][0][0]['channels'][:]['label'][0,i][0]
             # Check if the channel type includes 'MEG' and the channel is not marked as bad
             if 'MEG' in chan_type and chan_bad[i] == 0:
                 good_meg_channels.append(i)  # Add the channel index to the list
                 ch_names.append(chan_name)
 
-        # Access dimensions, convert to tuple of ints assuming it's 2D and transpose if necessary
-        data_dims = tuple(int(dim) for dim in file['D']['data']['dim'][:, 0])
+        data_dims = tuple(int(dim) for dim in mat_contents['D'][0][0]['data'][:]['dim'][:,0][0][0])
+        data_filename = mat_contents['D'][0][0]['data'][:]['fname'][:,0][0][0]
 
-        # Get filename stored as integers and convert to string
-        data_fname_data = file['D']['data']['fname'][:]
-        data_filename = ''.join(chr(code) for code in data_fname_data)
+    # Determine the directory of the data_fname
+    data_dir = os.path.dirname(data_fname)
+    full_data_path = os.path.join(data_dir, os.path.split(data_filename)[-1])
+
+    # Check if the data file exists at the path specified in the MAT file
+    if not os.path.exists(data_filename):
+        # If the file isn't found at the specified path, check the same directory as the .mat file
+        data_filename = full_data_path
+
+    # Confirm the existence of the file before attempting to open it
+    if not os.path.exists(data_filename):
+        raise FileNotFoundError(f"Data file not found in specified or default location: "
+                                f"{data_filename}")
 
     good_meg_channels = np.array(good_meg_channels)
 
