@@ -1,12 +1,13 @@
 """
 This module contains the unit tests for the `utils` module from the `lameg` package.
 """
-from unittest.mock import mock_open, patch
+from pathlib import Path
+from unittest.mock import mock_open, patch, MagicMock
 
 import numpy as np
 
 from lameg.util import (check_many, spm_context, big_brain_proportional_layer_boundaries,
-                        get_fiducial_coords)
+                        get_fiducial_coords, get_files, get_directories, make_directory, calc_prop)
 from spm import spm_standalone
 
 
@@ -119,6 +120,166 @@ def test_check_many():
     multiple = ['x', 'y']
     target = 'z'
     assert not check_many(multiple, target, func='all')
+
+
+def test_get_files():
+    """
+    Tests the `get_files` function to ensure it correctly identifies files based on specified
+    suffixes, prefixes, and content strings, and adheres to depth requirements.
+    """
+    # Mock files and directories with appropriate properties
+    mock_file1 = MagicMock(spec=Path, is_file=MagicMock(return_value=True))
+    mock_file2 = MagicMock(spec=Path, is_file=MagicMock(return_value=True))
+    mock_dir1 = MagicMock(spec=Path, is_file=MagicMock(return_value=False))
+    mock_dir2 = MagicMock(spec=Path, is_file=MagicMock(return_value=False))
+    mock_file3 = MagicMock(spec=Path, is_file=MagicMock(return_value=True))
+
+    mock_file1.name = "file1.txt"
+    mock_file1.suffix = ".txt"
+    mock_file2.name = "file2.txt"
+    mock_file2.suffix = ".txt"
+    mock_file3.name = "file3.txt"
+    mock_file3.suffix = ".txt"
+
+    # Setup the specific methods and properties needed
+    mock_path_instance = MagicMock(spec=Path)
+    mock_path_instance.rglob.return_value = [mock_file1, mock_file2]
+    mock_path_instance.iterdir.return_value = [mock_dir1, mock_dir2, mock_file3]
+
+    # Patch the Path constructor to return our mock instance
+    with patch.object(Path, '__new__', return_value=mock_path_instance):
+        # Function call for 'all' depth
+        files = get_files(
+            "test_dir",
+            "*.txt",
+            strings=["file"],
+            prefix="file",
+            check="all",
+            depth="all"
+        )
+        assert len(files) == 2, "Expected 2 files to be identified"
+
+        # Function call for 'one' depth
+        files = get_files(
+            "test_dir",
+            "*.txt",
+            strings=["file"],
+            prefix="file",
+            check="all",
+            depth="one"
+        )
+        assert len(files) == 1, "Expected 1 file to be identified in shallow search"
+
+
+def test_get_directories():
+    """
+    Tests the `get_directories` function to ensure it accurately finds directories based on
+    specific strings and adheres to specified search depths.
+    """
+    # Create a MagicMock for mocking the glob and iterdir methods
+    mock_dir1 = MagicMock(spec=Path, is_dir=MagicMock(return_value=True))
+    mock_dir2 = MagicMock(spec=Path, is_dir=MagicMock(return_value=True))
+    mock_dir3 = MagicMock(spec=Path, is_dir=MagicMock(return_value=True))
+
+    mock_dir1.__str__.return_value = "test_dir/subdir1"
+    mock_dir2.__str__.return_value = "test_dir/subdir2"
+    mock_dir3.__str__.return_value = "test_dir/not_included/subdir3"
+
+    with patch.object(Path, 'glob', return_value=[mock_dir1, mock_dir2, mock_dir3]) as mock_glob, \
+         patch.object(Path, 'iterdir',
+                      return_value=[
+                          mock_dir1,
+                          mock_dir2,
+                          MagicMock(spec=Path, is_dir=MagicMock(return_value=False))
+                      ]) as mock_iterdir:
+
+        test_dir = Path("test_dir")
+        # Test with depth 'all'
+        directories = get_directories(test_dir, strings=["subdir"], check="all", depth="all")
+        mock_glob.assert_called_once_with("**/")
+        assert len(directories) == 3, "Should return three directories"
+        assert all(isinstance(dir, Path) for dir in directories), ("All items should be "
+                                                                   "pathlib.Path objects")
+
+        # Test with depth 'one'
+        directories = get_directories(test_dir, strings=["subdir"], check="all", depth="one")
+        mock_iterdir.assert_called_once()
+        assert len(directories) == 2, "Should return two directories"
+
+
+def test_make_directory():
+    """
+    Tests the `make_directory` function to ensure it correctly creates directories,
+    handles both string and list inputs for directory paths, and properly checks the existence of
+    directories.
+    """
+    # Use the actual Path object for the directory path
+    test_root = Path("test_root")
+    new_dir = "new_dir"
+    dir_list = ["dir1", "dir2"]
+
+    # Patch the mkdir and exists methods of the Path class
+    with patch.object(Path, 'mkdir') as mock_mkdir, \
+            patch.object(Path, 'exists', return_value=True) as mock_exists:
+        # Test directory creation without checking existence
+        result = make_directory(test_root, new_dir)
+        mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
+        assert result, "Function should return True if directory is presumed created"
+
+        # Test directory creation with a list of directories
+        result = make_directory(test_root, dir_list, check=True)
+        assert result, "Function should return True when check=True and the directory exists"
+
+        # Test with check=True and directory does not exist
+        mock_exists.return_value = False
+        result = make_directory(test_root, new_dir, check=True)
+        assert not result, ("Function should return False when check=True and the directory does "
+                            "not exist")
+
+
+def test_calc_prop_zero_sum():
+    """
+    Tests the `calc_prop` function with a vector where the sum is zero.
+    The function should return the original vector unchanged because proportion calculation is not
+    possible.
+    """
+    vec = np.array([0, 0, 0])
+    result = calc_prop(vec)
+    np.testing.assert_array_equal(
+        result,
+        vec,
+        err_msg="Should return original vector when sum is zero"
+    )
+
+def test_calc_prop_non_zero_sum():
+    """
+    Tests the `calc_prop` function with a vector where the sum is non-zero.
+    The function should return a vector of cumulative proportions.
+    """
+    vec = np.array([1, 2, 3])
+    expected_result = np.array([1, 3, 6]) / 6  # cumulative sum divided by total sum
+    result = calc_prop(vec)
+    np.testing.assert_allclose(
+        result,
+        expected_result,
+        rtol=1e-5,
+        err_msg="Cumulative proportions are incorrect"
+    )
+
+def test_calc_prop_including_zero_elements():
+    """
+    Tests the `calc_prop` function with a vector including zero and non-zero elements.
+    It should handle zeros correctly in the proportion calculations.
+    """
+    vec = np.array([0, 1, 2, 0, 3])
+    expected_result = np.array([0, 1, 3, 3, 6]) / 6  # cumulative sum taking into account zeros
+    result = calc_prop(vec)
+    np.testing.assert_allclose(
+        result,
+        expected_result,
+        rtol=1e-5,
+        err_msg="Handling of zeros in vector is incorrect"
+    )
 
 
 def test_big_brain_proportional_layer_boundaries():
