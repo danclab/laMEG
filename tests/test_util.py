@@ -9,7 +9,8 @@ import numpy as np
 
 from lameg.util import (check_many, spm_context, big_brain_proportional_layer_boundaries,
                         get_fiducial_coords, get_files, get_directories, make_directory,
-                        calc_prop, batch, load_meg_sensor_data)
+                        calc_prop, batch, load_meg_sensor_data, get_surface_names,
+                        convert_fsaverage_to_native, convert_native_to_fsaverage)
 from spm import spm_standalone
 
 
@@ -145,6 +146,58 @@ def test_load_meg_sensor_data():
     target = np.array([35.541718, 116.940315, -17.433748, 132.34103, 44.1114, 88.78001, -68.96891,
                        8.402161, -80.73266, -18.521292])
     assert np.mean(np.abs(data[0, 0, :10] - target)) < 1e-5
+
+
+def test_get_surface_names():
+    """
+   Tests the `get_surface_names` function to ensure it returns correct surface names
+   and handles errors appropriately when expected files are not found.
+
+   This function performs two main checks:
+   1. It verifies that the `get_surface_names` function correctly returns a list of filenames
+      for a given number of surface files in a specified directory with a given file suffix.
+   2. It tests the error handling of the `get_surface_names` function by passing a non-existent
+      file suffix and expecting a FileNotFoundError to be raised.
+
+   Steps:
+   - Retrieves a set of surface names from a directory for a given file type and asserts that
+     the number of files returned matches the expected count.
+   - Attempts to retrieve surface names using a file suffix that does not exist to ensure that
+     the function raises a FileNotFoundError, confirming proper error handling.
+
+   Assertions:
+   - Asserts that the number of filenames returned by the first call is exactly 11, matching
+     the specified number of surface layers.
+   - Asserts that a FileNotFoundError is raised when a non-existent file suffix is used,
+     indicating robust error handling.
+
+   Raises:
+       AssertionError: If any of the conditions checked by the assertions are not met, indicating
+       that there is an issue with the functionality of the `get_surface_names` function.
+   """
+    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
+    surf_dir = os.path.join(test_data_path, 'sub-104/surf')
+
+    layer_fnames = get_surface_names(
+        11,
+        surf_dir,
+        'link_vector.fixed'
+    )
+
+    assert len(layer_fnames) == 11
+
+    error_raise = False
+    try:
+        _ = get_surface_names(
+            11,
+            surf_dir,
+            'test'
+        )
+    except FileNotFoundError:
+        error_raise = True
+    assert error_raise
+
+
 
 
 def test_check_many():
@@ -314,6 +367,119 @@ def test_make_directory():
         result = make_directory(test_root, new_dir, check=True)
         assert not result, ("Function should return False when check=True and the directory does "
                             "not exist")
+
+
+def test_convert_fsaverage_to_native():
+    """
+    Tests the `convert_fsaverage_to_native` function to ensure it accurately converts
+    FreeSurfer average coordinates to native brain space coordinates and handles errors
+    appropriately when provided with invalid inputs.
+
+    This test performs the following checks:
+    1. Verify that the function returns the correct native vertex index for given valid inputs.
+    2. Test the function's error handling by passing an out-of-range vertex index to ensure
+       an IndexError is raised.
+    3. Test the function's error handling by passing a non-existent subject ID to ensure
+       a FileNotFoundError is raised.
+
+    Procedures:
+    - Calls `convert_fsaverage_to_native` with a valid subject ID, hemisphere, and vertex index.
+      Checks if the returned value matches the expected native vertex index.
+    - Attempts to call the function with an invalid vertex index to verify that an IndexError
+      is properly triggered.
+    - Attempts to call the function with a non-existent subject ID to verify that a
+      FileNotFoundError is properly triggered.
+
+    Assertions:
+    - Asserts that the native vertex index returned matches the expected value of 166759 for
+      known valid inputs.
+    - Asserts that an IndexError is raised when a vertex index is used that exceeds the valid range.
+    - Asserts that a FileNotFoundError is raised when an invalid subject ID is used.
+
+    Raises:
+        AssertionError: If any of the conditions checked by the assertions are not met, indicating
+        an issue with the function's accuracy or error handling capabilities.
+    """
+    native_vtx = convert_fsaverage_to_native('sub-104', 'lh', 1000)
+    assert native_vtx == 166759
+
+    error_raise = False
+    try:
+        convert_fsaverage_to_native('sub-104', 'lh', 100000000)
+    except IndexError:
+        error_raise = True
+    assert error_raise
+
+    error_raise = False
+    try:
+        convert_fsaverage_to_native('xxx', 'lh', 1000)
+    except FileNotFoundError:
+        error_raise = True
+    assert error_raise
+
+
+def test_convert_native_to_fsaverage():
+    """
+    Tests the `convert_native_to_fsaverage` function to ensure it accurately maps native brain
+    space coordinates to FreeSurfer average brain coordinates and handles errors appropriately.
+
+    This function performs multiple checks:
+    1. Validate that the function correctly returns the hemisphere and fsaverage vertex index
+       for a given set of native space coordinates.
+    2. Test the function's error handling by passing an invalid subject ID, expecting a
+       FileNotFoundError to be raised.
+    3. Test the function's error handling by passing an invalid surface path, also expecting a
+       FileNotFoundError to be raised.
+
+    Procedures:
+    - Calls `convert_native_to_fsaverage` with a valid subject ID and surface path, checking
+      if the hemisphere and vertex index returned match expected values.
+    - Attempts to invoke the function with a non-existent subject ID to check for proper
+      exception handling.
+    - Attempts to invoke the function with a non-existent surface path to check for proper
+      exception handling.
+
+    Assertions:
+    - Asserts that the hemisphere and fsaverage vertex index are as expected for valid inputs,
+      confirming the function's accuracy in coordinate transformation.
+    - Asserts that a FileNotFoundError is raised for an invalid subject ID and surface path,
+      indicating robust error handling.
+
+    Raises:
+        AssertionError: If any of the conditions checked by the assertions are not met, indicating
+        an issue with the function's accuracy or error handling capabilities.
+    """
+    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
+    surf_path = os.path.join(test_data_path, 'sub-104/surf')
+    hemi, fs_vert = convert_native_to_fsaverage(
+        'sub-104',
+        surf_path,
+        [-5.045391, -58.015587, 28.667336]
+    )
+    assert hemi == 'lh'
+    assert fs_vert == 87729
+
+    error_raise = False
+    try:
+        _, _ = convert_native_to_fsaverage(
+            'xxx',
+            surf_path,
+            [-5.045391, -58.015587, 28.667336]
+        )
+    except FileNotFoundError:
+        error_raise = True
+    assert error_raise
+
+    error_raise = False
+    try:
+        _, _ = convert_native_to_fsaverage(
+            'sub-104',
+            'xxxx',
+            [-5.045391, -58.015587, 28.667336]
+        )
+    except FileNotFoundError:
+        error_raise = True
+    assert error_raise
 
 
 def test_calc_prop_zero_sum():
