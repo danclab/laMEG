@@ -1,13 +1,14 @@
 """
 This module contains the unit tests for the `utils` module from the `lameg` package.
 """
+import os
 from pathlib import Path
 from unittest.mock import mock_open, patch, MagicMock
 
 import numpy as np
 
 from lameg.util import (check_many, spm_context, big_brain_proportional_layer_boundaries,
-                        get_fiducial_coords, get_files, get_directories, make_directory, calc_prop)
+                        get_fiducial_coords, get_files, get_directories, make_directory, calc_prop, batch)
 from spm import spm_standalone
 
 
@@ -66,6 +67,25 @@ def test_spm_context():
     except RuntimeError:
         terminated = True
     assert terminated
+
+
+def test_batch():
+    """
+    Test the spm batch functionality
+    """
+    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
+    mri_fname = os.path.join(test_data_path, 'sub-104/mri/s2023-02-28_13-33-133958-00001-00224-1.nii')
+    with spm_context() as spm:
+        cfg = {
+            "spm": {
+                "util": {
+                    "checkreg": {
+                        "data": np.asarray([f'{mri_fname},1'], dtype="object")
+                    }
+                }
+            }
+        }
+        batch(cfg, spm_instance=spm)
 
 
 def test_check_many():
