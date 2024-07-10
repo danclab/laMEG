@@ -47,7 +47,7 @@ jobs:
 
     - name: Test with pytest
       env:
-        SUBJECTS: ${{ github.workspace }}/test_data/fs
+        SUBJECTS_DIR: ${{ github.workspace }}/test_data/fs
       run: |
         conda activate lameg
         conda install pytest pytest-cov coverage
