@@ -327,25 +327,20 @@ def get_files(target_path, suffix, strings=(""), prefix=None, check="all", depth
     - returns a list of pathlib.Path objects
     """
     path = Path(target_path)
+    files = []
     if depth == "all":
-        subdirs = [subdir for subdir in path.rglob(suffix)
-                   if check_many(strings, str(subdir.name), check)]
-        subdirs.sort()
-        if isinstance(prefix, str):
-            subdirs = [subdir for subdir in subdirs if path.name.startswith(prefix)]
-        return subdirs
-    if depth == "one":
-        subdirs = [subdir for subdir in path.iterdir() if
-                   all([
-                       subdir.is_file(),
-                       subdir.suffix == suffix[1:],
-                       check_many(strings, str(subdir.name), check)
-                   ])]
-        if isinstance(prefix, str):
-            subdirs = [subdir for subdir in subdirs if path.name.startswith(prefix)]
-        subdirs.sort()
-        return subdirs
-    return []
+        files = [file for file in path.rglob(suffix)
+                 if file.is_file() and file.suffix == suffix[1:] and
+                 check_many(strings, file.name, check)]
+    elif depth == "one":
+        files = [file for file in path.iterdir()
+                 if file.is_file() and file.suffix == suffix[1:] and
+                 check_many(strings, file.name, check)]
+
+    if isinstance(prefix, str):
+        files = [file for file in files if file.name.startswith(prefix)]
+    files.sort(key=lambda x: x.name)
+    return files
 
 
 def get_directories(target_path, strings=(""), check="all", depth="all"):
@@ -364,11 +359,12 @@ def get_directories(target_path, strings=(""), check="all", depth="all"):
     subdirs = []
     if depth == "all":
         subdirs = [subdir for subdir in path.glob("**/")
-                   if check_many(strings, str(subdir), check)]
+                   if subdir.is_dir() and check_many(strings, str(subdir), check)]
     elif depth == "one":
-        subdirs = [subdir for subdir in path.iterdir() if subdir.is_dir()
-                   if check_many(strings, str(subdir), check)]
-    subdirs.sort()
+        subdirs = [subdir for subdir in path.iterdir()
+                   if subdir.is_dir() and check_many(strings, str(subdir), check)]
+    # pylint: disable=unnecessary-lambda
+    subdirs.sort(key=lambda x: str(x))
     return subdirs
 
 
