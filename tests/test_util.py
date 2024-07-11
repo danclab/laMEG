@@ -350,8 +350,7 @@ def test_make_directory():
     new_dir = "new_dir"
 
     # Patch the mkdir and exists methods of the Path class
-    with patch.object(Path, 'mkdir') as mock_mkdir, \
-            patch.object(Path, 'exists', return_value=True) as mock_exists:
+    with patch.object(Path, 'mkdir') as mock_mkdir:
         # Test directory creation without checking existence
         result = make_directory(test_root, new_dir)
         mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
