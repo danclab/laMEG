@@ -732,7 +732,7 @@ def postprocess_freesurfer_surfaces(subj_id,
     layers = np.linspace(1, 0, n_surfaces)
 
     ## Create intermediate surfaces if needed
-    layer_names = Parallel(n_jobs=n_jobs)(delayed(create_layer_mesh)(layer, hemispheres, fs_subject_dir) for layer in layers)
+    layer_names = Parallel(n_jobs=n_jobs, backend='loky')(delayed(create_layer_mesh)(layer, hemispheres, fs_subject_dir) for layer in layers)
 
     ## Compute RAS offset
     # Define the path to the MRI file
@@ -974,7 +974,7 @@ def smoothmesh_multilayer_mm(meshname, fwhm, n_layers, redo=False, n_jobs=-1):
     distance_matrix = compute_mesh_distances(vertices.astype(np.float64), faces)
 
     # Parallel computation for each vertex using joblib
-    results = Parallel(n_jobs=n_jobs, backend='multiprocessing')(
+    results = Parallel(n_jobs=n_jobs, backend='loky')(
         delayed(smoothmesh_multilayer_mm_process_vertex)(j, fwhm, n_layers, distance_matrix, Ns_per_layer) for j in range(Ns_per_layer)
     )
 
