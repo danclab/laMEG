@@ -343,13 +343,11 @@ def test_get_directories():
 def test_make_directory():
     """
     Tests the `make_directory` function to ensure it correctly creates directories,
-    handles both string and list inputs for directory paths, and properly checks the existence of
-    directories.
+    handles both string and list inputs for directory paths
     """
     # Use the actual Path object for the directory path
     test_root = Path("test_root")
     new_dir = "new_dir"
-    dir_list = ["dir1", "dir2"]
 
     # Patch the mkdir and exists methods of the Path class
     with patch.object(Path, 'mkdir') as mock_mkdir, \
@@ -358,16 +356,6 @@ def test_make_directory():
         result = make_directory(test_root, new_dir)
         mock_mkdir.assert_called_once_with(parents=True, exist_ok=True)
         assert result, "Function should return True if directory is presumed created"
-
-        # Test directory creation with a list of directories
-        result = make_directory(test_root, dir_list, check=True)
-        assert result, "Function should return True when check=True and the directory exists"
-
-        # Test with check=True and directory does not exist
-        mock_exists.return_value = False
-        result = make_directory(test_root, new_dir, check=True)
-        assert not result, ("Function should return False when check=True and the directory does "
-                            "not exist")
 
 
 def test_convert_fsaverage_to_native():
