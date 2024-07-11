@@ -403,15 +403,12 @@ def get_directories(target_path, strings=(""), check="all", depth="all"):
     return subdirs
 
 
-def make_directory(root_path, extended_dir, check=False):
+def make_directory(root_path, extended_dir):
     """
     Creates a directory along with the intermediate directories.
     
     root_path (str or pathlib.Path or os.Path): the root directory
     extended_dir(str or list): directory or directories to create within root_path
-    
-    Notes:
-    - can return a created path or a False if check=True
     """
     root_path = Path(root_path)
     if isinstance(extended_dir, list):
@@ -420,9 +417,7 @@ def make_directory(root_path, extended_dir, check=False):
         root_path = root_path.joinpath(extended_dir)
 
     root_path.mkdir(parents=True, exist_ok=True)
-    if not check and all([check, root_path.exists()]):
-        return root_path
-    return root_path.exists()
+    return root_path
 
 
 def convert_fsaverage_to_native(subj_id, hemi, vert_idx):
