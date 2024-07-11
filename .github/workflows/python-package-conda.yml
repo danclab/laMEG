@@ -35,6 +35,7 @@ jobs:
     - name: Install dependencies and build package
       run: |
         conda activate lameg
+        pip install numpy==1.19.5
         python setup.py build_ext --inplace -v
         python install.py
       shell: bash -l {0}
