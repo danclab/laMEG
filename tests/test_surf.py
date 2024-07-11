@@ -4,7 +4,7 @@ This module contains the unit tests for the `surf` module from the `lameg` packa
 
 import numpy as np
 
-from lameg.surf import split_fv
+from lameg.surf import split_fv # pylint: disable=no-name-in-module
 
 def test_split_fv():
     """
