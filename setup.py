@@ -53,7 +53,7 @@ setup(
     url='https://github.com/danclab/laMEG',
     install_requires=install_requires,
     packages=find_packages(include=['lameg', 'lameg.*']),
-    ext_modules=cythonize(extensions),
+    ext_modules=cythonize(extensions, build_dir="."),
     package_data={
         'lameg': [
             '*.so',
