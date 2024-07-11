@@ -25,7 +25,11 @@ end
 matlabbatch{1}.spm.meeg.convert.channels{1}.all = 'all';
 matlabbatch{1}.spm.meeg.convert.outfile = spm_filename;
 matlabbatch{1}.spm.meeg.convert.eventpadding = 0;
-matlabbatch{1}.spm.meeg.convert.blocksize = 3276800;
+if epoched
+    matlabbatch{1}.spm.meeg.convert.blocksize = 3276800;
+else
+    matlabbatch{1}.spm.meeg.convert.blocksize = 113276800;
+end
 matlabbatch{1}.spm.meeg.convert.checkboundary = 1;
 matlabbatch{1}.spm.meeg.convert.saveorigheader = 0;
 matlabbatch{1}.spm.meeg.convert.inputformat = 'autodetect';
