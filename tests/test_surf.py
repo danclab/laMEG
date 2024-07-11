@@ -48,7 +48,7 @@ def test_split_fv():
                        [0, 2, 3],
                        [4, 5, 0],
                        [7, 6, 3]])
-    assert np.sum(patch_1_faces - target) == 0
+    assert np.allclose(patch_1_faces, target)
 
     patch_1_vertices = split_patches[0]['vertices']
     target = np.array([[2, 4],
@@ -59,17 +59,17 @@ def test_split_fv():
                        [2, 6],
                        [5, 2],
                        [5, 0]])
-    assert np.sum(patch_1_vertices - target) == 0
+    assert np.allclose(patch_1_vertices, target)
 
     patch_2_faces = split_patches[1]['faces']
     target = np.array([[0, 1, 2]])
-    assert np.sum(patch_2_faces - target) == 0
+    assert np.allclose(patch_2_faces, target)
 
     patch_2_vertices = split_patches[1]['vertices']
     target = np.array([[2, 2],
                        [4, 2],
                        [4, 0]])
-    assert np.sum(patch_2_vertices - target) == 0
+    assert np.allclose(patch_2_vertices, target)
 
     faces = np.array([[1, 2, 3], [1, 3, 4], [5, 6, 1], [7, 8, 9], [11, 10, 4], [1, 6, 7]])
     vertices = np.array([[2, 4],
@@ -94,7 +94,7 @@ def test_split_fv():
                        [ 6,  7,  8],
                        [10,  9,  3],
                        [ 0,  5,  6]])
-    assert np.sum(patch_faces - target) == 0
+    assert np.allclose(patch_faces, target)
 
     patch_vertices = split_patches[0]['vertices']
     target = np.array([[2, 4],
@@ -108,4 +108,4 @@ def test_split_fv():
                        [4, 0],
                        [5, 2],
                        [5, 0]])
-    assert np.sum(patch_vertices - target) == 0
+    assert np.allclose(patch_vertices, target)

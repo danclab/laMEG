@@ -10,7 +10,8 @@ import numpy as np
 from lameg.util import (check_many, spm_context, big_brain_proportional_layer_boundaries,
                         get_fiducial_coords, get_files, get_directories, make_directory,
                         calc_prop, batch, load_meg_sensor_data, get_surface_names,
-                        convert_fsaverage_to_native, convert_native_to_fsaverage)
+                        convert_fsaverage_to_native, convert_native_to_fsaverage,
+                        ttest_rel_corrected, get_bigbrain_layer_boundaries)
 from spm import spm_standalone
 
 
@@ -128,11 +129,11 @@ def test_load_meg_sensor_data():
     data, time, ch_names = load_meg_sensor_data(filename)
     assert data.shape[0] == 274 and data.shape[1] == 601 and data.shape[2] == 60
     assert (np.min(time) == -0.5 and np.max(time) == 0.5 and
-            np.abs(np.diff(time)[0]-0.001666666667) < 1e-6)
+            np.isclose(np.diff(time)[0], 0.001666666667))
     assert ch_names[0] == 'MLC11'
     target = np.array([127.983536, 6.9637985, -12.615336, 76.55547, 13.708231, -137.579, 90.26142,
                        -19.759878, 70.513176, 82.06577])
-    assert np.mean(np.abs(data[0,0,:10]-target)) < 1e-5
+    assert np.allclose(data[0,0,:10], target)
 
     # Test one that is prior to v7.3
     filename = os.path.join(test_data_path,
@@ -141,11 +142,11 @@ def test_load_meg_sensor_data():
     data, time, ch_names = load_meg_sensor_data(filename)
     assert data.shape[0] == 274 and data.shape[1] == 121 and data.shape[2] == 60
     assert (np.abs(np.min(time)- -0.09999999999999) < 1e-6 and np.abs(np.max(time)-0.1) < 1e-6 and
-            np.abs(np.diff(time)[0] - 0.001666666667) < 1e-6)
+            np.isclose(np.diff(time)[0], 0.001666666667))
     assert ch_names[0] == 'MLC11'
     target = np.array([35.541718, 116.940315, -17.433748, 132.34103, 44.1114, 88.78001, -68.96891,
                        8.402161, -80.73266, -18.521292])
-    assert np.mean(np.abs(data[0, 0, :10] - target)) < 1e-5
+    assert np.allclose(data[0, 0, :10], target)
 
 
 def test_get_surface_names():
@@ -482,11 +483,79 @@ def test_convert_native_to_fsaverage():
     assert error_raise
 
 
-def test_calc_prop_zero_sum():
+def test_ttest_rel_corrected():
     """
-    Tests the `calc_prop` function with a vector where the sum is zero.
-    The function should return the original vector unchanged because proportion calculation is not
-    possible.
+    Tests the `ttest_rel_corrected` function with various configurations to ensure it accurately
+    calculates the t-statistic, degrees of freedom, and p-value across different scenarios.
+
+    The function is tested under four main scenarios:
+    1. Default settings without any corrections applied.
+    2. Applying a variance correction of 0.1 to see its impact on the t-statistic and p-value.
+    3. Using a left one-tailed test (tail=-1) to verify the calculation of p-values for this
+       scenario.
+    4. Using a right one-tailed test (tail=1) to check for correctness in this tail type.
+
+    Each scenario checks:
+    - The closeness of computed t-values to the expected values with a tolerance of 0.01.
+    - Exact matches for computed degrees of freedom against expected values.
+    - The closeness of computed p-values to the expected values with a tolerance of 0.01.
+
+    Assertions are used to ensure that each test accurately reflects expected outcomes, providing
+    feedback if any value does not meet the expected criteria.
+    """
+
+    data = np.array([[1, 2, np.nan, 4],
+                     [1, 2, 3, 4]]).T
+
+    expected_tval = np.array([3.22428901, 4.44456638])
+    expected_deg_of_freedom = np.array([2, 3])
+    expected_p_val = np.array([0.08421719, 0.02118368])
+
+    tval, deg_of_freedom, p_val = ttest_rel_corrected(data)
+
+    assert np.allclose(tval, expected_tval, atol=1e-2), "T-values do not match expected"
+    assert np.array_equal(deg_of_freedom, expected_deg_of_freedom), ("Degrees of freedom do not "
+                                                                     "match expected")
+    assert np.allclose(p_val, expected_p_val, atol=1e-2), "P-values do not match expected"
+
+    expected_tval = np.array([3.14098262, 4.30331483])
+    expected_deg_of_freedom = np.array([2, 3])
+    expected_p_val = np.array([0.08816231, 0.02309284])
+
+    tval, deg_of_freedom, p_val = ttest_rel_corrected(data, correction=0.1)
+
+    assert np.allclose(tval, expected_tval, atol=1e-2), "T-values do not match expected"
+    assert np.array_equal(deg_of_freedom, expected_deg_of_freedom), ("Degrees of freedom do not "
+                                                                     "match expected")
+    assert np.allclose(p_val, expected_p_val, atol=1e-2), "P-values do not match expected"
+
+    expected_tval = np.array([3.22428901, 4.44456638])
+    expected_deg_of_freedom = np.array([2, 3])
+    expected_p_val = np.array([0.9578914, 0.98940816])
+
+    tval, deg_of_freedom, p_val = ttest_rel_corrected(data, tail=-1)
+
+    assert np.allclose(tval, expected_tval, atol=1e-2), "T-values do not match expected"
+    assert np.array_equal(deg_of_freedom, expected_deg_of_freedom), ("Degrees of freedom do not "
+                                                                     "match expected")
+    assert np.allclose(p_val, expected_p_val, atol=1e-2), "P-values do not match expected"
+
+    expected_tval = np.array([3.22428901, 4.44456638])
+    expected_deg_of_freedom = np.array([2, 3])
+    expected_p_val = np.array([0.9578914, 0.98940816])
+
+    tval, deg_of_freedom, p_val = ttest_rel_corrected(data, tail=1)
+
+    assert np.allclose(tval, expected_tval, atol=1e-2), "T-values do not match expected"
+    assert np.array_equal(deg_of_freedom, expected_deg_of_freedom), ("Degrees of freedom do not "
+                                                                     "match expected")
+    assert np.allclose(p_val, expected_p_val, atol=1e-2), "P-values do not match expected"
+
+
+def test_calc_prop():
+    """
+    Tests the `calc_prop` function with a vector where the sum is zero, non-zero, and when it has
+    zero- and non-zero elements.
     """
     vec = np.array([0, 0, 0])
     result = calc_prop(vec)
@@ -496,11 +565,6 @@ def test_calc_prop_zero_sum():
         err_msg="Should return original vector when sum is zero"
     )
 
-def test_calc_prop_non_zero_sum():
-    """
-    Tests the `calc_prop` function with a vector where the sum is non-zero.
-    The function should return a vector of cumulative proportions.
-    """
     vec = np.array([1, 2, 3])
     expected_result = np.array([1, 3, 6]) / 6  # cumulative sum divided by total sum
     result = calc_prop(vec)
@@ -511,11 +575,6 @@ def test_calc_prop_non_zero_sum():
         err_msg="Cumulative proportions are incorrect"
     )
 
-def test_calc_prop_including_zero_elements():
-    """
-    Tests the `calc_prop` function with a vector including zero and non-zero elements.
-    It should handle zeros correctly in the proportion calculations.
-    """
     vec = np.array([0, 1, 2, 0, 3])
     expected_result = np.array([0, 1, 3, 3, 6]) / 6  # cumulative sum taking into account zeros
     result = calc_prop(vec)
@@ -554,24 +613,77 @@ def test_big_brain_proportional_layer_boundaries():
     assert 'lh' in bb_data
     assert bb_data['lh'].shape[0] == 6 and bb_data['lh'].shape[1] == 163842
     expected = np.array([0.07864515, 0.13759026, 0.3424378, 0.4091583, 0.64115983, 1])
-    assert np.max(np.abs(bb_data['lh'][:, 0] - expected)) < 1e-6
+    assert np.allclose(bb_data['lh'][:, 0], expected)
 
     assert 'rh' in bb_data
     assert bb_data['rh'].shape[0] == 6 and bb_data['rh'].shape[1] == 163842
     expected = np.array([0.07103447, 0.15451714, 0.46817848, 0.53011256, 0.7344828, 1.])
-    assert np.max(np.abs(bb_data['rh'][:, 0] - expected)) < 1e-6
+    assert np.allclose(bb_data['rh'][:, 0], expected)
 
     bb_data = big_brain_proportional_layer_boundaries(overwrite=True)
 
     assert 'lh' in bb_data
     assert bb_data['lh'].shape[0] == 6 and bb_data['lh'].shape[1] == 163842
     expected = np.array([0.07864515, 0.13759026, 0.3424378, 0.4091583, 0.64115983, 1])
-    assert np.max(np.abs(bb_data['lh'][:, 0] - expected)) < 1e-6
+    assert np.allclose(bb_data['lh'][:, 0], expected)
 
     assert 'rh' in bb_data
     assert bb_data['rh'].shape[0] == 6 and bb_data['rh'].shape[1] == 163842
     expected = np.array([0.07103447, 0.15451714, 0.46817848, 0.53011256, 0.7344828, 1.])
-    assert np.max(np.abs(bb_data['rh'][:, 0] - expected)) < 1e-6
+    assert np.allclose(bb_data['rh'][:, 0], expected)
+
+
+def test_get_bigbrain_layer_boundaries():
+    """
+    Tests the `get_bigbrain_layer_boundaries` function to ensure it accurately retrieves
+    the proportional boundaries of brain layers from the BigBrain model.
+
+    This function performs several checks:
+    1. Verifies that the function correctly returns the expected array of proportional
+       boundaries for a given subject and coordinates using known correct inputs.
+    2. Confirms that the function raises a FileNotFoundError when provided with an
+       invalid subject identifier, ensuring robust error handling.
+    3. Ensures that the function also raises a FileNotFoundError when given an incorrect
+       path to the surface files, which tests the function's dependency on file paths.
+
+    The tests use:
+    - A path to test data structured in a typical project directory format.
+    - Hardcoded coordinates which are representative of typical inputs.
+    - Assertions to verify both the data accuracy and the error handling mechanisms.
+    """
+
+    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
+    surf_path = os.path.join(test_data_path, 'sub-104/surf')
+
+    vert_bb_prop = get_bigbrain_layer_boundaries(
+        'sub-104',
+        surf_path,
+        [-5.045391, -58.015587, 28.667336]
+    )
+    expected = np.array([0.18065107, 0.2555629 , 0.4672846 , 0.7949229 , 0.90064305, 1.])
+    assert np.allclose(vert_bb_prop, expected)
+
+    error_raise = False
+    try:
+        _ = get_bigbrain_layer_boundaries(
+            'xxx',
+            surf_path,
+            [-5.045391, -58.015587, 28.667336]
+        )
+    except FileNotFoundError:
+        error_raise = True
+    assert error_raise
+
+    error_raise = False
+    try:
+        _ = get_bigbrain_layer_boundaries(
+            'sub-104',
+            'xxx',
+            [-5.045391, -58.015587, 28.667336]
+        )
+    except FileNotFoundError:
+        error_raise = True
+    assert error_raise
 
 
 def test_get_fiducial_coords():
