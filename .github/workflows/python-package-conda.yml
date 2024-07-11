@@ -43,7 +43,7 @@ jobs:
     - name: Lint with pylint
       run: |
         conda activate lameg
-        conda install pylint
+        conda install pylint pytest pytest-cov coverage
         pylint --rcfile=${{ github.workspace }}/.pylintrc --disable=too-many-arguments,too-many-locals $(git ls-files '*.py')
       shell: bash -l {0}
 
@@ -52,7 +52,6 @@ jobs:
         SUBJECTS_DIR: ${{ github.workspace }}/test_data/fs
       run: |
         conda activate lameg
-        conda install pytest pytest-cov coverage
         pytest --cov=lameg --cov-report=xml
       shell: bash -l {0}
 
