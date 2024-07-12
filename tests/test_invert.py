@@ -226,12 +226,13 @@ def test_invert_msp(spm):
         pial_mesh_fname,
         base_fname,
         n_layers,
+        priors=[47507],
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
         spm_instance=spm
     )
 
-    assert np.isclose(free_energy[()], -404459.1434746343)
+    assert np.isclose(free_energy[()], -509588.72129308333)
     assert np.allclose(cv_err, [1, 0])
 
 
@@ -272,17 +273,16 @@ def test_load_source_time_series():
 
     time_series, time, mu_matrix = load_source_time_series(base_fname, vertices=[47507])
 
-    target = np.array([65.33608482, 7.99860076, -33.53403927, -35.38019463,
-                       8.5180489, -6.11440965, 4.53180635, 4.39901238,
-                       29.15413485, -26.00092322])
+    target = np.array([22.68529735, 20.8850863 , 26.29796176,  5.48887292, 13.1995661 ,
+                       19.65796882, 16.80385876, 26.76854724, 17.86000365, 18.98266381])
     assert np.allclose(time_series[0,:10,0], target)
 
     target = np.array([-0.1, -0.09833333, -0.09666667, -0.095, -0.09333333,
                        -0.09166667, -0.09, -0.08833333, -0.08666667, -0.085])
     assert np.allclose(time[:10], target)
 
-    target = np.array([-0.02459338, -0.02086884, -0.00458008, 0.01308403, 0.01805741,
-                       0.01350546, -0.01131606, -0.0030078, 0.01911467, 0.02798467])
+    target = np.array([-0.00211948, -0.00252587, -0.00292212, -0.00338775, -0.0034642 ,
+                       -0.00348748, -0.0043163 , -0.00279745, -0.00296675, -0.00306699])
     assert np.allclose(mu_matrix[0,:10], target)
 
 
