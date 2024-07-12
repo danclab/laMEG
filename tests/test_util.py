@@ -32,7 +32,7 @@ def test_spm_context():
     # Check that instance is terminated
     terminated = False
     try:
-        ver = spm.spm(
+        _ = spm.spm(
             "Version",
             nargout=1
         )
@@ -63,7 +63,7 @@ def test_spm_context():
     # Check that terminated
     terminated = False
     try:
-        ver = spm.spm(
+        _ = spm.spm(
             "Version",
             nargout=1
         )
