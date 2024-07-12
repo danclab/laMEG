@@ -13,12 +13,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Cache MATLAB Runtime
-      uses: actions/cache@v2
-      with:
-        path: ./MATLAB_Runtime_R2019a_Update_9_glnxa64.zip
-        key: MATLAB-Runtime-R2019a_Update_9
-
     - name: Cache Test Data
       uses: actions/cache@v2
       with:
@@ -38,6 +32,7 @@ jobs:
         pip install numpy==1.19.5 Cython
         python setup.py build_ext --inplace -v
         python install.py
+        rm ${{ github.workspace }}/MATLAB_Runtime_R2019a_Update_9_glnxa64.zip
       shell: bash -l {0}
 
     - name: Lint with pylint
