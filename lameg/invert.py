@@ -533,6 +533,7 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
     Returns:
     ndarray: An array containing the extracted source time series data (sources x time x trial).
     ndarray: An array containing the timestamps
+    ndarray: The matrix needed to reconstruct source activity from sensor signals
 
     Notes:
     - If 'inv_fname' is not provided, and 'mu_matrix' is None, the inverse solution from the
