@@ -81,6 +81,7 @@ def test_coregister(spm):
     base_fname = os.path.join(out_dir, f'{data_base}.mat')
 
     # Native space MRI to use for coregistration
+    # pylint: disable=duplicate-code
     mri_fname = os.path.join(
         test_data_path,
         subj_id,
