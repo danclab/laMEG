@@ -43,7 +43,8 @@ jobs:
     - name: Lint with pylint
       run: |
         conda activate lameg
-        conda install pylint pytest pytest-cov coverage pytest-dependency
+        conda install pylint pytest pytest-cov coverage
+        pip install pytest-dependency==0.6.0
         pylint --rcfile=${{ github.workspace }}/.pylintrc --disable=too-many-arguments,too-many-locals $(git ls-files '*.py')
       shell: bash -l {0}
 
