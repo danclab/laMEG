@@ -8,7 +8,8 @@ import numpy as np
 import pytest
 import nibabel as nib
 
-from lameg.laminar import model_comparison, sliding_window_model_comparison
+from lameg.invert import coregister, invert_ebb, load_source_time_series
+from lameg.laminar import model_comparison, sliding_window_model_comparison, compute_csd
 from lameg.simulate import run_dipole_simulation, run_current_density_simulation
 from lameg.util import get_fiducial_coords, get_surface_names, load_meg_sensor_data
 
@@ -335,7 +336,7 @@ def test_sliding_window_model_comparison(spm):
         'link_vector.fixed'
     )
 
-    sim_fname = os.path.join('../output/',
+    sim_fname = os.path.join('./output/',
                              'sim_24588_dipole_pial_pspm-converted_autoreject-'
                              'sub-104-ses-01-001-btn_trial-epo.mat')
     patch_size = 5
