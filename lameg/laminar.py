@@ -206,10 +206,10 @@ def compute_csd(signal, thickness, sfreq, smoothing=None):
     signal = neo.core.AnalogSignal(
         signal.T, units="T", sampling_rate=sfreq*pq.Hz
     )
-    thickness = pq.Quantity(np.linspace(0, thickness, num=signal.shape[0]).reshape(-1,1)) * pq.mm
+    coords = pq.Quantity(np.linspace(0, thickness, num=signal.shape[1]).reshape(-1,1)) * pq.mm
 
     csd = elephant.current_source_density.estimate_csd(
-        signal, thickness,
+        signal, coords,
         method = "StandardCSD"
     ).as_array().T
     csd[:2,:]=0
