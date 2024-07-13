@@ -9,7 +9,7 @@ import pytest
 import nibabel as nib
 
 from lameg.invert import coregister, invert_ebb, load_source_time_series
-from lameg.laminar import model_comparison, sliding_window_model_comparison, compute_csd
+from lameg.laminar import (model_comparison, sliding_window_model_comparison, compute_csd)
 from lameg.simulate import run_dipole_simulation, run_current_density_simulation
 from lameg.util import get_fiducial_coords, get_surface_names, load_meg_sensor_data
 
@@ -321,6 +321,7 @@ def test_sliding_window_model_comparison(spm):
     nas, lpa, rpa = get_fiducial_coords(subj_id, os.path.join(test_data_path, 'participants.tsv'))
 
     # Native space MRI to use for coregistration
+    # pylint: disable=duplicate-code
     mri_fname = os.path.join(
         test_data_path,
         subj_id,
@@ -384,3 +385,128 @@ def test_sliding_window_model_comparison(spm):
                        [-100.        ,  -61.66666667],
                        [-100.        ,  -60.        ]])
     assert np.allclose(wois[:10,:], target)
+
+
+@pytest.mark.dependency(depends=["test_run_dipole_simulation"])
+def test_compute_csd(spm):
+    """
+    Tests the `compute_csd` function to ensure accurate computation of the Current Source Density
+    (CSD) from simulated MEG data over multiple cortical layers.
+
+    This unit test is designed to:
+    1. Perform coregistration of simulated MEG data to a multilayer mesh based on fiducial
+       coordinates and native space MRI.
+    2. Use the output of the coregistration in source inversion to obtain mu matrices.
+    3. Extract time series data for specified vertices representing the pial layer and compute the
+       CSD and smoothed CSD.
+    4. Validate the computed CSD against expected values to ensure the accuracy of the CSD
+       computation process.
+
+    Dependencies:
+        This test depends on `test_run_dipole_simulation` which sets up necessary conditions and
+        data for simulating MEG data.
+
+    Steps:
+    - Coregister the simulation output with an MRI using fiducial coordinates.
+    - Use the registered data to perform source inversion, extracting the mu matrix.
+    - Load time series data for specific vertices to analyze neural activity across different
+      layers.
+    - Compute the CSD and a smoothed version of CSD for the extracted time series.
+    - Compare the results to predefined target values to validate the CSD computation.
+
+    Assertions:
+    - Assert that the values of computed CSD for specified layers match expected target values
+      closely, confirming the model's accuracy.
+    - Verify that the smoothed CSD also matches its respective expected values, ensuring the
+      effectiveness of the smoothing process.
+
+    This test ensures that the computational models and methods used to estimate neural activity
+    from MEG data are accurate and reliable across different conditions and setups.
+    """
+    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
+    subj_id = 'sub-104'
+    s_rate = 600
+
+    # Fiducial coil coordinates
+    nas, lpa, rpa = get_fiducial_coords(subj_id, os.path.join(test_data_path, 'participants.tsv'))
+
+    # Native space MRI to use for coregistration
+    # pylint: disable=duplicate-code
+    mri_fname = os.path.join(
+        test_data_path,
+        subj_id,
+        'mri',
+        's2023-02-28_13-33-133958-00001-00224-1.nii'
+    )
+
+    # Mesh to use for forward model in the simulations
+    multilayer_mesh_fname = os.path.join(
+        test_data_path,
+        subj_id,
+        'surf',
+        'multilayer.11.ds.link_vector.fixed.gii'
+    )
+
+    mesh = nib.load(multilayer_mesh_fname)
+    n_layers = 11
+    verts_per_surf = int(mesh.darrays[0].data.shape[0]/n_layers)
+
+
+    sim_fname=os.path.join('./output/',
+                           'sim_24588_dipole_pial_pspm-converted_autoreject-'
+                           'sub-104-ses-01-001-btn_trial-epo.mat')
+
+    # Coregister data to multilayer mesh
+    # pylint: disable=duplicate-code
+    coregister(
+        nas,
+        lpa,
+        rpa,
+        mri_fname,
+        multilayer_mesh_fname,
+        sim_fname,
+        spm_instance=spm
+    )
+
+    patch_size = 5
+    n_temp_modes = 4
+    # pylint: disable=W0632
+    [_,_,mu_matrix] = invert_ebb(
+        multilayer_mesh_fname,
+        sim_fname,
+        n_layers,
+        patch_size=patch_size,
+        n_temp_modes=n_temp_modes,
+        return_mu_matrix=True,
+        spm_instance=spm
+    )
+
+    pial_layer_vertices = np.arange(verts_per_surf)
+    pial_layer_ts, _, _ = load_source_time_series(
+        sim_fname,
+        mu_matrix=mu_matrix,
+        vertices=pial_layer_vertices
+    )
+
+    # Layer peak
+    m_layer_max = np.max(np.mean(pial_layer_ts,axis=-1),-1)
+    peak = np.argmax(m_layer_max)
+
+    layer_verts = [l * int(verts_per_surf) + peak for l in range(n_layers)]
+    layer_coords = mesh.darrays[0].data[layer_verts, :]
+    layer_dists = np.sqrt(np.sum(np.diff(layer_coords, axis=0) ** 2, axis=1))
+
+    # Get source time series for each layer
+    layer_ts, _, _ = load_source_time_series(sim_fname, vertices=layer_verts)
+
+    # Average over trials and compute CSD and smoothed CSD
+    mean_layer_ts = np.mean(layer_ts, axis=-1)
+    [csd, smooth_csd] = compute_csd(mean_layer_ts, np.sum(layer_dists), s_rate, smoothing='cubic')
+
+    target = np.array([ 0.00986531, -0.07117795,  0.02145686, -0.0356993 , -0.02422255,
+                        0.0993618 ,  0.01780521, -0.01642674, -0.00256466, -0.05318114])
+    assert np.allclose(csd[5,:10], target)
+
+    target = np.array([ 0.01145994,  0.00207419, -0.00875817, -0.00167645,  0.00080345,
+                        -0.00754003, -0.01884328, -0.00144315,  0.00474964,  0.01824842])
+    assert np.allclose(smooth_csd[5, :10], target)
