@@ -44,7 +44,6 @@ def test_model_comparison(spm):
     indicative of the function's reliability and correctness in real-world scenarios.
     """
 
-    spm.spm_standalone('eval', 'clear all;', nargout=0)
     test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
     subj_id = 'sub-104'
 
@@ -131,7 +130,6 @@ def test_sliding_window_model_comparison(spm):
     temporal aspects of neural activity as simulated.
     """
 
-    spm.spm_standalone('eval', 'clear all;', nargout=0)
     test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
 
     subj_id = 'sub-104'
@@ -341,7 +339,6 @@ def test_roi_power_comparison(spm):
       identifies and analyzes the specified regions.
     """
 
-    spm.spm_standalone('eval', 'clear all;', nargout=0)
 
     test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
     subj_id = 'sub-104'
