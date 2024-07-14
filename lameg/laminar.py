@@ -266,11 +266,6 @@ def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thr
         vertices=pial_vertices,
         mu_matrix=mu_matrix
     )
-    white_layer_ts, time, _ = load_source_time_series(
-        data_fname,
-        vertices=white_vertices,
-        mu_matrix=mu_matrix
-    )
 
     base_t_idx = np.where((time >= baseline_woi[0]) & (time < baseline_woi[1]))[0]
     exp_t_idx = np.where((time >= woi[0]) & (time < woi[1]))[0]
@@ -279,11 +274,19 @@ def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thr
     pial_base_power = np.squeeze(np.var(pial_layer_ts[:, base_t_idx, :], axis=1))
     pial_exp_power = np.squeeze(np.var(pial_layer_ts[:, exp_t_idx, :], axis=1))
     pial_power_change = (pial_exp_power - pial_base_power) / pial_base_power
+    del pial_layer_ts
+
+    white_layer_ts, time, _ = load_source_time_series(
+        data_fname,
+        vertices=white_vertices,
+        mu_matrix=mu_matrix
+    )
 
     # White matter power
     white_base_power = np.squeeze(np.var(white_layer_ts[:, base_t_idx, :], axis=1))
     white_exp_power = np.squeeze(np.var(white_layer_ts[:, exp_t_idx, :], axis=1))
     white_power_change = (white_exp_power - white_base_power) / white_base_power
+    del white_layer_ts
 
     # Define ROI
     pial_t_statistic, _, _ = ttest_rel_corrected((pial_exp_power - pial_base_power), axis=-1)
