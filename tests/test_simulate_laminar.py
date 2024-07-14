@@ -9,7 +9,8 @@ import pytest
 import nibabel as nib
 
 from lameg.invert import coregister, invert_ebb, load_source_time_series
-from lameg.laminar import (model_comparison, sliding_window_model_comparison, compute_csd)
+from lameg.laminar import (model_comparison, sliding_window_model_comparison, compute_csd,
+                           roi_power_comparison)
 from lameg.simulate import run_dipole_simulation, run_current_density_simulation
 from lameg.util import get_fiducial_coords, get_surface_names, load_meg_sensor_data
 
@@ -510,3 +511,111 @@ def test_compute_csd(spm):
     target = np.array([ 0.01145994,  0.00207419, -0.00875817, -0.00167645,  0.00080345,
                         -0.00754003, -0.01884328, -0.00144315,  0.00474964,  0.01824842])
     assert np.allclose(smooth_csd[5, :10], target)
+
+
+@pytest.mark.dependency(depends=["test_run_current_density_simulation"])
+def test_roi_power_comparison(spm):
+    """
+    Tests the `roi_power_comparison` function to evaluate its capability to accurately compute
+    statistical measures comparing power in specified regions of interest (ROIs) across different
+    cortical layers.
+
+    The unit test ensures that:
+    1. The function can effectively use MEG data and surface meshes for ROI analysis.
+    2. It calculates t-statistics and p-values correctly for given data sets, reflecting the
+       differences in neural activity within specified frequency bands and spatial regions.
+    3. It correctly identifies regions of interest based on mesh data and analyzes their
+       statistical significance.
+
+    Dependencies:
+        This test relies on the `test_run_current_density_simulation`, ensuring that required
+        simulation outputs are available for conducting ROI power comparisons.
+
+    Parameters:
+        spm (object): An initialized instance of the SPM software
+
+    Key steps in the test:
+    - Retrieve fiducial coordinates and use them to coregister simulated MEG data to a native space
+      MRI.
+    - Extract mu matrices from the source inversion results to use in ROI power comparison.
+    - Calculate t-statistics, p-values, degrees of freedom, and ROI indices for designated time and
+      frequency ranges.
+    - Validate the calculated results against expected values to ensure accuracy and reliability.
+
+    Assertions:
+    - Check if the computed t-statistic and p-value are close to their expected values, confirming
+      the statistical analysis's correctness.
+    - Verify the degrees of freedom and ROI indices to ensure that the function correctly
+      identifies and analyzes the specified regions.
+    """
+
+    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
+    subj_id = 'sub-104'
+
+    # Fiducial coil coordinates
+    nas, lpa, rpa = get_fiducial_coords(subj_id, os.path.join(test_data_path, 'participants.tsv'))
+
+    # Native space MRI to use for coregistration
+    # pylint: disable=duplicate-code
+    mri_fname = os.path.join(
+        test_data_path,
+        subj_id,
+        'mri',
+        's2023-02-28_13-33-133958-00001-00224-1.nii'
+    )
+
+    # Mesh to use for forward model in the simulations
+    multilayer_mesh_fname = os.path.join(
+        test_data_path,
+        subj_id,
+        'surf',
+        'multilayer.11.ds.link_vector.fixed.gii'
+    )
+
+    mesh = nib.load(multilayer_mesh_fname)
+    n_layers = 11
+
+    sim_fname = os.path.join('./output/',
+                             'sim_24588_current_density_pial_pspm-converted_autoreject-'
+                             'sub-104-ses-01-001-btn_trial-epo.mat')
+
+    # Coregister data to multilayer mesh
+    # pylint: disable=duplicate-code
+    coregister(
+        nas,
+        lpa,
+        rpa,
+        mri_fname,
+        multilayer_mesh_fname,
+        sim_fname,
+        spm_instance=spm
+    )
+
+    patch_size = 5
+    n_temp_modes = 1
+    # pylint: disable=W0632
+    [_, _, mu_matrix] = invert_ebb(
+        multilayer_mesh_fname,
+        sim_fname,
+        n_layers,
+        foi=[1, 5],
+        patch_size=patch_size,
+        n_temp_modes=n_temp_modes,
+        return_mu_matrix=True,
+        spm_instance=spm
+    )
+
+    laminar_t_statistic, laminar_p_value, deg_of_freedom, roi_idx = roi_power_comparison(
+        sim_fname,
+        [0, 500],
+        [-500, 0],
+        mesh,
+        n_layers,
+        99.99,
+        mu_matrix=mu_matrix
+    )
+
+    assert np.isclose(laminar_t_statistic, -2.649841049441414)
+    assert np.isclose(laminar_p_value, 0.010319915770875114)
+    assert deg_of_freedom==59
+    assert np.allclose(roi_idx, np.array([24194, 24320, 24441, 24442, 24588, 24589]))
