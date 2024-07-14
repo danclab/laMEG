@@ -16,7 +16,7 @@ jobs:
     - name: Cache Test Data
       uses: actions/cache@v2
       with:
-        path: ./test_data.tar.gz
+        path: ./test_data
         key: test_data
 
     - name: Set up Miniconda
@@ -33,6 +33,7 @@ jobs:
         python setup.py build_ext --inplace -v
         python install.py
         rm ${{ github.workspace }}/MATLAB_Runtime_R2019a_Update_9_glnxa64.zip
+        rm ${{ github.workspace }}/test_data.tar.gz
       shell: bash -l {0}
 
     - name: Lint with pylint
