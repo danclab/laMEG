@@ -1,6 +1,5 @@
 """
-This module contains the unit tests for the `simulate` and `laminar` modules from the `lameg`
-package.
+This module contains the unit tests for the `laminar` module from the `lameg` package.
 """
 import os
 
@@ -8,198 +7,14 @@ import numpy as np
 import pytest
 import nibabel as nib
 
-from lameg.invert import coregister, invert_ebb, load_source_time_series
+from lameg.invert import coregister, invert_ebb
 from lameg.laminar import (model_comparison, sliding_window_model_comparison, compute_csd,
                            roi_power_comparison)
-from lameg.simulate import run_dipole_simulation, run_current_density_simulation
-from lameg.util import get_fiducial_coords, get_surface_names, load_meg_sensor_data
+from lameg.util import get_fiducial_coords, get_surface_names
 
 
-@pytest.mark.dependency(depends=["tests/test_invert.py::test_invert_sliding_window"],
+@pytest.mark.dependency(depends=["tests/test_02_simulate.py::test_run_current_density_simulation"],
                         scope='session')
-def test_run_dipole_simulation(spm):
-    """
-    Tests the `run_dipole_simulation` function to verify the accurate generation of simulated MEG
-    sensor data based on a specified dipole model in a cortical mesh.
-
-    This test function performs several key operations:
-    1. Prepares a Gaussian signal representing dipole activity and uses it along with a specified
-       cortical mesh to simulate MEG data.
-    2. Ensures that the simulation reflects the input parameters such as dipole moment, signal
-       width, and signal-to-noise ratio.
-    3. Verifies that the resulting simulated sensor data matches expected target values, testing
-       both the amplitude of the sensor signals and the timing of the recordings.
-    4. Checks that the channel names are correctly assigned in the simulated data.
-
-    The function relies on the SPM object provided by a session-wide fixture, ensuring that the SPM
-    model is initialized only once and reused, optimizing performance across tests.
-
-    Parameters:
-        spm (object): The SPM instance used to handle brain simulation and MEG data processing.
-
-    Steps executed in the test:
-    - A Gaussian signal is generated to simulate neuronal activity.
-    - The `run_dipole_simulation` function is called with the generated signal and parameters
-      defining the characteristics of the simulation.
-    - The output MEG sensor data is loaded and compared against predefined target values to ensure
-      the simulation's accuracy.
-    - The first channel name is checked to confirm the correct configuration and data handling.
-
-    Assertions:
-    - Asserts that the simulated sensor data closely matches expected values, ensuring the
-      simulation's output integrity.
-    - Verifies that time vectors are accurate to the specified sampling rate.
-    - Checks that the channel name matches expected setup, confirming proper MEG data formatting.
-
-    The test depends on `test_load_source_time_series` being successful, as it ensures the
-    necessary data infrastructure and dependencies are correctly set up.
-    """
-
-    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
-    subj_id = 'sub-104'
-
-    # Strength of simulated activity (nAm)
-    dipole_moment = 8
-    # Temporal width of the simulated Gaussian
-    signal_width = .025  # 25ms
-
-    # Generate 200ms of a Gaussian at a sampling rate of 600Hz (to match the data file)
-    time = np.linspace(0, .2, 121)
-    zero_time = time[int((len(time) - 1) / 2 + 1)]
-    sim_signal = np.exp(-((time - zero_time) ** 2) / (2 * signal_width ** 2)).reshape(1, -1)
-
-    # Mesh to use for forward model in the simulations
-    mesh_fname = os.path.join(test_data_path, subj_id, 'surf/pial.ds.link_vector.fixed.gii')
-
-    # Load multilayer mesh and compute the number of vertices per layer
-    mesh = nib.load(mesh_fname)
-
-    sim_vertex = 24588
-    # Orientation of the simulated dipole
-    pial_unit_norm = mesh.darrays[2].data[sim_vertex, :]
-    prefix = f'sim_{sim_vertex}_dipole_pial_'
-
-    # Size of simulated patch of activity (mm)
-    sim_patch_size = 5
-    # SNR of simulated data (dB)
-    snr = -10
-
-    # Generate simulated data
-    base_fname='./output/pspm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
-
-    sim_fname = run_dipole_simulation(
-        base_fname,
-        prefix,
-        sim_vertex,
-        sim_signal,
-        pial_unit_norm,
-        dipole_moment,
-        sim_patch_size,
-        snr,
-        spm_instance=spm
-    )
-
-    sim_sensor_data, time, ch_names = load_meg_sensor_data(sim_fname)
-
-    target=np.array([9.644654, 22.121809, -20.063894, 3.8661294, 3.8762872,
-                     25.618711, -9.541486, 5.927515, -19.01493, 0.867059 ])
-    assert np.allclose(sim_sensor_data[0,:10,0], target)
-
-    target=np.array([-0.1, -0.09833333, -0.09666667, -0.095, -0.09333333,
-                     -0.09166667, -0.09, -0.08833333, -0.08666667, -0.085])
-    assert np.allclose(time[:10], target)
-
-    assert ch_names[0] == 'MLC11'
-
-
-@pytest.mark.dependency(depends=["tests/test_invert.py::test_invert_sliding_window"],
-                        scope='session')
-def test_run_current_density_simulation(spm):
-    """
-    Tests the `run_current_density_simulation` function to ensure it accurately simulates current
-    density maps based on specific neural activity models and evaluates the MEG sensor data
-    outputs against expected values.
-
-    The function aims to:
-    1. Simulate neuronal activity using a Gaussian waveform over a defined time course and verify
-       the resulting sensor data.
-    2. Ensure that the simulation parameters such as dipole moment, signal width, and
-       signal-to-noise ratio (SNR) are correctly applied.
-    3. Validate that the simulated data closely aligns with predefined target values, ensuring both
-       temporal and spatial accuracy of the simulation.
-
-    Parameters:
-        spm (object): An instance of the initialized SPM application, used to handle the simulation
-                      processes.
-
-    Key operations in this test include:
-    - Generating a Gaussian signal to represent localized brain activity.
-    - Running the current density simulation using a cortical mesh and checking the output against
-      expected sensor data.
-    - Validating the generated sensor data and time series to ensure they match the expected
-      patterns and values.
-    - Confirming the correct assignment of channel names, verifying that data arrays are properly
-      labeled and structured.
-
-    Assertions:
-    - Check if the first ten values of the simulated sensor data match the expected array of
-      values, validating the accuracy of the simulation.
-    - Ensure that the time series for the first ten data points are accurate to the specified
-      sampling rate.
-    - Verify that the first channel name matches the expected label, ensuring data integrity and
-      proper configuration.
-
-    This test is dependent on `test_load_source_time_series` to ensure that required data setups
-    and dependencies are appropriately configured beforehand.
-    """
-
-    # Strength of simulated activity (nAm)
-    dipole_moment = 8
-    # Temporal width of the simulated Gaussian
-    signal_width = .025  # 25ms
-
-    # Generate 200ms of a Gaussian at a sampling rate of 600Hz (to match the data file)
-    time = np.linspace(0, .2, 121)
-    zero_time = time[int((len(time) - 1) / 2 + 1)]
-    sim_signal = np.exp(-((time - zero_time) ** 2) / (2 * signal_width ** 2)).reshape(1, -1)
-
-    sim_vertex = 24588
-    prefix = f'sim_{sim_vertex}_current_density_pial_'
-
-    # Size of simulated patch of activity (mm)
-    sim_patch_size = 5
-    # SNR of simulated data (dB)
-    snr = -10
-
-    # Generate simulated data
-    base_fname='./output/pspm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
-
-    # Generate simulated data
-    sim_fname = run_current_density_simulation(
-        base_fname,
-        prefix,
-        sim_vertex,
-        sim_signal,
-        dipole_moment,
-        sim_patch_size,
-        snr,
-        spm_instance=spm
-    )
-
-    sim_sensor_data, time, ch_names = load_meg_sensor_data(sim_fname)
-
-    target=np.array([9.326762, 15.356956, -4.3236766, 26.251503, -9.620896,
-                     5.7415423, 9.518472, 17.73018, 12.0625515, -12.886167 ])
-    assert np.allclose(sim_sensor_data[0,:10,0], target)
-
-    target=np.array([-0.1, -0.09833333, -0.09666667, -0.095, -0.09333333,
-                     -0.09166667, -0.09, -0.08833333, -0.08666667, -0.085])
-    assert np.allclose(time[:10], target)
-
-    assert ch_names[0] == 'MLC11'
-
-
-@pytest.mark.dependency(depends=["test_run_current_density_simulation"])
 def test_model_comparison(spm):
     """
     Tests the `model_comparison` function to ensure it correctly compares different source
@@ -229,6 +44,7 @@ def test_model_comparison(spm):
     indicative of the function's reliability and correctness in real-world scenarios.
     """
 
+    spm.spm_standalone('eval', 'clear all;', nargout=0)
     test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
     subj_id = 'sub-104'
 
@@ -252,9 +68,9 @@ def test_model_comparison(spm):
         'link_vector.fixed'
     )
 
-    sim_fname=os.path.join('./output/',
-                           'sim_24588_current_density_pial_pspm-converted_autoreject-'
-                           'sub-104-ses-01-001-btn_trial-epo.mat')
+    sim_fname = os.path.join('./output/',
+                             'sim_24588_current_density_pial_pspm-converted_autoreject-'
+                             'sub-104-ses-01-001-btn_trial-epo.mat')
     patch_size = 5
     n_temp_modes = 4
     [free_energy, _] = model_comparison(
@@ -272,7 +88,8 @@ def test_model_comparison(spm):
     assert np.allclose(free_energy, np.array([-287707.70030694, -293264.38562064]))
 
 
-@pytest.mark.dependency(depends=["test_run_dipole_simulation"])
+@pytest.mark.dependency(depends=["tests/test_02_simulate.py::test_run_dipole_simulation"],
+                        scope='session')
 def test_sliding_window_model_comparison(spm):
     """
     Tests the `sliding_window_model_comparison` function to ensure it correctly performs
@@ -314,6 +131,7 @@ def test_sliding_window_model_comparison(spm):
     temporal aspects of neural activity as simulated.
     """
 
+    spm.spm_standalone('eval', 'clear all;', nargout=0)
     test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
 
     subj_id = 'sub-104'
@@ -371,25 +189,25 @@ def test_sliding_window_model_comparison(spm):
                         -279253.15129888],
                        [-279296.53050795, -279296.53050795, -279326.98676623,
                         -279312.46298879, -279312.46298879, -279292.45812693,
-                        -279214.1600669 , -279214.1600669 , -279241.90265108,
-                        -279253.1514743 ]])
-    assert np.allclose(free_energy[:,:10], target)
+                        -279214.1600669, -279214.1600669, -279241.90265108,
+                        -279253.1514743]])
+    assert np.allclose(free_energy[:, :10], target)
 
-    target = np.array([[-100.        ,  -75.        ],
-                       [-100.        ,  -73.33333333],
-                       [-100.        ,  -71.66666667],
-                       [-100.        ,  -70.        ],
-                       [-100.        ,  -68.33333333],
-                       [-100.        ,  -66.66666667],
-                       [-100.        ,  -65.        ],
-                       [-100.        ,  -63.33333333],
-                       [-100.        ,  -61.66666667],
-                       [-100.        ,  -60.        ]])
-    assert np.allclose(wois[:10,:], target)
+    target = np.array([[-100., -75.],
+                       [-100., -73.33333333],
+                       [-100., -71.66666667],
+                       [-100., -70.],
+                       [-100., -68.33333333],
+                       [-100., -66.66666667],
+                       [-100., -65.],
+                       [-100., -63.33333333],
+                       [-100., -61.66666667],
+                       [-100., -60.]])
+    assert np.allclose(wois[:10, :], target)
 
 
-@pytest.mark.dependency(depends=["test_run_dipole_simulation"])
-def test_compute_csd(spm):
+@pytest.mark.dependency()
+def test_compute_csd():
     """
     Tests the `compute_csd` function to ensure accurate computation of the Current Source Density
     (CSD) from simulated MEG data over multiple cortical layers.
@@ -424,96 +242,70 @@ def test_compute_csd(spm):
     This test ensures that the computational models and methods used to estimate neural activity
     from MEG data are accurate and reliable across different conditions and setups.
     """
-    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
-    subj_id = 'sub-104'
+
+    thickness = 4.6092634
     s_rate = 600
 
-    # Fiducial coil coordinates
-    nas, lpa, rpa = get_fiducial_coords(subj_id, os.path.join(test_data_path, 'participants.tsv'))
-
-    # Native space MRI to use for coregistration
-    # pylint: disable=duplicate-code
-    mri_fname = os.path.join(
-        test_data_path,
-        subj_id,
-        'mri',
-        's2023-02-28_13-33-133958-00001-00224-1.nii'
-    )
-
-    # Mesh to use for forward model in the simulations
-    multilayer_mesh_fname = os.path.join(
-        test_data_path,
-        subj_id,
-        'surf',
-        'multilayer.11.ds.link_vector.fixed.gii'
-    )
-
-    mesh = nib.load(multilayer_mesh_fname)
-    n_layers = 11
-    verts_per_surf = int(mesh.darrays[0].data.shape[0]/n_layers)
-
-
-    sim_fname=os.path.join('./output/',
-                           'sim_24588_dipole_pial_pspm-converted_autoreject-'
-                           'sub-104-ses-01-001-btn_trial-epo.mat')
-
-    # Coregister data to multilayer mesh
-    # pylint: disable=duplicate-code
-    coregister(
-        nas,
-        lpa,
-        rpa,
-        mri_fname,
-        multilayer_mesh_fname,
-        sim_fname,
-        spm_instance=spm
-    )
-
-    patch_size = 5
-    n_temp_modes = 4
-    # pylint: disable=W0632
-    [_,_,mu_matrix] = invert_ebb(
-        multilayer_mesh_fname,
-        sim_fname,
-        n_layers,
-        patch_size=patch_size,
-        n_temp_modes=n_temp_modes,
-        return_mu_matrix=True,
-        spm_instance=spm
-    )
-
-    pial_layer_vertices = np.arange(verts_per_surf)
-    pial_layer_ts, _, _ = load_source_time_series(
-        sim_fname,
-        mu_matrix=mu_matrix,
-        vertices=pial_layer_vertices
-    )
-
-    # Layer peak
-    m_layer_max = np.max(np.mean(pial_layer_ts,axis=-1),-1)
-    peak = np.argmax(m_layer_max)
-
-    layer_verts = [l * int(verts_per_surf) + peak for l in range(n_layers)]
-    layer_coords = mesh.darrays[0].data[layer_verts, :]
-    layer_dists = np.sqrt(np.sum(np.diff(layer_coords, axis=0) ** 2, axis=1))
-
-    # Get source time series for each layer
-    layer_ts, _, _ = load_source_time_series(sim_fname, vertices=layer_verts)
-
     # Average over trials and compute CSD and smoothed CSD
-    mean_layer_ts = np.mean(layer_ts, axis=-1)
-    [csd, smooth_csd] = compute_csd(mean_layer_ts, np.sum(layer_dists), s_rate, smoothing='cubic')
+    mean_layer_ts = np.array([[-2.49494905e-03, 1.00768780e-04, 1.98419396e-03,
+                               5.71883386e-04, -6.71066270e-07, 1.20126270e-03,
+                               3.98305717e-03, 5.04501537e-04, -9.24579604e-04,
+                               -3.59750486e-03],
+                              [-2.52018103e-03, -2.35669197e-04, 2.11956574e-03,
+                               4.25924778e-04, -1.14843079e-04, 1.68099310e-03,
+                               4.17476505e-03, 4.35020257e-04, -9.71325416e-04,
+                               -3.94518034e-03],
+                              [-2.16320010e-03, -5.38142242e-04, 1.94668338e-03,
+                               2.08191629e-04, -2.14643752e-04, 1.92530431e-03,
+                               3.73704499e-03, 3.01677715e-04, -8.65114354e-04,
+                               -3.70171427e-03],
+                              [-1.72057645e-03, -7.61128067e-04, 1.68961052e-03,
+                               9.45563482e-06, -2.85542464e-04, 2.02712329e-03,
+                               3.13361073e-03, 1.73024677e-04, -7.18358561e-04,
+                               -3.26497590e-03],
+                              [-1.46091741e-03, -1.01667770e-03, 1.60740279e-03,
+                               -1.65295308e-04, -3.70085107e-04, 2.29124340e-03,
+                               2.84963073e-03, 7.69352056e-05, -6.43007531e-04,
+                               -3.13761261e-03],
+                              [-9.83809962e-04, -1.03420231e-03, 1.25902835e-03,
+                               -2.74304924e-04, -3.69861793e-04, 2.09755402e-03,
+                               2.10592503e-03, -1.03895019e-05, -4.64007740e-04,
+                               -2.46570489e-03],
+                              [-6.13101302e-04, -9.81605973e-04, 9.66236519e-04,
+                               -3.27409225e-04, -3.47215572e-04, 1.85641465e-03,
+                               1.50018142e-03, -6.32344645e-05, -3.19116688e-04,
+                               -1.88388107e-03],
+                              [-3.39723753e-04, -8.83622916e-04, 7.27684625e-04,
+                               -3.38297841e-04, -3.10513506e-04, 1.59429703e-03,
+                               1.02688698e-03, -8.96038551e-05, -2.07261175e-04,
+                               -1.39994643e-03],
+                              [-1.59558486e-04, -8.14737789e-04, 5.75912773e-04,
+                               -3.42624744e-04, -2.85418715e-04, 1.42506398e-03,
+                               7.18130888e-04, -1.04044899e-04, -1.33539139e-04,
+                               -1.08198794e-03],
+                              [-2.83522366e-05, -7.18369663e-04, 4.44810039e-04,
+                               -3.23679082e-04, -2.51649491e-04, 1.23274586e-03,
+                               4.70845200e-04, -1.05549327e-04, -7.61171294e-05,
+                               -8.06136327e-04],
+                              [6.19161819e-05, -6.43688274e-04, 3.54761023e-04,
+                               -3.06079933e-04, -2.26176044e-04, 1.09429559e-03,
+                               2.99992862e-04, -1.04040227e-04, -3.65785356e-05,
+                               -6.12312968e-04]])
+
+    # pylint: disable=W0632
+    [csd, smooth_csd] = compute_csd(mean_layer_ts, thickness, s_rate, smoothing='cubic')
 
     target = np.array([ 0.00986531, -0.07117795,  0.02145686, -0.0356993 , -0.02422255,
                         0.0993618 ,  0.01780521, -0.01642674, -0.00256466, -0.05318114])
-    assert np.allclose(csd[5,:10], target)
+    assert np.allclose(csd[5, :10], target)
 
     target = np.array([ 0.01145994,  0.00207419, -0.00875817, -0.00167645,  0.00080345,
                         -0.00754003, -0.01884328, -0.00144315,  0.00474964,  0.01824842])
     assert np.allclose(smooth_csd[5, :10], target)
 
 
-@pytest.mark.dependency(depends=["test_run_current_density_simulation"])
+@pytest.mark.dependency(depends=["tests/test_02_simulate.py::test_run_current_density_simulation"],
+                        scope='session')
 def test_roi_power_comparison(spm):
     """
     Tests the `roi_power_comparison` function to evaluate its capability to accurately compute
@@ -548,6 +340,8 @@ def test_roi_power_comparison(spm):
     - Verify the degrees of freedom and ROI indices to ensure that the function correctly
       identifies and analyzes the specified regions.
     """
+
+    spm.spm_standalone('eval', 'clear all;', nargout=0)
 
     test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
     subj_id = 'sub-104'
@@ -617,5 +411,5 @@ def test_roi_power_comparison(spm):
 
     assert np.isclose(laminar_t_statistic, -2.649841049441414)
     assert np.isclose(laminar_p_value, 0.010319915770875114)
-    assert deg_of_freedom==59
+    assert deg_of_freedom == 59
     assert np.allclose(roi_idx, np.array([24194, 24320, 24441, 24442, 24588, 24589]))
