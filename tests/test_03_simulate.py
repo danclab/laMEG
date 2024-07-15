@@ -11,7 +11,7 @@ from lameg.simulate import run_dipole_simulation, run_current_density_simulation
 from lameg.util import load_meg_sensor_data
 
 
-@pytest.mark.dependency(depends=["tests/test_01_invert.py::test_invert_sliding_window"],
+@pytest.mark.dependency(depends=["tests/test_02_invert.py::test_invert_sliding_window"],
                         scope='session')
 def test_run_dipole_simulation(spm):
     """
@@ -47,7 +47,7 @@ def test_run_dipole_simulation(spm):
     - Verifies that time vectors are accurate to the specified sampling rate.
     - Checks that the channel name matches expected setup, confirming proper MEG data formatting.
 
-    The test depends on `test_load_source_time_series` being successful, as it ensures the
+    The test depends on `test_invert_ebb` being successful, as it ensures the
     necessary data infrastructure and dependencies are correctly set up.
     """
 
@@ -65,7 +65,7 @@ def test_run_dipole_simulation(spm):
     sim_signal = np.exp(-((time - zero_time) ** 2) / (2 * signal_width ** 2)).reshape(1, -1)
 
     # Mesh to use for forward model in the simulations
-    mesh_fname = os.path.join(test_data_path, subj_id, 'surf/pial.ds.link_vector.fixed.gii')
+    mesh_fname = os.path.join(test_data_path, subj_id, 'surf/multilayer.2.ds.link_vector.fixed.gii')
 
     # Load multilayer mesh and compute the number of vertices per layer
     mesh = nib.load(mesh_fname)
@@ -81,7 +81,7 @@ def test_run_dipole_simulation(spm):
     snr = -10
 
     # Generate simulated data
-    base_fname='./output/pspm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
+    base_fname = './output/pspm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
 
     sim_fname = run_dipole_simulation(
         base_fname,
@@ -97,8 +97,8 @@ def test_run_dipole_simulation(spm):
 
     sim_sensor_data, time, ch_names = load_meg_sensor_data(sim_fname)
 
-    target=np.array([9.644654, 22.121809, -20.063894, 3.8661294, 3.8762872,
-                     25.618711, -9.541486, 5.927515, -19.01493, 0.867059 ])
+    target=np.array([[9.644654, 22.121809, -20.063894, 3.8661294, 3.8762872,
+                      25.618711, -9.541486, 5.927515, -19.01493, 0.867059 ]])
     assert np.allclose(sim_sensor_data[0,:10,0], target)
 
     target=np.array([-0.1, -0.09833333, -0.09666667, -0.095, -0.09333333,
@@ -108,7 +108,7 @@ def test_run_dipole_simulation(spm):
     assert ch_names[0] == 'MLC11'
 
 
-@pytest.mark.dependency(depends=["tests/test_01_invert.py::test_invert_sliding_window"],
+@pytest.mark.dependency(depends=["tests/test_02_invert.py::test_invert_ebb"],
                         scope='session')
 def test_run_current_density_simulation(spm):
     """
@@ -145,19 +145,22 @@ def test_run_current_density_simulation(spm):
     - Verify that the first channel name matches the expected label, ensuring data integrity and
       proper configuration.
 
-    This test is dependent on `test_load_source_time_series` to ensure that required data setups
+    This test is dependent on `test_invert_ebb` to ensure that required data setups
     and dependencies are appropriately configured beforehand.
     """
 
+    # Frequency of simulated sinusoid (Hz)
+    freq = 20
     # Strength of simulated activity (nAm)
-    dipole_moment = 8
-    # Temporal width of the simulated Gaussian
-    signal_width = .025  # 25ms
+    dipole_moment = 10
+    # Sampling rate (must match the data file)
+    s_rate = 600
 
-    # Generate 200ms of a Gaussian at a sampling rate of 600Hz (to match the data file)
-    time = np.linspace(0, .2, 121)
-    zero_time = time[int((len(time) - 1) / 2 + 1)]
-    sim_signal = np.exp(-((time - zero_time) ** 2) / (2 * signal_width ** 2)).reshape(1, -1)
+    # Generate 1s of a sine wave at a sampling rate of 600Hz (to match the data file)
+    time = np.linspace(0, 1, s_rate + 1)
+    sim_signal = np.zeros(time.shape).reshape(1, -1)
+    t_idx = np.where(time >= 0.5)[0]
+    sim_signal[0, t_idx] = np.sin(time[t_idx] * freq * 2 * np.pi)
 
     sim_vertex = 24588
     prefix = f'sim_{sim_vertex}_current_density_pial_'
@@ -168,7 +171,7 @@ def test_run_current_density_simulation(spm):
     snr = -10
 
     # Generate simulated data
-    base_fname='./output/pspm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
+    base_fname='./output/spm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
 
     # Generate simulated data
     sim_fname = run_current_density_simulation(
@@ -184,12 +187,12 @@ def test_run_current_density_simulation(spm):
 
     sim_sensor_data, time, ch_names = load_meg_sensor_data(sim_fname)
 
-    target=np.array([9.326762, 15.356956, -4.3236766, 26.251503, -9.620896,
-                     5.7415423, 9.518472, 17.73018, 12.0625515, -12.886167 ])
+    target=np.array([[16.538923, 27.232574, -7.669976, 46.55197, -17.06571,
+                      10.177249, 16.873955, 31.43504, 21.381802, -22.865416]])
     assert np.allclose(sim_sensor_data[0,:10,0], target)
 
-    target=np.array([-0.1, -0.09833333, -0.09666667, -0.095, -0.09333333,
-                     -0.09166667, -0.09, -0.08833333, -0.08666667, -0.085])
+    target=np.array([[-0.5, -0.49833333, -0.49666667, -0.495, -0.49333333,
+                      -0.49166667, -0.49, -0.48833333, -0.48666667, -0.485]])
     assert np.allclose(time[:10], target)
 
     assert ch_names[0] == 'MLC11'
