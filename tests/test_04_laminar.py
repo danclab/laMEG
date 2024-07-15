@@ -7,14 +7,87 @@ import numpy as np
 import pytest
 import nibabel as nib
 
-from lameg.invert import coregister, invert_ebb
 from lameg.laminar import (model_comparison, sliding_window_model_comparison, compute_csd,
                            roi_power_comparison)
 from lameg.util import get_fiducial_coords, get_surface_names
 
 
-@pytest.mark.dependency(depends=["tests/test_02_simulate.py::test_run_current_density_simulation"],
+@pytest.mark.dependency(depends=["tests/test_03_simulate.py::test_run_current_density_simulation"],
                         scope='session')
+def test_roi_power_comparison():
+    """
+    Tests the `roi_power_comparison` function to evaluate its capability to accurately compute
+    statistical measures comparing power in specified regions of interest (ROIs) across different
+    cortical layers.
+
+    The unit test ensures that:
+    1. The function can effectively use MEG data and surface meshes for ROI analysis.
+    2. It calculates t-statistics and p-values correctly for given data sets, reflecting the
+       differences in neural activity within specified frequency bands and spatial regions.
+    3. It correctly identifies regions of interest based on mesh data and analyzes their
+       statistical significance.
+
+    Dependencies:
+        This test relies on the `test_run_current_density_simulation`, ensuring that required
+        simulation outputs are available for conducting ROI power comparisons.
+
+    Parameters:
+        spm (object): An initialized instance of the SPM software
+
+    Key steps in the test:
+    - Retrieve fiducial coordinates and use them to coregister simulated MEG data to a native space
+      MRI.
+    - Extract mu matrices from the source inversion results to use in ROI power comparison.
+    - Calculate t-statistics, p-values, degrees of freedom, and ROI indices for designated time and
+      frequency ranges.
+    - Validate the calculated results against expected values to ensure accuracy and reliability.
+
+    Assertions:
+    - Check if the computed t-statistic and p-value are close to their expected values, confirming
+      the statistical analysis's correctness.
+    - Verify the degrees of freedom and ROI indices to ensure that the function correctly
+      identifies and analyzes the specified regions.
+    """
+
+    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
+    subj_id = 'sub-104'
+
+    # Mesh to use for forward model in the simulations
+    multilayer_mesh_fname = os.path.join(
+        test_data_path,
+        subj_id,
+        'surf',
+        'multilayer.2.ds.link_vector.fixed.gii'
+    )
+
+    mesh = nib.load(multilayer_mesh_fname)
+    n_layers = 2
+
+    sim_fname = os.path.join('./output/',
+                             'sim_24588_current_density_pial_spm-converted_autoreject-'
+                             'sub-104-ses-01-001-btn_trial-epo.mat')
+
+    laminar_t_statistic, laminar_p_value, deg_of_freedom, roi_idx = roi_power_comparison(
+        sim_fname,
+        [0, 500],
+        [-500, 0],
+        mesh,
+        n_layers,
+        99.99,
+        chunk_size=8000
+    )
+
+    target = -44.486362719014195
+    assert np.isclose(laminar_t_statistic, target)
+    target = 4.3573533462602526e-47
+    assert np.isclose(laminar_p_value, target)
+    target = 59
+    assert deg_of_freedom == target
+    target = np.array([[24441, 24588, 24589, 24836, 24961, 25084, 25091, 25214]])
+    assert np.allclose(roi_idx, target)
+
+
+@pytest.mark.dependency(depends=["test_roi_power_comparison"])
 def test_model_comparison(spm):
     """
     Tests the `model_comparison` function to ensure it correctly compares different source
@@ -62,13 +135,13 @@ def test_model_comparison(spm):
     # Get name of each mesh that makes up the layers of the multilayer mesh - these will be used
     # for the sourcereconstruction
     layer_fnames = get_surface_names(
-        11,
+        2,
         os.path.join(test_data_path, subj_id, 'surf'),
         'link_vector.fixed'
     )
 
     sim_fname = os.path.join('./output/',
-                             'sim_24588_current_density_pial_pspm-converted_autoreject-'
+                             'sim_24588_current_density_pial_spm-converted_autoreject-'
                              'sub-104-ses-01-001-btn_trial-epo.mat')
     patch_size = 5
     n_temp_modes = 4
@@ -84,11 +157,11 @@ def test_model_comparison(spm):
         spm_instance=spm
     )
 
-    assert np.allclose(free_energy, np.array([-287707.70030694, -293264.38562064]))
+    target = np.array([-361364.11603841, -368714.57922992])
+    assert np.allclose(free_energy, target)
 
 
-@pytest.mark.dependency(depends=["tests/test_02_simulate.py::test_run_dipole_simulation"],
-                        scope='session')
+@pytest.mark.dependency(depends=["test_model_comparison"])
 def test_sliding_window_model_comparison(spm):
     """
     Tests the `sliding_window_model_comparison` function to ensure it correctly performs
@@ -149,7 +222,7 @@ def test_sliding_window_model_comparison(spm):
     # Get name of each mesh that makes up the layers of the multilayer mesh - these will be used
     # for the sourcereconstruction
     layer_fnames = get_surface_names(
-        11,
+        2,
         os.path.join(test_data_path, subj_id, 'surf'),
         'link_vector.fixed'
     )
@@ -158,7 +231,7 @@ def test_sliding_window_model_comparison(spm):
                              'sim_24588_dipole_pial_pspm-converted_autoreject-'
                              'sub-104-ses-01-001-btn_trial-epo.mat')
     patch_size = 5
-    sliding_n_temp_modes = 4
+    sliding_n_temp_modes = 1
     # Size of sliding window (in ms)
     win_size = 50
     # Whether or not windows overlap
@@ -181,14 +254,12 @@ def test_sliding_window_model_comparison(spm):
         spm_instance=spm
     )
 
-    target = np.array([[-279296.53033732, -279296.53033732, -279326.98678762,
-                        -279312.46292853, -279312.46292853, -279292.45809178,
-                        -279214.15994902, -279214.15994902, -279241.90254963,
-                        -279253.15129888],
-                       [-279296.53050795, -279296.53050795, -279326.98676623,
-                        -279312.46298879, -279312.46298879, -279292.45812693,
-                        -279214.1600669, -279214.1600669, -279241.90265108,
-                        -279253.1514743]])
+    target = np.array([[-69787.69453087, -69787.69453087, -69777.81548753, -69871.55018425,
+                        -69871.55018425, -69843.59546156, -69785.85227955, -69785.85227955,
+                        -69839.95198264, -69853.04491301],
+                       [-69787.69451834, -69787.69451834, -69777.81545186, -69871.55015114,
+                        -69871.55015114, -69843.59524696, -69785.85226694, -69785.85226694,
+                        -69839.95185067, -69853.04481584]])
     assert np.allclose(free_energy[:, :10], target)
 
     target = np.array([[-100., -75.],
@@ -204,41 +275,28 @@ def test_sliding_window_model_comparison(spm):
     assert np.allclose(wois[:10, :], target)
 
 
-@pytest.mark.dependency()
 def test_compute_csd():
     """
-    Tests the `compute_csd` function to ensure accurate computation of the Current Source Density
-    (CSD) from simulated MEG data over multiple cortical layers.
+    Tests the `compute_csd` function to ensure it accurately computes the Current Source Density
+    (CSD) from provided sample MEG data and applies a smoothing process to the CSD calculations.
 
-    This unit test is designed to:
-    1. Perform coregistration of simulated MEG data to a multilayer mesh based on fiducial
-       coordinates and native space MRI.
-    2. Use the output of the coregistration in source inversion to obtain mu matrices.
-    3. Extract time series data for specified vertices representing the pial layer and compute the
-       CSD and smoothed CSD.
-    4. Validate the computed CSD against expected values to ensure the accuracy of the CSD
-       computation process.
+    This unit test verifies:
+    1. The correct computation of CSD from sample time series data.
+    2. The application of a cubic smoothing process to the computed CSD.
+    3. The accuracy of both the computed CSD and the smoothed CSD against predefined expected
+       values.
 
-    Dependencies:
-        This test depends on `test_run_dipole_simulation` which sets up necessary conditions and
-        data for simulating MEG data.
-
-    Steps:
-    - Coregister the simulation output with an MRI using fiducial coordinates.
-    - Use the registered data to perform source inversion, extracting the mu matrix.
-    - Load time series data for specific vertices to analyze neural activity across different
-      layers.
-    - Compute the CSD and a smoothed version of CSD for the extracted time series.
-    - Compare the results to predefined target values to validate the CSD computation.
+    Steps performed:
+    - Load precomputed time series data for specified vertices representing cortical activity.
+    - Compute the CSD and a smoothed version of CSD for the loaded time series data.
+    - Compare the results to predefined target values to validate the accuracy of the CSD
+      computations.
 
     Assertions:
-    - Assert that the values of computed CSD for specified layers match expected target values
-      closely, confirming the model's accuracy.
-    - Verify that the smoothed CSD also matches its respective expected values, ensuring the
+    - Assert that the values of computed CSD for specified layers closely match the expected target
+      values, confirming the model's accuracy.
+    - Verify that the smoothed CSD matches its respective expected values, ensuring the
       effectiveness of the smoothing process.
-
-    This test ensures that the computational models and methods used to estimate neural activity
-    from MEG data are accurate and reliable across different conditions and setups.
     """
 
     thickness = 4.6092634
@@ -300,113 +358,3 @@ def test_compute_csd():
     target = np.array([ 0.01145994,  0.00207419, -0.00875817, -0.00167645,  0.00080345,
                         -0.00754003, -0.01884328, -0.00144315,  0.00474964,  0.01824842])
     assert np.allclose(smooth_csd[5, :10], target)
-
-
-@pytest.mark.dependency(depends=["tests/test_02_simulate.py::test_run_current_density_simulation"],
-                        scope='session')
-def test_roi_power_comparison(spm):
-    """
-    Tests the `roi_power_comparison` function to evaluate its capability to accurately compute
-    statistical measures comparing power in specified regions of interest (ROIs) across different
-    cortical layers.
-
-    The unit test ensures that:
-    1. The function can effectively use MEG data and surface meshes for ROI analysis.
-    2. It calculates t-statistics and p-values correctly for given data sets, reflecting the
-       differences in neural activity within specified frequency bands and spatial regions.
-    3. It correctly identifies regions of interest based on mesh data and analyzes their
-       statistical significance.
-
-    Dependencies:
-        This test relies on the `test_run_current_density_simulation`, ensuring that required
-        simulation outputs are available for conducting ROI power comparisons.
-
-    Parameters:
-        spm (object): An initialized instance of the SPM software
-
-    Key steps in the test:
-    - Retrieve fiducial coordinates and use them to coregister simulated MEG data to a native space
-      MRI.
-    - Extract mu matrices from the source inversion results to use in ROI power comparison.
-    - Calculate t-statistics, p-values, degrees of freedom, and ROI indices for designated time and
-      frequency ranges.
-    - Validate the calculated results against expected values to ensure accuracy and reliability.
-
-    Assertions:
-    - Check if the computed t-statistic and p-value are close to their expected values, confirming
-      the statistical analysis's correctness.
-    - Verify the degrees of freedom and ROI indices to ensure that the function correctly
-      identifies and analyzes the specified regions.
-    """
-
-
-    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
-    subj_id = 'sub-104'
-
-    # Fiducial coil coordinates
-    nas, lpa, rpa = get_fiducial_coords(subj_id, os.path.join(test_data_path, 'participants.tsv'))
-
-    # Native space MRI to use for coregistration
-    # pylint: disable=duplicate-code
-    mri_fname = os.path.join(
-        test_data_path,
-        subj_id,
-        'mri',
-        's2023-02-28_13-33-133958-00001-00224-1.nii'
-    )
-
-    # Mesh to use for forward model in the simulations
-    multilayer_mesh_fname = os.path.join(
-        test_data_path,
-        subj_id,
-        'surf',
-        'multilayer.11.ds.link_vector.fixed.gii'
-    )
-
-    mesh = nib.load(multilayer_mesh_fname)
-    n_layers = 11
-
-    sim_fname = os.path.join('./output/',
-                             'sim_24588_current_density_pial_pspm-converted_autoreject-'
-                             'sub-104-ses-01-001-btn_trial-epo.mat')
-
-    # Coregister data to multilayer mesh
-    # pylint: disable=duplicate-code
-    coregister(
-        nas,
-        lpa,
-        rpa,
-        mri_fname,
-        multilayer_mesh_fname,
-        sim_fname,
-        spm_instance=spm
-    )
-
-    patch_size = 5
-    n_temp_modes = 1
-    # pylint: disable=W0632
-    [_, _, mu_matrix] = invert_ebb(
-        multilayer_mesh_fname,
-        sim_fname,
-        n_layers,
-        foi=[1, 5],
-        patch_size=patch_size,
-        n_temp_modes=n_temp_modes,
-        return_mu_matrix=True,
-        spm_instance=spm
-    )
-
-    laminar_t_statistic, laminar_p_value, deg_of_freedom, roi_idx = roi_power_comparison(
-        sim_fname,
-        [0, 500],
-        [-500, 0],
-        mesh,
-        n_layers,
-        99.99,
-        mu_matrix=mu_matrix
-    )
-
-    assert np.isclose(laminar_t_statistic, -2.649841049441414)
-    assert np.isclose(laminar_p_value, 0.010319915770875114)
-    assert deg_of_freedom == 59
-    assert np.allclose(roi_idx, np.array([24194, 24320, 24441, 24442, 24588, 24589]))

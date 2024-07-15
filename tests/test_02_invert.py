@@ -7,18 +7,21 @@ import shutil
 import h5py
 import numpy as np
 import pytest
-from scipy.io import loadmat
 
 from lameg.invert import (coregister, invert_ebb, invert_msp, load_source_time_series,
                           invert_sliding_window)
 from lameg.util import get_fiducial_coords, make_directory
 
 
-@pytest.mark.dependency()
+@pytest.mark.dependency(depends=["tests/test_01_surf.py::test_smoothmesh_multilayer_mm"],
+                        scope='session')
 def test_coregister(spm):
     """
     Tests the coregistration process for neuroimaging data, ensuring that the output is properly
     formatted and correctly written to the simulation output files.
+
+    This test is dependent on the successful execution of `test_smoothmesh_multilayer_mm`, as it
+    uses data files prepared and potentially modified by that prior test.
 
     This test performs several key operations:
     1. Retrieves fiducial coordinates necessary for coregistration from a participant's metadata.
@@ -43,6 +46,219 @@ def test_coregister(spm):
     - coregister function to align MEG data with an anatomical MRI using the fiducial points and
       the specified mesh.
     - h5py.File to interact with HDF5 file format for assertions on data structure.
+    """
+
+    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
+    subj_id = 'sub-104'
+    ses_id = 'ses-01'
+
+    # Fiducial coil coordinates
+    nas, lpa, rpa = get_fiducial_coords(subj_id, os.path.join(test_data_path, 'participants.tsv'))
+
+    # Data file to base simulations on
+    data_file = os.path.join(
+        test_data_path,
+        subj_id,
+        'meg',
+        ses_id,
+        'spm/spm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
+    )
+
+    data_path, data_file_name = os.path.split(data_file)
+    data_base = os.path.splitext(data_file_name)[0]
+
+    # Where to put simulated data
+    out_dir = make_directory('./', ['output'])
+
+    # Copy data files to tmp directory
+    shutil.copy(
+        os.path.join(data_path, f'{data_base}.mat'),
+        out_dir.joinpath(f'{data_base}.mat')
+    )
+    shutil.copy(
+        os.path.join(data_path, f'{data_base}.dat'),
+        out_dir.joinpath(f'{data_base}.dat')
+    )
+
+    # Construct base file name for simulations
+    base_fname = os.path.join(out_dir, f'{data_base}.mat')
+
+    # Native space MRI to use for coregistration
+    # pylint: disable=duplicate-code
+    mri_fname = os.path.join(
+        test_data_path,
+        subj_id,
+        'mri',
+        's2023-02-28_13-33-133958-00001-00224-1.nii'
+    )
+
+    # Mesh to use for forward model in the simulations
+    mesh_fname = os.path.join(
+        test_data_path,
+        subj_id,
+        'surf',
+        'multilayer.2.ds.link_vector.fixed.gii'
+    )
+
+    # Coregister data to pial mesh
+    # pylint: disable=duplicate-code
+    coregister(
+        nas,
+        lpa,
+        rpa,
+        mri_fname,
+        mesh_fname,
+        base_fname,
+        spm_instance=spm
+    )
+
+    with h5py.File(data_file, 'r') as old_file:
+        assert 'inv' not in old_file['D']['other']
+
+    with h5py.File(base_fname, 'r') as new_file:
+        assert 'inv' in new_file['D']['other']
+
+
+@pytest.mark.dependency(depends=["test_coregister"])
+def test_invert_msp(spm):
+    """
+    Test the `invert_msp` function to ensure it accurately performs the inversion using specified
+    parameters and a predefined mesh, verifying output against expected values.
+
+    This test is dependent on the successful execution of `test_coregister`, as it uses data files
+    prepared and potentially modified by that prior test.
+
+    Key Functionalities Tested:
+    1. Execution of the `invert_msp` function with a specific pial mesh and a defined number of
+       layers, patch size, and number of temporal modes.
+    2. Validation of the output against expected free energy values and cross-validation errors to
+       ensure accuracy and reliability.
+
+    Steps:
+    - Retrieve paths to necessary data and mesh files required for the simulation.
+    - Execute the `invert_msp` function using these files along with specified simulation
+      parameters.
+    - Compare the results (free energy and cross-validation errors) to predefined expected values.
+
+    Assertions:
+    - Verify that the computed free energy closely matches the expected theoretical value, ensuring
+      the inversion's accuracy.
+    - Confirm that the cross-validation errors align with expected results, validating the method's
+      effectiveness in realistic usage scenarios.
+    """
+
+    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
+    subj_id = 'sub-104'
+
+    # Data file to base simulations on
+    base_fname = os.path.join(
+        './output',
+        'spm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
+    )
+
+    # Mesh to use for forward model in the simulations
+    mesh_fname = os.path.join(
+        test_data_path,
+        subj_id,
+        'surf',
+        'multilayer.2.ds.link_vector.fixed.gii'
+    )
+
+    patch_size = 5
+    n_temp_modes = 4
+    n_layers = 2
+    [free_energy, cv_err] = invert_msp(
+        mesh_fname,
+        base_fname,
+        n_layers,
+        priors=[47507],
+        patch_size=patch_size,
+        n_temp_modes=n_temp_modes,
+        spm_instance=spm
+    )
+
+    assert np.isclose(free_energy[()], -531625.706352819)
+    assert np.allclose(cv_err, [1, 0])
+
+
+
+@pytest.mark.dependency(depends=["test_invert_msp"])
+def test_load_source_time_series():
+    """
+    Tests the `load_source_time_series` function to ensure it correctly loads and processes
+    source-level time series data from simulation output files.
+
+    The function is assessed on its ability to:
+    1. Load time series data for specified vertices from a given dataset.
+    2. Accurately retrieve the associated time points and modulation (mu) matrix related to the
+       source time series.
+
+    The test involves:
+    - Extracting data from a predefined file path.
+    - Verifying that the time series, time vector, and mu matrix data extracted match expected
+      predefined values for given vertices.
+
+    Assertions are made to:
+    - Confirm that the time series data for the first 10 time points of the first vertex
+      closely match the target values, ensuring data integrity and correct processing.
+    - Ensure that the extracted time vector for the first 10 time points matches the expected
+      sequence, verifying correct time alignment.
+    - Verify that the first 10 values of the mu matrix are as expected, demonstrating accurate
+      modulation factor retrieval.
+
+    The test uses hardcoded targets for comparison, expecting precise numerical agreement to ensure
+    data accuracy and correct functionality.
+    """
+
+    # Data file to base simulations on
+    base_fname = os.path.join(
+        './output',
+        'spm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
+    )
+
+    time_series, time, mu_matrix = load_source_time_series(base_fname, vertices=[47507])
+
+    target = np.array([-16.9862851,   -8.29507822, -22.08004497, -20.7505602,  -16.89318925,
+                       -7.50645959,   4.95707106,  -1.12602458,  -4.46654369,  -1.40089003])
+    assert np.allclose(time_series[0,:10,0], target)
+
+    target = np.array([[-0.5,        -0.49833333, -0.49666667, -0.495,      -0.49333333,
+                        -0.49166667, -0.49,       -0.48833333, -0.48666667, -0.485     ]])
+    assert np.allclose(time[:10], target)
+
+    target = np.array([[-0.00210898, -0.00251335, -0.00290763, -0.00337096, -0.00344703,
+                        -0.00347019, -0.0042949,  -0.00278358, -0.00295204, -0.00305179]])
+    assert np.allclose(mu_matrix[0,:10], target)
+
+
+@pytest.mark.dependency(depends=["test_load_source_time_series"])
+def test_invert_sliding_window(spm):
+    """
+    Tests the `invert_sliding_window` function to ensure it accurately performs time-resolved
+    source localization by computing free energy and windows of interest (WOIs) for specified
+    vertex indices.
+
+    This test focuses on:
+    1. Evaluating the function's ability to calculate free energy values across a sliding temporal
+       window.
+    2. Ensuring the returned WOIs (Windows of Interest) are accurate according to specified
+       parameters.
+    3. Verifying that the computation results are consistent with expected target values.
+
+    Steps executed in the test:
+    - Load essential paths and file names for necessary data and mesh files from a preconfigured
+      directory.
+    - Execute the `invert_sliding_window` function using a vertex index, a pial surface mesh for
+      the forward model,
+      and a base filename of preprocessed MEG data.
+    - Validate the outputs, both free energy and WOIs, against predefined target arrays.
+
+    Assertions:
+    - Confirm that the computed free energy values for the first 10 temporal windows closely match
+      the expected results,
+      verifying the function's precision in temporal modeling.
+    - Ensure that the initial segments of the returned WOIs align with expected values, testing the
+      function's accuracy in defining relevant temporal segments.
     """
 
     test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
@@ -90,38 +306,48 @@ def test_coregister(spm):
     )
 
     # Mesh to use for forward model in the simulations
-    pial_mesh_fname = os.path.join(
+    mesh_fname = os.path.join(
         test_data_path,
         subj_id,
         'surf',
-        'pial.ds.link_vector.fixed.gii'
+        'multilayer.2.ds.link_vector.fixed.gii'
     )
 
-    # Coregister data to multilayer mesh
+    # Coregister data to pial mesh
     # pylint: disable=duplicate-code
     coregister(
         nas,
         lpa,
         rpa,
         mri_fname,
-        pial_mesh_fname,
+        mesh_fname,
         base_fname,
         spm_instance=spm
     )
 
-    mat_contents = loadmat(data_file)
-    assert 'inv' not in mat_contents['D']['other'][0][0]
+    [free_energy, wois] = invert_sliding_window(
+        47507,
+        mesh_fname,
+        base_fname,
+        1,
+        spm_instance=spm
+    )
 
-    with h5py.File(base_fname, 'r') as new_file:
-        assert 'inv' in new_file['D']['other']
+    target = np.array([[-114127.2837675,  -116032.11084924, -116032.11084924, -116741.69256236,
+                        -117923.06858476, -117923.06858476, -118270.09526525, -118099.40201486,
+                        -117391.37816534, -117836.45671641]])
+    assert np.allclose(free_energy[:10], target)
+
+    target=np.array([[-100., -100., -100., -100., -100.,
+                      -100., -98.33333333, -96.66666667, -95., -93.33333333]])
+    assert np.allclose(wois[:10,0], target)
 
 
-@pytest.mark.dependency(depends=["test_coregister"])
+@pytest.mark.dependency(depends=["test_invert_sliding_window"])
 def test_invert_ebb(spm):
     """
     Test the `invert_ebb` function to ensure it performs correctly with specified parameters and
-    conditions. This test relies on data being correctly coregistered by `test_coregister`, hence
-    it is dependent on that test.
+    conditions.
 
     The function `invert_ebb` is tested here under the following conditions:
     1. Utilizing a specific mesh for the forward model, which is essential for the simulation.
@@ -148,22 +374,22 @@ def test_invert_ebb(spm):
     # Data file to base simulations on
     base_fname = os.path.join(
         './output',
-        'pspm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
+        'spm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
     )
 
     # Mesh to use for forward model in the simulations
-    pial_mesh_fname = os.path.join(
+    mesh_fname = os.path.join(
         test_data_path,
         subj_id,
         'surf',
-        'pial.ds.link_vector.fixed.gii'
+        'multilayer.2.ds.link_vector.fixed.gii'
     )
 
     patch_size = 5
     n_temp_modes = 4
-    n_layers = 1
+    n_layers = 2
     [free_energy, cv_err] = invert_ebb(
-        pial_mesh_fname,
+        mesh_fname,
         base_fname,
         n_layers,
         patch_size=patch_size,
@@ -171,184 +397,5 @@ def test_invert_ebb(spm):
         spm_instance=spm
     )
 
-    assert np.isclose(free_energy[()], -404120.90854437)
+    assert np.isclose(free_energy[()], -413897.45369541395)
     assert np.allclose(cv_err, [1, 0])
-
-
-@pytest.mark.dependency(depends=["test_invert_ebb"])
-def test_invert_msp(spm):
-    """
-    Test the `invert_msp` function to ensure it accurately performs the inversion using specified
-    parameters and a predefined mesh, verifying output against expected values.
-
-    This test is dependent on the successful execution of `test_invert_ebb`, as it uses data files
-    prepared and potentially modified by that prior test.
-
-    Key Functionalities Tested:
-    1. Execution of the `invert_msp` function with a specific pial mesh and a defined number of
-       layers, patch size, and number of temporal modes.
-    2. Validation of the output against expected free energy values and cross-validation errors to
-       ensure accuracy and reliability.
-
-    Steps:
-    - Retrieve paths to necessary data and mesh files required for the simulation.
-    - Execute the `invert_msp` function using these files along with specified simulation
-      parameters.
-    - Compare the results (free energy and cross-validation errors) to predefined expected values.
-
-    Assertions:
-    - Verify that the computed free energy closely matches the expected theoretical value, ensuring
-      the inversion's accuracy.
-    - Confirm that the cross-validation errors align with expected results, validating the method's
-      effectiveness in realistic usage scenarios.
-    """
-
-    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
-    subj_id = 'sub-104'
-
-    # Data file to base simulations on
-    base_fname = os.path.join(
-        './output',
-        'pspm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
-    )
-
-    # Mesh to use for forward model in the simulations
-    pial_mesh_fname = os.path.join(
-        test_data_path,
-        subj_id,
-        'surf',
-        'pial.ds.link_vector.fixed.gii'
-    )
-
-    patch_size = 5
-    n_temp_modes = 4
-    n_layers = 1
-    [free_energy, cv_err] = invert_msp(
-        pial_mesh_fname,
-        base_fname,
-        n_layers,
-        priors=[47507],
-        patch_size=patch_size,
-        n_temp_modes=n_temp_modes,
-        spm_instance=spm
-    )
-
-    assert np.isclose(free_energy[()], -509588.72129308333)
-    assert np.allclose(cv_err, [1, 0])
-
-
-
-@pytest.mark.dependency(depends=["test_invert_msp"])
-def test_load_source_time_series():
-    """
-    Tests the `load_source_time_series` function to ensure it correctly loads and processes
-    source-level time series data from simulation output files.
-
-    The function is assessed on its ability to:
-    1. Load time series data for specified vertices from a given dataset.
-    2. Accurately retrieve the associated time points and modulation (mu) matrix related to the
-       source time series.
-
-    The test involves:
-    - Extracting data from a predefined file path.
-    - Verifying that the time series, time vector, and mu matrix data extracted match expected
-      predefined values for given vertices.
-
-    Assertions are made to:
-    - Confirm that the time series data for the first 10 time points of the first vertex
-      closely match the target values, ensuring data integrity and correct processing.
-    - Ensure that the extracted time vector for the first 10 time points matches the expected
-      sequence, verifying correct time alignment.
-    - Verify that the first 10 values of the mu matrix are as expected, demonstrating accurate
-      modulation factor retrieval.
-
-    The test uses hardcoded targets for comparison, expecting precise numerical agreement to ensure
-    data accuracy and correct functionality.
-    """
-
-    # Data file to base simulations on
-    base_fname = os.path.join(
-        './output',
-        'pspm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
-    )
-
-    time_series, time, mu_matrix = load_source_time_series(base_fname, vertices=[47507])
-
-    target = np.array([22.68529735, 20.8850863 , 26.29796176,  5.48887292, 13.1995661 ,
-                       19.65796882, 16.80385876, 26.76854724, 17.86000365, 18.98266381])
-    assert np.allclose(time_series[0,:10,0], target)
-
-    target = np.array([-0.1, -0.09833333, -0.09666667, -0.095, -0.09333333,
-                       -0.09166667, -0.09, -0.08833333, -0.08666667, -0.085])
-    assert np.allclose(time[:10], target)
-
-    target = np.array([-0.00211948, -0.00252587, -0.00292212, -0.00338775, -0.0034642 ,
-                       -0.00348748, -0.0043163 , -0.00279745, -0.00296675, -0.00306699])
-    assert np.allclose(mu_matrix[0,:10], target)
-
-
-@pytest.mark.dependency(depends=["test_load_source_time_series"])
-def test_invert_sliding_window(spm):
-    """
-    Tests the `invert_sliding_window` function to ensure it accurately performs time-resolved
-    source localization by computing free energy and windows of interest (WOIs) for specified
-    vertex indices.
-
-    This test focuses on:
-    1. Evaluating the function's ability to calculate free energy values across a sliding temporal
-       window.
-    2. Ensuring the returned WOIs (Windows of Interest) are accurate according to specified
-       parameters.
-    3. Verifying that the computation results are consistent with expected target values.
-
-    Steps executed in the test:
-    - Load essential paths and file names for necessary data and mesh files from a preconfigured
-      directory.
-    - Execute the `invert_sliding_window` function using a vertex index, a pial surface mesh for
-      the forward model,
-      and a base filename of preprocessed MEG data.
-    - Validate the outputs, both free energy and WOIs, against predefined target arrays.
-
-    Assertions:
-    - Confirm that the computed free energy values for the first 10 temporal windows closely match
-      the expected results,
-      verifying the function's precision in temporal modeling.
-    - Ensure that the initial segments of the returned WOIs align with expected values, testing the
-      function's accuracy in defining relevant temporal segments.
-    """
-
-    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
-    subj_id = 'sub-104'
-
-    # Data file to base simulations on
-    base_fname = os.path.join(
-        './output',
-        'pspm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
-    )
-
-    # Mesh to use for forward model in the simulations
-    pial_mesh_fname = os.path.join(
-        test_data_path,
-        subj_id,
-        'surf',
-        'pial.ds.link_vector.fixed.gii'
-    )
-
-    [free_energy, wois] = invert_sliding_window(
-        47507,
-        pial_mesh_fname,
-        base_fname,
-        1,
-        spm_instance=spm
-    )
-
-    target = np.array([-114127.2837675, -116032.11084924, -116032.11084924,
-                       -116741.69256236, -117923.06858476, -117923.06858476,
-                       -118270.09526525, -118099.40201486, -117391.37816534,
-                       -117836.45671641])
-    assert np.allclose(free_energy[:10], target)
-
-    target=np.array([-100., -100., -100., -100.,
-                     -100., -100., -98.33333333, -96.66666667,
-                     -95.,  -93.33333333])
-    assert np.allclose(wois[:10,0], target)
