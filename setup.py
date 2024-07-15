@@ -50,6 +50,15 @@ setup(
     description='A toolbox for laminar inference with MEG',
     long_description=long_description,
     long_description_content_type='text/markdown',
+    classifiers=[
+        'Intended Audience :: Science/Research',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved',
+        'Programming Language :: Python',
+        'Topic :: Software Development',
+        'Topic :: Scientific/Engineering',
+        'Operating System :: Unix'
+    ],
     url='https://github.com/danclab/laMEG',
     install_requires=install_requires,
     packages=find_packages(include=['lameg', 'lameg.*']),
