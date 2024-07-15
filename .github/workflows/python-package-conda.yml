@@ -49,7 +49,7 @@ jobs:
         SUBJECTS_DIR: ${{ github.workspace }}/test_data/fs
       run: |
         conda activate lameg
-        pytest --cov=lameg --cov-report=xml
+        python -m pytest --cov=lameg --cov-report=xml
       shell: bash -l {0}
 
     - name: Upload coverage to Codecov
