@@ -233,7 +233,7 @@ def compute_csd(signal, thickness, sfreq, smoothing=None):
 
 
 def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thresh,
-                         mu_matrix=None):
+                         mu_matrix=None, chunk_size=None):
     """
     Computes and compares power changes in pial and white matter layers to define
     regions of interest (ROI) based on significant power shifts.
@@ -252,6 +252,8 @@ def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thr
     n_layers (int): Number of layers in the cortical model.
     perc_thresh (float): Percentile threshold for determining significant changes in power.
     mu_matrix (ndarray, optional): Lead field matrix (source x sensor). Default is None.
+    chunk_size (int): Number of vertices to load source time series from at ones. If None, will
+                      load all at the same time. Default is None.
 
     Returns:
     tuple: Contains laminar t-statistic, laminar p-value, degrees of freedom and indices of
@@ -261,32 +263,41 @@ def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thr
     pial_vertices = np.arange(verts_per_surf)
     white_vertices = (n_layers - 1) * verts_per_surf + np.arange(verts_per_surf)
 
-    pial_layer_ts, time, _ = load_source_time_series(
+    # Load data incrementally
+    def load_and_compute_power(vertices, time_indices, chunk_size, n_trials):
+        incremental_power = np.zeros((len(vertices), n_trials))
+        if chunk_size is None:
+            chunk_size = len(vertices)
+        for start in range(0, len(vertices), chunk_size):
+            end = min(start + chunk_size, len(vertices))
+            vertex_slice = vertices[start:end]
+            ts_chunk, _, _ = load_source_time_series(
+                data_fname, vertices=vertex_slice, mu_matrix=mu_matrix
+            )
+            # Compute variance directly on loaded chunk
+            power_chunk = np.var(ts_chunk[:, time_indices, :], axis=1)
+            incremental_power[start:end,:] = power_chunk
+            del ts_chunk  # Free up memory
+        return incremental_power
+
+    # Load time indices
+    ts_v, time, _ = load_source_time_series(
         data_fname,
-        vertices=pial_vertices,
+        vertices=pial_vertices[:1],
         mu_matrix=mu_matrix
     )
-
+    n_trials = ts_v.shape[2]
     base_t_idx = np.where((time >= baseline_woi[0]) & (time < baseline_woi[1]))[0]
     exp_t_idx = np.where((time >= woi[0]) & (time < woi[1]))[0]
 
-    # Pial power
-    pial_base_power = np.squeeze(np.var(pial_layer_ts[:, base_t_idx, :], axis=1))
-    pial_exp_power = np.squeeze(np.var(pial_layer_ts[:, exp_t_idx, :], axis=1))
+    # Compute power changes for pial and white matter layers
+    pial_base_power = load_and_compute_power(pial_vertices, base_t_idx, chunk_size, n_trials)
+    pial_exp_power = load_and_compute_power(pial_vertices, exp_t_idx, chunk_size, n_trials)
     pial_power_change = (pial_exp_power - pial_base_power) / pial_base_power
-    del pial_layer_ts
 
-    white_layer_ts, time, _ = load_source_time_series(
-        data_fname,
-        vertices=white_vertices,
-        mu_matrix=mu_matrix
-    )
-
-    # White matter power
-    white_base_power = np.squeeze(np.var(white_layer_ts[:, base_t_idx, :], axis=1))
-    white_exp_power = np.squeeze(np.var(white_layer_ts[:, exp_t_idx, :], axis=1))
+    white_base_power = load_and_compute_power(white_vertices, base_t_idx, chunk_size, n_trials)
+    white_exp_power = load_and_compute_power(white_vertices, exp_t_idx, chunk_size, n_trials)
     white_power_change = (white_exp_power - white_base_power) / white_base_power
-    del white_layer_ts
 
     # Define ROI
     pial_t_statistic, _, _ = ttest_rel_corrected((pial_exp_power - pial_base_power), axis=-1)
@@ -299,7 +310,7 @@ def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thr
     pial_roi_power_change = np.mean(pial_power_change[roi_idx, :], axis=0)
     white_roi_power_change = np.mean(white_power_change[roi_idx, :], axis=0)
 
-    # Compare power t statistic should be positive (more power in pial layer)
+    # Compare power t statistic
     laminar_t_statistic, deg_of_freedom, laminar_p_value = ttest_rel_corrected(
         np.abs(pial_roi_power_change) - np.abs(white_roi_power_change),
         axis=-1
