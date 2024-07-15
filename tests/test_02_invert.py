@@ -13,8 +13,7 @@ from lameg.invert import (coregister, invert_ebb, invert_msp, load_source_time_s
 from lameg.util import get_fiducial_coords, make_directory
 
 
-@pytest.mark.dependency(depends=["tests/test_01_surf.py::test_smoothmesh_multilayer_mm"],
-                        scope='session')
+@pytest.mark.dependency()
 def test_coregister(spm):
     """
     Tests the coregistration process for neuroimaging data, ensuring that the output is properly
