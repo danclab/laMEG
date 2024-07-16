@@ -167,6 +167,19 @@ def test_invert_msp(spm):
     patch_size = 5
     n_temp_modes = 4
     n_layers = 2
+    [free_energy, cv_err] = invert_msp(
+        mesh_fname,
+        base_fname,
+        n_layers,
+        patch_size=patch_size,
+        n_temp_modes=n_temp_modes,
+        viz=False,
+        spm_instance=spm
+    )
+
+    assert np.isclose(free_energy[()], -413717.02338021)
+    assert np.allclose(cv_err, [1, 0])
+
     # pylint: disable=unbalanced-tuple-unpacking
     [free_energy, cv_err, mu_matrix] = invert_msp(
         mesh_fname,
@@ -184,19 +197,6 @@ def test_invert_msp(spm):
                        -0.00347019, -0.0042949 , -0.00278358, -0.00295204, -0.00305179])
     assert np.allclose(mu_matrix[47507,:10], target)
     assert np.isclose(free_energy[()], -531625.706352819)
-    assert np.allclose(cv_err, [1, 0])
-
-    [free_energy, cv_err] = invert_msp(
-        mesh_fname,
-        base_fname,
-        n_layers,
-        patch_size=patch_size,
-        n_temp_modes=n_temp_modes,
-        viz=False,
-        spm_instance=spm
-    )
-
-    assert np.isclose(free_energy[()], -413717.02338021)
     assert np.allclose(cv_err, [1, 0])
 
 
