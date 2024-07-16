@@ -20,7 +20,7 @@ def install_package():
     Installs the current directory as a pip package.
     This function assumes the directory contains a setup.py file.
     """
-    subprocess.check_call([sys.executable, "-m", "pip", "install", "."])
+    subprocess.check_call([sys.executable, 'setup.py', 'build_ext', '--inplace', '-v'])
 
 
 def install_spm(base_dir):
