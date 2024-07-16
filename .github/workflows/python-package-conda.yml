@@ -19,12 +19,6 @@ jobs:
         path: ./test_data
         key: test_data
 
-    - name: Cache Matlab Runtime
-      uses: actions/cache@v2
-      with:
-        path: ./MATLAB_Runtime_R2019a_Update_9_glnxa64.zip
-        key: MATLAB_Runtime_R2019a_Update_9_glnxa64.zip
-
     - name: Set up Miniconda
       uses: conda-incubator/setup-miniconda@v2
       with:
@@ -38,6 +32,7 @@ jobs:
         pip install numpy==1.19.5 Cython
         python setup.py build_ext --inplace -v
         python install.py
+        rm ${{ github.workspace }}/MATLAB_Runtime_R2019a_Update_9_glnxa64.zip
         rm ${{ github.workspace }}/test_data.tar.gz
       shell: bash -l {0}
 
