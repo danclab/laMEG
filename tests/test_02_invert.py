@@ -167,20 +167,36 @@ def test_invert_msp(spm):
     patch_size = 5
     n_temp_modes = 4
     n_layers = 2
-    [free_energy, cv_err] = invert_msp(
+    [free_energy, cv_err, mu_matrix] = invert_msp(
         mesh_fname,
         base_fname,
         n_layers,
         priors=[47507],
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
+        return_mu_matrix=True,
         viz=False,
         spm_instance=spm
     )
 
+    target = np.array([-0.00210898, -0.00251335, -0.00290763, -0.00337096, -0.00344703,
+                       -0.00347019, -0.0042949 , -0.00278358, -0.00295204, -0.00305179])
+    assert np.allclose(mu_matrix[47507,:10], target)
     assert np.isclose(free_energy[()], -531625.706352819)
     assert np.allclose(cv_err, [1, 0])
 
+    [free_energy, cv_err] = invert_msp(
+        mesh_fname,
+        base_fname,
+        n_layers,
+        patch_size=patch_size,
+        n_temp_modes=n_temp_modes,
+        viz=False,
+        spm_instance=spm
+    )
+
+    assert np.isclose(free_energy[()], -413717.02338021)
+    assert np.allclose(cv_err, [1, 0])
 
 
 @pytest.mark.dependency(depends=["test_invert_msp"])
@@ -389,15 +405,20 @@ def test_invert_ebb(spm):
     patch_size = 5
     n_temp_modes = 4
     n_layers = 2
-    [free_energy, cv_err] = invert_ebb(
+    [free_energy, cv_err, mu_matrix] = invert_ebb(
         mesh_fname,
         base_fname,
         n_layers,
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
+        return_mu_matrix=True,
         viz=False,
         spm_instance=spm
     )
 
+    target = np.array([[5.15987883e-08, -7.36323078e-07, -9.38635347e-07, -2.76254642e-07,
+                        4.62369541e-07, 8.26861696e-07, -1.17622334e-06, -1.43342753e-06,
+                        1.74504105e-07, 1.40428247e-06]])
+    assert np.allclose(mu_matrix[0,:10], target)
     assert np.isclose(free_energy[()], -413897.45369541395)
     assert np.allclose(cv_err, [1, 0])
