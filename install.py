@@ -22,6 +22,7 @@ def install_package():
     """
     subprocess.check_call([sys.executable, '-m', 'pip', 'install', 'numpy==1.19.5', 'Cython==3.0.10'])
     subprocess.check_call([sys.executable, 'setup.py', 'build_ext', '--inplace', '-v'])
+    subprocess.check_call([sys.executable, "-m", "pip", "install", "."])
 
 
 def install_spm(base_dir):
