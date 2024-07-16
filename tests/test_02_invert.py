@@ -167,6 +167,7 @@ def test_invert_msp(spm):
     patch_size = 5
     n_temp_modes = 4
     n_layers = 2
+    # pylint: disable=unbalanced-tuple-unpacking
     [free_energy, cv_err, mu_matrix] = invert_msp(
         mesh_fname,
         base_fname,
@@ -405,6 +406,7 @@ def test_invert_ebb(spm):
     patch_size = 5
     n_temp_modes = 4
     n_layers = 2
+    # pylint: disable=unbalanced-tuple-unpacking
     [free_energy, cv_err, mu_matrix] = invert_ebb(
         mesh_fname,
         base_fname,
