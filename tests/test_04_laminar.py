@@ -154,6 +154,7 @@ def test_model_comparison(spm):
         sim_fname,
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
+        viz=False,
         spm_instance=spm
     )
 
@@ -251,6 +252,7 @@ def test_sliding_window_model_comparison(spm):
         n_temp_modes=sliding_n_temp_modes,
         win_size=win_size,
         win_overlap=win_overlap,
+        viz=False,
         spm_instance=spm
     )
 
