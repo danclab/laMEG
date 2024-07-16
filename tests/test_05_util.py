@@ -7,11 +7,13 @@ from unittest.mock import mock_open, patch, MagicMock
 
 import numpy as np
 
+import mne
+
 from lameg.util import (check_many, spm_context, big_brain_proportional_layer_boundaries,
                         get_fiducial_coords, get_files, get_directories, make_directory,
                         calc_prop, batch, load_meg_sensor_data, get_surface_names,
                         convert_fsaverage_to_native, convert_native_to_fsaverage,
-                        ttest_rel_corrected, get_bigbrain_layer_boundaries)
+                        ttest_rel_corrected, get_bigbrain_layer_boundaries, fif_spm_conversion)
 from spm import spm_standalone
 
 
@@ -199,6 +201,80 @@ def test_get_surface_names():
     assert error_raise
 
 
+def test_fif_spm_conversion():
+    """
+    Tests the `fif_spm_conversion` function to ensure it correctly converts MEG data from FIF
+    format used by MNE-Python into a format compatible with SPM, validating both epoch and
+    continuous data conversions.
+
+    This test verifies:
+    1. Correct conversion of epoch MEG data from FIF format to a format that SPM can use.
+    2. Correct conversion of continuous raw MEG data from FIF to SPM format.
+    3. The integrity of the converted data by comparing it against the original data to ensure that
+       the conversion process preserves the data accurately.
+
+    Steps performed:
+    - Convert epoched MEG data from FIF to SPM format and verify the data integrity by comparing
+      the converted data with the original data.
+    - Convert raw continuous MEG data from FIF to SPM format and similarly verify the data
+      integrity.
+
+    Assertions:
+    - For epoched data, assert that the data values in the converted SPM file closely match the
+      corresponding values in the original FIF file, scaled appropriately.
+    - For raw data, perform a similar assertion to ensure the values match, confirming that the
+      conversion process does not alter the data inappropriately.
+
+    The test uses file paths and data from a predefined test dataset and involves file operations
+    expected to produce outputs in the './output' directory. This test ensures the reliability and
+    accuracy of the data conversion tools used in the processing pipeline, essential for subsequent
+    analytical tasks in SPM.
+    """
+    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
+    path = Path(os.path.join(test_data_path, "sub-104/meg/ses-01"))
+    exp_name = "mobeta"
+
+    raw_path = path.joinpath("mne/sub-104-ses-01-001-raw.fif")
+    epo_path = path.joinpath("mne/autoreject-sub-104-ses-01-001-btn_trial-epo.fif")
+    raw_ctf_path = os.path.join(test_data_path, "sub-104/meg/ses-01/raw/")
+    subject = 'sub-104'
+    res4_files = get_files(raw_ctf_path, "*.res4", strings=[exp_name])
+    res4_file = [i for i in res4_files if check_many(i.parts, subject, func="any")][0]
+
+    output_path = './output'
+
+    fif_spm_conversion(
+        epo_path, res4_file, output_path,
+        epoched=True
+    )
+    epochs = mne.read_epochs(epo_path)
+    epo_data = epochs.get_data()
+    out_fname = os.path.join(output_path, "spm_autoreject-sub-104-ses-01-001-btn_trial-epo.mat")
+    spm_data, time, ch_names = load_meg_sensor_data(out_fname)
+
+    ch_name = epochs.ch_names[100]
+    assert ch_name in ch_names
+    spm_idx = ch_names.index(ch_name)
+    assert np.allclose(epo_data[:, 100, :]*1e15, spm_data[spm_idx,:,:].T)
+
+    assert np.allclose(epochs.times, time)
+
+
+    fif_spm_conversion(
+        raw_path, res4_file, output_path,
+        epoched=False
+    )
+    raw = mne.io.read_raw_fif(raw_path)
+    raw_data = raw.get_data()
+    out_fname = os.path.join(output_path, "spm_sub-104-ses-01-001-raw.mat")
+    spm_data, time, ch_names = load_meg_sensor_data(out_fname)
+
+    ch_name = raw.ch_names[100]
+    assert ch_name in ch_names
+    spm_idx = ch_names.index(ch_name)
+    assert np.allclose(raw_data[100,:]*1e15, spm_data[spm_idx,:])
+
+    assert np.allclose(raw.times, time)
 
 
 def test_check_many():
