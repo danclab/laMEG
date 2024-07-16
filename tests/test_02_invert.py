@@ -108,6 +108,7 @@ def test_coregister(spm):
         mri_fname,
         mesh_fname,
         base_fname,
+        viz=False,
         spm_instance=spm
     )
 
@@ -173,6 +174,7 @@ def test_invert_msp(spm):
         priors=[47507],
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
+        viz=False,
         spm_instance=spm
     )
 
@@ -393,6 +395,7 @@ def test_invert_ebb(spm):
         n_layers,
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
+        viz=False,
         spm_instance=spm
     )
 
