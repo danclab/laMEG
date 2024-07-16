@@ -92,14 +92,15 @@ def test_run_dipole_simulation(spm):
         dipole_moment,
         sim_patch_size,
         snr,
+        average_trials=True,
         spm_instance=spm
     )
 
     sim_sensor_data, time, ch_names = load_meg_sensor_data(sim_fname)
 
-    target=np.array([[9.644654, 22.121809, -20.063894, 3.8661294, 3.8762872,
-                      25.618711, -9.541486, 5.927515, -19.01493, 0.867059 ]])
-    assert np.allclose(sim_sensor_data[0,:10,0], target)
+    target=np.array([[[0.8278234, -1.8756828, 1.0758591, 3.6655827, 1.3485234 ,
+                       0.26952612, 4.0082555, 2.0518725, -3.1177888, -0.6963516 ]]])
+    assert np.allclose(sim_sensor_data[0,:10], target)
 
     target=np.array([-0.1, -0.09833333, -0.09666667, -0.095, -0.09333333,
                      -0.09166667, -0.09, -0.08833333, -0.08666667, -0.085])
