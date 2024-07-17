@@ -123,6 +123,14 @@ def test_load_meg_sensor_data():
 
     test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
 
+    # Test file that does not exist
+    error_raise = False
+    try:
+        _, _, _ = load_meg_sensor_data('X.mat')
+    except FileNotFoundError:
+        error_raise = True
+    assert error_raise
+
     # Test one that is v7.3
     filename = os.path.join(
         test_data_path,
@@ -243,9 +251,10 @@ def test_fif_spm_conversion():
 
     output_path = './output'
 
+    # Epoched data
     fif_spm_conversion(
         epo_path, res4_file, output_path,
-        epoched=True
+        True
     )
     epochs = mne.read_epochs(epo_path)
     epo_data = epochs.get_data()
@@ -259,10 +268,10 @@ def test_fif_spm_conversion():
 
     assert np.allclose(epochs.times, time)
 
-
+    # Raw data
     fif_spm_conversion(
         raw_path, res4_file, output_path,
-        epoched=False
+        False
     )
     raw = mne.io.read_raw_fif(raw_path)
     raw_data = raw.get_data()
@@ -467,6 +476,9 @@ def test_convert_fsaverage_to_native():
     native_vtx = convert_fsaverage_to_native('sub-104', 'lh', 1000)
     assert native_vtx == 166759
 
+    native_vtx = convert_fsaverage_to_native('sub-104', 'rh', 1000)
+    assert native_vtx == 471282
+
     error_raise = False
     try:
         convert_fsaverage_to_native('sub-104', 'lh', 100000000)
@@ -522,6 +534,14 @@ def test_convert_native_to_fsaverage():
     )
     assert hemi == 'lh'
     assert fs_vert == 87729
+
+    hemi, fs_vert = convert_native_to_fsaverage(
+        'sub-104',
+        surf_path,
+        [25.045391, -58.015587, 28.667336]
+    )
+    assert hemi == 'rh'
+    assert fs_vert == 86092
 
     error_raise = False
     try:
