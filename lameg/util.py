@@ -220,7 +220,7 @@ def load_meg_sensor_data(data_fname):
 
     # Confirm the existence of the file before attempting to open it
     if not os.path.exists(data_filename):
-        raise FileNotFoundError(f"Data file not found in specified or default location: "
+        raise FileNotFoundError(f"Data file not found in specified location: "
                                 f"{data_filename}")
 
     good_meg_channels = np.array(good_meg_channels)
@@ -279,8 +279,8 @@ def get_surface_names(n_layers, surf_path, orientation_method):
     return layer_fnames
 
 
-def fif_spm_conversion(mne_file, res4_file, output_path, prefix="spm_", epoched=None,
-                       create_path=False, spm_instance=None):
+def fif_spm_conversion(mne_file, res4_file, output_path, epoched, prefix="spm_",
+                       spm_instance=None):
     """
     Converts *.fif file to SPM data format.
 
@@ -289,10 +289,8 @@ def fif_spm_conversion(mne_file, res4_file, output_path, prefix="spm_", epoched=
     res4_file (str or pathlib.Path or os.Path): location of the sensor position data. *.res4 for
                                                 CTF
     output_path (str or pathlib.Path or os.Path): location of the converted file
+    epoched (bool): Specify if the data is epoched (True) or not (False)
     prefix (str): a string appended to the output_name after conversion. Default: "spm_"
-    epoched (bool): Specify if the data is epoched (True) or not (False), default None will raise
-                    an error
-    create_path (bool): if True create the non-existent subdirectories of the output path
     spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
 
     Notes:
@@ -301,17 +299,12 @@ def fif_spm_conversion(mne_file, res4_file, output_path, prefix="spm_", epoched=
           within the function.
     """
 
-    if epoched is None:
-        raise ValueError("Please specify if the data is epoched (True) or not (False)")
     epoched = int(epoched)
 
     # clean things up for matlab
     mne_file = str(mne_file)
     output_path = str(output_path)
     res4_file = str(res4_file)
-
-    if create_path:
-        make_directory(output_path, None)
 
     with spm_context(spm_instance) as spm:
         spm.convert_mne_to_spm(
