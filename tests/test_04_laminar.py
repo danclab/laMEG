@@ -145,6 +145,8 @@ def test_model_comparison(spm):
                              'sub-104-ses-01-001-btn_trial-epo.mat')
     patch_size = 5
     n_temp_modes = 4
+
+    # Test MSP
     [free_energy, _] = model_comparison(
         nas,
         lpa,
@@ -152,6 +154,25 @@ def test_model_comparison(spm):
         mri_fname,
         [layer_fnames[0], layer_fnames[-1]],
         sim_fname,
+        method='MSP',
+        patch_size=patch_size,
+        n_temp_modes=n_temp_modes,
+        viz=False,
+        spm_instance=spm
+    )
+
+    target = np.array([-363363.71782398, -363395.63599583])
+    assert np.allclose(free_energy, target)
+
+    # Test EBB
+    [free_energy, _] = model_comparison(
+        nas,
+        lpa,
+        rpa,
+        mri_fname,
+        [layer_fnames[0], layer_fnames[-1]],
+        sim_fname,
+        method='EBB',
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
         viz=False,
