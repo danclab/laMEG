@@ -13,7 +13,7 @@ from lameg.util import (check_many, spm_context, big_brain_proportional_layer_bo
                         get_fiducial_coords, get_files, get_directories, make_directory,
                         calc_prop, batch, load_meg_sensor_data, get_surface_names,
                         convert_fsaverage_to_native, convert_native_to_fsaverage,
-                        ttest_rel_corrected, get_bigbrain_layer_boundaries, fif_spm_conversion)
+                        ttest_rel_corrected, get_bigbrain_layer_boundaries, ctf_fif_spm_conversion)
 from spm import spm_standalone
 
 
@@ -252,7 +252,7 @@ def test_fif_spm_conversion():
     output_path = './output'
 
     # Epoched data
-    fif_spm_conversion(
+    ctf_fif_spm_conversion(
         epo_path, res4_file, output_path,
         True
     )
@@ -269,7 +269,7 @@ def test_fif_spm_conversion():
     assert np.allclose(epochs.times, time)
 
     # Raw data
-    fif_spm_conversion(
+    ctf_fif_spm_conversion(
         raw_path, res4_file, output_path,
         False
     )
