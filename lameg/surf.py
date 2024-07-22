@@ -251,15 +251,18 @@ def remove_vertices(gifti_surf, vertices_to_remove):
     new_vertices = vertices[vertices_to_keep, :]
 
     # Find which faces to keep - ones that point to kept vertices
-    face_x = np.isin(faces[:, 0], vertices_to_keep)
-    face_y = np.isin(faces[:, 1], vertices_to_keep)
-    face_z = np.isin(faces[:, 2], vertices_to_keep)
-    faces_to_keep = np.where(face_x & face_y & face_z)[0]
+    if faces.shape[0]>0:
+        face_x = np.isin(faces[:, 0], vertices_to_keep)
+        face_y = np.isin(faces[:, 1], vertices_to_keep)
+        face_z = np.isin(faces[:, 2], vertices_to_keep)
+        faces_to_keep = np.where(face_x & face_y & face_z)[0]
 
-    # Re-index faces
-    x_faces = faces[faces_to_keep, :].reshape(-1)
-    idxs = np.searchsorted(vertices_to_keep, x_faces)
-    new_faces = idxs.reshape(-1, 3)
+        # Re-index faces
+        x_faces = faces[faces_to_keep, :].reshape(-1)
+        idxs = np.searchsorted(vertices_to_keep, x_faces)
+        new_faces = idxs.reshape(-1, 3)
+    else:
+        new_faces = faces
 
     # Create new gifti object
     normals = None

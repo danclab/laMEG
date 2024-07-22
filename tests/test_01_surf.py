@@ -7,7 +7,7 @@ from scipy.sparse import csr_matrix
 
 from lameg.surf import split_fv, mesh_adjacency, fix_non_manifold_edges, \
     find_non_manifold_edges, create_surf_gifti, _normit, mesh_normals, \
-    remove_vertices  # pylint: disable=no-name-in-module
+    remove_vertices, remove_unconnected_vertices  # pylint: disable=no-name-in-module
 
 
 def assert_sparse_equal(actual, expected):
@@ -135,6 +135,73 @@ def test_create_surf_gifti(vertices, faces, normals, expect_normals):
             normals,
             "Normals data array not matched"
         )
+
+
+@pytest.fixture
+def connected_gifti():
+    vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]])
+    faces = np.array([[0, 1, 2], [0, 2, 3]])
+    return create_surf_gifti(vertices, faces)
+
+
+@pytest.fixture
+def unconnected_gifti():
+    vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [2, 2, 2]])
+    faces = np.array([[0, 1, 2], [0, 2, 3]])
+    return create_surf_gifti(vertices, faces)
+
+
+# pylint: disable=W0621
+def test_remove_unconnected_vertices_with_connected_gifti(connected_gifti):
+    """
+    Test the function with a Gifti surface where all vertices are connected.
+    Ensures that no vertices are removed when all are connected to faces.
+    """
+    result = remove_unconnected_vertices(connected_gifti)
+    assert result.darrays[0].data.shape[0] == 4
+
+
+# pylint: disable=W0621
+def test_remove_unconnected_vertices_with_unconnected_gifti(unconnected_gifti):
+    """
+    Test the function with a Gifti surface containing unconnected vertices.
+    Verifies that unconnected vertices are correctly removed.
+    """
+    result = remove_unconnected_vertices(unconnected_gifti)
+    assert len(result.darrays[0].data) == 4
+
+
+def test_remove_unconnected_vertices_no_vertices():
+    """
+    Test the function on a Gifti surface with no vertices.
+    Checks the function's handling of empty vertex data.
+    """
+    gifti = create_surf_gifti(np.zeros((0,3)), np.zeros((0,3)))
+    result = remove_unconnected_vertices(gifti)
+    assert result.darrays[0].data.shape[0] == 0
+
+
+def test_remove_unconnected_vertices_no_faces():
+    """
+    Test the function on a Gifti surface with vertices but no faces.
+    Ensures that all vertices are removed as none are connected.
+    """
+    vertices = np.array([[0, 0, 0], [1, 0, 0]])
+    gifti = create_surf_gifti(vertices, np.zeros((0,3)))
+    result = remove_unconnected_vertices(gifti)
+    assert result.darrays[0].data.shape[0] == 0
+
+
+def test_remove_unconnected_vertices_edge_case():
+    """
+    Test the function with a Gifti surface where all vertices are exactly connected.
+    Confirms no unnecessary removal of connected vertices.
+    """
+    vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0]])
+    faces = np.array([[0, 1, 2]])
+    gifti = create_surf_gifti(vertices, faces)
+    result = remove_unconnected_vertices(gifti)
+    assert len(result.darrays[0].data) == 3
 
 
 @pytest.fixture
