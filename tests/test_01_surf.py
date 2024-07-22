@@ -139,6 +139,15 @@ def test_create_surf_gifti(vertices, faces, normals, expect_normals):
 
 @pytest.fixture
 def connected_gifti():
+    """
+    Provides a GiftiImage fixture with all vertices connected to faces.
+
+    This fixture represents a typical scenario where every vertex is part of at least one face,
+    ensuring that no vertices should be removed during the processing of connected vertices.
+
+    Returns:
+    nibabel.gifti.GiftiImage: A GiftiImage object where all vertices are connected.
+    """
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]])
     faces = np.array([[0, 1, 2], [0, 2, 3]])
     return create_surf_gifti(vertices, faces)
@@ -146,6 +155,15 @@ def connected_gifti():
 
 @pytest.fixture
 def unconnected_gifti():
+    """
+    Provides a GiftiImage fixture with some vertices unconnected to any faces.
+
+    This fixture is designed to test the removal functionality for unconnected vertices,
+    simulating a scenario where one vertex out of several does not contribute to any face.
+
+    Returns:
+    nibabel.gifti.GiftiImage: A GiftiImage object with some unconnected vertices.
+    """
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0], [2, 2, 2]])
     faces = np.array([[0, 1, 2], [0, 2, 3]])
     return create_surf_gifti(vertices, faces)
