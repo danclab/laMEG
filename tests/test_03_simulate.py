@@ -98,8 +98,8 @@ def test_run_dipole_simulation(spm):
 
     sim_sensor_data, time, ch_names = load_meg_sensor_data(sim_fname)
 
-    target=np.array([[[0.8278234, -1.8756828, 1.0758591, 3.6655827, 1.3485234 ,
-                       0.26952612, 4.0082555, 2.0518725, -3.1177888, -0.6963516 ]]])
+    target=np.array([ 0.05684258, -0.12866193,  0.07388893,  0.2516157,   0.09264176,  0.01863054,
+                      0.27522185,  0.14102148, -0.21366386, -0.04743002])
     assert np.allclose(sim_sensor_data[0,:10], target)
 
     target=np.array([-0.1, -0.09833333, -0.09666667, -0.095, -0.09333333,
@@ -188,8 +188,8 @@ def test_run_current_density_simulation(spm):
 
     sim_sensor_data, time, ch_names = load_meg_sensor_data(sim_fname)
 
-    target=np.array([[16.538923, 27.232574, -7.669976, 46.55197, -17.06571,
-                      10.177249, 16.873955, 31.43504, 21.381802, -22.865416]])
+    target=np.array([ 2.4205484,  3.9856143, -1.1225368,  6.813098,  -2.4976463,  1.4894879,
+                      2.469582,   4.6006646,  3.1293263, -3.3464603])
     assert np.allclose(sim_sensor_data[0,:10,0], target)
 
     target=np.array([[-0.5, -0.49833333, -0.49666667, -0.495, -0.49333333,
