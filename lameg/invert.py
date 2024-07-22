@@ -16,7 +16,6 @@ from scipy.io import savemat
 from scipy.sparse import csc_matrix
 
 from lameg.util import load_meg_sensor_data, spm_context, batch
-from lameg.surf import smoothmesh_multilayer_mm # pylint: disable=no-name-in-module
 import matlab # pylint: disable=wrong-import-order
 
 
@@ -148,14 +147,19 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
     if foi is None:
         foi = [0, 256]
 
-    print(f'Smoothing {mesh_fname}')
-    _ = smoothmesh_multilayer_mm(mesh_fname, patch_size, n_layers, n_jobs=-1)
-
     # Extract directory name and file name without extension
     data_dir, fname_with_ext = os.path.split(data_fname)
     fname, _ = os.path.splitext(fname_with_ext)
 
     with spm_context(spm_instance) as spm:
+        print(f'Smoothing {mesh_fname}')
+        _ = spm.spm_eeg_smoothmesh_multilayer_mm(
+            mesh_fname,
+            float(patch_size),
+            float(n_layers),
+            nargout=1
+        )
+
         # Construct new file name with added '_testmodes.mat'
         spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
         spatialmodename, nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(
@@ -278,9 +282,6 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
     if woi is None:
         woi = [-np.inf, np.inf]
 
-    print(f'Smoothing {mesh_fname}')
-    _ = smoothmesh_multilayer_mm(mesh_fname, patch_size, n_layers, n_jobs=-1)
-
     priors = [x + 1 for x in priors]
     if isinstance(woi, np.ndarray):
         woi = woi.tolist()
@@ -290,6 +291,14 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
     fname, _ = os.path.splitext(fname_with_ext)
 
     with spm_context(spm_instance) as spm:
+        print(f'Smoothing {mesh_fname}')
+        _ = spm.spm_eeg_smoothmesh_multilayer_mm(
+            mesh_fname,
+            float(patch_size),
+            float(n_layers),
+            nargout=1
+        )
+
         # Construct new file name with added '_testmodes.mat'
         spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
         spatialmodename, nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(
@@ -418,9 +427,6 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     if foi is None:
         foi = [0, 256]
 
-    print(f'Smoothing {mesh_fname}')
-    _ = smoothmesh_multilayer_mm(mesh_fname, patch_size, n_layers, n_jobs=-1)
-
     prior = prior + 1.0
 
     _, time, _ = load_meg_sensor_data(data_fname)
@@ -447,6 +453,14 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     fname, _ = os.path.splitext(fname_with_ext)
 
     with spm_context(spm_instance) as spm:
+        print(f'Smoothing {mesh_fname}')
+        _ = spm.spm_eeg_smoothmesh_multilayer_mm(
+            mesh_fname,
+            float(patch_size),
+            float(n_layers),
+            nargout=1
+        )
+
         # Construct new file name with added '_testmodes.mat'
         spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
         spatialmodename, nmodes, _ = spm.spm_eeg_inv_prep_modes_xval(
