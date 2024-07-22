@@ -279,8 +279,8 @@ def get_surface_names(n_layers, surf_path, orientation_method):
     return layer_fnames
 
 
-def fif_spm_conversion(mne_file, res4_file, output_path, epoched, prefix="spm_",
-                       spm_instance=None):
+def ctf_fif_spm_conversion(mne_file, res4_file, output_path, epoched, prefix="spm_",
+                           spm_instance=None):
     """
     Converts *.fif file to SPM data format.
 
@@ -307,7 +307,7 @@ def fif_spm_conversion(mne_file, res4_file, output_path, epoched, prefix="spm_",
     res4_file = str(res4_file)
 
     with spm_context(spm_instance) as spm:
-        spm.convert_mne_to_spm(
+        spm.convert_ctf_fif_to_spm(
                 res4_file, mne_file, output_path,
                 prefix, float(epoched), nargout=0
             )
