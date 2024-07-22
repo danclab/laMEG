@@ -20,15 +20,6 @@ def install_package():
     Installs the current directory as a pip package.
     This function assumes the directory contains a setup.py file.
     """
-    subprocess.check_call([
-        sys.executable,
-        '-m',
-        'pip',
-        'install',
-        'numpy==1.19.5',
-        'Cython==3.0.10'
-    ])
-    subprocess.check_call([sys.executable, 'setup.py', 'build_ext', '--inplace', '-v'])
     subprocess.check_call([sys.executable, "-m", "pip", "install", "."])
 
 
@@ -243,7 +234,7 @@ def main():
 
     if not args.no_test_data:
         test_data_zip = os.path.join(base_dir, 'test_data.tar.gz')
-        test_data_download_url = 'https://osf.io/mt9xe/download'
+        test_data_download_url = 'https://osf.io/ztndr/download'
 
         # Download test data
         download_file(test_data_download_url, test_data_zip)
