@@ -7,7 +7,8 @@ from scipy.sparse import csr_matrix
 
 from lameg.surf import split_fv, mesh_adjacency, fix_non_manifold_edges, \
     find_non_manifold_edges, create_surf_gifti, _normit, mesh_normals, \
-    remove_vertices, remove_unconnected_vertices  # pylint: disable=no-name-in-module
+    remove_vertices, remove_unconnected_vertices, downsample_single_surface, \
+    iterative_downsample_single_surface  # pylint: disable=no-name-in-module
 
 
 def assert_sparse_equal(actual, expected):
@@ -290,7 +291,6 @@ def test_edge_case_removal(sample_gifti):
     assert len(new_gifti.darrays[1].data) == 0  # Assuming it removes one face
 
 
-
 @pytest.mark.parametrize("faces, expected_result", [
     # No non-manifold edges: Simple triangle
     (np.array([[0, 1, 2]]), {}),
@@ -342,6 +342,125 @@ def test_fix_non_manifold_edges(vertices, faces, expected_faces):
     """
     _, actual_faces = fix_non_manifold_edges(vertices, faces)
     np.testing.assert_array_equal(actual_faces, expected_faces)
+
+
+@pytest.fixture
+def large_gifti():
+    """
+    Provides a large GiftiImage fixture with a dense mesh of vertices and faces.
+
+    This fixture is designed for testing functions that operate on complex, high-resolution
+    neuroimaging surface data. It simulates a realistic scenario where a mesh might include
+    thousands of vertices and faces, typical of high-resolution brain scans.
+
+    Returns:
+    nibabel.gifti.GiftiImage: A GiftiImage object representing a dense mesh.
+    """
+    # Create a large number of vertices arranged in a grid
+    num_vertices_side = 100  # Creates a 100x100 grid of vertices
+    vertices = np.array([[x_coord, y_coord, np.sin(x_coord) * np.cos(y_coord)]
+                         for x_coord in range(num_vertices_side)
+                         for y_coord in range(num_vertices_side)])
+
+    # Create faces using the grid of vertices
+    faces = []
+    for x_idx in range(num_vertices_side - 1):
+        for y_idx in range(num_vertices_side - 1):
+            # Each square in the grid is divided into two triangles
+            top_left = x_idx * num_vertices_side + y_idx
+            top_right = top_left + 1
+            bottom_left = top_left + num_vertices_side
+            bottom_right = bottom_left + 1
+
+            faces.append([top_left, bottom_left, top_right])  # First triangle
+            faces.append([bottom_left, bottom_right, top_right])  # Second triangle
+
+    # Convert lists to numpy arrays
+    vertices = np.array(vertices)
+    faces = np.array(faces)
+
+    # Create the GiftiImage
+    gii = create_surf_gifti(vertices, faces)
+
+    return gii
+
+
+# pylint: disable=W0621
+def test_downsample_single_surface(large_gifti):
+    """
+    Test the downsampling of a single surface represented as a Gifti file.
+
+    This function tests whether the `downsample_single_surface` function accurately reduces
+    the number of vertices and faces in a Gifti surface mesh according to a specified downsampling
+    factor. It verifies the new size of the vertex and face arrays and checks the first few entries
+    for correctness against predefined targets.
+
+    Parameters:
+    - large_gifti (GiftiImage): A GiftiImage object that represents a 3D surface mesh.
+
+    Asserts:
+    - The number of vertices in the first data array after downsampling is exactly 3224.
+    - The number of vertices in the second data array after downsampling is exactly 1960.
+    - The content of the first ten entries of the vertex and face arrays match the predefined
+      target arrays, confirming that the downsampling and data integrity are preserved.
+
+    This function will raise an AssertionError if the conditions are not met, indicating a
+    potential issue in the `downsample_single_surface` function or the input data.
+    """
+    ds_gifti = downsample_single_surface(large_gifti, 0.1)
+
+    assert ds_gifti.darrays[0].data.shape[0] == 3224
+    assert ds_gifti.darrays[1].data.shape[0] == 1960
+    target = np.array([[ 0.,  1.,  0.], [ 0.,  6.,  0.], [ 0.,  9., -0.], [ 0., 21., -0.],
+                       [ 0., 31.,  0.], [ 0., 41., -0.], [ 0., 43.,  0.], [ 0., 53., -0.],
+                       [ 0., 68.,  0.], [ 0., 75.,  0.]])
+    assert np.allclose(ds_gifti.darrays[0].data[:10,:], target)
+    target = np.array([[  12,   13,    0], [1834,    1, 1717], [  16,   27, 1004],
+                       [1628,    3, 1627], [2851,   60, 2818], [  60, 1805, 2818],
+                       [1361, 2618, 2387], [1001,   17,    4], [2074,   37,  998],
+                       [  37, 1620,  998]])
+    assert np.allclose(ds_gifti.darrays[1].data[:10,:], target)
+
+
+# pylint: disable=W0621
+def test_iterative_downsample_single_surface(large_gifti):
+    """
+    Test the iterative downsampling process on a single surface represented as a Gifti file.
+
+    This function tests the `iterative_downsample_single_surface` function to ensure it correctly
+    applies an iterative downsampling algorithm to reduce the complexity of a 3D surface mesh
+    while maintaining the integrity of the data structure. The test checks if the output dimensions
+    and specific data points of the vertex and face arrays conform to expected values after
+    downsampling.
+
+    Parameters:
+    - large_gifti (GiftiImage): A GiftiImage object that represents a 3D surface mesh to be
+      downsampled.
+
+    Asserts:
+    - The number of vertices in the first data array after downsampling should be exactly 3224.
+    - The number of vertices in the second data array after downsampling should be exactly 1960.
+    - The first ten entries of the vertex and face arrays are checked against predefined target
+      arrays, ensuring that the iterative downsampling process preserves data fidelity and
+      accuracy.
+
+    Raises:
+    - AssertionError: If any of the conditions are not met, an AssertionError is raised, indicating
+      a potential issue in the iterative downsampling process or the initial data.
+    """
+    ds_gifti = iterative_downsample_single_surface(large_gifti, 0.1)
+
+    assert ds_gifti.darrays[0].data.shape[0] == 1202
+    assert ds_gifti.darrays[1].data.shape[0] == 759
+    target = np.array([[ 0., 9., -0.], [ 0., 21., -0.], [ 0., 43., 0.], [ 0., 68., 0.],
+                       [ 0., 75., 0.], [ 1., 0., 0.84147096], [ 1., 3., -.83305],
+                       [ 1., 12., 0.71008], [1., 65., -0.47329], [1., 94., 0.81577]])
+    assert np.allclose(ds_gifti.darrays[0].data[:10,:], target)
+    target = np.array([[ 603,    1,  602], [  17,  656, 1015], [ 501,  941,  865],
+                       [ 596, 1153,    8], [ 610,   11,    4], [ 771, 1117, 1118],
+                       [ 945,  946,  947], [ 750,  951,  907], [ 972,  670,    0],
+                       [ 752,  678,    7]])
+    assert np.allclose(ds_gifti.darrays[1].data[:10,:], target)
 
 
 @pytest.mark.parametrize("faces, expected", [
