@@ -1,6 +1,7 @@
 """
 This module contains the unit tests for the `surf` module from the `lameg` package.
 """
+import copy
 import numpy as np
 import pytest
 from scipy.sparse import csr_matrix
@@ -8,7 +9,7 @@ from scipy.sparse import csr_matrix
 from lameg.surf import split_fv, mesh_adjacency, fix_non_manifold_edges, \
     find_non_manifold_edges, create_surf_gifti, _normit, mesh_normals, \
     remove_vertices, remove_unconnected_vertices, downsample_single_surface, \
-    iterative_downsample_single_surface  # pylint: disable=no-name-in-module
+    iterative_downsample_single_surface, downsample_multiple_surfaces  # pylint: disable=no-name-in-module
 
 
 def assert_sparse_equal(actual, expected):
@@ -461,6 +462,62 @@ def test_iterative_downsample_single_surface(large_gifti):
                        [ 945,  946,  947], [ 750,  951,  907], [ 972,  670,    0],
                        [ 752,  678,    7]])
     assert np.allclose(ds_gifti.darrays[1].data[:10,:], target)
+
+
+def test_downsample_multiple_surfaces(large_gifti):
+    """
+    Test the downsampling of multiple surface meshes represented as Gifti files.
+
+    This function performs a test to ensure the functionality of the `downsample_multiple_surfaces`
+    function, which is intended to downsample a list of surface meshes. The test involves modifying
+    the z-coordinates of the vertices of a copy of the input mesh to create a distinct but related
+    surface mesh. Both the original and modified meshes are then downsampled, and various
+    assertions are performed to check data integrity and consistency between the two downsampled
+    surfaces.
+
+    Parameters:
+    - large_gifti (GiftiImage): A GiftiImage object that represents a 3D surface mesh.
+
+    Processes:
+    - Copies the vertex data from the original surface and modifies the z-coordinates.
+    - Creates a new GiftiImage with the modified vertices to simulate a different but related
+      surface.
+    - Applies downsampling to both the original and modified surfaces.
+    - Checks the vertex data and face data of the resulting downsampled surfaces against expected
+      targets.
+
+    Asserts:
+    - The first five vertices of the downsampled surfaces match the expected target values.
+    - The first five faces of the downsampled original surface match expected target values.
+    - The number of vertices in the downsampled surfaces are equal, ensuring consistent
+      downsampling.
+    - The face data of both downsampled surfaces are identical, asserting data integrity
+      post-downsampling.
+
+    Raises:
+    - AssertionError: If any of the assertions fail, indicating discrepancies in the downsampling
+      process or input modifications.
+    """
+    verts2 = copy.copy(large_gifti.darrays[0].data)
+    verts2[:,2] = verts2[:,2]+5
+    large_gifti2 = create_surf_gifti(verts2, large_gifti.darrays[1].data)
+
+    ds_surfs = downsample_multiple_surfaces([large_gifti, large_gifti2], 0.1)
+
+    target = np.array([[ 0.,  9., -0.], [ 0., 21., -0.], [ 0., 43.,  0.], [ 0., 68.,  0.],
+                       [ 0., 75.,  0.]])
+    assert np.allclose(ds_surfs[0].darrays[0].data[:5,:], target)
+
+    target = np.array([[ 0.,  9.,  5.], [ 0., 21.,  5.], [ 0., 43.,  5.], [ 0., 68.,  5.],
+                       [ 0., 75.,  5.]])
+    assert np.allclose(ds_surfs[1].darrays[0].data[:5, :], target)
+
+    target = np.array([[ 603,    1,  602], [  17,  656, 1015], [ 501,  941,  865],
+                       [ 596, 1153,    8], [ 610,   11,    4]])
+    assert np.allclose(ds_surfs[0].darrays[1].data[:5,:], target)
+
+    assert ds_surfs[0].darrays[0].data.shape[0] == ds_surfs[1].darrays[0].data.shape[0]
+    assert np.allclose(ds_surfs[0].darrays[1].data, ds_surfs[1].darrays[1].data)
 
 
 @pytest.mark.parametrize("faces, expected", [
