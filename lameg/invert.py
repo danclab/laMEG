@@ -19,7 +19,8 @@ from lameg.util import load_meg_sensor_data, spm_context, batch
 import matlab # pylint: disable=wrong-import-order
 
 
-def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=True, spm_instance=None):
+def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, fid_labels=('nas', 'lpa', 'rpa'),
+               viz=True, spm_instance=None):
     """
     Run head coregistration.
 
@@ -33,6 +34,7 @@ def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=True, spm_i
     mri_fname (str): Filename of the MRI data.
     mesh_fname (str): Filename of the mesh data.
     data_fname (str): Filename of the MEG/EEG data.
+    fid_labels (list): Fiducial coordinate labels. Default is ['nas', 'lpa', 'rpa']
     viz (boolean, optional): Whether or not to show SPM visualization. Default is True
     spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
 
@@ -53,7 +55,7 @@ def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, viz=True, spm_i
 
     # Construct the structured array correctly for each fiducial entry
     fiducials = np.zeros(3, dtype=fid_dtype)
-    fiducials['fidname'] = ['nas', 'lpa', 'rpa']
+    fiducials['fidname'] = list(fid_labels)
     fiducials['specification']['type'][0] = np.array(nas,
                                                      dtype=float)
     fiducials['specification']['type'][1] = np.array(lpa,
