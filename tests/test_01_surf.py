@@ -10,7 +10,7 @@ from lameg.surf import split_fv, mesh_adjacency, fix_non_manifold_edges, \
     find_non_manifold_edges, create_surf_gifti, _normit, mesh_normals, \
     remove_vertices, remove_unconnected_vertices, downsample_single_surface, \
     iterative_downsample_single_surface, downsample_multiple_surfaces, \
-    combine_surfaces  # pylint: disable=no-name-in-module
+    combine_surfaces, interpolate_data  # pylint: disable=no-name-in-module
 
 
 def assert_sparse_equal(actual, expected):
@@ -465,6 +465,7 @@ def test_iterative_downsample_single_surface(large_gifti):
     assert np.allclose(ds_gifti.darrays[1].data[:10,:], target)
 
 
+# pylint: disable=W0621
 def test_downsample_multiple_surfaces(large_gifti):
     """
     Test the downsampling of multiple surface meshes represented as Gifti files.
@@ -521,6 +522,7 @@ def test_downsample_multiple_surfaces(large_gifti):
     assert np.allclose(ds_surfs[0].darrays[1].data, ds_surfs[1].darrays[1].data)
 
 
+# pylint: disable=W0621
 def test_combine_surfaces(large_gifti):
     """
     Test the combination of multiple surface meshes into a single surface mesh.
@@ -598,6 +600,32 @@ def test_mesh_adjacency(faces, expected):
     """
     result = mesh_adjacency(faces)
     assert_sparse_equal(result, expected)
+
+
+# pylint: disable=W0621
+def test_interpolate_data(large_gifti):
+    """
+    Tests the interpolate_data function by comparing the interpolated results
+    from a downsampled GIFTI surface with known target values.
+
+    Parameters:
+    large_gifti (nibabel.gifti.GiftiImage): The original high-resolution GIFTI surface image.
+
+    Steps:
+    1. Downsamples the large_gifti surface to 10% of its vertices.
+    2. Creates random data for the downsampled surface.
+    3. Interpolates the data back onto the large_gifti surface.
+    4. Asserts that the interpolated data closely matches a predefined target array
+       for the first 10 vertices.
+    """
+    smaller_gifti = downsample_single_surface(large_gifti, 0.1)
+    n_verts = smaller_gifti.darrays[0].data.shape[0]
+    ds_data = np.linspace(0,100, n_verts)
+    interp_data = interpolate_data(large_gifti, smaller_gifti, ds_data)
+    target = np.array([3.03420237e+01, 5.32733478e+01, 5.32733478e+01, 6.74284478e+01,
+                       7.44034286e+01, 3.72172278e+01, 3.10269935e-02, 3.10269935e-02,
+                       4.65404902e-02, 6.20539870e-02])
+    assert np.allclose(interp_data[:10], target)
 
 
 def test_split_fv():
