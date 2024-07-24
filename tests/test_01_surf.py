@@ -9,7 +9,8 @@ from scipy.sparse import csr_matrix
 from lameg.surf import split_fv, mesh_adjacency, fix_non_manifold_edges, \
     find_non_manifold_edges, create_surf_gifti, _normit, mesh_normals, \
     remove_vertices, remove_unconnected_vertices, downsample_single_surface, \
-    iterative_downsample_single_surface, downsample_multiple_surfaces  # pylint: disable=no-name-in-module
+    iterative_downsample_single_surface, downsample_multiple_surfaces, \
+    combine_surfaces  # pylint: disable=no-name-in-module
 
 
 def assert_sparse_equal(actual, expected):
@@ -518,6 +519,57 @@ def test_downsample_multiple_surfaces(large_gifti):
 
     assert ds_surfs[0].darrays[0].data.shape[0] == ds_surfs[1].darrays[0].data.shape[0]
     assert np.allclose(ds_surfs[0].darrays[1].data, ds_surfs[1].darrays[1].data)
+
+
+def test_combine_surfaces(large_gifti):
+    """
+    Test the combination of multiple surface meshes into a single surface mesh.
+
+    This function evaluates the functionality of the `combine_surfaces` function, which is designed
+    to merge multiple Gifti surface meshes into a single composite surface. It involves creating a
+    second surface by modifying the z-coordinates of the vertex data from the original mesh, then
+    combining this modified mesh with the original mesh. The function tests if the vertices and
+    faces of the resulting combined surface correctly concatenate the data from the original and
+    modified surfaces.
+
+    Parameters:
+    - large_gifti (GiftiImage): A GiftiImage object representing a 3D surface mesh.
+
+    Processes:
+    - Copies the vertex data from the original surface and modifies the z-coordinates to create a
+      variation.
+    - Constructs a new GiftiImage with these modified vertices.
+    - Combines the original and modified meshes into a single composite mesh.
+    - Validates that the vertex and face data in the combined surface mesh matches the concatenated
+      data of the two individual meshes.
+
+    Asserts:
+    - The vertex data of the combined surface exactly matches the concatenated vertex data of the
+      original and modified surfaces.
+    - The face data of the combined surface exactly matches the concatenated face data of the
+      original and modified surfaces.
+
+    Raises:
+    - AssertionError: If any of the assertions fail, it indicates an error in the surface
+      combination process or an inconsistency in data manipulation prior to combining.
+    """
+    verts2 = copy.copy(large_gifti.darrays[0].data)
+    verts2[:, 2] = verts2[:, 2] + 5
+    large_gifti2 = create_surf_gifti(verts2, large_gifti.darrays[1].data)
+
+    combined_surf = combine_surfaces([large_gifti, large_gifti2])
+
+    target = np.vstack([
+        large_gifti.darrays[0].data,
+        large_gifti2.darrays[0].data
+    ])
+    assert np.allclose(combined_surf.darrays[0].data, target)
+
+    target = np.vstack([
+        large_gifti.darrays[1].data,
+        large_gifti2.darrays[1].data+large_gifti.darrays[0].data.shape[0]
+    ])
+    assert np.allclose(combined_surf.darrays[1].data, target)
 
 
 @pytest.mark.parametrize("faces, expected", [
