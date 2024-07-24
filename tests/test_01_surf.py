@@ -2,15 +2,19 @@
 This module contains the unit tests for the `surf` module from the `lameg` package.
 """
 import copy
+import os
+
 import numpy as np
 import pytest
+import nibabel as nib
 from scipy.sparse import csr_matrix
 
 from lameg.surf import split_fv, mesh_adjacency, fix_non_manifold_edges, \
     find_non_manifold_edges, create_surf_gifti, _normit, mesh_normals, \
     remove_vertices, remove_unconnected_vertices, downsample_single_surface, \
     iterative_downsample_single_surface, downsample_multiple_surfaces, \
-    combine_surfaces, interpolate_data  # pylint: disable=no-name-in-module
+    combine_surfaces, interpolate_data, compute_dipole_orientations  # pylint: disable=no-name-in-module
+from lameg.util import make_directory
 
 
 def assert_sparse_equal(actual, expected):
@@ -572,6 +576,103 @@ def test_combine_surfaces(large_gifti):
         large_gifti2.darrays[1].data+large_gifti.darrays[0].data.shape[0]
     ])
     assert np.allclose(combined_surf.darrays[1].data, target)
+
+
+# pylint: disable=W0621
+def test_compute_dipole_orientations(large_gifti):
+    """
+    Test the compute_dipole_orientations function for different methods to ensure correct
+    calculation of dipole orientations across various scenarios.
+
+    Steps:
+    1. Create two slightly different surface files by modifying vertex coordinates.
+    2. Downsample both surfaces and save them.
+    3. Compute dipole orientations for the 'link_vector', 'ds_surf_norm', 'orig_surf_norm',
+       and 'cps' methods.
+    4. Verify the orientations against predefined expected outcomes for each method.
+
+    The test checks:
+    - That the function handles the creation of link vectors correctly by comparing the
+      computed vectors against expected ones for identical configurations (fixed=True).
+    - That the surface normal calculations are correct for downsampled and original surfaces
+      under the conditions of a fixed orientation across layers.
+    - That the orientation results are close to the expected values, indicating correct
+      functionality of the method computations and the handling of inputs and surface
+      manipulations.
+
+    This test helps confirm the robustness of the orientation computation under a variety of
+    typical usage scenarios and ensures that any changes to the underlying implementation
+    maintain the expected behavior.
+    """
+    _ = make_directory('./', ['output'])
+
+    nib.save(large_gifti, os.path.join('./output/white.gii'))
+
+    verts2 = copy.copy(large_gifti.darrays[0].data)
+    verts2[:, 2] = verts2[:, 2] + 5
+    large_gifti2 = create_surf_gifti(verts2, large_gifti.darrays[1].data)
+    nib.save(large_gifti2, os.path.join('./output/pial.gii'))
+
+    ds_surfs = downsample_multiple_surfaces([large_gifti2, large_gifti], 0.1)
+    nib.save(ds_surfs[0], './output/pial.ds.gii')
+    nib.save(ds_surfs[1], './output/white.ds.gii')
+
+    normals = compute_dipole_orientations(
+        'link_vector',
+        ['pial','white'],
+        './output',
+        fixed=True
+    )
+    target = np.array([[ 0.,  0., -1.], [ 0.,  0., -1.], [ 0.,  0. ,-1.], [ 0.,  0., -1.],
+                       [ 0.,  0., -1.], [ 0.,  0., -1.], [ 0.,  0., -1.], [ 0.,  0., -1.],
+                       [ 0.,  0., -1.], [ 0.,  0., -1.]])
+    assert np.allclose(normals[0,:10,:], target)
+    assert np.allclose(normals[1,:10,:], target)
+
+    normals = compute_dipole_orientations(
+        'ds_surf_norm',
+        ['pial', 'white'],
+        './output',
+        fixed=True
+    )
+
+    target = np.array([[-0.04698259,  0.1540498,  -0.98694545],
+                       [-0.07900448,  0.12416247, -0.9891117 ],
+                       [ 0.05659738,  0.10748,    -0.99259496],
+                       [-0.11056121, -0.07688656, -0.99089086],
+                       [-0.04565653,  0.14132655, -0.9889096 ]])
+    assert np.allclose(normals[0,:5,:], target)
+    assert np.allclose(normals[1, :5, :], target)
+
+    normals = compute_dipole_orientations(
+        'orig_surf_norm',
+        ['pial', 'white'],
+        './output',
+        fixed=True
+    )
+
+    target = np.array([[ 0.4929678,  -0.1130688, -0.8626692 ],
+                       [-0.4485411,  -0.16056265, -0.87922156],
+                       [-0.16060773, -0.21938397 ,-0.9623283 ],
+                       [ 0.16595066,  0.21885467, -0.961542  ],
+                       [ 0.08390685,  0.22491537, -0.97075886]])
+    assert np.allclose(normals[0,:5,:], target)
+    assert np.allclose(normals[1, :5, :], target)
+
+    normals = compute_dipole_orientations(
+        'cps',
+        ['pial', 'white'],
+        './output',
+        fixed=True
+    )
+
+    target = np.array([[ 1.8139431e-01, -2.7962229e-01 ,-9.4281888e-01],
+                       [-1.0353364e-02, -7.2763674e-02, -9.9729550e-01],
+                       [ 3.1780198e-04, -1.1128817e-01 ,-9.9378812e-01],
+                       [-1.8438324e-02, -1.2312002e-02, -9.9975419e-01],
+                       [ 7.1880430e-02,  1.5277593e-01, -9.8564333e-01]])
+    assert np.allclose(normals[0,:5,:], target)
+    assert np.allclose(normals[1,:5,:], target)
 
 
 @pytest.mark.parametrize("faces, expected", [
