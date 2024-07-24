@@ -626,7 +626,7 @@ def combine_surfaces(surfaces):
 
 
 # pylint: disable=R0912
-def compute_dipole_orientations(method, layer_names, subject_out_dir, fixed=True):
+def compute_dipole_orientations(method, layer_names, surf_dir, fixed=True):
     """
     Compute dipole orientations for cortical layers using different methods.
 
@@ -641,7 +641,7 @@ def compute_dipole_orientations(method, layer_names, subject_out_dir, fixed=True
                   cps: cortical patch statistics - mean surface normal vectors from connected
                        vertices in the original (non-downsampled) surface
     layer_names (list): Names of the cortical layers.
-    subject_out_dir (str): Directory where the surface files are stored.
+    surf_dir (str): Directory where the surface files are stored.
     fixed (bool, optional): Flag to ensure that orientation of corresponding vertices across
                             layers is the same (True by default). If true, for ds_surf_norm,
                             orig_surf_norm, and cps, orientations computed from the pial surface
@@ -659,8 +659,8 @@ def compute_dipole_orientations(method, layer_names, subject_out_dir, fixed=True
     if method == 'link_vector':
         # Method: Use link vectors between pial and white surfaces as dipole orientations
         # Load downsampled pial and white surfaces
-        pial_surf = nib.load(os.path.join(subject_out_dir, 'pial.ds.gii'))
-        white_surf = nib.load(os.path.join(subject_out_dir, 'white.ds.gii'))
+        pial_surf = nib.load(os.path.join(surf_dir, 'pial.ds.gii'))
+        white_surf = nib.load(os.path.join(surf_dir, 'white.ds.gii'))
 
         # Extract vertices
         pial_vertices = pial_surf.darrays[0].data
@@ -682,7 +682,7 @@ def compute_dipole_orientations(method, layer_names, subject_out_dir, fixed=True
         orientations = []
         for l_idx, layer_name in enumerate(layer_names):
             if l_idx == 0 or not fixed:
-                in_surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.gii')
+                in_surf_path = os.path.join(surf_dir, f'{layer_name}.ds.gii')
                 surf = nib.load(in_surf_path)
                 vtx_norms, _ = mesh_normals(
                     surf.darrays[0].data,
@@ -697,9 +697,9 @@ def compute_dipole_orientations(method, layer_names, subject_out_dir, fixed=True
         orientations = []
         for l_idx, layer_name in enumerate(layer_names):
             if l_idx == 0 or not fixed:
-                in_surf_path = os.path.join(subject_out_dir, f'{layer_name}.gii')
+                in_surf_path = os.path.join(surf_dir, f'{layer_name}.gii')
                 orig_surf = nib.load(in_surf_path)
-                ds_surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.gii')
+                ds_surf_path = os.path.join(surf_dir, f'{layer_name}.ds.gii')
                 ds_surf = nib.load(ds_surf_path)
                 kdtree = KDTree(orig_surf.darrays[0].data)
                 _, orig_vert_idx = kdtree.query(ds_surf.darrays[0].data, k=1)
@@ -716,9 +716,9 @@ def compute_dipole_orientations(method, layer_names, subject_out_dir, fixed=True
         orientations = []
         for l_idx, layer_name in enumerate(layer_names):
             if l_idx == 0 or not fixed:
-                in_surf_path = os.path.join(subject_out_dir, f'{layer_name}.gii')
+                in_surf_path = os.path.join(surf_dir, f'{layer_name}.gii')
                 orig_surf = nib.load(in_surf_path)
-                ds_surf_path = os.path.join(subject_out_dir, f'{layer_name}.ds.gii')
+                ds_surf_path = os.path.join(surf_dir, f'{layer_name}.ds.gii')
                 ds_surf = nib.load(ds_surf_path)
                 kdtree = KDTree(ds_surf.darrays[0].data)
                 _, ds_vert_idx = kdtree.query(orig_surf.darrays[0].data, k=1)
