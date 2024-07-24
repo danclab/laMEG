@@ -155,10 +155,12 @@ def test_model_comparison(spm):
         [layer_fnames[0], layer_fnames[-1]],
         sim_fname,
         method='MSP',
-        patch_size=patch_size,
-        n_temp_modes=n_temp_modes,
         viz=False,
-        spm_instance=spm
+        spm_instance=spm,
+        invert_kwargs={
+            'patch_size': patch_size,
+            'n_temp_modes': n_temp_modes,
+        }
     )
 
     target = np.array([-202445.53571645, -200488.54855084])
@@ -173,10 +175,12 @@ def test_model_comparison(spm):
         [layer_fnames[0], layer_fnames[-1]],
         sim_fname,
         method='EBB',
-        patch_size=patch_size,
-        n_temp_modes=n_temp_modes,
         viz=False,
-        spm_instance=spm
+        spm_instance=spm,
+        invert_kwargs={
+            'patch_size': patch_size,
+            'n_temp_modes': n_temp_modes,
+        }
     )
 
     target = np.array([-207555.39271896, -207279.30947456])
@@ -269,12 +273,14 @@ def test_sliding_window_model_comparison(spm):
         mri_fname,
         [layer_fnames[0], layer_fnames[-1]],
         sim_fname,
-        patch_size=patch_size,
-        n_temp_modes=sliding_n_temp_modes,
-        win_size=win_size,
-        win_overlap=win_overlap,
         viz=False,
-        spm_instance=spm
+        spm_instance=spm,
+        invert_kwargs={
+            'patch_size': patch_size,
+            'n_temp_modes': sliding_n_temp_modes,
+            'win_size': win_size,
+            'win_overlap': win_overlap
+        }
     )
 
     target = np.array([[-25742.35576421, -25742.35576421, -25731.55977826, -25825.36418008,

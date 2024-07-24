@@ -30,13 +30,14 @@ from lameg.util import ttest_rel_corrected
 
 
 def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='EBB', viz=True,
-                     spm_instance=None, **kwargs):
+                     spm_instance=None, coregister_kwargs=None, invert_kwargs=None):
     """
     Compare model fits using different meshes by computing the free energy.
 
     This function runs source reconstruction algorithms (either Empirical Bayesian Beamformer or
     Multiple Sparse Priors) on a set of meshes and compares their model fits using the free energy
-    and cross validation error metrics.
+    and cross validation error metrics. It allows for separate configuration of coregistration and
+    inversion parameters through distinct keyword argument dictionaries.
 
     Parameters:
     nas (list): NASion fiducial coordinates.
@@ -46,14 +47,14 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
     mesh_fnames (list): List of filenames for different meshes.
     data_fname (str): Filename of the MEG/EEG data.
     method (str, optional): Source reconstruction method, either 'EBB' or 'MSP'. Default is 'EBB'.
-    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
-    spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
-    **kwargs: Additional keyword arguments are passed directly to the source reconstruction
-              functions (invert_ebb or invert_msp).
+    viz (boolean, optional): Whether to display SPM visualizations. Default is True.
+    spm_instance (spm_standalone, optional): Instance of standalone SPM software. Default is None.
+    coregister_kwargs (dict, optional): Keyword arguments specifically for the coregister function.
+    invert_kwargs (dict, optional): Keyword arguments specifically for the invert function.
 
     Returns:
-    list: A list containing the free energy values corresponding to each mesh, and the cross
-          validation error for each mesh.
+    tuple: A tuple containing two numpy arrays: the first with the free energy values corresponding
+           to each mesh, and the second with the cross-validation error for each mesh.
 
     Notes:
         - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
@@ -61,6 +62,11 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
           within the function.
         - Free energy is used as a measure of model fit, with higher values indicating better fit.
     """
+
+    if coregister_kwargs is None:
+        coregister_kwargs = {}
+    if invert_kwargs is None:
+        invert_kwargs = {}
 
     f_vals = []
     cv_errs = []
@@ -73,7 +79,8 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
             mesh_fname,
             data_fname,
             viz=viz,
-            spm_instance=spm_instance
+            spm_instance=spm_instance,
+            **coregister_kwargs
         )
 
         f_val = np.nan
@@ -85,7 +92,7 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
                 1,
                 viz=viz,
                 spm_instance=spm_instance,
-                **kwargs
+                **invert_kwargs
             )
         elif method == 'MSP':
             [f_val, cv_err] = invert_msp(
@@ -94,7 +101,7 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
                 1,
                 viz=viz,
                 spm_instance=spm_instance,
-                **kwargs
+                **invert_kwargs
             )
         f_vals.append(f_val)
         cv_errs.append(cv_err)
@@ -106,7 +113,8 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
 
 
 def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname,
-                                    viz=True, spm_instance=None, **kwargs):
+                                    viz=True, spm_instance=None, coregister_kwargs=None,
+                                    invert_kwargs=None):
     """
     Compare model fits across different meshes using a sliding window approach.
 
@@ -124,8 +132,9 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
     data_fname (str): Filename of the MEG/EEG data.
     viz (boolean, optional): Whether or not to show SPM visualization. Default is True
     spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
-    **kwargs: Additional keyword arguments are passed directly to the invert_sliding_window
-              function.
+    coregister_kwargs (dict, optional): Keyword arguments specifically for the coregister function.
+    invert_kwargs (dict, optional): Keyword arguments specifically for the invert_sliding_window
+                                    function.
 
     Returns:
     tuple: A tuple containing a list of free energy values for each mesh and the windows of
@@ -140,6 +149,11 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
         - The prior index is adjusted by adding 1 to align with MATLAB's 1-based indexing.
     """
 
+    if coregister_kwargs is None:
+        coregister_kwargs = {}
+    if invert_kwargs is None:
+        invert_kwargs = {}
+
     f_vals = []
     wois = []
     for mesh_fname in mesh_fnames:
@@ -151,7 +165,8 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
             mesh_fname,
             data_fname,
             viz=viz,
-            spm_instance=spm_instance
+            spm_instance=spm_instance,
+            **coregister_kwargs
         )
 
         [mesh_fvals, wois] = invert_sliding_window(
@@ -161,7 +176,7 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
             1,
             viz=viz,
             spm_instance=spm_instance,
-            **kwargs
+            **invert_kwargs
         )
         f_vals.append(mesh_fvals)
 
