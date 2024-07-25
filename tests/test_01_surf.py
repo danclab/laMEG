@@ -374,6 +374,9 @@ def large_gifti():
     vertices = np.array([[x_coord, y_coord, np.sin(x_coord) * np.cos(y_coord)]
                          for x_coord in range(num_vertices_side)
                          for y_coord in range(num_vertices_side)])
+    normals = np.array([[x_coord, y_coord, -1*np.sin(x_coord) + 3*np.cos(y_coord)]
+                         for x_coord in range(num_vertices_side)
+                         for y_coord in range(num_vertices_side)])
 
     # Create faces using the grid of vertices
     faces = []
@@ -391,9 +394,10 @@ def large_gifti():
     # Convert lists to numpy arrays
     vertices = np.array(vertices)
     faces = np.array(faces)
+    normals = np.array(normals)
 
     # Create the GiftiImage
-    gii = create_surf_gifti(vertices, faces)
+    gii = create_surf_gifti(vertices, faces, normals=normals)
 
     return gii
 
@@ -424,6 +428,7 @@ def test_downsample_single_surface(large_gifti):
 
     assert ds_gifti.darrays[0].data.shape[0] == 3224
     assert ds_gifti.darrays[1].data.shape[0] == 1960
+    assert ds_gifti.darrays[2].data.shape[0] == 3224
     target = np.array([[ 0.,  1.,  0.], [ 0.,  6.,  0.], [ 0.,  9., -0.], [ 0., 21., -0.],
                        [ 0., 31.,  0.], [ 0., 41., -0.], [ 0., 43.,  0.], [ 0., 53., -0.],
                        [ 0., 68.,  0.], [ 0., 75.,  0.]])
@@ -433,6 +438,9 @@ def test_downsample_single_surface(large_gifti):
                        [1361, 2618, 2387], [1001,   17,    4], [2074,   37,  998],
                        [  37, 1620,  998]])
     assert np.allclose(ds_gifti.darrays[1].data[:10,:], target)
+    target = np.array([[ 0., 1., 1.620907 ], [ 0., 6., 2.8805108], [ 0., 9., -2.7333908],
+                       [ 0., 21., -1.6431878], [ 0., 31., 2.7442272]])
+    assert np.allclose(ds_gifti.darrays[2].data[:5, :], target)
 
 
 # pylint: disable=W0621
@@ -513,7 +521,11 @@ def test_downsample_multiple_surfaces(large_gifti):
     """
     verts2 = copy.copy(large_gifti.darrays[0].data)
     verts2[:,2] = verts2[:,2]+5
-    large_gifti2 = create_surf_gifti(verts2, large_gifti.darrays[1].data)
+    large_gifti2 = create_surf_gifti(
+        verts2,
+        large_gifti.darrays[1].data,
+        normals=large_gifti.darrays[2].data
+    )
 
     ds_surfs = downsample_multiple_surfaces([large_gifti, large_gifti2], 0.1)
 
@@ -528,6 +540,14 @@ def test_downsample_multiple_surfaces(large_gifti):
     target = np.array([[ 603,    1,  602], [  17,  656, 1015], [ 501,  941,  865],
                        [ 596, 1153,    8], [ 610,   11,    4]])
     assert np.allclose(ds_surfs[0].darrays[1].data[:5,:], target)
+
+    target = np.array([[ 0., 9., -2.7333908], [ 0., 21., -1.6431878], [ 0., 43., 1.66534  ],
+                       [ 0., 68., 1.3204291], [ 0., 75., 2.7652538]])
+    assert np.allclose(ds_surfs[0].darrays[2].data[:5, :], target)
+
+    target = np.array([[0., 9., -2.7333908], [0., 21., -1.6431878], [0., 43., 1.66534],
+                       [0., 68., 1.3204291], [0., 75., 2.7652538]])
+    assert np.allclose(ds_surfs[1].darrays[2].data[:5, :], target)
 
     assert ds_surfs[0].darrays[0].data.shape[0] == ds_surfs[1].darrays[0].data.shape[0]
     assert np.allclose(ds_surfs[0].darrays[1].data, ds_surfs[1].darrays[1].data)
@@ -568,7 +588,11 @@ def test_combine_surfaces(large_gifti):
     """
     verts2 = copy.copy(large_gifti.darrays[0].data)
     verts2[:, 2] = verts2[:, 2] + 5
-    large_gifti2 = create_surf_gifti(verts2, large_gifti.darrays[1].data)
+    large_gifti2 = create_surf_gifti(
+        verts2,
+        large_gifti.darrays[1].data,
+        normals=large_gifti.darrays[2].data
+    )
 
     combined_surf = combine_surfaces([large_gifti, large_gifti2])
 
@@ -583,6 +607,12 @@ def test_combine_surfaces(large_gifti):
         large_gifti2.darrays[1].data+large_gifti.darrays[0].data.shape[0]
     ])
     assert np.allclose(combined_surf.darrays[1].data, target)
+
+    target = np.vstack([
+        large_gifti.darrays[2].data,
+        large_gifti2.darrays[2].data
+    ])
+    assert np.allclose(combined_surf.darrays[2].data, target)
 
 
 # pylint: disable=W0621
