@@ -165,8 +165,8 @@ def create_surf_gifti(vertices, faces, normals=None):
     )
 
     # If normals are provided and not empty, cast them to float32 and add them to the Gifti image
-    if normals is not None and len(normals) > 0:
-        normals = normals.astype(np.float32)
+    if normals is not None:
+        normals = np.array(normals).astype(np.float32)
         new_gifti.add_gifti_data_array(
             nib.gifti.GiftiDataArray(
                 data=normals,
