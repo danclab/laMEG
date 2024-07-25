@@ -472,7 +472,14 @@ def iterative_downsample_single_surface(gifti_surf, ds_factor=0.1):
     ds_vertices = current_surf.darrays[0].data
     ds_faces = current_surf.darrays[1].data
     nonmani_vertices, nonmani_faces = fix_non_manifold_edges(ds_vertices, ds_faces)
-    current_surf = create_surf_gifti(nonmani_vertices, nonmani_faces)
+
+    normals = None
+    if len(current_surf.darrays) > 2 and \
+            current_surf.darrays[2].intent == nib.nifti1.intent_codes['NIFTI_INTENT_VECTOR'] and \
+            current_surf.darrays[2].data.shape[0]==current_surf.darrays[0].data.shape[0]:
+        normals = current_surf.darrays[2].data
+
+    current_surf = create_surf_gifti(nonmani_vertices, nonmani_faces, normals=normals)
 
     # Remove unconnected vertices
     current_surf = remove_unconnected_vertices(current_surf)
