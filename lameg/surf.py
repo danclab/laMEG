@@ -414,7 +414,16 @@ def downsample_single_surface(gifti_surf, ds_factor=0.1):
     # vertex indices
     reduced_faces = face_data.reshape(-1, 4)[:, 1:4]
 
-    new_gifti_surf = create_surf_gifti(reduced_vertices, reduced_faces)
+    # Find the original vertices closest to the downsampled vertices
+    kdtree = KDTree(gifti_surf.darrays[0].data)
+    _, orig_vert_idx = kdtree.query(reduced_vertices, k=1)
+
+    reduced_normals = None
+    if len(gifti_surf.darrays) > 2 and \
+            gifti_surf.darrays[2].intent == nib.nifti1.intent_codes['NIFTI_INTENT_VECTOR']:
+        reduced_normals = gifti_surf.darrays[2].data[orig_vert_idx]
+
+    new_gifti_surf = create_surf_gifti(reduced_vertices, reduced_faces, normals=reduced_normals)
 
     return new_gifti_surf
 
