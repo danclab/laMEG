@@ -420,7 +420,8 @@ def downsample_single_surface(gifti_surf, ds_factor=0.1):
 
     reduced_normals = None
     if len(gifti_surf.darrays) > 2 and \
-            gifti_surf.darrays[2].intent == nib.nifti1.intent_codes['NIFTI_INTENT_VECTOR']:
+            gifti_surf.darrays[2].intent == nib.nifti1.intent_codes['NIFTI_INTENT_VECTOR'] and \
+            gifti_surf.darrays[2].data.shape[0]==gifti_surf.darrays[0].data.shape[0]:
         reduced_normals = gifti_surf.darrays[2].data[orig_vert_idx]
 
     new_gifti_surf = create_surf_gifti(reduced_vertices, reduced_faces, normals=reduced_normals)
@@ -528,14 +529,8 @@ def downsample_multiple_surfaces(in_surfs, ds_factor):
         f"belong to the original surface."
     )
 
-    reduced_normals = None
-    if len(primary_surf.darrays) > 2 and \
-            primary_surf.darrays[2].intent == nib.nifti1.intent_codes['NIFTI_INTENT_VECTOR']:
-        reduced_normals = primary_surf.darrays[2].data[orig_vert_idx]
-
     # Save the downsampled primary surface with normals
-    ds_surf = create_surf_gifti(reduced_vertices, reduced_faces, normals=reduced_normals)
-    out_surfs.append(ds_surf)
+    out_surfs.append(ds_primary_surf)
 
     # Process other surfaces
     for i in range(1, len(in_surfs)):
@@ -543,7 +538,8 @@ def downsample_multiple_surfaces(in_surfs, ds_factor):
 
         reduced_normals = None
         if len(surf.darrays) > 2 and \
-                surf.darrays[2].intent == nib.nifti1.intent_codes['NIFTI_INTENT_VECTOR']:
+                surf.darrays[2].intent == nib.nifti1.intent_codes['NIFTI_INTENT_VECTOR'] and \
+                surf.darrays[2].data.shape[0] == surf.darrays[0].data.shape[0]:
             reduced_normals = surf.darrays[2].data[orig_vert_idx]
 
         surf_verts=surf.darrays[0].data[orig_vert_idx, :]
@@ -606,11 +602,6 @@ def combine_surfaces(surfaces):
         normal_arrays = [da.data for da in mesh.darrays
                          if da.intent == nib.nifti1.intent_codes['NIFTI_INTENT_VECTOR']]
         normals = np.concatenate(normal_arrays) if normal_arrays else np.array([])
-
-        if vertices.ndim != 2 or vertices.shape[1] != 3:
-            raise ValueError("Vertices array should have shape [n, 3]")
-        if faces.ndim != 2 or faces.shape[1] != 3:
-            raise ValueError("Faces array should have shape [n, 3]")
 
         combined_vertices.append(vertices)
         combined_faces.append(faces + face_offset)
