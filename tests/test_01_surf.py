@@ -243,7 +243,8 @@ def sample_gifti():
     """
     vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]])
     faces = np.array([[0, 1, 2], [0, 2, 3]])
-    return create_surf_gifti(vertices, faces)
+    normals = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1], [1, 0, 0]])
+    return create_surf_gifti(vertices, faces, normals=normals)
 
 
 # pylint: disable=W0621
@@ -255,6 +256,7 @@ def test_remove_no_vertices(sample_gifti):
     new_gifti = remove_vertices(sample_gifti, np.array([]))
     assert np.array_equal(new_gifti.darrays[0].data, sample_gifti.darrays[0].data)
     assert np.array_equal(new_gifti.darrays[1].data, sample_gifti.darrays[1].data)
+    assert np.array_equal(new_gifti.darrays[2].data, sample_gifti.darrays[2].data)
 
 
 # pylint: disable=W0621
@@ -271,6 +273,10 @@ def test_remove_specific_vertices(sample_gifti):
         np.array([[0., 0., 0.], [1., 1., 0.], [0., 1., 0.]])
     )
     assert np.array_equal(new_gifti.darrays[1].data, np.array([[0, 1, 2]]))
+    assert np.array_equal(
+        new_gifti.darrays[2].data,
+        np.array([[1, 0, 0], [0, 0, 1], [1, 0, 0]])
+    )
 
 
 # pylint: disable=W0621
@@ -283,6 +289,7 @@ def test_remove_all_vertices(sample_gifti):
     new_gifti = remove_vertices(sample_gifti, vertices_to_remove)
     assert len(new_gifti.darrays[0].data) == 0
     assert len(new_gifti.darrays[1].data) == 0
+    assert len(new_gifti.darrays[2].data) == 0
 
 
 # pylint: disable=W0621
