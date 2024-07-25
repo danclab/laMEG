@@ -3,6 +3,9 @@ This module contains the unit tests for the `surf` module from the `lameg` packa
 """
 import copy
 import os
+import shutil
+import subprocess
+from unittest.mock import patch, MagicMock
 
 import numpy as np
 import pytest
@@ -13,9 +16,10 @@ from lameg.surf import split_fv, mesh_adjacency, fix_non_manifold_edges, \
     find_non_manifold_edges, create_surf_gifti, _normit, mesh_normals, \
     remove_vertices, remove_unconnected_vertices, downsample_single_surface, \
     iterative_downsample_single_surface, downsample_multiple_surfaces, \
-    combine_surfaces, interpolate_data, compute_dipole_orientations  # pylint: disable=no-name-in-module
+    combine_surfaces, interpolate_data, compute_dipole_orientations, \
+    create_layer_mesh, postprocess_freesurfer_surfaces  # pylint: disable=no-name-in-module
 from lameg.util import make_directory
-
+# pylint: disable=C0302
 
 def assert_sparse_equal(actual, expected):
     """
@@ -710,6 +714,165 @@ def test_compute_dipole_orientations(large_gifti):
                        [ 7.1880430e-02,  1.5277593e-01, -9.8564333e-01]])
     assert np.allclose(normals[0,:5,:], target)
     assert np.allclose(normals[1,:5,:], target)
+
+
+def test_create_layer_mesh():
+    """
+    Test the `create_layer_mesh` function for correct mesh file creation or retrieval.
+
+    This test simulates different cortical layer specifications and hemisphere selections
+    within a mocked FreeSurfer environment. It evaluates whether the function correctly:
+    - Returns proper mesh identifiers for boundary cortical layers (0 for 'white' and 1 for
+      'pial').
+    - Formats and returns the name for intermediate layers accurately.
+    - Triggers the creation of mesh files using `mris_expand` when required.
+
+    Mocks:
+        os.path.exists: Simulated to always return False to enforce the condition that mesh files
+                        do not exist, which should trigger the `mris_expand` command.
+        subprocess.run: Mocked to prevent actual execution of the `mris_expand` command, allowing
+                        us to test that it is called correctly without performing any real file
+                        operations.
+
+    The function is tested under the following conditions:
+    - Intermediate layer values (e.g., 0.5), to check for correct formatted string return and
+      subprocess invocation.
+    - Boundary layer values (0 and 1), to ensure correct identifiers are returned without
+      subprocess invocation.
+    - Invalid layer values (e.g., -0.1, 1.1), to confirm the function returns None as expected.
+
+    Assertions:
+        - Assert that the result for intermediate layers matches the formatted layer name.
+        - Confirm that subprocess.run is called the correct number of times with the expected
+          arguments.
+        - Validate that boundary layers return 'white' or 'pial', and invalid inputs return None.
+    """
+    # Setup test parameters
+    layer = 0.5
+    hemispheres = ['lh', 'rh']
+    fs_subject_dir = '/fake/freesurfer/subjects/subject1'
+
+    # Mocking os.path.exists to always return False
+    # This implies that the mesh files do not exist and will trigger mris_expand
+    with patch('os.path.exists', return_value=False):
+        # Mocking subprocess.run to simulate mris_expand without actually calling it
+        with patch('subprocess.run') as mock_run:
+            result = create_layer_mesh(layer, hemispheres, fs_subject_dir)
+
+            # Asserting correct behavior
+            assert result == '0.500', "Layer name should be formatted to three decimal places"
+            # Ensure subprocess.run was called twice (once for each hemisphere)
+            assert mock_run.call_count == 2
+            # Check if subprocess.run was called with the expected command
+            for hemi in hemispheres:
+                expected_call = [
+                    'mris_expand',
+                    '-thickness',
+                    f'/fake/freesurfer/subjects/subject1/surf/{hemi}.white',
+                    f'{layer}',
+                    f'/fake/freesurfer/subjects/subject1/surf/{hemi}.0.500'
+                ]
+                mock_run.assert_any_call(expected_call, check=True)
+
+    # Test edge cases for layers 0 and 1
+    assert create_layer_mesh(1, hemispheres, fs_subject_dir) == 'pial'
+    assert create_layer_mesh(0, hemispheres, fs_subject_dir) == 'white'
+    assert create_layer_mesh(-0.1, hemispheres, fs_subject_dir) is None
+    assert create_layer_mesh(1.1, hemispheres, fs_subject_dir) is None
+
+
+def test_postprocess_freesurfer_surfaces():
+    """
+    Test the `postprocess_freesurfer_surfaces` function to ensure it processes surface meshes
+    correctly.
+
+    This test checks that the function handles:
+    - Environment setup and surface mesh creation through the `create_layer_mesh` function.
+    - Proper handling of subprocess calls for `mris_info` and other commands.
+    - Interaction with the filesystem for reading and writing files.
+
+    Mocks:
+    - `os.getenv` to provide a fake SUBJECTS_DIR environment variable.
+    - `subprocess.Popen` to simulate the output of the `mris_info` command.
+    - `create_layer_mesh` to avoid actual mesh creation and subprocess calls.
+    - File operations like `nibabel.load` and `nibabel.save` to handle read/write without actual
+      files.
+
+    The test is run with a typical set of input parameters and uses a fixture to set up a temporary
+    directory structure.
+    """
+    subj_id = 'sub-104'
+    out_dir = './output'
+    shutil.copy('./test_data/sub-104/surf/lh.pial.gii', './output/lh.pial.gii')
+    shutil.copy('./test_data/sub-104/surf/lh.white.gii', './output/lh.white.gii')
+    shutil.copy('./test_data/sub-104/surf/lh.white.gii', './output/lh.inflated.gii')
+    shutil.copy('./test_data/sub-104/surf/rh.pial.gii', './output/rh.pial.gii')
+    shutil.copy('./test_data/sub-104/surf/rh.white.gii', './output/rh.white.gii')
+    shutil.copy('./test_data/sub-104/surf/rh.white.gii', './output/rh.inflated.gii')
+    out_fname = 'processed_surface.gii'
+
+    # Setup the Popen mock
+    mock_process = MagicMock()
+    mock_process.communicate.return_value = (b'0.1 0.2 0.3', b'')
+
+    # Mock the Popen context manager
+    mock_popen = MagicMock()
+    mock_popen.return_value.__enter__.return_value = mock_process
+    mock_popen.return_value.__exit__.return_value = None
+
+    # Mock for subprocess.run()
+    mock_run = MagicMock()
+    mock_run.return_value.returncode = 0
+
+    # Define side_effect function
+    # pylint: disable=W0613
+    def create_layer_mesh_side_effect(layer, hemispheres, fs_subject_dir):
+        if layer == 1:
+            return 'pial'
+        if 0 < layer < 1:
+            return f'{layer:.3f}'
+        if layer == 0:
+            return 'white'
+        return None
+
+    # Mock environment and external functions
+    with patch('os.getenv', return_value='./test_data/fs'), \
+            patch('subprocess.Popen', mock_popen), \
+            patch('subprocess.run', mock_run), \
+            patch('lameg.surf.create_layer_mesh', side_effect=create_layer_mesh_side_effect):
+
+        # Call function
+        postprocess_freesurfer_surfaces(subj_id, out_dir, out_fname, n_surfaces=2)
+
+        # Ensure `create_layer_mesh` is called correctly
+        assert mock_popen.call_count == 1, \
+            "Expected subprocess.Popen to be called once for mris_info"
+        mock_popen.assert_called_with(
+            f"mri_info --cras {os.path.join('./test_data/fs', subj_id, 'mri', 'orig.mgz')}",
+            shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        final_surf = nib.load(os.path.join(out_dir, out_fname))
+        target = np.array([[ -4.945391,  -57.815586,   28.967335 ],
+                           [ -5.680048,  -57.90388,    27.428965 ],
+                           [ -6.0047097, -57.829296,   25.688501 ],
+                           [ -6.5609765, -57.508076,   24.787767 ],
+                           [-11.259755,  -57.880123,   20.450663 ]])
+        assert np.allclose(final_surf.darrays[0].data[:5,:], target)
+
+        target = np.array([[    0,    10,    28],
+                           [    0,    28,     8],
+                           [   11,     0,     8],
+                           [    0,    11, 46271],
+                           [   10,    13, 46894]])
+        assert np.allclose(final_surf.darrays[1].data[:5, :], target)
+
+        target = np.array([[ 0.14771064,  0.9553547,  -0.25588843],
+                           [ 0.22574118,  0.97246087, -0.05797116],
+                           [ 0.28987604,  0.95356506,  0.08176449],
+                           [ 0.4109391,   0.89564127,  0.17016393],
+                           [-0.06476931,  0.996889,   -0.04491389]])
+        assert np.allclose(final_surf.darrays[2].data[:5, :], target)
+
 
 
 @pytest.mark.parametrize("faces, expected", [
