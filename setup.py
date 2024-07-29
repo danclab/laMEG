@@ -9,7 +9,7 @@ import shutil
 import subprocess
 import sys
 import zipfile
-from setuptools import setup, find_packages
+from setuptools import setup
 from setuptools.command.install import install
 
 class CustomInstall(install):
@@ -33,7 +33,6 @@ class CustomInstall(install):
         SPM and MATLAB runtime, sets environment variables, and sets up Jupyter extensions.
         """
         super().run()
-        # importlib.invalidate_caches()
         self.install_spm()
         self.install_matlab_runtime()
         self.set_environment_variables()
@@ -188,15 +187,21 @@ class CustomInstall(install):
         with open(activate_script_path, "w", encoding="utf-8") as out_file:
             out_file.write("#!/bin/bash\n\n")
             out_file.write("# Script to set up Jupyter extensions for the environment\n")
-            out_file.write("if command -v jupyter &> /dev/null\n")
-            out_file.write("then\n")
+
+            # Marker file to prevent re-running the setup
+            marker_file = os.path.join(conda_env_path, ".jupyter_setup_done")
+            out_file.write(f'MARKER_FILE="{marker_file}"\n')
+            out_file.write("if [ ! -f \"$MARKER_FILE\" ]; then\n")
             out_file.write("    echo 'Setting up Jupyter extensions...'\n")
-            out_file.write("    jupyter nbextension install --py --user k3d\n")
-            out_file.write("    jupyter nbextension enable --py --user k3d\n")
-            out_file.write("    echo 'Jupyter extensions setup completed.'\n")
-            out_file.write("else\n")
-            out_file.write("    echo 'Jupyter is not installed. Please install Jupyter and try "
+            out_file.write("    if command -v jupyter &> /dev/null; then\n")
+            out_file.write("        jupyter nbextension install --py --user k3d\n")
+            out_file.write("        jupyter nbextension enable --py --user k3d\n")
+            out_file.write("        echo 'Jupyter extensions setup completed.'\n")
+            out_file.write("        touch \"$MARKER_FILE\"\n")
+            out_file.write("    else\n")
+            out_file.write("        echo 'Jupyter is not installed. Please install Jupyter and try "
                            "again.'\n")
+            out_file.write("    fi\n")
             out_file.write("fi\n")
 
         # Make the script executable
@@ -230,25 +235,6 @@ with open('README.md', 'r', encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
-    name='lameg',
-    version='0.2',
-    author='DANC lab',
-    author_email='james.bonaiuto@isc.cnrs.fr',
-    description='A toolbox for laminar inference with MEG',
-    long_description=long_description,
-    long_description_content_type='text/markdown',
-    url='https://github.com/danclab/laMEG',
-    packages=find_packages(include=['lameg', 'lameg.*']),
-    package_data={
-        'lameg': [
-            'matlab/*',
-            'settings.json',
-            'assets/*',
-            'assets/big_brain_layer_thickness/*'
-        ],
-    },
-    include_package_data=True,
-    zip_safe=False,
     cmdclass={
         'install': CustomInstall,
     },
