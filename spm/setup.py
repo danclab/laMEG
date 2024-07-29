@@ -18,7 +18,7 @@ if __name__ == '__main__':
 
     setup(
         name="matlabruntimeforpython",
-        version="R2019a",
+        version="9.6",
         description='A module to call MATLAB from Python',
         author='MathWorks',
         url='https://www.mathworks.com/',
