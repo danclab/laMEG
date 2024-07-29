@@ -1,0 +1,42 @@
+[build-system]
+requires = [
+    "setuptools>=42", "wheel", "setuptools_scm", "ByteSplitter==1.0.4"
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lameg"
+version = "0.2"
+description = "A toolbox for laminar inference with MEG"
+readme = "README.md"
+requires-python = ">=3.6"
+dependencies = [
+    "nibabel==3.2.2", "vtk==9.3.0", "numpy==1.19.5", "scipy==1.5.4", "matplotlib==3.3.4",
+    "joblib==1.1.1", "setuptools==59.6.0", "elephant==0.10.0", "neo==0.9.0", "quantities==0.13.0",
+    "h5py==3.1.0", "mne==1.3.1", "notebook==6.4.10",
+    "widgetsnbextension==3.6.6", "ipywidgets==7.8.1", "jupyterlab-widgets==1.1.7", "k3d==2.14.5"
+]
+dynamic = ["authors"]
+classifiers=[
+        'Intended Audience :: Science/Research',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved',
+        'Programming Language :: Python',
+        'Topic :: Software Development',
+        'Topic :: Scientific/Engineering',
+        'Operating System :: Unix'
+]
+
+[project.urls]
+homepage = "https://github.com/danclab/laMEG"
+
+[tool.setuptools.packages.find]
+include = ["lameg", "lameg.*"]
+
+[tool.setuptools.package-data]
+"lameg" = [
+    "matlab/*",
+    "settings.json",
+    "assets/*",
+    "assets/big_brain_layer_thickness/*"
+]

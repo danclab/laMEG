@@ -34,11 +34,7 @@ Toolbox for laminar inference with MEG, powered by [FreeSurfer](https://surfer.n
 
 3. To install laMEG, from the base directory, run:
 
-       python install.py
-
-   By default, the install script will download and install MATLAB Runtime R2019a Update9. If you want to do this yourself (make sure to install this exact version and to set the required environment variables: https://www.mathworks.com/help/compiler/install-the-matlab-runtime.html), you can run:
-
-       python install.py --no_matlab_runtime
+       pip install .
 
 4. Before using, deactivate and reactivate the environment for changes to environment variables to take effect:
 

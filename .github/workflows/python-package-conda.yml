@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies and build package
       run: |
         conda activate lameg
-        python install.py
+        pip install .
         rm ${{ github.workspace }}/MATLAB_Runtime_R2019a_Update_9_glnxa64.zip
         rm ${{ github.workspace }}/test_data.tar.gz
       shell: bash -l {0}
@@ -40,7 +40,7 @@ jobs:
         SUBJECTS_DIR: ${{ github.workspace }}/test_data/fs
       run: |
         conda activate lameg
-        pytest --cov=lameg --cov-report=xml
+        python -m pytest --cov=lameg --cov-report=xml
       shell: bash -l {0}
 
     - name: Upload coverage to Codecov
