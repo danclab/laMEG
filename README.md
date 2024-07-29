@@ -32,9 +32,9 @@ Toolbox for laminar inference with MEG, powered by [FreeSurfer](https://surfer.n
 
    replacing &lt;env name&gt; with name of the environment you created. 
 
-3. To install laMEG, from the base directory, run:
+3. To install laMEG, run:
 
-       pip install .
+       pip install lameg
 
 4. Before using, deactivate and reactivate the environment for changes to environment variables to take effect:
 
