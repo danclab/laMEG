@@ -1,4 +1,4 @@
-<img src="./lameg/assets/logo.png?raw=true" alt="laMEG" title="Title" width="300"/>
+<img src="https://github.com/danclab/laMEG/blob/main/lameg/assets/logo.png?raw=true" alt="laMEG" title="Title" width="300"/>
 
 Toolbox for laminar inference with MEG, powered by [FreeSurfer](https://surfer.nmr.mgh.harvard.edu/fswiki) and [SPM](https://github.com/spm/)
 
