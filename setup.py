@@ -33,11 +33,11 @@ class CustomInstall(install):
         SPM and MATLAB runtime, sets environment variables, and sets up Jupyter extensions.
         """
         super().run()
-        self.install_spm()
-        self.install_matlab_runtime()
-        self.set_environment_variables()
-        self.download_and_extract_test_data()
-        self.setup_jupyter_extensions()
+        #self.install_spm()
+        #self.install_matlab_runtime()
+        #self.set_environment_variables()
+        #self.download_and_extract_test_data()
+        #self.setup_jupyter_extensions()
 
 
     def install_spm(self):
@@ -236,7 +236,7 @@ with open('README.md', 'r', encoding="utf-8") as f:
 
 setup(
     name='lameg',
-    version='1.0.0',
+    version='1.0.dev0',
     description='A toolbox for laminar inference with MEG',
     long_description=long_description,
     long_description_content_type='text/markdown',
