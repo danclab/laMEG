@@ -47,6 +47,6 @@ Toolbox for laminar inference with MEG, powered by [FreeSurfer](https://surfer.n
 *Supported by the European Research Council (ERC) under the European Union's Horizon 2020 research and innovation programme grant agreement 864550, and a seed grant from the Fondation pour l'Audition.*
 
 <div style="display: flex; align-items: left;">
-    <img src="https://github.com/danclab/laMEG/blob/main/lameg/assets/erc_logo.jpg?raw=true" alt="ERC" title="Title" width="100"/>
-    <img src="https://github.com/danclab/laMEG/blob/main/lameg/assets/fpa_logo.png?raw=true" alt="FPA" title="Title" width="100"/>
+    <img src="https://github.com/danclab/laMEG/blob/main/lameg/assets/erc_logo.jpg?raw=true" alt="ERC" title="Title" height="100"/>
+    <img src="https://github.com/danclab/laMEG/blob/main/lameg/assets/fpa_logo.png?raw=true" alt="FPA" title="Title" height="100"/>
 </div>
