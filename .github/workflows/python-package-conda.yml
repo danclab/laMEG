@@ -24,7 +24,6 @@ jobs:
       run: |
         conda activate lameg
         pip install .
-        rm ${{ github.workspace }}/MATLAB_Runtime_R2019a_Update_9_glnxa64.zip
         rm ${{ github.workspace }}/test_data.tar.gz
       shell: bash -l {0}
 
