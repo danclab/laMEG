@@ -153,7 +153,7 @@ setup(
         "ipywidgets==7.8.1",
         "jupyterlab-widgets==1.1.7",
         "k3d==2.14.5",
-        "spm @ git+ssh://git@github.com/danclab/DANC_spm_python.git"
+        "spm @ git+https://git@github.com/danclab/DANC_spm_python.git"
     ],
     classifiers=[
         'Intended Audience :: Science/Research',
