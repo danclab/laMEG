@@ -209,7 +209,7 @@ def show_surface(surface, color=None, grid=False, menu=False, vertex_colors=None
     return plot
 
 
-def plot_csd(csd, times, axis, colorbar=True, cmap="RdBu_r", vmin_vmax=None):
+def plot_csd(csd, times, axis, colorbar=True, cmap="RdBu_r", vmin_vmax=None, n_layers=11):
     """
     Plot the computed Current Source Density (CSD) data.
 
@@ -230,6 +230,7 @@ def plot_csd(csd, times, axis, colorbar=True, cmap="RdBu_r", vmin_vmax=None):
                                         normalization. If "norm", a standard normalization is used.
                                         If None, the range is set to the maximum absolute value in
                                         the CSD matrix. Default is None.
+    n_layers (int): Number of layers in the CSD
 
     Returns:
     csd_imshow: The imshow object of the plot.
@@ -255,8 +256,8 @@ def plot_csd(csd, times, axis, colorbar=True, cmap="RdBu_r", vmin_vmax=None):
         cmap=cmap, interpolation="none"
     )
     axis.set_ylim(1, 0)
-    axis.set_yticks(np.linspace(0, 1, 11))
-    axis.set_yticklabels(np.arange(1, 12))
+    axis.set_yticks(np.linspace(0, 1, n_layers))
+    axis.set_yticklabels(np.arange(1, n_layers+1))
     if colorbar:
         clbr=plt.colorbar(csd_imshow, ax=axis)
         clbr.set_label('CSD')
