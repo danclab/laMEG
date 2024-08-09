@@ -2,8 +2,7 @@
 requires = [
     "setuptools>=42",
     "wheel",
-    "setuptools_scm",
-    "ByteSplitter==1.0.4"
+    "setuptools_scm"
 ]
 build-backend = "setuptools.build_meta"
 
@@ -30,7 +29,8 @@ dependencies = [
     "widgetsnbextension==3.6.6",
     "ipywidgets==7.8.1",
     "jupyterlab-widgets==1.1.7",
-    "k3d==2.14.5"
+    "k3d==2.14.5",
+    "spm @ git+https://git@github.com/danclab/DANC_spm_python.git"
 ]
 authors = [
     { name = "James Bonaiuto", email = "james.bonaiuto@isc.cnrs.fr" },
