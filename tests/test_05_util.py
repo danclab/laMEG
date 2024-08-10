@@ -8,13 +8,13 @@ from unittest.mock import mock_open, patch, MagicMock
 import numpy as np
 
 import mne
+from spm import spm_standalone
 
 from lameg.util import (check_many, spm_context, big_brain_proportional_layer_boundaries,
                         get_fiducial_coords, get_files, get_directories, make_directory,
                         calc_prop, batch, load_meg_sensor_data, get_surface_names,
                         convert_fsaverage_to_native, convert_native_to_fsaverage,
                         ttest_rel_corrected, get_bigbrain_layer_boundaries, ctf_fif_spm_conversion)
-from spm import spm_standalone
 
 
 def test_spm_context():
