@@ -59,6 +59,7 @@ class CustomInstall(install):
         self.download_file(test_data_download_url, test_data_zip)
         if os.path.exists(test_data_zip):
             subprocess.check_call(['tar', '-xzf', test_data_zip, '-C', base_dir])
+            os.remove(test_data_zip)
 
 
     def setup_jupyter_extensions(self):
