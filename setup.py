@@ -55,7 +55,7 @@ class CustomInstall(install):
         """
         base_dir = os.path.abspath(os.path.dirname(__file__))
         test_data_zip = os.path.join(base_dir, 'test_data.tar.gz')
-        test_data_download_url = 'https://osf.io/ztndr/download'
+        test_data_download_url = 'https://osf.io/mgz9q/download'
         self.download_file(test_data_download_url, test_data_zip)
         if os.path.exists(test_data_zip):
             subprocess.check_call(['tar', '-xzf', test_data_zip, '-C', base_dir])
@@ -126,7 +126,7 @@ with open('README.md', 'r', encoding="utf-8") as f:
 
 setup(
     name='lameg',
-    version='1.0.0',
+    version='0.0.1',
     description='A toolbox for laminar inference with MEG',
     long_description=long_description,
     long_description_content_type='text/markdown',
