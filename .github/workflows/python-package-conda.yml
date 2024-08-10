@@ -24,7 +24,6 @@ jobs:
       run: |
         conda activate lameg
         pip install -v .
-        rm ${{ github.workspace }}/test_data.tar.gz
       shell: bash -l {0}
 
     - name: Lint with pylint
@@ -37,9 +36,6 @@ jobs:
     - name: Test with pytest
       env:
         SUBJECTS_DIR: ${{ github.workspace }}/test_data/fs
-        MATLAB_RUNTIME_DIR: /usr/share/miniconda/envs/lameg/lib/python3.7/site-packages/MATLAB_Runtime
-        LD_LIBRARY_PATH: /usr/share/miniconda/envs/lameg/lib/python3.7/site-packages/MATLAB_Runtime/v96/runtime/glnxa64:/usr/share/miniconda/envs/lameg/lib/python3.7/site-packages/MATLAB_Runtime/v96/bin/glnxa64:/usr/share/miniconda/envs/lameg/lib/python3.7/site-packages/MATLAB_Runtime/v96/sys/os/glnxa64:$LD_LIBRARY_PATH
-        XAPPLRESDIR: /usr/share/miniconda/envs/lameg/lib/python3.7/site-packages/MATLAB_Runtime/v96/X11/app-defaults
       run: |
         conda activate lameg
         python -m pytest --cov=lameg --cov-report=xml
