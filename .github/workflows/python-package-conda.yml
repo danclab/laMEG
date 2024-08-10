@@ -23,7 +23,7 @@ jobs:
     - name: Install dependencies and build package
       run: |
         conda activate lameg
-        pip install .
+        pip install -v .
         rm ${{ github.workspace }}/test_data.tar.gz
       shell: bash -l {0}
 
@@ -38,8 +38,8 @@ jobs:
       env:
         SUBJECTS_DIR: ${{ github.workspace }}/test_data/fs
         MATLAB_RUNTIME_DIR: /usr/share/miniconda/envs/lameg/lib/python3.7/site-packages/MATLAB_Runtime
-        LD_LIBRARY_PATH: ${MATLAB_RUNTIME_DIR}/v96/runtime/glnxa64:${MATLAB_RUNTIME_DIR}/v96/bin/glnxa64:${MATLAB_RUNTIME_DIR}/v96/sys/os/glnxa64:$LD_LIBRARY_PATH
-        XAPPLRESDIR: ${MATLAB_RUNTIME_DIR}/v96/X11/app-defaults
+        LD_LIBRARY_PATH: /usr/share/miniconda/envs/lameg/lib/python3.7/site-packages/MATLAB_Runtime/v96/runtime/glnxa64:/usr/share/miniconda/envs/lameg/lib/python3.7/site-packages/MATLAB_Runtime/v96/bin/glnxa64:/usr/share/miniconda/envs/lameg/lib/python3.7/site-packages/MATLAB_Runtime/v96/sys/os/glnxa64:$LD_LIBRARY_PATH
+        XAPPLRESDIR: /usr/share/miniconda/envs/lameg/lib/python3.7/site-packages/MATLAB_Runtime/v96/X11/app-defaults
       run: |
         conda activate lameg
         python -m pytest --cov=lameg --cov-report=xml
