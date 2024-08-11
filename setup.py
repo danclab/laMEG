@@ -55,8 +55,8 @@ class CustomInstall(install):
         try:
             # Use the pip associated with the current Python interpreter
             subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-v', clone_dir])
-        except subprocess.CalledProcessError as e:
-            print(f"Failed to install SPM package. Error: {e}")
+        except subprocess.CalledProcessError as err:
+            print(f"Failed to install SPM package. Error: {err}")
             raise
         shutil.rmtree(clone_dir)
 
