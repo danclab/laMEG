@@ -24,10 +24,6 @@ class CustomInstall(install):
     - Setting up Jupyter extensions.
     """
 
-    def __init__(self, dist: Distribution):
-        super().__init__(dist)
-        self.original_working_dir = os.getcwd()
-
     def run(self):
         """
         Executes the custom installation process.
@@ -37,7 +33,6 @@ class CustomInstall(install):
         """
         self.clone_and_install_spm()
         super().run()
-        self.download_and_extract_test_data()
         self.setup_jupyter_extensions()
 
 
@@ -64,33 +59,6 @@ class CustomInstall(install):
             print(f"Failed to install SPM package. Error: {err}")
             raise
         shutil.rmtree(clone_dir)
-
-
-    def download_file(self, url, save_path):
-        """
-        Downloads a file from a given URL to the specified path.
-
-        Parameters:
-        url (str): The URL to download the file from.
-        save_path (str): The local path to save the downloaded file.
-        """
-        if not os.path.exists(save_path):
-            subprocess.check_call(['wget', '-c', url, '-O', save_path])
-
-
-    def download_and_extract_test_data(self):
-        """
-        Downloads and extracts test data from a given URL.
-
-        This method downloads a compressed file containing test data and extracts it into the base
-        directory.
-        """
-        test_data_zip = os.path.join(self.original_working_dir, 'test_data.tar.gz')
-        test_data_download_url = 'https://osf.io/mgz9q/download'
-        self.download_file(test_data_download_url, test_data_zip)
-        if os.path.exists(test_data_zip):
-            subprocess.check_call(['tar', '-xzf', test_data_zip, '-C', self.original_working_dir])
-            os.remove(test_data_zip)
 
 
     def setup_jupyter_extensions(self):
@@ -128,28 +96,6 @@ class CustomInstall(install):
 
         # Make the script executable
         os.chmod(activate_script_path, 0o755)
-
-
-    def get_installed_package_dir(self, package_name):
-        """
-        Finds the installation directory of a specified package.
-
-        Parameters:
-        package_name (str): The name of the package to locate.
-
-        Returns:
-        str: The path to the installed package.
-
-        Raises:
-        FileNotFoundError: If the package is not found in the site-packages directories.
-        """
-        site_packages = site.getsitepackages()
-        for site_package in site_packages:
-            potential_path = os.path.join(site_package, package_name)
-            if os.path.isdir(potential_path):
-                return potential_path
-        raise FileNotFoundError(f"Package {package_name} not found in site-packages directories: "
-                                f"{site_packages}")
 
 
 # Read the long description from the README.md
