@@ -24,18 +24,21 @@ jobs:
         conda activate lameg
         pip install .
         pip install sphinx sphinx-rtd-theme
+      shell: bash -l {0}
 
     - name: Generate API documentation
       run: |
         conda activate lameg
         cd docs
         sphinx-apidoc -o source ../lameg/
+      shell: bash -l {0}
 
     - name: Build the documentation
       run: |
         conda activate lameg
         cd docs
         make html
+      shell: bash -l {0}
 
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
