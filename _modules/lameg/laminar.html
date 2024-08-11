@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>lameg.laminar &mdash; laMEG 0.0.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            laMEG
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../modules.html">lameg</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">laMEG</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">lameg.laminar</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for lameg.laminar</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">This module provides tools for performing laminar analysis of MEG signals.</span>
+<span class="sd">It integrates functionalities for coregistering head models, performing source reconstruction</span>
+<span class="sd">using different methods (Empirical Bayesian Beamformer and Multiple Sparse Priors),</span>
+<span class="sd">and assessing model fit via free energy calculations. It also includes capabilities</span>
+<span class="sd">for analyzing laminar current source density and comparing regional brain activity</span>
+<span class="sd">across different conditions or layers.</span>
+
+<span class="sd">The module leverages external libraries such as NumPy, SciPy, neo, quantities,</span>
+<span class="sd">and proprietary tools like MATLAB alongside the SPM toolkit.</span>
+<span class="sd">Functions provided allow for complex workflows such as sliding window analysis</span>
+<span class="sd">for dynamic source reconstruction and laminar analysis for studying laminar cortical activity.</span>
+
+<span class="sd">Key functionalities include:</span>
+<span class="sd">- Coregistration of MEG/EEG data with MRI and mesh models.</span>
+<span class="sd">- Source reconstruction with options to choose between different methods and evaluate model fits.</span>
+<span class="sd">- Calculation of current source density from laminar neural signals.</span>
+<span class="sd">- Comparison of power changes across different regions and layers to identify areas of interest.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">interp1d</span>
+<span class="kn">import</span> <span class="nn">elephant</span>
+<span class="kn">import</span> <span class="nn">neo</span>
+<span class="kn">import</span> <span class="nn">quantities</span> <span class="k">as</span> <span class="nn">pq</span>
+
+<span class="kn">from</span> <span class="nn">lameg.invert</span> <span class="kn">import</span> <span class="p">(</span><span class="n">invert_ebb</span><span class="p">,</span> <span class="n">coregister</span><span class="p">,</span> <span class="n">load_source_time_series</span><span class="p">,</span> <span class="n">invert_msp</span><span class="p">,</span>
+                          <span class="n">invert_sliding_window</span><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">lameg.util</span> <span class="kn">import</span> <span class="n">ttest_rel_corrected</span>
+
+
+<div class="viewcode-block" id="model_comparison"><a class="viewcode-back" href="../../lameg.html#lameg.laminar.model_comparison">[docs]</a><span class="k">def</span> <span class="nf">model_comparison</span><span class="p">(</span><span class="n">nas</span><span class="p">,</span> <span class="n">lpa</span><span class="p">,</span> <span class="n">rpa</span><span class="p">,</span> <span class="n">mri_fname</span><span class="p">,</span> <span class="n">mesh_fnames</span><span class="p">,</span> <span class="n">data_fname</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;EBB&#39;</span><span class="p">,</span> <span class="n">viz</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                     <span class="n">spm_instance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">coregister_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">invert_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compare model fits using different meshes by computing the free energy.</span>
+
+<span class="sd">    This function runs source reconstruction algorithms (either Empirical Bayesian Beamformer or</span>
+<span class="sd">    Multiple Sparse Priors) on a set of meshes and compares their model fits using the free energy</span>
+<span class="sd">    and cross validation error metrics. It allows for separate configuration of coregistration and</span>
+<span class="sd">    inversion parameters through distinct keyword argument dictionaries.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">    nas (list): NASion fiducial coordinates.</span>
+<span class="sd">    lpa (list): Left PreAuricular fiducial coordinates.</span>
+<span class="sd">    rpa (list): Right PreAuricular fiducial coordinates.</span>
+<span class="sd">    mri_fname (str): Filename of the MRI data.</span>
+<span class="sd">    mesh_fnames (list): List of filenames for different meshes.</span>
+<span class="sd">    data_fname (str): Filename of the MEG/EEG data.</span>
+<span class="sd">    method (str, optional): Source reconstruction method, either &#39;EBB&#39; or &#39;MSP&#39;. Default is &#39;EBB&#39;.</span>
+<span class="sd">    viz (boolean, optional): Whether to display SPM visualizations. Default is True.</span>
+<span class="sd">    spm_instance (spm_standalone, optional): Instance of standalone SPM software. Default is None.</span>
+<span class="sd">    coregister_kwargs (dict, optional): Keyword arguments specifically for the coregister function.</span>
+<span class="sd">    invert_kwargs (dict, optional): Keyword arguments specifically for the invert function.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    tuple: A tuple containing two numpy arrays: the first with the free energy values corresponding</span>
+<span class="sd">           to each mesh, and the second with the cross-validation error for each mesh.</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        - If `spm_instance` is not provided, the function will start a new standalone SPM instance.</span>
+<span class="sd">        - The function will automatically close the standalone SPM instance if it was started</span>
+<span class="sd">          within the function.</span>
+<span class="sd">        - Free energy is used as a measure of model fit, with higher values indicating better fit.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">coregister_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">coregister_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">invert_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">invert_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">f_vals</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">cv_errs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">mesh_fname</span> <span class="ow">in</span> <span class="n">mesh_fnames</span><span class="p">:</span>
+        <span class="n">coregister</span><span class="p">(</span>
+            <span class="n">nas</span><span class="p">,</span>
+            <span class="n">lpa</span><span class="p">,</span>
+            <span class="n">rpa</span><span class="p">,</span>
+            <span class="n">mri_fname</span><span class="p">,</span>
+            <span class="n">mesh_fname</span><span class="p">,</span>
+            <span class="n">data_fname</span><span class="p">,</span>
+            <span class="n">viz</span><span class="o">=</span><span class="n">viz</span><span class="p">,</span>
+            <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm_instance</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">coregister_kwargs</span>
+        <span class="p">)</span>
+
+        <span class="n">f_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="n">cv_err</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;EBB&#39;</span><span class="p">:</span>
+            <span class="p">[</span><span class="n">f_val</span><span class="p">,</span> <span class="n">cv_err</span><span class="p">]</span> <span class="o">=</span> <span class="n">invert_ebb</span><span class="p">(</span>
+                <span class="n">mesh_fname</span><span class="p">,</span>
+                <span class="n">data_fname</span><span class="p">,</span>
+                <span class="mi">1</span><span class="p">,</span>
+                <span class="n">viz</span><span class="o">=</span><span class="n">viz</span><span class="p">,</span>
+                <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm_instance</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">invert_kwargs</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s1">&#39;MSP&#39;</span><span class="p">:</span>
+            <span class="p">[</span><span class="n">f_val</span><span class="p">,</span> <span class="n">cv_err</span><span class="p">]</span> <span class="o">=</span> <span class="n">invert_msp</span><span class="p">(</span>
+                <span class="n">mesh_fname</span><span class="p">,</span>
+                <span class="n">data_fname</span><span class="p">,</span>
+                <span class="mi">1</span><span class="p">,</span>
+                <span class="n">viz</span><span class="o">=</span><span class="n">viz</span><span class="p">,</span>
+                <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm_instance</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">invert_kwargs</span>
+            <span class="p">)</span>
+        <span class="n">f_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">f_val</span><span class="p">)</span>
+        <span class="n">cv_errs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cv_err</span><span class="p">)</span>
+
+    <span class="n">f_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">f_vals</span><span class="p">)</span>
+    <span class="n">cv_errs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">cv_errs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">f_vals</span><span class="p">,</span> <span class="n">cv_errs</span></div>
+
+
+<div class="viewcode-block" id="sliding_window_model_comparison"><a class="viewcode-back" href="../../lameg.html#lameg.laminar.sliding_window_model_comparison">[docs]</a><span class="k">def</span> <span class="nf">sliding_window_model_comparison</span><span class="p">(</span><span class="n">prior</span><span class="p">,</span> <span class="n">nas</span><span class="p">,</span> <span class="n">lpa</span><span class="p">,</span> <span class="n">rpa</span><span class="p">,</span> <span class="n">mri_fname</span><span class="p">,</span> <span class="n">mesh_fnames</span><span class="p">,</span> <span class="n">data_fname</span><span class="p">,</span>
+                                    <span class="n">viz</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">spm_instance</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">coregister_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                                    <span class="n">invert_kwargs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compare model fits across different meshes using a sliding window approach.</span>
+
+<span class="sd">    This function runs source reconstruction using the Multiple Sparse Priors (MSP) method in</span>
+<span class="sd">    sliding time windows on a set of meshes. It compares the model fits for each mesh by computing</span>
+<span class="sd">    the free energy in each window.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">    prior (float): Index of the vertex to be used as a prior.</span>
+<span class="sd">    nas (list): NASion fiducial coordinates.</span>
+<span class="sd">    lpa (list): Left PreAuricular fiducial coordinates.</span>
+<span class="sd">    rpa (list): Right PreAuricular fiducial coordinates.</span>
+<span class="sd">    mri_fname (str): Filename of the MRI data.</span>
+<span class="sd">    mesh_fnames (list): List of filenames for different meshes.</span>
+<span class="sd">    data_fname (str): Filename of the MEG/EEG data.</span>
+<span class="sd">    viz (boolean, optional): Whether or not to show SPM visualization. Default is True</span>
+<span class="sd">    spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.</span>
+<span class="sd">    coregister_kwargs (dict, optional): Keyword arguments specifically for the coregister function.</span>
+<span class="sd">    invert_kwargs (dict, optional): Keyword arguments specifically for the invert_sliding_window</span>
+<span class="sd">                                    function.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    tuple: A tuple containing a list of free energy values for each mesh and the windows of</span>
+<span class="sd">           interest (wois).</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">        - If `spm_instance` is not provided, the function will start a new standalone SPM</span>
+<span class="sd">          instance.</span>
+<span class="sd">        - The function will automatically close the standalone SPM instance if it was started</span>
+<span class="sd">          within the function.</span>
+<span class="sd">        - Free energy is used as a measure of model fit, with higher values indicating better fit.</span>
+<span class="sd">        - The prior index is adjusted by adding 1 to align with MATLAB&#39;s 1-based indexing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="n">coregister_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">coregister_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">invert_kwargs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">invert_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">f_vals</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">wois</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">mesh_fname</span> <span class="ow">in</span> <span class="n">mesh_fnames</span><span class="p">:</span>
+        <span class="n">coregister</span><span class="p">(</span>
+            <span class="n">nas</span><span class="p">,</span>
+            <span class="n">lpa</span><span class="p">,</span>
+            <span class="n">rpa</span><span class="p">,</span>
+            <span class="n">mri_fname</span><span class="p">,</span>
+            <span class="n">mesh_fname</span><span class="p">,</span>
+            <span class="n">data_fname</span><span class="p">,</span>
+            <span class="n">viz</span><span class="o">=</span><span class="n">viz</span><span class="p">,</span>
+            <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm_instance</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">coregister_kwargs</span>
+        <span class="p">)</span>
+
+        <span class="p">[</span><span class="n">mesh_fvals</span><span class="p">,</span> <span class="n">wois</span><span class="p">]</span> <span class="o">=</span> <span class="n">invert_sliding_window</span><span class="p">(</span>
+            <span class="n">prior</span><span class="p">,</span>
+            <span class="n">mesh_fname</span><span class="p">,</span>
+            <span class="n">data_fname</span><span class="p">,</span>
+            <span class="mi">1</span><span class="p">,</span>
+            <span class="n">viz</span><span class="o">=</span><span class="n">viz</span><span class="p">,</span>
+            <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm_instance</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">invert_kwargs</span>
+        <span class="p">)</span>
+        <span class="n">f_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mesh_fvals</span><span class="p">)</span>
+
+    <span class="n">f_vals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vstack</span><span class="p">(</span><span class="n">f_vals</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">f_vals</span><span class="p">,</span> <span class="n">wois</span></div>
+
+
+<div class="viewcode-block" id="compute_csd"><a class="viewcode-back" href="../../lameg.html#lameg.laminar.compute_csd">[docs]</a><span class="k">def</span> <span class="nf">compute_csd</span><span class="p">(</span><span class="n">signal</span><span class="p">,</span> <span class="n">thickness</span><span class="p">,</span> <span class="n">sfreq</span><span class="p">,</span> <span class="n">smoothing</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the laminar Current Source Density (CSD) from a given signal.</span>
+
+<span class="sd">    This function calculates CSD using the Standard CSD method. It takes a multi-layered neural</span>
+<span class="sd">    signal, typically from laminar probes, and computes the CSD. An optional smoothing step can</span>
+<span class="sd">    be applied to the CSD output.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">    signal (numpy.ndarray): The neural signal matrix, where rows correspond to different layers</span>
+<span class="sd">                            and columns to time points.</span>
+<span class="sd">    thickness (float): The laminar thickness of the cortex from which the signal was recorded, in</span>
+<span class="sd">                       millimeters.</span>
+<span class="sd">    sfreq (float): Sampling frequency of the signal in Hertz.</span>
+<span class="sd">    smoothing (str, optional): Specifies the kind of smoothing to apply to the CSD. Acceptable</span>
+<span class="sd">                               values are those compatible with scipy.interpolate.interp1d, such as</span>
+<span class="sd">                               &#39;linear&#39;, &#39;nearest&#39;, &#39;zero&#39;, &#39;slinear&#39;, &#39;quadratic&#39;, &#39;cubic&#39;, etc.</span>
+<span class="sd">                               If None, no smoothing is applied. Default is None.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    list: A list containing the CSD matrix as the first element. If smoothing is applied, the</span>
+<span class="sd">          second element is the smoothed CSD matrix. The CSD matrix dimensions are layers x time</span>
+<span class="sd">          points.</span>
+
+<span class="sd">    Notes:</span>
+<span class="sd">    - The function requires the &#39;neo&#39;, &#39;quantities&#39; (pq), &#39;numpy&#39; (np), &#39;elephant&#39;, and</span>
+<span class="sd">      &#39;scipy.interpolate.interp1d&#39; libraries.</span>
+<span class="sd">    - The CSD is calculated using the Standard CSD method provided by the &#39;elephant&#39; package.</span>
+<span class="sd">    - Smoothing is applied across layers and is independent for each time point.</span>
+<span class="sd">    - The returned CSD matrix has the same number of time points as the input signal but can have a</span>
+<span class="sd">      different number</span>
+<span class="sd">      of layers if smoothing is applied.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">signal</span> <span class="o">=</span> <span class="n">neo</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">AnalogSignal</span><span class="p">(</span>
+        <span class="n">signal</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">units</span><span class="o">=</span><span class="s2">&quot;T&quot;</span><span class="p">,</span> <span class="n">sampling_rate</span><span class="o">=</span><span class="n">sfreq</span><span class="o">*</span><span class="n">pq</span><span class="o">.</span><span class="n">Hz</span>
+    <span class="p">)</span>
+    <span class="n">coords</span> <span class="o">=</span> <span class="n">pq</span><span class="o">.</span><span class="n">Quantity</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">thickness</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">signal</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">))</span> <span class="o">*</span> <span class="n">pq</span><span class="o">.</span><span class="n">mm</span>
+
+    <span class="n">csd</span> <span class="o">=</span> <span class="n">elephant</span><span class="o">.</span><span class="n">current_source_density</span><span class="o">.</span><span class="n">estimate_csd</span><span class="p">(</span>
+        <span class="n">signal</span><span class="p">,</span> <span class="n">coords</span><span class="p">,</span>
+        <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;StandardCSD&quot;</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">as_array</span><span class="p">()</span><span class="o">.</span><span class="n">T</span>
+    <span class="n">csd</span><span class="p">[:</span><span class="mi">2</span><span class="p">,:]</span><span class="o">=</span><span class="mi">0</span>
+    <span class="n">csd</span><span class="p">[</span><span class="o">-</span><span class="mi">2</span><span class="p">:,:]</span><span class="o">=</span><span class="mi">0</span>
+
+    <span class="n">ret_vals</span><span class="o">=</span><span class="p">[</span><span class="n">csd</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">smoothing</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">layers</span><span class="p">,</span> <span class="n">time</span> <span class="o">=</span> <span class="n">csd</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">smoothed</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">layer_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">layers</span><span class="p">)</span>
+        <span class="n">smooth_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">t_idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">time</span><span class="p">):</span>
+            <span class="n">interp_function</span> <span class="o">=</span> <span class="n">interp1d</span><span class="p">(</span><span class="n">layer_x</span><span class="p">,</span> <span class="n">csd</span><span class="p">[:,</span> <span class="n">t_idx</span><span class="p">],</span> <span class="n">kind</span><span class="o">=</span><span class="n">smoothing</span><span class="p">)</span>
+            <span class="n">interp_y</span> <span class="o">=</span> <span class="n">interp_function</span><span class="p">(</span><span class="n">smooth_x</span><span class="p">)</span>
+            <span class="n">smoothed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">interp_y</span><span class="p">)</span>
+        <span class="n">smoothed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">smoothed</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+        <span class="n">ret_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">smoothed</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">ret_vals</span></div>
+
+
+<div class="viewcode-block" id="roi_power_comparison"><a class="viewcode-back" href="../../lameg.html#lameg.laminar.roi_power_comparison">[docs]</a><span class="k">def</span> <span class="nf">roi_power_comparison</span><span class="p">(</span><span class="n">data_fname</span><span class="p">,</span> <span class="n">woi</span><span class="p">,</span> <span class="n">baseline_woi</span><span class="p">,</span> <span class="n">mesh</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">,</span> <span class="n">perc_thresh</span><span class="p">,</span>
+                         <span class="n">mu_matrix</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">chunk_size</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Computes and compares power changes in pial and white matter layers to define</span>
+<span class="sd">    regions of interest (ROI) based on significant power shifts.</span>
+
+<span class="sd">    This function calculates power changes in the pial and white matter layers during a specified</span>
+<span class="sd">    window of interest (WOI) and a baseline window. It identifies ROIs by comparing these changes</span>
+<span class="sd">    against a percentile threshold and performs a relative comparison of power changes between</span>
+<span class="sd">    the layers to assess laminar differences.</span>
+
+<span class="sd">    Parameters:</span>
+<span class="sd">    data_fname (str): Filename of the data file containing source time series.</span>
+<span class="sd">    woi (tuple): Window of interest, specified as a start and end time (in milliseconds).</span>
+<span class="sd">    baseline_woi (tuple): Baseline window of interest for comparison, specified as start and end</span>
+<span class="sd">                          time (in milliseconds).</span>
+<span class="sd">    mesh (nibabel.gifti.GiftiImage): Gifti surface mesh.</span>
+<span class="sd">    n_layers (int): Number of layers in the cortical model.</span>
+<span class="sd">    perc_thresh (float): Percentile threshold for determining significant changes in power.</span>
+<span class="sd">    mu_matrix (ndarray, optional): Lead field matrix (source x sensor). Default is None.</span>
+<span class="sd">    chunk_size (int): Number of vertices to load source time series from at ones. If None, will</span>
+<span class="sd">                      load all at the same time. Default is None.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">    tuple: Contains laminar t-statistic, laminar p-value, degrees of freedom and indices of</span>
+<span class="sd">        vertices considered as ROIs.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">verts_per_surf</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">darrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">n_layers</span><span class="p">)</span>
+    <span class="n">pial_vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">verts_per_surf</span><span class="p">)</span>
+    <span class="n">white_vertices</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_layers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">verts_per_surf</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">verts_per_surf</span><span class="p">)</span>
+
+    <span class="c1"># Load data incrementally</span>
+    <span class="k">def</span> <span class="nf">load_and_compute_power</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">time_indices</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">,</span> <span class="n">n_trials</span><span class="p">):</span>
+        <span class="n">incremental_power</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">vertices</span><span class="p">),</span> <span class="n">n_trials</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">chunk_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">chunk_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">vertices</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">vertices</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">):</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">start</span> <span class="o">+</span> <span class="n">chunk_size</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">vertices</span><span class="p">))</span>
+            <span class="n">vertex_slice</span> <span class="o">=</span> <span class="n">vertices</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+            <span class="n">ts_chunk</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">load_source_time_series</span><span class="p">(</span>
+                <span class="n">data_fname</span><span class="p">,</span> <span class="n">vertices</span><span class="o">=</span><span class="n">vertex_slice</span><span class="p">,</span> <span class="n">mu_matrix</span><span class="o">=</span><span class="n">mu_matrix</span>
+            <span class="p">)</span>
+            <span class="c1"># Compute variance directly on loaded chunk</span>
+            <span class="n">power_chunk</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">ts_chunk</span><span class="p">[:,</span> <span class="n">time_indices</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">incremental_power</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">power_chunk</span>
+            <span class="k">del</span> <span class="n">ts_chunk</span>  <span class="c1"># Free up memory</span>
+        <span class="k">return</span> <span class="n">incremental_power</span>
+
+    <span class="c1"># Load time indices</span>
+    <span class="n">ts_v</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">load_source_time_series</span><span class="p">(</span>
+        <span class="n">data_fname</span><span class="p">,</span>
+        <span class="n">vertices</span><span class="o">=</span><span class="n">pial_vertices</span><span class="p">[:</span><span class="mi">1</span><span class="p">],</span>
+        <span class="n">mu_matrix</span><span class="o">=</span><span class="n">mu_matrix</span>
+    <span class="p">)</span>
+    <span class="n">n_trials</span> <span class="o">=</span> <span class="n">ts_v</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">base_t_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">time</span> <span class="o">&gt;=</span> <span class="n">baseline_woi</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">time</span> <span class="o">&lt;</span> <span class="n">baseline_woi</span><span class="p">[</span><span class="mi">1</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">exp_t_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">time</span> <span class="o">&gt;=</span> <span class="n">woi</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">time</span> <span class="o">&lt;</span> <span class="n">woi</span><span class="p">[</span><span class="mi">1</span><span class="p">]))[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="c1"># Compute power changes for pial and white matter layers</span>
+    <span class="n">pial_base_power</span> <span class="o">=</span> <span class="n">load_and_compute_power</span><span class="p">(</span><span class="n">pial_vertices</span><span class="p">,</span> <span class="n">base_t_idx</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">,</span> <span class="n">n_trials</span><span class="p">)</span>
+    <span class="n">pial_exp_power</span> <span class="o">=</span> <span class="n">load_and_compute_power</span><span class="p">(</span><span class="n">pial_vertices</span><span class="p">,</span> <span class="n">exp_t_idx</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">,</span> <span class="n">n_trials</span><span class="p">)</span>
+    <span class="n">pial_power_change</span> <span class="o">=</span> <span class="p">(</span><span class="n">pial_exp_power</span> <span class="o">-</span> <span class="n">pial_base_power</span><span class="p">)</span> <span class="o">/</span> <span class="n">pial_base_power</span>
+
+    <span class="n">white_base_power</span> <span class="o">=</span> <span class="n">load_and_compute_power</span><span class="p">(</span><span class="n">white_vertices</span><span class="p">,</span> <span class="n">base_t_idx</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">,</span> <span class="n">n_trials</span><span class="p">)</span>
+    <span class="n">white_exp_power</span> <span class="o">=</span> <span class="n">load_and_compute_power</span><span class="p">(</span><span class="n">white_vertices</span><span class="p">,</span> <span class="n">exp_t_idx</span><span class="p">,</span> <span class="n">chunk_size</span><span class="p">,</span> <span class="n">n_trials</span><span class="p">)</span>
+    <span class="n">white_power_change</span> <span class="o">=</span> <span class="p">(</span><span class="n">white_exp_power</span> <span class="o">-</span> <span class="n">white_base_power</span><span class="p">)</span> <span class="o">/</span> <span class="n">white_base_power</span>
+
+    <span class="c1"># Define ROI</span>
+    <span class="n">pial_t_statistic</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ttest_rel_corrected</span><span class="p">((</span><span class="n">pial_exp_power</span> <span class="o">-</span> <span class="n">pial_base_power</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">white_t_statistic</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">ttest_rel_corrected</span><span class="p">((</span><span class="n">white_exp_power</span> <span class="o">-</span> <span class="n">white_base_power</span><span class="p">),</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="n">pial_thresh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">pial_t_statistic</span><span class="p">,</span> <span class="n">perc_thresh</span><span class="p">)</span>
+    <span class="n">white_thresh</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">white_t_statistic</span><span class="p">,</span> <span class="n">perc_thresh</span><span class="p">)</span>
+    <span class="n">roi_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">pial_t_statistic</span> <span class="o">&gt;</span> <span class="n">pial_thresh</span><span class="p">)</span> <span class="o">|</span> <span class="p">(</span><span class="n">white_t_statistic</span> <span class="o">&gt;</span> <span class="n">white_thresh</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">pial_roi_power_change</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">pial_power_change</span><span class="p">[</span><span class="n">roi_idx</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">white_roi_power_change</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">white_power_change</span><span class="p">[</span><span class="n">roi_idx</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="c1"># Compare power t statistic</span>
+    <span class="n">laminar_t_statistic</span><span class="p">,</span> <span class="n">deg_of_freedom</span><span class="p">,</span> <span class="n">laminar_p_value</span> <span class="o">=</span> <span class="n">ttest_rel_corrected</span><span class="p">(</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">pial_roi_power_change</span><span class="p">)</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">white_roi_power_change</span><span class="p">),</span>
+        <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">laminar_t_statistic</span><span class="p">,</span> <span class="n">laminar_p_value</span><span class="p">,</span> <span class="n">deg_of_freedom</span><span class="p">,</span> <span class="n">roi_idx</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2024, DANC lab.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
