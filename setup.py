@@ -54,7 +54,7 @@ class CustomInstall(install):
         print("Installing SPM package...")
         try:
             # Use the pip associated with the current Python interpreter
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-v', clone_dir])
+            subprocess.check_call([sys.executable, '-m', 'pip', 'install', clone_dir])
         except subprocess.CalledProcessError as err:
             print(f"Failed to install SPM package. Error: {err}")
             raise
