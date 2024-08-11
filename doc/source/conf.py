@@ -9,8 +9,7 @@ import sys
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
 curdir = os.path.dirname(__file__)
-sys.path.append(os.path.abspath(os.path.join(curdir, '..', 'lameg')))
-sys.path.append(os.path.abspath(os.path.join(curdir, '..')))
+sys.path.append(os.path.abspath(os.path.join(curdir, '../../lameg')))
 
 project = 'laMEG'
 copyright = '2024, DANC lab'

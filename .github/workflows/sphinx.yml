@@ -22,9 +22,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install sphinx sphinx-rtd-theme
 
+    - name: Generate API documentation
+      run: |
+        sphinx-apidoc -o doc/source lameg/
+
     - name: Build the documentation
       run: |
-        sphinx-apidoc -o doc lameg/
         cd doc
         make html
 
