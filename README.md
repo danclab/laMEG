@@ -41,7 +41,9 @@ Toolbox for laminar inference with MEG, powered by [FreeSurfer](https://surfer.n
 
        conda deactivate
        conda activate <env name>
-       
+
+5. If you want to run the tutorials, download and extract the [test data](https://osf.io/mgz9q/download)
+
 ## Funding
 *Supported by the European Research Council (ERC) under the European Union's Horizon 2020 research and innovation programme grant agreement 864550, and a seed grant from the Fondation pour l'Audition.*
 
