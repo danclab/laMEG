@@ -24,7 +24,8 @@ jobs:
 
     - name: Generate API documentation
       run: |
-        sphinx-apidoc -o docs/source lameg/
+        cd docs
+        sphinx-apidoc -o source ../lameg/
 
     - name: Build the documentation
       run: |
