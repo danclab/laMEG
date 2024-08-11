@@ -2,6 +2,7 @@
 
 Toolbox for laminar inference with MEG, powered by [FreeSurfer](https://surfer.nmr.mgh.harvard.edu/fswiki) and [SPM](https://github.com/spm/)
 
+[![PyPI version](https://badge.fury.io/py/lameg.svg)](https://badge.fury.io/py/lameg)
 [![Unit tests](https://github.com/danclab/laMEG/actions/workflows/python-package-conda.yml/badge.svg)](https://github.com/danclab/laMEG/actions/workflows/python-package-conda.yml)
 [![codecov](https://codecov.io/gh/danclab/laMEG/branch/main/graph/badge.svg)](https://codecov.io/gh/danclab/laMEG)
 [![linting: pylint](https://img.shields.io/badge/linting-pylint-yellowgreen)](https://github.com/pylint-dev/pylint)
