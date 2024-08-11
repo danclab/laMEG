@@ -24,6 +24,7 @@ jobs:
 
     - name: Build the documentation
       run: |
+        sphinx-apidoc -o doc lameg/
         cd doc
         make html
 
