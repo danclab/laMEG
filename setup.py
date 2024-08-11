@@ -7,6 +7,8 @@ import site
 import os
 import subprocess
 import sys
+from distutils.dist import Distribution
+
 from setuptools import setup, find_packages
 from setuptools.command.install import install
 
@@ -22,6 +24,9 @@ class CustomInstall(install):
     - Setting up Jupyter extensions.
     """
 
+    def __init__(self, dist: Distribution):
+        super().__init__(dist)
+        self.original_working_dir = os.getcwd()
 
     def run(self):
         """
@@ -30,7 +35,6 @@ class CustomInstall(install):
         This method runs the standard installation, installs additional components like
         SPM and MATLAB runtime, sets environment variables, and sets up Jupyter extensions.
         """
-        self.original_working_dir = os.getcwd()
         self.clone_and_install_spm()
         super().run()
         self.download_and_extract_test_data()
