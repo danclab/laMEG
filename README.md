@@ -26,19 +26,17 @@ Toolbox for laminar inference with MEG, powered by [FreeSurfer](https://surfer.n
 
    replacing &lt;env name&gt; with the name of the environment you would like to create (i.e. 'lameg')
 
-3. Activate the environment:
+2. Activate the environment:
 
        conda activate <env name>
 
    replacing &lt;env name&gt; with name of the environment you created. 
 
-3. Either clone the repository, or download and extract the code zip file.
+3. To install laMEG, run:
 
-4. To install laMEG, from the project directory, run:
+       pip install lameg
 
-       pip install .
-
-5. Before using, deactivate and reactivate the environment for changes to environment variables to take effect:
+4. Before using, deactivate and reactivate the environment for changes to environment variables to take effect:
 
        conda deactivate
        conda activate <env name>

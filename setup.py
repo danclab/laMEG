@@ -2,6 +2,7 @@
 This module configures the installation setup for the laMEG package, facilitating its installation
 and post-installation steps.
 """
+import shutil
 import site
 import os
 import subprocess
@@ -29,9 +30,35 @@ class CustomInstall(install):
         This method runs the standard installation, installs additional components like
         SPM and MATLAB runtime, sets environment variables, and sets up Jupyter extensions.
         """
+        self.clone_and_install_spm()
         super().run()
         self.download_and_extract_test_data()
         self.setup_jupyter_extensions()
+
+
+    def clone_and_install_spm(self):
+        """
+        Clones the SPM repository and installs it.
+
+        This method clones the DANC_spm_python repository from GitHub, then installs it using pip.
+        """
+        repo_url = "https://github.com/danclab/DANC_spm_python.git"
+        clone_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'DANC_spm_python')
+
+        if not os.path.exists(clone_dir):
+            print(f"Cloning SPM repository from {repo_url}...")
+            subprocess.check_call(['git', 'clone', repo_url, clone_dir])
+        else:
+            print("SPM repository already exists, skipping cloning.")
+
+        print("Installing SPM package...")
+        try:
+            # Use the pip associated with the current Python interpreter
+            subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-v', clone_dir])
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to install SPM package. Error: {e}")
+            raise
+        shutil.rmtree(clone_dir)
 
 
     def download_file(self, url, save_path):
@@ -153,8 +180,7 @@ setup(
         "widgetsnbextension==3.6.6",
         "ipywidgets==7.8.1",
         "jupyterlab-widgets==1.1.7",
-        "k3d==2.14.5",
-        "spm @ git+https://git@github.com/danclab/DANC_spm_python.git"
+        "k3d==2.14.5"
     ],
     classifiers=[
         'Intended Audience :: Science/Research',
