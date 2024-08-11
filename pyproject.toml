@@ -12,7 +12,7 @@ name = "lameg"
 version = "0.0.1"
 description = "A toolbox for laminar inference with MEG"
 readme = "README.md"
-requires-python = ">=3.6"
+requires-python = "3.7"
 dependencies = [
     "nibabel==3.2.2",
     "vtk==9.3.0",
