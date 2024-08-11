@@ -30,6 +30,7 @@ class CustomInstall(install):
         This method runs the standard installation, installs additional components like
         SPM and MATLAB runtime, sets environment variables, and sets up Jupyter extensions.
         """
+        self.original_working_dir = os.getcwd()
         self.clone_and_install_spm()
         super().run()
         self.download_and_extract_test_data()
@@ -80,12 +81,11 @@ class CustomInstall(install):
         This method downloads a compressed file containing test data and extracts it into the base
         directory.
         """
-        base_dir = os.path.abspath(os.path.dirname(__file__))
-        test_data_zip = os.path.join(base_dir, 'test_data.tar.gz')
+        test_data_zip = os.path.join(self.original_working_dir, 'test_data.tar.gz')
         test_data_download_url = 'https://osf.io/mgz9q/download'
         self.download_file(test_data_download_url, test_data_zip)
         if os.path.exists(test_data_zip):
-            subprocess.check_call(['tar', '-xzf', test_data_zip, '-C', base_dir])
+            subprocess.check_call(['tar', '-xzf', test_data_zip, '-C', self.original_working_dir])
             os.remove(test_data_zip)
 
 
