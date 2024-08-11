@@ -3,11 +3,9 @@ This module configures the installation setup for the laMEG package, facilitatin
 and post-installation steps.
 """
 import shutil
-import site
 import os
 import subprocess
 import sys
-from distutils.dist import Distribution
 
 from setuptools import setup, find_packages
 from setuptools.command.install import install
