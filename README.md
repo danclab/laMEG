@@ -26,7 +26,7 @@ Toolbox for laminar inference with MEG, powered by [FreeSurfer](https://surfer.n
 
        conda create -n <env name> python=3.7
 
-   replacing &lt;env name&gt; with the name of the environment you would like to create (i.e. 'lameg')
+   replacing &lt;env name&gt; with the name of the environment you would like to create (i.e. 'lameg', or the name of your project)
 
 2. Activate the environment:
 
