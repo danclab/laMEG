@@ -3,3 +3,6 @@ pytest==7.4.4
 pytest_dependency==0.6.0
 build
 installer
+sphinx
+sphinx_rtd_theme
+myst_parser
