@@ -52,10 +52,35 @@
 <li class="toctree-l3"><a class="reference internal" href="#lameg-invert-module">lameg.invert module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#lameg-laminar-module">lameg.laminar module</a></li>
 <li class="toctree-l3"><a class="reference internal" href="#lameg-simulate-module">lameg.simulate module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#lameg-surf-module">lameg.surf module</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-lameg.surf">lameg.surf module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.combine_surfaces"><code class="docutils literal notranslate"><span class="pre">combine_surfaces()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.compute_dipole_orientations"><code class="docutils literal notranslate"><span class="pre">compute_dipole_orientations()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.create_layer_mesh"><code class="docutils literal notranslate"><span class="pre">create_layer_mesh()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.create_surf_gifti"><code class="docutils literal notranslate"><span class="pre">create_surf_gifti()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.downsample_multiple_surfaces"><code class="docutils literal notranslate"><span class="pre">downsample_multiple_surfaces()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.downsample_single_surface"><code class="docutils literal notranslate"><span class="pre">downsample_single_surface()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.find_non_manifold_edges"><code class="docutils literal notranslate"><span class="pre">find_non_manifold_edges()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.fix_non_manifold_edges"><code class="docutils literal notranslate"><span class="pre">fix_non_manifold_edges()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.interpolate_data"><code class="docutils literal notranslate"><span class="pre">interpolate_data()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.iterative_downsample_single_surface"><code class="docutils literal notranslate"><span class="pre">iterative_downsample_single_surface()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.mesh_adjacency"><code class="docutils literal notranslate"><span class="pre">mesh_adjacency()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.mesh_normals"><code class="docutils literal notranslate"><span class="pre">mesh_normals()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.postprocess_freesurfer_surfaces"><code class="docutils literal notranslate"><span class="pre">postprocess_freesurfer_surfaces()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.remove_unconnected_vertices"><code class="docutils literal notranslate"><span class="pre">remove_unconnected_vertices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.remove_vertices"><code class="docutils literal notranslate"><span class="pre">remove_vertices()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.split_fv"><code class="docutils literal notranslate"><span class="pre">split_fv()</span></code></a></li>
+</ul>
+</li>
 <li class="toctree-l3"><a class="reference internal" href="#lameg-util-module">lameg.util module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#lameg-viz-module">lameg.viz module</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-contents">Module contents</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#module-lameg.viz">lameg.viz module</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.viz.color_map"><code class="docutils literal notranslate"><span class="pre">color_map()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.viz.data_to_rgb"><code class="docutils literal notranslate"><span class="pre">data_to_rgb()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.viz.plot_csd"><code class="docutils literal notranslate"><span class="pre">plot_csd()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.viz.rgbtoint"><code class="docutils literal notranslate"><span class="pre">rgbtoint()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="#lameg.viz.show_surface"><code class="docutils literal notranslate"><span class="pre">show_surface()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#module-lameg">Module contents</a></li>
 </ul>
 </li>
 </ul>
@@ -101,17 +126,681 @@
 <section id="lameg-simulate-module">
 <h2>lameg.simulate module<a class="headerlink" href="#lameg-simulate-module" title="Permalink to this heading"></a></h2>
 </section>
-<section id="lameg-surf-module">
-<h2>lameg.surf module<a class="headerlink" href="#lameg-surf-module" title="Permalink to this heading"></a></h2>
+<section id="module-lameg.surf">
+<span id="lameg-surf-module"></span><h2>lameg.surf module<a class="headerlink" href="#module-lameg.surf" title="Permalink to this heading"></a></h2>
+<p>This module provides a set of tools for handling and manipulating surface mesh data, primarily
+used within neuroimaging and computer graphics contexts. The functionalities include computing mesh
+normals, interpolating mesh data, handling non-manifold edges, creating and manipulating GIFTI
+surface files, and downsampling meshes using the VTK library.</p>
+<p>The functions within the module leverage external libraries such as nibabel for neuroimaging data
+management, numpy for numerical operations, scipy for scientific computing tasks like Delaunay
+triangulation, and the VTK toolkit for complex mesh processing tasks such as mesh decimation.</p>
+<p>Key functionalities include:
+- Normalization of vectors to unit length.
+- Calculation of normals for mesh surfaces using both Delaunay triangulation and custom methods.
+- Creation of GIFTI images from mesh data.
+- Removal of specified vertices from a mesh and updating the mesh topology accordingly.
+- Identification and handling of non-manifold edges to ensure mesh manifoldness.
+- Interpolation of data from a downsampled mesh back to its original high-resolution mesh.
+- Downsampling of meshes using VTK’s decimation algorithms.
+- Combination and adjustment of multiple surface meshes into a single mesh.</p>
+<p>The module supports processing of both individual and multiple surfaces, ensuring that operations
+like downsampling, normal computation, and vertex manipulation are optimized for performance and
+applicability in both research and clinical environments.</p>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">faces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gifti_img</span> <span class="o">=</span> <span class="n">create_surf_gifti</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">faces</span><span class="p">,</span> <span class="n">normals</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.combine_surfaces">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">combine_surfaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surfaces</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#combine_surfaces"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.combine_surfaces" title="Permalink to this definition"></a></dt>
+<dd><p>Combine multiple surface meshes into a single surface mesh.</p>
+<p>This function takes a list of Gifti surface meshes and combines them into a single surface
+mesh. It concatenates the vertices, faces, and normals (if present) from each surface. The
+faces are re-indexed appropriately to maintain the correct references to the combined vertex
+array.</p>
+<p>Parameters:
+surfaces (list of nibabel.gifti.GiftiImage): List of Gifti surface meshes to be combined.</p>
+<p>Returns:
+nibabel.gifti.GiftiImage: A single combined Gifti surface mesh.</p>
+<p>Notes:
+- The vertices, faces, and normals (if present) from each surface are concatenated.
+- The faces are re-indexed to reference the correct vertices in the combined vertex array.
+- If normals are present in any of the input surfaces, they are also combined.</p>
+<p>Raises:
+ValueError: If the vertex or face arrays do not have the expected dimensions.</p>
+<p>Example:
+&gt;&gt;&gt; import nibabel as nib
+&gt;&gt;&gt; surfaces = [nib.load(‘path/to/surface1.gii’), nib.load(‘path/to/surface2.gii’)]
+&gt;&gt;&gt; combined_surf = combine_surfaces(surfaces)
+&gt;&gt;&gt; nib.save(combined_surf, ‘path/to/combined_surface.gii’)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.compute_dipole_orientations">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">compute_dipole_orientations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#compute_dipole_orientations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.compute_dipole_orientations" title="Permalink to this definition"></a></dt>
+<dd><p>Compute dipole orientations for cortical layers using different methods.</p>
+<p>Parameters:
+method (str): Method for computing dipole orientations (‘link_vector’, ‘ds_surf_norm’,</p>
+<blockquote>
+<div><p>‘orig_surf_norm’, or ‘cps’).
+link_vector: vectors connecting pial vertices to corresponding white matter</p>
+<blockquote>
+<div><p>vertices</p>
+</div></blockquote>
+<p>ds_surf_norm: surface normal vectors computed from the downsampled surface
+orig_surf_norm: surface normal vectors computed from the original</p>
+<blockquote>
+<div><p>(non-downsampled) surface</p>
+</div></blockquote>
+<dl class="simple">
+<dt>cps: cortical patch statistics - mean surface normal vectors from connected</dt><dd><p>vertices in the original (non-downsampled) surface</p>
+</dd>
+</dl>
+</div></blockquote>
+<p>layer_names (list): Names of the cortical layers.
+surf_dir (str): Directory where the surface files are stored.
+fixed (bool, optional): Flag to ensure that orientation of corresponding vertices across</p>
+<blockquote>
+<div><p>layers is the same (True by default). If true, for ds_surf_norm,
+orig_surf_norm, and cps, orientations computed from the pial surface
+are used for all layers.</p>
+</div></blockquote>
+<p>Returns:
+numpy.ndarray: An array of dipole orientations for each vertex in each layer.</p>
+<p>Raises:
+ValueError: If the number of vertices in pial and white surfaces do not match.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.create_layer_mesh">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">create_layer_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hemispheres</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs_subject_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#create_layer_mesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.create_layer_mesh" title="Permalink to this definition"></a></dt>
+<dd><p>Create or retrieve a specified cortical layer mesh file name or path based on the provided
+layer proportional thickness or identifier.</p>
+<p>Parameters:
+layer (float or int): Specifies the cortical layer. The value 1 corresponds to the ‘pial’</p>
+<blockquote>
+<div><p>surface, values between 0 and 1 (exclusive) correspond to intermediate
+layers (specified as a decimal), and the value 0 corresponds to the
+‘white’ surface.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>hemispheres (list of str): A list of hemisphere identifiers (e.g., [‘lh’, ‘rh’]) for which</dt><dd><p>meshes should be created or retrieved.</p>
+</dd>
+<dt>fs_subject_dir (str): Path to the subject directory within the FreeSurfer environment. This</dt><dd><p>directory should include a ‘surf’ directory where mesh files are stored.</p>
+</dd>
+</dl>
+<p>Returns:
+str or None: Returns a string representing the mesh layer (‘pial’, ‘white’, or a specific</p>
+<blockquote>
+<div><p>intermediate layer as a formatted string). Returns None if the input layer does
+not match any recognized pattern (e.g., a negative number or a number greater
+than 1).</p>
+</div></blockquote>
+<p>Behavior:
+For intermediate layers (0 &lt; layer &lt; 1), the function will check for the existence of the mesh
+file corresponding to each hemisphere. If it does not exist, it uses ‘mris_expand’ to generate
+it using the white matter surface file. If the layer exactly matches 0 or 1, it returns the
+corresponding standard FreeSurfer mesh identifier (‘white’ or ‘pial’).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.create_surf_gifti">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">create_surf_gifti</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#create_surf_gifti"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.create_surf_gifti" title="Permalink to this definition"></a></dt>
+<dd><p>Create a Gifti image object from surface mesh data.</p>
+<p>This function creates a GiftiImage object from the provided vertices, faces, and optional
+normals. The vertices and faces are required, while normals are optional. If normals are
+provided, they are added to the Gifti image. The function returns the GiftiImage object.</p>
+<p>Parameters:
+vertices (numpy.ndarray): Array of vertices. Each row represents a vertex with its x, y, z</p>
+<blockquote>
+<div><p>coordinates.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>faces (numpy.ndarray): Array of faces. Each row represents a face with three integers</dt><dd><p>corresponding to vertex indices.</p>
+</dd>
+<dt>normals (numpy.ndarray, optional): Array of vertex normals. Each row represents a normal vector</dt><dd><p>corresponding to a vertex.</p>
+</dd>
+</dl>
+<p>Returns:
+nibabel.gifti.GiftiImage: The GiftiImage object created from the provided mesh data.</p>
+<p>Notes:
+- Vertex, face, and normal arrays should be NumPy arrays.
+- Vertices and normals should be in float32 format, and faces should be in int32 format.</p>
+<p>Example:
+&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; import nibabel as nib
+&gt;&gt;&gt; vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]])
+&gt;&gt;&gt; faces = np.array([[0, 1, 2], [0, 2, 3]])
+&gt;&gt;&gt; normals = np.array([[0, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1]])
+&gt;&gt;&gt; gifti_img = create_surf_gifti(vertices, faces, normals)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.downsample_multiple_surfaces">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">downsample_multiple_surfaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_surfs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#downsample_multiple_surfaces"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.downsample_multiple_surfaces" title="Permalink to this definition"></a></dt>
+<dd><p>Downampled multiple surface meshes using the VTK decimation algorithm.</p>
+<p>This function takes a list of input surface meshes (in Gifti format) and applies a dowsampling
+process to each surface. The downsampling is performed using VTK’s vtkDecimatePro algorithm.
+The first surface in the list is downsampled, and its vertex mapping is then applied to all
+other surfaces in the list. The function returns a list of downsampled surface meshes.</p>
+<p>Parameters:
+in_surfs (list of nibabel.gifti.GiftiImage): Input Gifti surface meshes to be downsampled.
+ratio (float): The reduction ratio for the downsampling process. For example, a ratio of 0.1</p>
+<blockquote>
+<div><p>implies that the mesh will be reduced to 90% of its original size.</p>
+</div></blockquote>
+<p>Returns:
+list of nibabel.gifti.GiftiImage: List of downsampled Gifti surface meshes.</p>
+<p>Notes:
+- The function prints the percentage of vertices retained in the first surface after</p>
+<blockquote>
+<div><p>downsampling.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>If normals are present in the input surfaces, they are also downsampled and mapped to the
+new surfaces.</p></li>
+<li><p>The resulting surfaces maintain the original topology and are suitable for visualization and
+further processing.</p></li>
+</ul>
+<p>Example:
+&gt;&gt;&gt; import nibabel as nib
+&gt;&gt;&gt; in_surfs = [nib.load(‘path/to/input_surf1.gii’), nib.load(‘path/to/input_surf2.gii’)]
+&gt;&gt;&gt; ratio = 0.1
+&gt;&gt;&gt; out_surfs = downsample_multiple_surfaces(in_surfs, ds_factor)
+&gt;&gt;&gt; for i, ds_surf in enumerate(out_surfs):
+…     nib.save(ds_surf, f’path/to/output_surf{i+1}.gii’)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.downsample_single_surface">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">downsample_single_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#downsample_single_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.downsample_single_surface" title="Permalink to this definition"></a></dt>
+<dd><p>Downsample a Gifti surface using the VTK library.</p>
+<p>This function takes a Gifti surface defined by its vertices and faces, and downsamples it using
+VTK’s vtkDecimatePro algorithm. The reduction ratio determines the degree of downsampling.
+The function returns the downsampled Gifti surface.</p>
+<p>Parameters:
+gifti_surf (nibabel.gifti.GiftiImage): The Gifti surface object from which vertices will be</p>
+<blockquote>
+<div><p>removed.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>reduction_ratio (float): The proportion of the mesh to remove. For example, a reduction ratio</dt><dd><p>of 0.1 retains 90% of the original mesh.</p>
+</dd>
+</dl>
+<p>Returns:
+nibabel.gifti.GiftiImage: A new GiftiImage object with the downsampled surface.</p>
+<p>Notes:
+- The input faces array should be triangulated, i.e., each face should consist of exactly three</p>
+<blockquote>
+<div><p>vertex indices.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>The VTK library is used for mesh decimation, which must be installed and properly configured.</p></li>
+<li><p>The returned GiftiImage object is a new object; the original <cite>gifti_surf</cite> object is not
+modified in place.</p></li>
+</ul>
+<p>Example:
+&gt;&gt;&gt; import numpy as np
+&gt;&gt;&gt; gifti_surf = nib.load(‘path_to_gifti_file.gii’)
+&gt;&gt;&gt; new_gifti_surf = downsample_single_surface(gifti_surf, 0.1)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.find_non_manifold_edges">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">find_non_manifold_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">faces</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#find_non_manifold_edges"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.find_non_manifold_edges" title="Permalink to this definition"></a></dt>
+<dd><p>Identifies non-manifold edges in a given mesh represented by its faces.</p>
+<p>A non-manifold edge is defined as an edge that is shared by more than two faces. This function
+processes an array of faces, each face represented by a tuple of vertex indices, and identifies
+edges that meet the non-manifold criteria.</p>
+<p>Parameters:
+faces (np.ndarray): An array where each row represents a face as a tuple of three vertex</p>
+<blockquote>
+<div><p>indices.</p>
+</div></blockquote>
+<p>Returns:
+dict: A dictionary where keys are tuples representing non-manifold edges (vertices indices are</p>
+<blockquote>
+<div><p>sorted), and values are lists of face indices that share the edge.</p>
+</div></blockquote>
+<p>The function uses a defaultdict to collect face indices for each edge encountered in the mesh.
+It then filters out edges that are associated with more than two faces, identifying them as
+non-manifold.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.fix_non_manifold_edges">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">fix_non_manifold_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#fix_non_manifold_edges"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.fix_non_manifold_edges" title="Permalink to this definition"></a></dt>
+<dd><p>Removes faces associated with non-manifold edges from a mesh defined by vertices and faces.</p>
+<p>Non-manifold edges are edges that are shared by more than two faces, which can cause issues
+in various mesh processing tasks such as mesh simplification, smoothing, or 3D printing. This
+function identifies such edges and removes all faces associated with them to ensure
+manifoldness of the mesh.</p>
+<p>Parameters:
+vertices (np.ndarray): An array of vertices, where each row represents a vertex as [x, y, z]</p>
+<blockquote>
+<div><p>coordinates.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>faces (np.ndarray): An array of faces, where each row represents a face as indices into the</dt><dd><p>vertices array.</p>
+</dd>
+</dl>
+<p>Returns:
+tuple: A tuple containing two elements:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>np.ndarray: The unchanged array of vertices.</p></li>
+<li><dl class="simple">
+<dt>np.ndarray: The modified array of faces, with faces associated with non-manifold edges</dt><dd><p>removed.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+<p>Examples:
+&gt;&gt;&gt; vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]])
+&gt;&gt;&gt; faces = np.array([[0, 1, 2], [0, 2, 3], [1, 2, 3]])
+&gt;&gt;&gt; new_vertices, new_faces = fix_non_manifold_edges(vertices, faces)
+&gt;&gt;&gt; new_faces
+array([[0, 1, 2], [0, 2, 3]])  # Assuming face [1, 2, 3] was associated with a non-manifold</p>
+<blockquote>
+<div><p># edge</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.interpolate_data">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">interpolate_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsampled_mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsampled_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjacency_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#interpolate_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.interpolate_data" title="Permalink to this definition"></a></dt>
+<dd><p>Interpolates vertex data from a downsampled mesh back to the original mesh using nearest
+neighbor matching and optional smoothing based on an adjacency matrix. Both meshes are
+expected to be nibabel Gifti objects.</p>
+<p>Parameters:
+original_mesh (GiftiImage): The original high-resolution mesh as a nibabel Gifti object from</p>
+<blockquote>
+<div><p>which ‘downsampled_mesh’ is derived.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>downsampled_mesh (GiftiImage): The downsampled version of the original mesh as a nibabel Gifti</dt><dd><p>object.</p>
+</dd>
+</dl>
+<p>downsampled_data (array): Data associated with the vertices of ‘downsampled_mesh’.
+adjacency_matrix (sparse matrix, optional): A vertex-by-vertex adjacency matrix of the original</p>
+<blockquote>
+<div><p>mesh. If None, it will be computed from the
+‘original_mesh’.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>max_iterations (int, optional): The maximum number of iterations to perform for smoothing the</dt><dd><p>interpolated data.</p>
+</dd>
+</dl>
+<p>Returns:
+np.ndarray: An array of interpolated data for each vertex in the ‘original_mesh’. The data is</p>
+<blockquote>
+<div><p>initially interpolated using nearest neighbors and can be further refined through
+iterative smoothing.</p>
+</div></blockquote>
+<p>The function first finds the nearest vertex in the ‘downsampled_mesh’ for each vertex in the
+‘original_mesh’ using a KD-tree. It directly assigns corresponding data values where a close
+match is found. The function iteratively adjusts data values at vertices without direct matches
+by averaging over neighbors.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.iterative_downsample_single_surface">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">iterative_downsample_single_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#iterative_downsample_single_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.iterative_downsample_single_surface" title="Permalink to this definition"></a></dt>
+<dd><p>Iteratively downsample a single surface mesh to a target number of vertices.</p>
+<p>This function reduces the number of vertices in a surface mesh (in GIFTI format) to a specified
+fraction of its original size. Downsampling is performed iteratively until the target number of
+vertices is reached or closely approximated.</p>
+<p>Parameters:
+gifti_surf (nibabel.gifti.GiftiImage): The surface mesh to be downsampled, provided as a GIFTI</p>
+<blockquote>
+<div><p>image object.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>ds_factor (float, optional): The downsampling factor representing the target fraction of the</dt><dd><p>original number of vertices. Default is 0.1.</p>
+</dd>
+</dl>
+<p>Returns:
+nibabel.gifti.GiftiImage: The downsampled surface mesh as a GIFTI image object.</p>
+<p>Notes:
+- The downsampling process is iterative. In each iteration, the mesh is downsampled by a factor</p>
+<blockquote>
+<div><p>calculated to approach the target number of vertices.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>If the calculated downsampling factor in an iteration equals or exceeds 1, the process is
+terminated to prevent upsampling or infinite loops.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.mesh_adjacency">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">mesh_adjacency</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">faces</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#mesh_adjacency"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.mesh_adjacency" title="Permalink to this definition"></a></dt>
+<dd><p>Compute the adjacency matrix of a triangle mesh.</p>
+<p>Parameters:
+faces - a numpy array of shape [f, 3] representing the mesh faces</p>
+<p>Returns:
+adjacency - adjacency matrix as a sparse [v, v] array, where v is the number of vertices.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.mesh_normals">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">mesh_normals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#mesh_normals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.mesh_normals" title="Permalink to this definition"></a></dt>
+<dd><p>This function computes the normals of a mesh.</p>
+<p>Parameters:
+vertices (ndarray): Array of vertices of the mesh. Each row represents a vertex.
+faces (ndarray): Array of faces of the mesh. Each row represents a face with indices to the</p>
+<blockquote>
+<div><p>vertices array.</p>
+</div></blockquote>
+<p>unit (bool, optional): If True, the normals are normalized to unit length. Default is False.</p>
+<p>Returns:
+tuple: A tuple containing two ndarrays:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p>vertex_normal: Normal vectors for each vertex.</p></li>
+<li><p>face_normal: Normal vectors for each face.</p></li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.postprocess_freesurfer_surfaces">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">postprocess_freesurfer_surfaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_surfaces</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_deep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#postprocess_freesurfer_surfaces"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.postprocess_freesurfer_surfaces" title="Permalink to this definition"></a></dt>
+<dd><p>Process and combine FreeSurfer surface meshes for a subject.</p>
+<p>This function processes FreeSurfer surface meshes for a given subject by creating intermediate
+surfaces, adjusting for RAS offset, removing deep vertices, combining hemispheres,
+downsampling, and computing link vectors. The resulting surfaces are combined and saved to a
+specified output file.</p>
+<p>Parameters:
+subj_id (str): Subject ID corresponding to the FreeSurfer subject directory.
+out_dir (str): Output directory where the processed files will be saved.
+out_fname (str): Filename for the final combined surface mesh.
+n_surfaces (int, optional): Number of intermediate surfaces to create between white and pial</p>
+<blockquote>
+<div><p>surfaces.</p>
+</div></blockquote>
+<p>ds_factor (float, optional): Downsampling factor for surface decimation.
+orientation (str, optional): Method to compute orientation vectors (‘link_vector’ for</p>
+<blockquote>
+<div><p>pial-white link, ‘ds_surf_norm’ for downsampled surface normals,
+‘orig_surf_norm’ for original surface normals, and ‘cps’ for
+cortical patch statistics).</p>
+</div></blockquote>
+<dl class="simple">
+<dt>fix_orientation (bool, optional): Flag to ensure that orientation of corresponding vertices</dt><dd><p>across layers is the same (True by default)</p>
+</dd>
+<dt>remove_deep (bool, optional): Flag to remove vertices located in deep regions (labeled as</dt><dd><p>‘unknown’).</p>
+</dd>
+<dt>n_jobs (int, optional): Number of parallel processes to run. -1 for all available cores (-1 by</dt><dd><p>default)</p>
+</dd>
+</dl>
+<p>Notes:
+- This function assumes the FreeSurfer ‘SUBJECTS_DIR’ environment variable is set.
+- Surfaces are processed in Gifti format and combined into a single surface mesh.</p>
+<p>Example:
+&gt;&gt;&gt; postprocess_freesurfer_surfaces(‘subject1’, ‘/path/to/output’, ‘combined_surface.gii’)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.remove_unconnected_vertices">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">remove_unconnected_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#remove_unconnected_vertices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.remove_unconnected_vertices" title="Permalink to this definition"></a></dt>
+<dd><p>Removes vertices that are not connected to any faces from a Gifti surface object.</p>
+<p>Parameters:
+gifti_surf (nibabel.gifti.GiftiImage): The Gifti surface object to be processed.</p>
+<p>Returns:
+nibabel.gifti.GiftiImage: A new GiftiImage object with unconnected vertices removed.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.remove_vertices">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">remove_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertices_to_remove</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#remove_vertices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.remove_vertices" title="Permalink to this definition"></a></dt>
+<dd><p>Remove specified vertices from a Gifti surface and update the faces accordingly.</p>
+<p>This function modifies a Gifti surface by removing the specified vertices. It also updates
+the faces of the surface so that they only reference the remaining vertices. If normals
+are present in the surface, they are also updated to correspond to the new set of vertices.</p>
+<p>Parameters:
+gifti_surf (nibabel.gifti.GiftiImage): The Gifti surface object from which vertices will be</p>
+<blockquote>
+<div><p>removed.</p>
+</div></blockquote>
+<p>vertices_to_remove (array_like): An array of vertex indices to be removed from the surface.</p>
+<p>Returns:
+nibabel.gifti.GiftiImage: A new GiftiImage object with the specified vertices removed and faces</p>
+<blockquote>
+<div><p>updated.</p>
+</div></blockquote>
+<p>Notes:
+- The function assumes that the GiftiImage object contains at least two data arrays: one for</p>
+<blockquote>
+<div><p>vertices and one for faces. If normals are present, they are also updated.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>Vertex indices in <cite>vertices_to_remove</cite> should be zero-based (following Python’s indexing
+convention).</p></li>
+<li><p>The returned GiftiImage object is a new object; the original <cite>gifti_surf</cite> object is not
+modified in place.</p></li>
+</ul>
+<p>Example:
+&gt;&gt;&gt; import nibabel as nib
+&gt;&gt;&gt; gifti_surf = nib.load(‘path_to_gifti_file.gii’)
+&gt;&gt;&gt; vertices_to_remove = np.array([0, 2, 5])  # Indices of vertices to remove
+&gt;&gt;&gt; new_gifti_surf = remove_vertices(gifti_surf, vertices_to_remove)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.split_fv">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">split_fv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">faces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#split_fv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.split_fv" title="Permalink to this definition"></a></dt>
+<dd><p>Splits faces and vertices into connected pieces based on the connectivity of the faces.</p>
+<p>Parameters:
+faces (np.array): A 2D numpy array of faces, where each row represents a face and each element</p>
+<blockquote>
+<div><p>is an index to a vertex in vertices.</p>
+</div></blockquote>
+<p>vertices (np.array): A 2D numpy array of vertices, where each row represents a vertex.</p>
+<p>Returns:
+list of dicts: A list where each element is a dictionary with keys ‘faces’ and ‘vertices’. Each</p>
+<blockquote>
+<div><p>dictionary represents a separately connected patch of the mesh.</p>
+</div></blockquote>
+<p>Examples:
+&gt;&gt;&gt; faces = np.array([[1, 2, 3], [1, 3, 4], [5, 6, 1], [7, 8, 9], [11, 10, 4]])
+&gt;&gt;&gt; vertices = np.array([[2, 4], [2, 8], [8, 4], [8, 0], [0, 4], [2, 6], [2, 2], [4, 2],</p>
+<blockquote>
+<div><p>[4, 0], [5, 2], [5, 0]])</p>
+</div></blockquote>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">split_patches</span> <span class="o">=</span> <span class="n">split_fv</span><span class="p">(</span><span class="n">faces</span><span class="p">,</span> <span class="n">vertices</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="simple">
+<dt>Note: Faces and vertices should be defined such that faces sharing a vertex reference the same</dt><dd><p>vertex number. This function does not explicitly test for duplicate vertices at the same
+location.</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="lameg-util-module">
 <h2>lameg.util module<a class="headerlink" href="#lameg-util-module" title="Permalink to this heading"></a></h2>
 </section>
-<section id="lameg-viz-module">
-<h2>lameg.viz module<a class="headerlink" href="#lameg-viz-module" title="Permalink to this heading"></a></h2>
+<section id="module-lameg.viz">
+<span id="lameg-viz-module"></span><h2>lameg.viz module<a class="headerlink" href="#module-lameg.viz" title="Permalink to this heading"></a></h2>
+<p>This module provides tools for converting and visualizing numerical data into color-coded formats.
+It includes functions for mapping data to RGB and hexadecimal color values, performing color
+normalization, and rendering 3D surface visualizations using K3D. Additional utilities are included
+for plotting Current Source Density (CSD) data and handling color transformations.</p>
+<p>Functions:
+- data_to_rgb: Converts numerical data into RGB or RGBA color arrays based on a specified colormap</p>
+<blockquote>
+<div><p>and normalization.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>rgbtoint: Converts RGB color lists to a single 32-bit integer color representation.</p></li>
+<li><p>color_map: Maps numerical data to hexadecimal color values suitable for use in visualizations.</p></li>
+<li><p>show_surface: Renders 3D surfaces with optional vertex coloring and interactive features using
+K3D.</p></li>
+<li><p>plot_csd: Plots Current Source Density (CSD) data as a 2D image over a specified time range.</p></li>
+</ul>
+<p>Utilities:
+- The module supports various color normalizations including linear, logarithmic, and diverging</p>
+<blockquote>
+<div><p>scales.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>Includes handling of edge cases and data-specific adjustments to enhance the quality of visual
+outputs.</p></li>
+</ul>
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.viz.color_map">
+<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">color_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vcenter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TS'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/viz.html#color_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.viz.color_map" title="Permalink to this definition"></a></dt>
+<dd><p>Returns a data mapped to the color map in the hexadecimal format,
+and a colormap to use for e.g. a colorbar.</p>
+<p>Parameters:
+data (iterable): 1d numerical data
+n_bins (int): amount of bins in the histogram
+vmin (float): lowest value on the histogram range
+vmax (float): highest value on the histogram range
+vcenter (float): centre of the histogram range (default=0 for zero-centred color mapping)
+norm (str): type of normalisation (“TS”, “N”, “LOG”)</p>
+<p>Notes:
+- function creates a normalisation based on the “norm” argument
+- creates a suitable colormap
+- maps data values based on the histogram bins
+- returns RGB values for each data point
+- converts percent based RGB to decimal
+- converts RGB to hexadecimal in a fromat appropriate for the visualisation function</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.viz.data_to_rgb">
+<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">data_to_rgb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vcenter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ret_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TS'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/viz.html#data_to_rgb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.viz.data_to_rgb" title="Permalink to this definition"></a></dt>
+<dd><p>Returns RGB values of a data mapped to the normalised matplotlib colormap.
+(optionally) Returns a colormap to use for e.g. a colorbar.</p>
+<p>Parameters:
+data (iterable): 1d numerical data
+n_bins (int): amount of bins in the histogram
+vmin (float): lowest value on the histogram range
+vmax (float): highest value on the histogram range
+vcenter (float): centre of the histogram range (default=0 for zero-centred color mapping)
+ret_map (bool): return a colormap object
+norm (str): type of normalisation (“TS”, “N”, “LOG”)</p>
+<p>Notes:
+- function creates a normalisation based on the “norm” argument
+- creates a suitable colormap
+- maps data values based on the histogram bins
+- returns RGB values for each data point</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.viz.plot_csd">
+<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">plot_csd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">times</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colorbar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RdBu_r'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin_vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/viz.html#plot_csd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.viz.plot_csd" title="Permalink to this definition"></a></dt>
+<dd><p>Plot the computed Current Source Density (CSD) data.</p>
+<p>This function takes a CSD matrix and plots it over a specified time range. It offers options
+for color normalization, colormap selection, and including a colorbar. Optionally, it can
+return plot details.</p>
+<p>Parameters:
+csd (numpy.ndarray): The CSD matrix to be plotted, with dimensions corresponding to</p>
+<blockquote>
+<div><p>layers x time points.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>times (numpy.ndarray): A 1D array of time points corresponding to the columns of the CSD</dt><dd><p>matrix.</p>
+</dd>
+</dl>
+<p>ax (matplotlib.axes.Axes): The matplotlib axes object where the CSD data will be plotted.
+colorbar (bool, optional): Flag to indicate whether a colorbar should be added to the plot.</p>
+<blockquote>
+<div><p>Default is True.</p>
+</div></blockquote>
+<p>cmap (str, optional): The colormap used for plotting the CSD data. Default is “RdBu_r”.
+vmin_vmax (tuple or str, optional): A tuple specifying the (vmin, vmax) range for color</p>
+<blockquote>
+<div><p>normalization. If “norm”, a standard normalization is used.
+If None, the range is set to the maximum absolute value in
+the CSD matrix. Default is None.</p>
+</div></blockquote>
+<p>n_layers (int): Number of layers in the CSD</p>
+<p>Returns:
+csd_imshow: The imshow object of the plot.</p>
+<p>Notes:
+- This function requires ‘numpy’, ‘matplotlib.colors’, and ‘matplotlib.pyplot’ libraries.
+- The ‘TwoSlopeNorm’ from ‘matplotlib.colors’ is used for diverging color normalization.
+- The aspect ratio of the plot is automatically set to ‘auto’ for appropriate time-layer</p>
+<blockquote>
+<div><p>representation.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>Layer labels are set from 1 to 11, assuming a total of 11 layers.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.viz.rgbtoint">
+<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">rgbtoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rgb</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/viz.html#rgbtoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.viz.rgbtoint" title="Permalink to this definition"></a></dt>
+<dd><p>Returns a 32bit representation of the color as an integer.</p>
+<p>Parameters:
+rgb (array): accepts integer [R, G, B] array</p>
+<p>Notes:
+- function requires integer RGB (values 0-255)</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.viz.show_surface">
+<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">show_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">menu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertex_colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camera_view</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coord_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coord_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/viz.html#show_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.viz.show_surface" title="Permalink to this definition"></a></dt>
+<dd><p>Renders a 3D surface with optional data overlay. The rendering is persistent and does not
+require an active kernel.</p>
+<p>Parameters:
+- surface (nibabel.gifti.GiftiImage): The Gifti surface mesh to be rendered.
+- color (array, optional): Basic color of the surface in the absence of data. Specified as a</p>
+<blockquote>
+<div><p>decimal RGB array. Default is [166, 166, 166].</p>
+</div></blockquote>
+<ul class="simple">
+<li><p>grid (bool, optional): Toggles the rendering of a grid. Default is False.</p></li>
+<li><dl class="simple">
+<dt>menu (bool, optional): Toggles the display of a menu with options such as lighting</dt><dd><p>adjustments. Default is False.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>vertex_colors (array, optional): An array of vertex colors specified as hexadecimal 32-bit</dt><dd><p>color values. Each color corresponds to a vertex on the
+surface. Default is None.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>info (bool, optional): If True, prints information about the surface, such as the number of</dt><dd><p>vertices. Default is False.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>camera_view (array, optional): Specifies a camera view for the rendering. If None, an</dt><dd><p>automatic camera view is set. Default is None.</p>
+</dd>
+</dl>
+</li>
+<li><p>height (int, optional): Height of the widget in pixels. Default is 512.</p></li>
+<li><dl class="simple">
+<dt>opacity (float, optional): Sets the opacity of the surface, with 1.0 being fully opaque and</dt><dd><p>0.0 being fully transparent. Default is 1.0.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Returns:
+- plot: A k3d plot object containing the rendered surface.</p>
+<p>This function utilizes the k3d library for rendering the surface. It supports customization of
+surface color, opacity, and additional features like grid and menu display. The <cite>colors</cite>
+parameter allows for vertex-level color customization.</p>
+</dd></dl>
+
 </section>
-<section id="module-contents">
-<h2>Module contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<section id="module-lameg">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-lameg" title="Permalink to this heading"></a></h2>
 </section>
 </section>
 
