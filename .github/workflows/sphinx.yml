@@ -24,11 +24,11 @@ jobs:
 
     - name: Generate API documentation
       run: |
-        sphinx-apidoc -o doc/source lameg/
+        sphinx-apidoc -o docs/source lameg/
 
     - name: Build the documentation
       run: |
-        cd doc
+        cd docs
         make html
 
     - name: Deploy to GitHub Pages
