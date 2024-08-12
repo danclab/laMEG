@@ -38,11 +38,8 @@ import numpy as np
 import h5py
 from scipy.io import savemat
 
-
-import spm_standalone
-import matlab
 from lameg.util import spm_context
-
+import matlab # pylint: disable=wrong-import-order
 
 def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_moments,
                                    sim_patch_sizes, snr, sim_woi=None, spm_instance=None):
