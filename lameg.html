@@ -1,159 +1,189 @@
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
-<head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>lameg package &mdash; laMEG 0.0.2 documentation</title>
-      <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="_static/css/theme.css" />
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-  
-  <!--[if lt IE 9]>
-    <script src="_static/js/html5shiv.min.js"></script>
-  <![endif]-->
-  
-        <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
-        <script src="_static/jquery.js"></script>
-        <script src="_static/underscore.js"></script>
-        <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
-        <script src="_static/doctools.js"></script>
-        <script src="_static/sphinx_highlight.js"></script>
-    <script src="_static/js/theme.js"></script>
+    <title>lameg package &#8212; laMEG 0.0.2 documentation</title>
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/bootstrap-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="_static/copybutton.css" />
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/clipboard.min.js"></script>
+    <script src="_static/copybutton.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="lameg" href="modules.html" /> 
-</head>
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="_static/js/jquery-1.12.4.min.js"></script>
+<script type="text/javascript" src="_static/js/jquery-fix.js"></script>
+<script type="text/javascript" src="_static/bootstrap-3.4.1/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="_static/bootstrap-sphinx.js"></script>
 
-<body class="wy-body-for-nav"> 
-  <div class="wy-grid-for-nav">
-    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
-      <div class="wy-side-scroll">
-        <div class="wy-side-nav-search" >
+  </head><body>
 
-          
-          
-          <a href="index.html" class="icon icon-home">
-            laMEG
-          </a>
-<div role="search">
-  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
-    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
-    <input type="hidden" name="check_keywords" value="yes" />
-    <input type="hidden" name="area" value="default" />
-  </form>
-</div>
-        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
-              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
-<ul class="current">
-<li class="toctree-l1 current"><a class="reference internal" href="modules.html">lameg</a><ul class="current">
-<li class="toctree-l2 current"><a class="current reference internal" href="#">lameg package</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#submodules">Submodules</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#module-lameg.invert">lameg.invert module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.invert.coregister"><code class="docutils literal notranslate"><span class="pre">coregister()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.invert.invert_ebb"><code class="docutils literal notranslate"><span class="pre">invert_ebb()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.invert.invert_msp"><code class="docutils literal notranslate"><span class="pre">invert_msp()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.invert.invert_sliding_window"><code class="docutils literal notranslate"><span class="pre">invert_sliding_window()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.invert.load_source_time_series"><code class="docutils literal notranslate"><span class="pre">load_source_time_series()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#module-lameg.laminar">lameg.laminar module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.laminar.compute_csd"><code class="docutils literal notranslate"><span class="pre">compute_csd()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.laminar.model_comparison"><code class="docutils literal notranslate"><span class="pre">model_comparison()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.laminar.roi_power_comparison"><code class="docutils literal notranslate"><span class="pre">roi_power_comparison()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.laminar.sliding_window_model_comparison"><code class="docutils literal notranslate"><span class="pre">sliding_window_model_comparison()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#module-lameg.simulate">lameg.simulate module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.simulate.run_current_density_simulation"><code class="docutils literal notranslate"><span class="pre">run_current_density_simulation()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.simulate.run_dipole_simulation"><code class="docutils literal notranslate"><span class="pre">run_dipole_simulation()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#module-lameg.surf">lameg.surf module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.combine_surfaces"><code class="docutils literal notranslate"><span class="pre">combine_surfaces()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.compute_dipole_orientations"><code class="docutils literal notranslate"><span class="pre">compute_dipole_orientations()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.create_layer_mesh"><code class="docutils literal notranslate"><span class="pre">create_layer_mesh()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.create_surf_gifti"><code class="docutils literal notranslate"><span class="pre">create_surf_gifti()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.downsample_multiple_surfaces"><code class="docutils literal notranslate"><span class="pre">downsample_multiple_surfaces()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.downsample_single_surface"><code class="docutils literal notranslate"><span class="pre">downsample_single_surface()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.find_non_manifold_edges"><code class="docutils literal notranslate"><span class="pre">find_non_manifold_edges()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.fix_non_manifold_edges"><code class="docutils literal notranslate"><span class="pre">fix_non_manifold_edges()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.interpolate_data"><code class="docutils literal notranslate"><span class="pre">interpolate_data()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.iterative_downsample_single_surface"><code class="docutils literal notranslate"><span class="pre">iterative_downsample_single_surface()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.mesh_adjacency"><code class="docutils literal notranslate"><span class="pre">mesh_adjacency()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.mesh_normals"><code class="docutils literal notranslate"><span class="pre">mesh_normals()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.postprocess_freesurfer_surfaces"><code class="docutils literal notranslate"><span class="pre">postprocess_freesurfer_surfaces()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.remove_unconnected_vertices"><code class="docutils literal notranslate"><span class="pre">remove_unconnected_vertices()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.remove_vertices"><code class="docutils literal notranslate"><span class="pre">remove_vertices()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.surf.split_fv"><code class="docutils literal notranslate"><span class="pre">split_fv()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#module-lameg.util">lameg.util module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.util.batch"><code class="docutils literal notranslate"><span class="pre">batch()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.util.big_brain_proportional_layer_boundaries"><code class="docutils literal notranslate"><span class="pre">big_brain_proportional_layer_boundaries()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.util.calc_prop"><code class="docutils literal notranslate"><span class="pre">calc_prop()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.util.check_many"><code class="docutils literal notranslate"><span class="pre">check_many()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.util.convert_fsaverage_to_native"><code class="docutils literal notranslate"><span class="pre">convert_fsaverage_to_native()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.util.convert_native_to_fsaverage"><code class="docutils literal notranslate"><span class="pre">convert_native_to_fsaverage()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.util.ctf_fif_spm_conversion"><code class="docutils literal notranslate"><span class="pre">ctf_fif_spm_conversion()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.util.get_bigbrain_layer_boundaries"><code class="docutils literal notranslate"><span class="pre">get_bigbrain_layer_boundaries()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.util.get_directories"><code class="docutils literal notranslate"><span class="pre">get_directories()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.util.get_fiducial_coords"><code class="docutils literal notranslate"><span class="pre">get_fiducial_coords()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.util.get_files"><code class="docutils literal notranslate"><span class="pre">get_files()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.util.get_surface_names"><code class="docutils literal notranslate"><span class="pre">get_surface_names()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.util.load_meg_sensor_data"><code class="docutils literal notranslate"><span class="pre">load_meg_sensor_data()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.util.make_directory"><code class="docutils literal notranslate"><span class="pre">make_directory()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.util.spm_context"><code class="docutils literal notranslate"><span class="pre">spm_context()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.util.ttest_rel_corrected"><code class="docutils literal notranslate"><span class="pre">ttest_rel_corrected()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#module-lameg.viz">lameg.viz module</a><ul>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.viz.color_map"><code class="docutils literal notranslate"><span class="pre">color_map()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.viz.data_to_rgb"><code class="docutils literal notranslate"><span class="pre">data_to_rgb()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.viz.plot_csd"><code class="docutils literal notranslate"><span class="pre">plot_csd()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.viz.rgbtoint"><code class="docutils literal notranslate"><span class="pre">rgbtoint()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="#lameg.viz.show_surface"><code class="docutils literal notranslate"><span class="pre">show_surface()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="#module-lameg">Module contents</a></li>
-</ul>
-</li>
-</ul>
-</li>
-</ul>
-
-        </div>
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="index.html">
+          laMEG</a>
+        <span class="navbar-text navbar-version pull-left"><b></b></span>
       </div>
-    </nav>
 
-    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
-          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
-          <a href="index.html">laMEG</a>
-      </nav>
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+                <li><a href="modules.html">API</a></li>
+                <li><a href="https://github.com/danclab/laMEG">GitHub</a></li>
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"></ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">lameg package</a><ul>
+<li><a class="reference internal" href="#submodules">Submodules</a></li>
+<li><a class="reference internal" href="#module-lameg.invert">lameg.invert module</a><ul>
+<li><a class="reference internal" href="#lameg.invert.coregister"><code class="docutils literal notranslate"><span class="pre">coregister()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.invert.invert_ebb"><code class="docutils literal notranslate"><span class="pre">invert_ebb()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.invert.invert_msp"><code class="docutils literal notranslate"><span class="pre">invert_msp()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.invert.invert_sliding_window"><code class="docutils literal notranslate"><span class="pre">invert_sliding_window()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.invert.load_source_time_series"><code class="docutils literal notranslate"><span class="pre">load_source_time_series()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-lameg.laminar">lameg.laminar module</a><ul>
+<li><a class="reference internal" href="#lameg.laminar.compute_csd"><code class="docutils literal notranslate"><span class="pre">compute_csd()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.laminar.model_comparison"><code class="docutils literal notranslate"><span class="pre">model_comparison()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.laminar.roi_power_comparison"><code class="docutils literal notranslate"><span class="pre">roi_power_comparison()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.laminar.sliding_window_model_comparison"><code class="docutils literal notranslate"><span class="pre">sliding_window_model_comparison()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-lameg.simulate">lameg.simulate module</a><ul>
+<li><a class="reference internal" href="#lameg.simulate.run_current_density_simulation"><code class="docutils literal notranslate"><span class="pre">run_current_density_simulation()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.simulate.run_dipole_simulation"><code class="docutils literal notranslate"><span class="pre">run_dipole_simulation()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-lameg.surf">lameg.surf module</a><ul>
+<li><a class="reference internal" href="#lameg.surf.combine_surfaces"><code class="docutils literal notranslate"><span class="pre">combine_surfaces()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.surf.compute_dipole_orientations"><code class="docutils literal notranslate"><span class="pre">compute_dipole_orientations()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.surf.create_layer_mesh"><code class="docutils literal notranslate"><span class="pre">create_layer_mesh()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.surf.create_surf_gifti"><code class="docutils literal notranslate"><span class="pre">create_surf_gifti()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.surf.downsample_multiple_surfaces"><code class="docutils literal notranslate"><span class="pre">downsample_multiple_surfaces()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.surf.downsample_single_surface"><code class="docutils literal notranslate"><span class="pre">downsample_single_surface()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.surf.find_non_manifold_edges"><code class="docutils literal notranslate"><span class="pre">find_non_manifold_edges()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.surf.fix_non_manifold_edges"><code class="docutils literal notranslate"><span class="pre">fix_non_manifold_edges()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.surf.interpolate_data"><code class="docutils literal notranslate"><span class="pre">interpolate_data()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.surf.iterative_downsample_single_surface"><code class="docutils literal notranslate"><span class="pre">iterative_downsample_single_surface()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.surf.mesh_adjacency"><code class="docutils literal notranslate"><span class="pre">mesh_adjacency()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.surf.mesh_normals"><code class="docutils literal notranslate"><span class="pre">mesh_normals()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.surf.postprocess_freesurfer_surfaces"><code class="docutils literal notranslate"><span class="pre">postprocess_freesurfer_surfaces()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.surf.remove_unconnected_vertices"><code class="docutils literal notranslate"><span class="pre">remove_unconnected_vertices()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.surf.remove_vertices"><code class="docutils literal notranslate"><span class="pre">remove_vertices()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.surf.split_fv"><code class="docutils literal notranslate"><span class="pre">split_fv()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-lameg.util">lameg.util module</a><ul>
+<li><a class="reference internal" href="#lameg.util.batch"><code class="docutils literal notranslate"><span class="pre">batch()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.util.big_brain_proportional_layer_boundaries"><code class="docutils literal notranslate"><span class="pre">big_brain_proportional_layer_boundaries()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.util.calc_prop"><code class="docutils literal notranslate"><span class="pre">calc_prop()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.util.check_many"><code class="docutils literal notranslate"><span class="pre">check_many()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.util.convert_fsaverage_to_native"><code class="docutils literal notranslate"><span class="pre">convert_fsaverage_to_native()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.util.convert_native_to_fsaverage"><code class="docutils literal notranslate"><span class="pre">convert_native_to_fsaverage()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.util.ctf_fif_spm_conversion"><code class="docutils literal notranslate"><span class="pre">ctf_fif_spm_conversion()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.util.get_bigbrain_layer_boundaries"><code class="docutils literal notranslate"><span class="pre">get_bigbrain_layer_boundaries()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.util.get_directories"><code class="docutils literal notranslate"><span class="pre">get_directories()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.util.get_fiducial_coords"><code class="docutils literal notranslate"><span class="pre">get_fiducial_coords()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.util.get_files"><code class="docutils literal notranslate"><span class="pre">get_files()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.util.get_surface_names"><code class="docutils literal notranslate"><span class="pre">get_surface_names()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.util.load_meg_sensor_data"><code class="docutils literal notranslate"><span class="pre">load_meg_sensor_data()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.util.make_directory"><code class="docutils literal notranslate"><span class="pre">make_directory()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.util.spm_context"><code class="docutils literal notranslate"><span class="pre">spm_context()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.util.ttest_rel_corrected"><code class="docutils literal notranslate"><span class="pre">ttest_rel_corrected()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-lameg.viz">lameg.viz module</a><ul>
+<li><a class="reference internal" href="#lameg.viz.color_map"><code class="docutils literal notranslate"><span class="pre">color_map()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.viz.data_to_rgb"><code class="docutils literal notranslate"><span class="pre">data_to_rgb()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.viz.plot_csd"><code class="docutils literal notranslate"><span class="pre">plot_csd()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.viz.rgbtoint"><code class="docutils literal notranslate"><span class="pre">rgbtoint()</span></code></a></li>
+<li><a class="reference internal" href="#lameg.viz.show_surface"><code class="docutils literal notranslate"><span class="pre">show_surface()</span></code></a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#module-lameg">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="_sources/lameg.rst.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
 
-      <div class="wy-nav-content">
-        <div class="rst-content">
-          <div role="navigation" aria-label="Page navigation">
-  <ul class="wy-breadcrumbs">
-      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
-          <li class="breadcrumb-item"><a href="modules.html">lameg</a></li>
-      <li class="breadcrumb-item active">lameg package</li>
-      <li class="wy-breadcrumbs-aside">
-            <a href="_sources/lameg.rst.txt" rel="nofollow"> View page source</a>
-      </li>
-  </ul>
-  <hr/>
-</div>
-          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
-           <div itemprop="articleBody">
-             
+          
+            
+<form class="navbar-form navbar-right" action="search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="body col-md-12 content" role="main">
+      
   <section id="lameg-package">
-<h1>lameg package<a class="headerlink" href="#lameg-package" title="Permalink to this heading"></a></h1>
+<h1>lameg package<a class="headerlink" href="#lameg-package" title="Permalink to this heading">¶</a></h1>
 <section id="submodules">
-<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading"></a></h2>
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this heading">¶</a></h2>
 </section>
 <section id="module-lameg.invert">
-<span id="lameg-invert-module"></span><h2>lameg.invert module<a class="headerlink" href="#module-lameg.invert" title="Permalink to this heading"></a></h2>
+<span id="lameg-invert-module"></span><h2>lameg.invert module<a class="headerlink" href="#module-lameg.invert" title="Permalink to this heading">¶</a></h2>
 <p>This module provides tools for the coregistration, and source reconstruction of MEG/EEG data
 utilizing MATLAB and SPM (Statistical Parametric Mapping) functionalities.
 Key operations include:</p>
@@ -165,7 +195,7 @@ algorithms.</p></li>
 </ul>
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.invert.coregister">
-<span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">coregister</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fid_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('nas',</span> <span class="pre">'lpa',</span> <span class="pre">'rpa')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/invert.html#coregister"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.invert.coregister" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">coregister</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fid_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('nas',</span> <span class="pre">'lpa',</span> <span class="pre">'rpa')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/invert.html#coregister"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.invert.coregister" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run head coregistration.</p>
 <p>This function interfaces with MATLAB to perform head coregistration on MEG/EEG data using an
 MRI and mesh</p>
@@ -181,7 +211,7 @@ viz (boolean, optional): Whether or not to show SPM visualization. Default is Tr
 spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.</p>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>If <em class="xref py py-obj">spm_instance</em> is not provided, the function will start a new standalone SPM instance.</p></li>
 <li><p>The function will automatically close the standalone SPM instance if it was started
 within the function.</p></li>
 </ul>
@@ -189,7 +219,7 @@ within the function.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.invert.invert_ebb">
-<span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">invert_ebb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_temp_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">foi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hann_windowing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_folds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ideal_pc_test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/invert.html#invert_ebb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.invert.invert_ebb" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">invert_ebb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_temp_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">foi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hann_windowing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_folds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ideal_pc_test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/invert.html#invert_ebb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.invert.invert_ebb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run the Empirical Bayesian Beamformer (EBB) source reconstruction algorithm.</p>
 <p>This function interfaces with MATLAB to perform EBB source reconstruction on MEG/EEG data.
 It involves mesh smoothing and running the EBB algorithm in MATLAB. The MEG/EEG data must
@@ -222,7 +252,7 @@ list: A list containing the free energy, cross validation error (cv_err), and th
 </div></blockquote>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>If <em class="xref py py-obj">spm_instance</em> is not provided, the function will start a new standalone SPM instance.</p></li>
 <li><p>The function will automatically close the standalone SPM instance if it was started
 within the function.</p></li>
 </ul>
@@ -230,7 +260,7 @@ within the function.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.invert.invert_msp">
-<span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">invert_msp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_temp_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">foi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hann_windowing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_folds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ideal_pc_test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/invert.html#invert_msp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.invert.invert_msp" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">invert_msp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_temp_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">foi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hann_windowing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_folds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ideal_pc_test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/invert.html#invert_msp"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.invert.invert_msp" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run the Multiple Sparse Priors (MSP) source reconstruction algorithm.</p>
 <p>This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data.
 It involves mesh smoothing and running the MSP algorithm in MATLAB. The MEG/EEG data must
@@ -263,7 +293,7 @@ list: A list containing the free energy, cross validation error (cv_err), and th
 </div></blockquote>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>If <em class="xref py py-obj">spm_instance</em> is not provided, the function will start a new standalone SPM instance.</p></li>
 <li><p>The function will automatically close the standalone SPM instance if it was started
 within the function.</p></li>
 <li><p>Priors are adjusted by adding 1 to each index to align with MATLAB’s 1-based indexing.</p></li>
@@ -272,7 +302,7 @@ within the function.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.invert.invert_sliding_window">
-<span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">invert_sliding_window</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_temp_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">win_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">win_overlap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">foi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hann_windowing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/invert.html#invert_sliding_window"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.invert.invert_sliding_window" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">invert_sliding_window</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_temp_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">win_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">win_overlap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">foi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hann_windowing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/invert.html#invert_sliding_window"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.invert.invert_sliding_window" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time window.</p>
 <p>This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data
 within sliding time windows. It involves mesh smoothing and running the MSP algorithm in
@@ -301,7 +331,7 @@ list: A list containing the free energy time series (free_energy), and the windo
 </div></blockquote>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>If <em class="xref py py-obj">spm_instance</em> is not provided, the function will start a new standalone SPM instance.</p></li>
 <li><p>The function will automatically close the standalone SPM instance if it was started
 within the function.</p></li>
 <li><p>The prior index is adjusted by adding 1 to align with MATLAB’s 1-based indexing.</p></li>
@@ -310,7 +340,7 @@ within the function.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.invert.load_source_time_series">
-<span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">load_source_time_series</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/invert.html#load_source_time_series"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.invert.load_source_time_series" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">load_source_time_series</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/invert.html#load_source_time_series"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.invert.load_source_time_series" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load source time series data from specified vertices using precomputed inverse solutions or a
 lead field matrix.</p>
 <p>This function interfaces with MATLAB to extract time series data from specific vertices, based
@@ -345,7 +375,7 @@ the lead field matrix, without the need for precomputed inverse solutions.</p></
 
 </section>
 <section id="module-lameg.laminar">
-<span id="lameg-laminar-module"></span><h2>lameg.laminar module<a class="headerlink" href="#module-lameg.laminar" title="Permalink to this heading"></a></h2>
+<span id="lameg-laminar-module"></span><h2>lameg.laminar module<a class="headerlink" href="#module-lameg.laminar" title="Permalink to this heading">¶</a></h2>
 <p>This module provides tools for performing laminar analysis of MEG signals.
 It integrates functionalities for coregistering head models, performing source reconstruction
 using different methods (Empirical Bayesian Beamformer and Multiple Sparse Priors),
@@ -363,7 +393,7 @@ for dynamic source reconstruction and laminar analysis for studying laminar cort
 - Comparison of power changes across different regions and layers to identify areas of interest.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.laminar.compute_csd">
-<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">compute_csd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sfreq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smoothing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/laminar.html#compute_csd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.laminar.compute_csd" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">compute_csd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sfreq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smoothing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/laminar.html#compute_csd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.laminar.compute_csd" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the laminar Current Source Density (CSD) from a given signal.</p>
 <p>This function calculates CSD using the Standard CSD method. It takes a multi-layered neural
 signal, typically from laminar probes, and computes the CSD. An optional smoothing step can
@@ -406,7 +436,7 @@ of layers if smoothing is applied.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.laminar.model_comparison">
-<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">model_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_fnames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'EBB'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coregister_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">invert_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/laminar.html#model_comparison"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.laminar.model_comparison" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">model_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_fnames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'EBB'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coregister_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">invert_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/laminar.html#model_comparison"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.laminar.model_comparison" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compare model fits using different meshes by computing the free energy.</p>
 <p>This function runs source reconstruction algorithms (either Empirical Bayesian Beamformer or
 Multiple Sparse Priors) on a set of meshes and compares their model fits using the free energy
@@ -431,7 +461,7 @@ tuple: A tuple containing two numpy arrays: the first with the free energy value
 </div></blockquote>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>If <em class="xref py py-obj">spm_instance</em> is not provided, the function will start a new standalone SPM instance.</p></li>
 <li><p>The function will automatically close the standalone SPM instance if it was started
 within the function.</p></li>
 <li><p>Free energy is used as a measure of model fit, with higher values indicating better fit.</p></li>
@@ -440,7 +470,7 @@ within the function.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.laminar.roi_power_comparison">
-<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">roi_power_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">woi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_woi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perc_thresh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/laminar.html#roi_power_comparison"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.laminar.roi_power_comparison" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">roi_power_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">woi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_woi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perc_thresh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/laminar.html#roi_power_comparison"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.laminar.roi_power_comparison" title="Permalink to this definition">¶</a></dt>
 <dd><p>Computes and compares power changes in pial and white matter layers to define
 regions of interest (ROI) based on significant power shifts.</p>
 <p>This function calculates power changes in the pial and white matter layers during a specified
@@ -471,7 +501,7 @@ tuple: Contains laminar t-statistic, laminar p-value, degrees of freedom and ind
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.laminar.sliding_window_model_comparison">
-<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">sliding_window_model_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_fnames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coregister_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">invert_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/laminar.html#sliding_window_model_comparison"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.laminar.sliding_window_model_comparison" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">sliding_window_model_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_fnames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coregister_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">invert_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/laminar.html#sliding_window_model_comparison"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.laminar.sliding_window_model_comparison" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compare model fits across different meshes using a sliding window approach.</p>
 <p>This function runs source reconstruction using the Multiple Sparse Priors (MSP) method in
 sliding time windows on a set of meshes. It compares the model fits for each mesh by computing
@@ -498,7 +528,7 @@ tuple: A tuple containing a list of free energy values for each mesh and the win
 </div></blockquote>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM
+<li><p>If <em class="xref py py-obj">spm_instance</em> is not provided, the function will start a new standalone SPM
 instance.</p></li>
 <li><p>The function will automatically close the standalone SPM instance if it was started
 within the function.</p></li>
@@ -509,7 +539,7 @@ within the function.</p></li>
 
 </section>
 <section id="module-lameg.simulate">
-<span id="lameg-simulate-module"></span><h2>lameg.simulate module<a class="headerlink" href="#module-lameg.simulate" title="Permalink to this heading"></a></h2>
+<span id="lameg-simulate-module"></span><h2>lameg.simulate module<a class="headerlink" href="#module-lameg.simulate" title="Permalink to this heading">¶</a></h2>
 <p>This module facilitates the simulation of MEG/EEG data using MATLAB’s computing environment and the
 Statistical Parametric Mapping (SPM) toolbox. It provides functionalities to simulate both current
 density and dipole-based MEG/EEG data under varying conditions and configurations.</p>
@@ -545,7 +575,7 @@ source localization methods.</p></li>
 </ul>
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.simulate.run_current_density_simulation">
-<span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">run_current_density_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_signals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipole_moments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_patch_sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/simulate.html#run_current_density_simulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.simulate.run_current_density_simulation" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">run_current_density_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_signals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipole_moments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_patch_sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/simulate.html#run_current_density_simulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.simulate.run_current_density_simulation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Simulate current density data based on specified parameters.</p>
 <p>This function interfaces with MATLAB to generate simulated MEG/EEG data. It creates simulations
 based on specified vertices, signals, dipole moments, and patch sizes, incorporating a defined
@@ -576,7 +606,7 @@ sim_woi (list, optional): Window of interest for the simulation as [start, end].
 str: Filename of the generated simulated data.</p>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>If <em class="xref py py-obj">spm_instance</em> is not provided, the function will start a new standalone SPM instance.</p></li>
 <li><p>The function will automatically close the standalone SPM instance if it was started
 within the function.</p></li>
 </ul>
@@ -584,7 +614,7 @@ within the function.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.simulate.run_dipole_simulation">
-<span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">run_dipole_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_signals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipole_orientations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipole_moments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_patch_sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">average_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/simulate.html#run_dipole_simulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.simulate.run_dipole_simulation" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">run_dipole_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_signals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipole_orientations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipole_moments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_patch_sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">average_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/simulate.html#run_dipole_simulation"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.simulate.run_dipole_simulation" title="Permalink to this definition">¶</a></dt>
 <dd><p>Simulate dipole-based MEG/EEG data based on specified parameters.</p>
 <p>This function interfaces with MATLAB to generate simulated MEG/EEG data with specific dipole
 configurations. It creates simulations based on specified vertices, signals, dipole
@@ -625,7 +655,7 @@ sim_woi (list, optional): Window of interest for the simulation as [start, end].
 str: Filename of the generated simulated data.</p>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>If <em class="xref py py-obj">spm_instance</em> is not provided, the function will start a new standalone SPM instance.</p></li>
 <li><p>The function will automatically close the standalone SPM instance if it was started
 within the function.</p></li>
 </ul>
@@ -633,7 +663,7 @@ within the function.</p></li>
 
 </section>
 <section id="module-lameg.surf">
-<span id="lameg-surf-module"></span><h2>lameg.surf module<a class="headerlink" href="#module-lameg.surf" title="Permalink to this heading"></a></h2>
+<span id="lameg-surf-module"></span><h2>lameg.surf module<a class="headerlink" href="#module-lameg.surf" title="Permalink to this heading">¶</a></h2>
 <p>This module provides a set of tools for handling and manipulating surface mesh data, primarily
 used within neuroimaging and computer graphics contexts. The functionalities include computing mesh
 normals, interpolating mesh data, handling non-manifold edges, creating and manipulating GIFTI
@@ -664,7 +694,7 @@ applicability in both research and clinical environments.</p>
 </div>
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.combine_surfaces">
-<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">combine_surfaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surfaces</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#combine_surfaces"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.combine_surfaces" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">combine_surfaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surfaces</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#combine_surfaces"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.combine_surfaces" title="Permalink to this definition">¶</a></dt>
 <dd><p>Combine multiple surface meshes into a single surface mesh.</p>
 <p>This function takes a list of Gifti surface meshes and combines them into a single surface
 mesh. It concatenates the vertices, faces, and normals (if present) from each surface. The
@@ -689,7 +719,7 @@ ValueError: If the vertex or face arrays do not have the expected dimensions.</p
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.compute_dipole_orientations">
-<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">compute_dipole_orientations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#compute_dipole_orientations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.compute_dipole_orientations" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">compute_dipole_orientations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#compute_dipole_orientations"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.compute_dipole_orientations" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute dipole orientations for cortical layers using different methods.</p>
 <p>Parameters:
 method (str): Method for computing dipole orientations (‘link_vector’, ‘ds_surf_norm’,</p>
@@ -725,7 +755,7 @@ ValueError: If the number of vertices in pial and white surfaces do not match.</
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.create_layer_mesh">
-<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">create_layer_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hemispheres</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs_subject_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#create_layer_mesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.create_layer_mesh" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">create_layer_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hemispheres</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs_subject_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#create_layer_mesh"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.create_layer_mesh" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create or retrieve a specified cortical layer mesh file name or path based on the provided
 layer proportional thickness or identifier.</p>
 <p>Parameters:
@@ -757,7 +787,7 @@ corresponding standard FreeSurfer mesh identifier (‘white’ or ‘pial’).</
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.create_surf_gifti">
-<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">create_surf_gifti</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#create_surf_gifti"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.create_surf_gifti" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">create_surf_gifti</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#create_surf_gifti"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.create_surf_gifti" title="Permalink to this definition">¶</a></dt>
 <dd><p>Create a Gifti image object from surface mesh data.</p>
 <p>This function creates a GiftiImage object from the provided vertices, faces, and optional
 normals. The vertices and faces are required, while normals are optional. If normals are
@@ -789,7 +819,7 @@ nibabel.gifti.GiftiImage: The GiftiImage object created from the provided mesh d
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.downsample_multiple_surfaces">
-<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">downsample_multiple_surfaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_surfs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#downsample_multiple_surfaces"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.downsample_multiple_surfaces" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">downsample_multiple_surfaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_surfs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#downsample_multiple_surfaces"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.downsample_multiple_surfaces" title="Permalink to this definition">¶</a></dt>
 <dd><p>Downampled multiple surface meshes using the VTK decimation algorithm.</p>
 <p>This function takes a list of input surface meshes (in Gifti format) and applies a dowsampling
 process to each surface. The downsampling is performed using VTK’s vtkDecimatePro algorithm.
@@ -825,7 +855,7 @@ further processing.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.downsample_single_surface">
-<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">downsample_single_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#downsample_single_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.downsample_single_surface" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">downsample_single_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#downsample_single_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.downsample_single_surface" title="Permalink to this definition">¶</a></dt>
 <dd><p>Downsample a Gifti surface using the VTK library.</p>
 <p>This function takes a Gifti surface defined by its vertices and faces, and downsamples it using
 VTK’s vtkDecimatePro algorithm. The reduction ratio determines the degree of downsampling.
@@ -848,7 +878,7 @@ nibabel.gifti.GiftiImage: A new GiftiImage object with the downsampled surface.<
 </div></blockquote>
 <ul class="simple">
 <li><p>The VTK library is used for mesh decimation, which must be installed and properly configured.</p></li>
-<li><p>The returned GiftiImage object is a new object; the original <cite>gifti_surf</cite> object is not
+<li><p>The returned GiftiImage object is a new object; the original <em class="xref py py-obj">gifti_surf</em> object is not
 modified in place.</p></li>
 </ul>
 <p>Example:
@@ -859,7 +889,7 @@ modified in place.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.find_non_manifold_edges">
-<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">find_non_manifold_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">faces</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#find_non_manifold_edges"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.find_non_manifold_edges" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">find_non_manifold_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">faces</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#find_non_manifold_edges"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.find_non_manifold_edges" title="Permalink to this definition">¶</a></dt>
 <dd><p>Identifies non-manifold edges in a given mesh represented by its faces.</p>
 <p>A non-manifold edge is defined as an edge that is shared by more than two faces. This function
 processes an array of faces, each face represented by a tuple of vertex indices, and identifies
@@ -881,7 +911,7 @@ non-manifold.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.fix_non_manifold_edges">
-<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">fix_non_manifold_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#fix_non_manifold_edges"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.fix_non_manifold_edges" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">fix_non_manifold_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#fix_non_manifold_edges"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.fix_non_manifold_edges" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes faces associated with non-manifold edges from a mesh defined by vertices and faces.</p>
 <p>Non-manifold edges are edges that are shared by more than two faces, which can cause issues
 in various mesh processing tasks such as mesh simplification, smoothing, or 3D printing. This
@@ -921,7 +951,7 @@ array([[0, 1, 2], [0, 2, 3]])  # Assuming face [1, 2, 3] was associated with a n
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.interpolate_data">
-<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">interpolate_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsampled_mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsampled_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjacency_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#interpolate_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.interpolate_data" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">interpolate_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsampled_mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsampled_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjacency_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#interpolate_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.interpolate_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Interpolates vertex data from a downsampled mesh back to the original mesh using nearest
 neighbor matching and optional smoothing based on an adjacency matrix. Both meshes are
 expected to be nibabel Gifti objects.</p>
@@ -958,7 +988,7 @@ by averaging over neighbors.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.iterative_downsample_single_surface">
-<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">iterative_downsample_single_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#iterative_downsample_single_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.iterative_downsample_single_surface" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">iterative_downsample_single_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#iterative_downsample_single_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.iterative_downsample_single_surface" title="Permalink to this definition">¶</a></dt>
 <dd><p>Iteratively downsample a single surface mesh to a target number of vertices.</p>
 <p>This function reduces the number of vertices in a surface mesh (in GIFTI format) to a specified
 fraction of its original size. Downsampling is performed iteratively until the target number of
@@ -987,7 +1017,7 @@ terminated to prevent upsampling or infinite loops.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.mesh_adjacency">
-<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">mesh_adjacency</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">faces</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#mesh_adjacency"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.mesh_adjacency" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">mesh_adjacency</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">faces</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#mesh_adjacency"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.mesh_adjacency" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the adjacency matrix of a triangle mesh.</p>
 <p>Parameters:
 faces - a numpy array of shape [f, 3] representing the mesh faces</p>
@@ -997,7 +1027,7 @@ adjacency - adjacency matrix as a sparse [v, v] array, where v is the number of 
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.mesh_normals">
-<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">mesh_normals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#mesh_normals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.mesh_normals" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">mesh_normals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#mesh_normals"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.mesh_normals" title="Permalink to this definition">¶</a></dt>
 <dd><p>This function computes the normals of a mesh.</p>
 <p>Parameters:
 vertices (ndarray): Array of vertices of the mesh. Each row represents a vertex.
@@ -1018,7 +1048,7 @@ tuple: A tuple containing two ndarrays:</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.postprocess_freesurfer_surfaces">
-<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">postprocess_freesurfer_surfaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_surfaces</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_deep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#postprocess_freesurfer_surfaces"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.postprocess_freesurfer_surfaces" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">postprocess_freesurfer_surfaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_surfaces</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_deep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#postprocess_freesurfer_surfaces"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.postprocess_freesurfer_surfaces" title="Permalink to this definition">¶</a></dt>
 <dd><p>Process and combine FreeSurfer surface meshes for a subject.</p>
 <p>This function processes FreeSurfer surface meshes for a given subject by creating intermediate
 surfaces, adjusting for RAS offset, removing deep vertices, combining hemispheres,
@@ -1056,7 +1086,7 @@ cortical patch statistics).</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.remove_unconnected_vertices">
-<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">remove_unconnected_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#remove_unconnected_vertices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.remove_unconnected_vertices" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">remove_unconnected_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#remove_unconnected_vertices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.remove_unconnected_vertices" title="Permalink to this definition">¶</a></dt>
 <dd><p>Removes vertices that are not connected to any faces from a Gifti surface object.</p>
 <p>Parameters:
 gifti_surf (nibabel.gifti.GiftiImage): The Gifti surface object to be processed.</p>
@@ -1066,7 +1096,7 @@ nibabel.gifti.GiftiImage: A new GiftiImage object with unconnected vertices remo
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.remove_vertices">
-<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">remove_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertices_to_remove</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#remove_vertices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.remove_vertices" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">remove_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertices_to_remove</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#remove_vertices"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.remove_vertices" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove specified vertices from a Gifti surface and update the faces accordingly.</p>
 <p>This function modifies a Gifti surface by removing the specified vertices. It also updates
 the faces of the surface so that they only reference the remaining vertices. If normals
@@ -1088,9 +1118,9 @@ nibabel.gifti.GiftiImage: A new GiftiImage object with the specified vertices re
 <div><p>vertices and one for faces. If normals are present, they are also updated.</p>
 </div></blockquote>
 <ul class="simple">
-<li><p>Vertex indices in <cite>vertices_to_remove</cite> should be zero-based (following Python’s indexing
+<li><p>Vertex indices in <em class="xref py py-obj">vertices_to_remove</em> should be zero-based (following Python’s indexing
 convention).</p></li>
-<li><p>The returned GiftiImage object is a new object; the original <cite>gifti_surf</cite> object is not
+<li><p>The returned GiftiImage object is a new object; the original <em class="xref py py-obj">gifti_surf</em> object is not
 modified in place.</p></li>
 </ul>
 <p>Example:
@@ -1102,7 +1132,7 @@ modified in place.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.split_fv">
-<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">split_fv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">faces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#split_fv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.split_fv" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">split_fv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">faces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/surf.html#split_fv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.surf.split_fv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Splits faces and vertices into connected pieces based on the connectivity of the faces.</p>
 <p>Parameters:
 faces (np.array): A 2D numpy array of faces, where each row represents a face and each element</p>
@@ -1133,7 +1163,7 @@ location.</p>
 
 </section>
 <section id="module-lameg.util">
-<span id="lameg-util-module"></span><h2>lameg.util module<a class="headerlink" href="#module-lameg.util" title="Permalink to this heading"></a></h2>
+<span id="lameg-util-module"></span><h2>lameg.util module<a class="headerlink" href="#module-lameg.util" title="Permalink to this heading">¶</a></h2>
 <p>This module provides tools for interfacing with SPM (Statistical Parametric Mapping) software,
 managing MEG sensor data, and working with neuroimaging data in various formats such as NIfTI,
 GIFTI, and MATLAB files. It includes functions for batch processing in SPM, converting data
@@ -1146,7 +1176,7 @@ cortical mesh analysis.</p>
 - Utility functions for anatomical and spatial data transformations.</p>
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.batch">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.batch" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#batch"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.batch" title="Permalink to this definition">¶</a></dt>
 <dd><p>Execute a batch processing job in SPM (Statistical Parametric Mapping) using MATLAB.</p>
 <p>This function prepares a configuration for an SPM batch job, saves it to a temporary MATLAB
 file, and executes it within an SPM instance. The function is capable of running any batch
@@ -1197,13 +1227,13 @@ batch(cfg, viz=False)
 - The temporary MATLAB file is created in the system’s default temp directory.
 - This function assumes that an SPM and MATLAB environment is properly set up and accessible</p>
 <blockquote>
-<div><p>through the provided <cite>spm_instance</cite> or through a default SPM environment.</p>
+<div><p>through the provided <em class="xref py py-obj">spm_instance</em> or through a default SPM environment.</p>
 </div></blockquote>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.big_brain_proportional_layer_boundaries">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">big_brain_proportional_layer_boundaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#big_brain_proportional_layer_boundaries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.big_brain_proportional_layer_boundaries" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">big_brain_proportional_layer_boundaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#big_brain_proportional_layer_boundaries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.big_brain_proportional_layer_boundaries" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the proportional layer boundaries (6 values between 0 and 1) from
 fsaverage converted Big Brain atlas, included in the laMEG.</p>
 <p>Function uses the included fsaverage converted Big Brain cortical thickness atlas to calculate
@@ -1220,13 +1250,13 @@ bb_data (dict): dictionary (keys: “lh”, “rh”) with arrays containing lay
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.calc_prop">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">calc_prop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vec</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#calc_prop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.calc_prop" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">calc_prop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vec</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#calc_prop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.calc_prop" title="Permalink to this definition">¶</a></dt>
 <dd><p>from independent thickness to overall proportion, while respecting the zeros</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.check_many">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">check_many</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">multiple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#check_many"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.check_many" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">check_many</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">multiple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#check_many"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.check_many" title="Permalink to this definition">¶</a></dt>
 <dd><p>Checks for a presence of strings in a target strings.</p>
 <p>Parameters:
 multiple (list): strings to be found in target string
@@ -1238,7 +1268,7 @@ func (str): “all” or “any”, use the fuction to search for any or all str
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.convert_fsaverage_to_native">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">convert_fsaverage_to_native</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hemi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vert_idx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#convert_fsaverage_to_native"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.convert_fsaverage_to_native" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">convert_fsaverage_to_native</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hemi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vert_idx</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#convert_fsaverage_to_native"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.convert_fsaverage_to_native" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert a vertex index from fsaverage to a subject’s native surface space.</p>
 <p>This function takes a vertex index from the fsaverage template surface and finds the
 corresponding vertex index in a subject’s native surface space. It loads the fsaverage
@@ -1260,7 +1290,7 @@ int: Index of the vertex on the subject’s native surface that corresponds to t
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.convert_native_to_fsaverage">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">convert_native_to_fsaverage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_surf_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_coord</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#convert_native_to_fsaverage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.convert_native_to_fsaverage" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">convert_native_to_fsaverage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_surf_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_coord</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#convert_native_to_fsaverage"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.convert_native_to_fsaverage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert coordinates from a subject’s native surface space to the fsaverage surface space.</p>
 <p>This function maps a vertex coordinate from a subject’s native combined pial surface to the
 corresponding vertex index in the fsaverage template space. It does this by determining which
@@ -1288,7 +1318,7 @@ str: The hemisphere the vertex is found in (‘lh’ for left hemisphere, ‘rh�
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.ctf_fif_spm_conversion">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">ctf_fif_spm_conversion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mne_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res4_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoched</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spm_'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#ctf_fif_spm_conversion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.ctf_fif_spm_conversion" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">ctf_fif_spm_conversion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mne_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res4_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoched</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spm_'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#ctf_fif_spm_conversion"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.ctf_fif_spm_conversion" title="Permalink to this definition">¶</a></dt>
 <dd><p>Converts <a href="#id9"><span class="problematic" id="id10">*</span></a>.fif file to SPM data format.</p>
 <p>Parameters:
 mne_file (str or pathlib.Path or os.Path): path to the “<em>-raw.fif” or “</em>-epo.fif” file
@@ -1302,7 +1332,7 @@ prefix (str): a string appended to the output_name after conversion. Default: �
 spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.</p>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>If <em class="xref py py-obj">spm_instance</em> is not provided, the function will start a new standalone SPM instance.</p></li>
 <li><p>The function will automatically close the standalone SPM instance if it was started
 within the function.</p></li>
 </ul>
@@ -1310,7 +1340,7 @@ within the function.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.get_bigbrain_layer_boundaries">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_bigbrain_layer_boundaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_surf_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_coord</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#get_bigbrain_layer_boundaries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.get_bigbrain_layer_boundaries" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_bigbrain_layer_boundaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_surf_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_coord</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#get_bigbrain_layer_boundaries"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.get_bigbrain_layer_boundaries" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get the cortical layer boundaries based on Big Brain atlas for a specified coordinate in the
 subject’s downsampled combined space.</p>
 <p>Function maps a vertex coordinate from a subject’s native combined pial surface to the
@@ -1334,7 +1364,7 @@ vert_bb_prop (array-like): proportional layer boundaries (6 values between 0 and
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.get_directories">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_directories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#get_directories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.get_directories" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_directories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#get_directories"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.get_directories" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of directories in the path (or all subdirectories) containing
 specified strings.</p>
 <p>Parameters:
@@ -1346,7 +1376,7 @@ depth (str): “all” or “one”, depth of search (recurrent or shallow)</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.get_fiducial_coords">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_fiducial_coords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#get_fiducial_coords"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.get_fiducial_coords" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_fiducial_coords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#get_fiducial_coords"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.get_fiducial_coords" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fetches fiducial coordinates from a tab-separated values (TSV) file for a given subject ID.</p>
 <p>Parameters:
 subj_id (str): The subject ID to look for in the file.
@@ -1357,7 +1387,7 @@ tuple: A tuple containing the NAS, LPA, and RPA coordinates as lists of floats.<
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.get_files">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#get_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.get_files" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#get_files"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.get_files" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a list of the files with specific extension, prefix and name containing
 specific strings. Either all files in the directory or in this directory.</p>
 <p>Parameters:
@@ -1373,7 +1403,7 @@ depth (str): “all” or “one”, depth of search (recurrent or shallow)</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.get_surface_names">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_surface_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation_method</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#get_surface_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.get_surface_names" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_surface_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation_method</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#get_surface_names"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.get_surface_names" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generates a list of filenames for each mesh layer in a multi-layer mesh setup.</p>
 <p>Parameters:
 - n_layers (int): The number of layers in the mesh.
@@ -1394,7 +1424,7 @@ Each filename also includes an orientation method specifier.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.load_meg_sensor_data">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">load_meg_sensor_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#load_meg_sensor_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.load_meg_sensor_data" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">load_meg_sensor_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#load_meg_sensor_data"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.load_meg_sensor_data" title="Permalink to this definition">¶</a></dt>
 <dd><p>Load sensor data from a MEG dataset.</p>
 <p>Parameters:
 data_fname (str): Filename or path of the MEG/EEG data file.</p>
@@ -1406,7 +1436,7 @@ list: A list of channel names</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.make_directory">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">make_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extended_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#make_directory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.make_directory" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">make_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extended_dir</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#make_directory"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.make_directory" title="Permalink to this definition">¶</a></dt>
 <dd><p>Creates a directory along with the intermediate directories.</p>
 <p>root_path (str or pathlib.Path or os.Path): the root directory
 extended_dir(str or list): directory or directories to create within root_path</p>
@@ -1414,7 +1444,7 @@ extended_dir(str or list): directory or directories to create within root_path</
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.spm_context">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">spm_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#spm_context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.spm_context" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">spm_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#spm_context"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.spm_context" title="Permalink to this definition">¶</a></dt>
 <dd><p>Context manager for handling standalone SPM instances.</p>
 <p>Parameters:
 spm (spm_standalone, optional): An existing standalone instance. Default is None.</p>
@@ -1432,7 +1462,7 @@ spm_standalone: A standalone SPM instance for use within the context.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.ttest_rel_corrected">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">ttest_rel_corrected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tail</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#ttest_rel_corrected"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.ttest_rel_corrected" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">ttest_rel_corrected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tail</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/util.html#ttest_rel_corrected"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.util.ttest_rel_corrected" title="Permalink to this definition">¶</a></dt>
 <dd><p>Perform a corrected paired t-test on a sample of data.</p>
 <p>This function handles missing data (NaNs) and applies a variance correction to the t-test
 calculation.
@@ -1470,7 +1500,7 @@ tuple: A tuple containing the t-statistic (float), degrees of freedom (int), and
 
 </section>
 <section id="module-lameg.viz">
-<span id="lameg-viz-module"></span><h2>lameg.viz module<a class="headerlink" href="#module-lameg.viz" title="Permalink to this heading"></a></h2>
+<span id="lameg-viz-module"></span><h2>lameg.viz module<a class="headerlink" href="#module-lameg.viz" title="Permalink to this heading">¶</a></h2>
 <p>This module provides tools for converting and visualizing numerical data into color-coded formats.
 It includes functions for mapping data to RGB and hexadecimal color values, performing color
 normalization, and rendering 3D surface visualizations using K3D. Additional utilities are included
@@ -1498,7 +1528,7 @@ outputs.</p></li>
 </ul>
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.viz.color_map">
-<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">color_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vcenter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TS'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/viz.html#color_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.viz.color_map" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">color_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vcenter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TS'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/viz.html#color_map"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.viz.color_map" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a data mapped to the color map in the hexadecimal format,
 and a colormap to use for e.g. a colorbar.</p>
 <p>Parameters:
@@ -1519,7 +1549,7 @@ norm (str): type of normalisation (“TS”, “N”, “LOG”)</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.viz.data_to_rgb">
-<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">data_to_rgb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vcenter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ret_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TS'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/viz.html#data_to_rgb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.viz.data_to_rgb" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">data_to_rgb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vcenter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ret_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TS'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/viz.html#data_to_rgb"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.viz.data_to_rgb" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns RGB values of a data mapped to the normalised matplotlib colormap.
 (optionally) Returns a colormap to use for e.g. a colorbar.</p>
 <p>Parameters:
@@ -1539,7 +1569,7 @@ norm (str): type of normalisation (“TS”, “N”, “LOG”)</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.viz.plot_csd">
-<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">plot_csd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">times</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colorbar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RdBu_r'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin_vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/viz.html#plot_csd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.viz.plot_csd" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">plot_csd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">csd</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">times</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">colorbar</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'RdBu_r'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin_vmax</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/viz.html#plot_csd"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.viz.plot_csd" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot the computed Current Source Density (CSD) data.</p>
 <p>This function takes a CSD matrix and plots it over a specified time range. It offers options
 for color normalization, colormap selection, and including a colorbar. Optionally, it can
@@ -1582,7 +1612,7 @@ csd_imshow: The imshow object of the plot.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.viz.rgbtoint">
-<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">rgbtoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rgb</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/viz.html#rgbtoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.viz.rgbtoint" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">rgbtoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rgb</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/viz.html#rgbtoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.viz.rgbtoint" title="Permalink to this definition">¶</a></dt>
 <dd><p>Returns a 32bit representation of the color as an integer.</p>
 <p>Parameters:
 rgb (array): accepts integer [R, G, B] array</p>
@@ -1592,7 +1622,7 @@ rgb (array): accepts integer [R, G, B] array</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.viz.show_surface">
-<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">show_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">menu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertex_colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camera_view</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coord_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coord_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/viz.html#show_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.viz.show_surface" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">show_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">menu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertex_colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camera_view</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coord_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coord_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="_modules/lameg/viz.html#show_surface"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#lameg.viz.show_surface" title="Permalink to this definition">¶</a></dt>
 <dd><p>Renders a 3D surface with optional data overlay. The rendering is persistent and does not
 require an active kernel.</p>
 <p>Parameters:
@@ -1634,44 +1664,32 @@ surface. Default is None.</p>
 <p>Returns:
 - plot: A k3d plot object containing the rendered surface.</p>
 <p>This function utilizes the k3d library for rendering the surface. It supports customization of
-surface color, opacity, and additional features like grid and menu display. The <cite>colors</cite>
+surface color, opacity, and additional features like grid and menu display. The <code class="xref py py-obj docutils literal notranslate"><span class="pre">colors</span></code>
 parameter allows for vertex-level color customization.</p>
 </dd></dl>
 
 </section>
 <section id="module-lameg">
-<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-lameg" title="Permalink to this heading"></a></h2>
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-lameg" title="Permalink to this heading">¶</a></h2>
 </section>
 </section>
 
 
-           </div>
-          </div>
-          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="modules.html" class="btn btn-neutral float-left" title="lameg" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
     </div>
-
-  <hr/>
-
-  <div role="contentinfo">
-    <p>&#169; Copyright 2024, DANC lab.</p>
+      
   </div>
-
-  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
-    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
-    provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   
-
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2024, DANC lab.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.3.0.<br/>
+    </p>
+  </div>
 </footer>
-        </div>
-      </div>
-    </section>
-  </div>
-  <script>
-      jQuery(function () {
-          SphinxRtdTheme.Navigation.enable(true);
-      });
-  </script> 
-
-</body>
+  </body>
 </html>
