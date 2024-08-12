@@ -23,7 +23,7 @@ jobs:
       run: |
         conda activate lameg
         pip install .
-        pip install sphinx sphinx-rtd-theme
+        pip install sphinx sphinx-rtd-theme myst_parser sphinx_gallery sphinx_bootstrap_theme numpydoc sphinx_copybutton
       shell: bash -l {0}
 
     - name: Generate API documentation
