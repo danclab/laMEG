@@ -1,9 +1,9 @@
-"""
-This module facilitates the simulation of MEG/EEG data using MATLAB's computing environment and the
+"""This module facilitates the simulation of MEG/EEG data using MATLAB's computing environment and the
 Statistical Parametric Mapping (SPM) toolbox. It provides functionalities to simulate both current
 density and dipole-based MEG/EEG data under varying conditions and configurations.
 
 Key Features:
+-------------
 - Current Density Simulation: Allows for the simulation of current density data based on
   user-defined parameters such as vertices, signals, dipole moments, and patch sizes. Includes the
   ability to specify the signal-to-noise ratio and window of interest for the simulations.
@@ -24,6 +24,7 @@ instance is provided, the functions will initiate a new one and close it upon co
 managed externally.
 
 Examples of use:
+----------------
 - Simulating data with specific noise levels and analyzing the impact of noise on signal processing
   algorithms.
 - Generating datasets with known properties to test the efficacy of dipole fitting routines or
@@ -37,20 +38,22 @@ import numpy as np
 import h5py
 from scipy.io import savemat
 
+
+import spm_standalone
 import matlab
 from lameg.util import spm_context
 
 
 def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_moments,
                                    sim_patch_sizes, snr, sim_woi=None, spm_instance=None):
-    """
-    Simulate current density data based on specified parameters.
+    """Simulate current density data based on specified parameters.
 
     This function interfaces with MATLAB to generate simulated MEG/EEG data. It creates simulations
     based on specified vertices, signals, dipole moments, and patch sizes, incorporating a defined
     signal-to-noise ratio (SNR). White noise is added at the sensor level to yield the given SNR.
 
     Parameters:
+    -------------
     data_file (str): Filename or path of the MEG/EEG data file used as a template for simulation.
     prefix (str): Prefix for the output simulated data filename.
     sim_vertices (list or int): Indices of vertices where simulations are centered. Can be a single
@@ -66,9 +69,11 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
     spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
 
     Returns:
-    str: Filename of the generated simulated data.
+    -------------
+    sim_fname (str): Filename of the generated simulated data.
 
     Notes:
+    -------------
         - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
         - The function will automatically close the standalone SPM instance if it was started
           within the function.
@@ -117,8 +122,7 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
 def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_orientations,
                           dipole_moments, sim_patch_sizes, snr, sim_woi=None, average_trials=False,
                           spm_instance=None):
-    """
-    Simulate dipole-based MEG/EEG data based on specified parameters.
+    """Simulate dipole-based MEG/EEG data based on specified parameters.
 
     This function interfaces with MATLAB to generate simulated MEG/EEG data with specific dipole
     configurations. It creates simulations based on specified vertices, signals, dipole
@@ -126,6 +130,7 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
     White noise is added at the sensor level to yield the given SNR.
 
     Parameters:
+    -------------
     data_file (str): Filename or path of the MEG/EEG data file used as a template for simulation.
     prefix (str): Prefix for the output simulated data filename.
     sim_vertices (list or int): Indices of vertices where simulations are centered. Can be a single
@@ -146,9 +151,11 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
     spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
 
     Returns:
-    str: Filename of the generated simulated data.
+    -------------
+    sim_fname (str): Filename of the generated simulated data.
 
     Notes:
+    -------------
         - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
         - The function will automatically close the standalone SPM instance if it was started
           within the function.

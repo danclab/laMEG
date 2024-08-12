@@ -1,6 +1,8 @@
 <img src="https://github.com/danclab/laMEG/blob/main/lameg/assets/logo.png?raw=true" alt="laMEG" title="Title" width="300"/>
 
-Toolbox for laminar inference with MEG, powered by [FreeSurfer](https://surfer.nmr.mgh.harvard.edu/fswiki) and [SPM](https://github.com/spm/)
+Toolbox for laminar inference with MEG, powered by [FreeSurfer](https://surfer.nmr.mgh.harvard.edu/fswiki) and [SPM](https://github.com/spm/).
+
+Documentation available [here](https://danclab.github.io/laMEG/).
 
 [![PyPI version](https://badge.fury.io/py/lameg.svg)](https://badge.fury.io/py/lameg)
 [![Unit tests](https://github.com/danclab/laMEG/actions/workflows/python-package-conda.yml/badge.svg)](https://github.com/danclab/laMEG/actions/workflows/python-package-conda.yml)

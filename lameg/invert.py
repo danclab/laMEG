@@ -20,14 +20,14 @@ import matlab # pylint: disable=wrong-import-order
 
 
 def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, fid_labels=('nas', 'lpa', 'rpa'),
-               viz=True, spm_instance=None):
-    """
-    Run head coregistration.
+               viz=True, spm_instance=None) -> None:
+    """Run head coregistration.
 
     This function interfaces with MATLAB to perform head coregistration on MEG/EEG data using an
     MRI and mesh
 
     Parameters:
+    -------------
     nas (list): NASion fiducial coordinates.
     lpa (list): Left PreAuricular fiducial coordinates.
     rpa (list): Right PreAuricular fiducial coordinates.
@@ -39,6 +39,7 @@ def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, fid_labels=('na
     spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
 
     Notes:
+    -------------
         - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
         - The function will automatically close the standalone SPM instance if it was started
           within the function.
@@ -110,14 +111,14 @@ def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, fid_labels=('na
 def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, foi=None, woi=None,
                hann_windowing=False, n_folds=1, ideal_pc_test=0, viz=True, return_mu_matrix=False,
                spm_instance=None):
-    """
-    Run the Empirical Bayesian Beamformer (EBB) source reconstruction algorithm.
+    """Run the Empirical Bayesian Beamformer (EBB) source reconstruction algorithm.
 
     This function interfaces with MATLAB to perform EBB source reconstruction on MEG/EEG data.
     It involves mesh smoothing and running the EBB algorithm in MATLAB. The MEG/EEG data must
     already be coregistered with the given mesh.
 
     Parameters:
+    -------------
     mesh_fname (str): Filename of the mesh data.
     data_fname (str): Filename of the MEG/EEG data.
     n_layers (int): Number of layers in the mesh.
@@ -136,10 +137,12 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
     spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
 
     Returns:
+    -------------
     list: A list containing the free energy, cross validation error (cv_err), and the matrix needed
           to reconstruct source activity (mu_matrix; if return_mu_matrix is True).
 
     Notes:
+    -------------
         - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
         - The function will automatically close the standalone SPM instance if it was started
           within the function.
@@ -242,14 +245,14 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
 def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_temp_modes=4,
                foi=None, woi=None, hann_windowing=False, n_folds=1, ideal_pc_test=0, viz=True,
                return_mu_matrix=False, spm_instance=None):
-    """
-    Run the Multiple Sparse Priors (MSP) source reconstruction algorithm.
+    """Run the Multiple Sparse Priors (MSP) source reconstruction algorithm.
 
     This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data.
     It involves mesh smoothing and running the MSP algorithm in MATLAB. The MEG/EEG data must
     already be coregistered with the given mesh.
 
     Parameters:
+    -------------
     mesh_fname (str): Filename of the mesh data.
     data_fname (str): Filename of the MEG/EEG data.
     n_layers (int): Number of layers in the mesh.
@@ -268,10 +271,12 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
     spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
 
     Returns:
+    -------------
     list: A list containing the free energy, cross validation error (cv_err), and the matrix
           needed to reconstruct source activity (mu_matrix; if return_mu_matrix is True).
 
     Notes:
+    -------------
         - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
         - The function will automatically close the standalone SPM instance if it was started
           within the function.
@@ -393,8 +398,7 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
 def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=1,
                           win_size=16, win_overlap=True, foi=None, hann_windowing=True, viz=True,
                           spm_instance=None):
-    """
-    Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time window.
+    """Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time window.
 
     This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data
     within sliding time windows. It involves mesh smoothing and running the MSP algorithm in
@@ -402,6 +406,7 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     mesh.
 
     Parameters:
+    -------------
     prior (float): Index of the vertex to be used as a prior.
     mesh_fname (str): Filename of the mesh data.
     data_fname (str): Filename of the MEG/EEG data.
@@ -417,10 +422,12 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
 
     Returns:
+    -------------
     list: A list containing the free energy time series (free_energy), and the windows of interest
           (wois).
 
     Notes:
+    -------------
         - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
         - The function will automatically close the standalone SPM instance if it was started
           within the function.
@@ -529,8 +536,7 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
 
 
 def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices=None):
-    """
-    Load source time series data from specified vertices using precomputed inverse solutions or a
+    """Load source time series data from specified vertices using precomputed inverse solutions or a
     lead field matrix.
 
     This function interfaces with MATLAB to extract time series data from specific vertices, based
@@ -538,6 +544,7 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
     field matrix.
 
     Parameters:
+    -------------
     data_fname (str): Filename or path of the MEG/EEG data file.
     mu_matrix (ndarray, optional): Lead field matrix (source x sensor). Default is None.
     inv_fname (str, optional): Filename or path of the file containing the inverse solutions.
@@ -547,11 +554,13 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
                                       used.
 
     Returns:
-    ndarray: An array containing the extracted source time series data (sources x time x trial).
-    ndarray: An array containing the timestamps
-    ndarray: The matrix needed to reconstruct source activity from sensor signals
+    -------------
+    source_ts (np.array): An array containing the extracted source time series data (sources x time x trial).
+    time (np.array): An array containing the timestamps
+    mu_matrix (np.array): The matrix needed to reconstruct source activity from sensor signals
 
     Notes:
+    -------------
     - If 'inv_fname' is not provided, and 'mu_matrix' is None, the inverse solution from the
       MEG/EEG data file specified by 'data_fname' will be used.
     - If 'mu_matrix' is provided, the function will compute the source time series directly using
