@@ -1,38 +1,8 @@
-.. image:: https://github.com/danclab/laMEG/blob/main/lameg/assets/logo.png?raw=true
-   :alt: laMEG
-   :width: 300
+|Logo|
 
 Toolbox for laminar inference with MEG, powered by `FreeSurfer <https://surfer.nmr.mgh.harvard.edu/fswiki>`_ and `SPM <https://github.com/spm/>`_
 
-.. image:: https://badge.fury.io/py/lameg.svg
-   :target: https://badge.fury.io/py/lameg
-   :alt: PyPI version
-
-.. image:: https://github.com/danclab/laMEG/actions/workflows/python-package-conda.yml/badge.svg
-   :target: https://github.com/danclab/laMEG/actions/workflows/python-package-conda.yml
-   :alt: Unit tests
-
-.. image:: https://codecov.io/gh/danclab/laMEG/branch/main/graph/badge.svg
-   :target: https://codecov.io/gh/danclab/laMEG
-   :alt: codecov
-
-.. image:: https://img.shields.io/badge/linting-pylint-yellowgreen
-   :target: https://github.com/pylint-dev/pylint
-   :alt: linting: pylint
-
-.. image:: https://img.shields.io/badge/Python-3.7-blue.svg
-   :target: https://www.python.org/downloads/
-   :alt: Python 3.7
-
-.. image:: https://img.shields.io/badge/License-GPLv3-blue.svg
-   :target: https://www.gnu.org/licenses/gpl-3.0
-   :alt: License: GPL v3
-
-.. image:: https://img.shields.io/github/repo-size/danclab/laMEG
-   :alt: Repo Size
-
-.. image:: https://img.shields.io/pypi/dm/lameg
-   :alt: PyPI - Downloads
+|PyPI version| |Unit tests| |Coverage| |Linting| |Python| |License| |Repo size| |PyPI downloads|
 
 Operating system
 ================
@@ -82,6 +52,43 @@ Funding
 =======
 *Supported by the European Research Council (ERC) under the European Union's Horizon 2020 research and innovation programme grant agreement 864550, and a seed grant from the Fondation pour l'Audition.*
 
+|ERC| |FPA|
+
+
+.. |Logo| image:: https://github.com/danclab/laMEG/blob/main/lameg/assets/logo.png?raw=true
+   :alt: laMEG
+   :width: 300
+
+.. |PyPI version| image:: https://badge.fury.io/py/lameg.svg
+   :target: https://badge.fury.io/py/lameg
+   :alt: PyPI version
+
+.. |Unit tests| image:: https://github.com/danclab/laMEG/actions/workflows/python-package-conda.yml/badge.svg
+   :target: https://github.com/danclab/laMEG/actions/workflows/python-package-conda.yml
+   :alt: Unit tests
+
+.. |Coverage| image:: https://codecov.io/gh/danclab/laMEG/branch/main/graph/badge.svg
+   :target: https://codecov.io/gh/danclab/laMEG
+   :alt: codecov
+
+.. |Linting| image:: https://img.shields.io/badge/linting-pylint-yellowgreen
+   :target: https://github.com/pylint-dev/pylint
+   :alt: linting: pylint
+
+.. |Python| image:: https://img.shields.io/badge/Python-3.7-blue.svg
+   :target: https://www.python.org/downloads/
+   :alt: Python 3.7
+
+.. |License| image:: https://img.shields.io/badge/License-GPLv3-blue.svg
+   :target: https://www.gnu.org/licenses/gpl-3.0
+   :alt: License: GPL v3
+
+.. |Repo size| image:: https://img.shields.io/github/repo-size/danclab/laMEG
+   :alt: Repo Size
+
+.. |PyPI downloads| image:: https://img.shields.io/pypi/dm/lameg
+   :alt: PyPI - Downloads
+
 .. |ERC| image:: https://github.com/danclab/laMEG/blob/main/lameg/assets/erc_logo.jpg?raw=true
    :alt: ERC
    :height: 100
@@ -90,4 +97,3 @@ Funding
    :alt: FPA
    :height: 100
 
-|ERC| |FPA|
