@@ -96,8 +96,8 @@ class CustomInstall(install):
         os.chmod(activate_script_path, 0o755)
 
 
-# Read the long description from the README.md
-with open('README.md', 'r', encoding="utf-8") as f:
+# Read the long description from the README.rst
+with open('README.rst', 'r', encoding="utf-8") as f:
     long_description = f.read()
 
 setup(
@@ -105,7 +105,7 @@ setup(
     version='0.0.2',
     description='A toolbox for laminar inference with MEG',
     long_description=long_description,
-    long_description_content_type='text/markdown',
+    long_description_content_type='text/x-rst',
     author='DANC lab',
     author_email='james.bonaiuto@isc.cnrs.fr',
     url='https://github.com/danclab/laMEG',

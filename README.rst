@@ -76,12 +76,14 @@ Funding
 =======
 *Supported by the European Research Council (ERC) under the European Union's Horizon 2020 research and innovation programme grant agreement 864550, and a seed grant from the Fondation pour l'Audition.*
 
-.. image:: https://github.com/danclab/laMEG/blob/main/lameg/assets/erc_logo.jpg?raw=true
+.. |ERC| image:: https://github.com/danclab/laMEG/blob/main/lameg/assets/erc_logo.jpg?raw=true
    :alt: ERC
    :title: Title
    :height: 100
 
-.. image:: https://github.com/danclab/laMEG/blob/main/lameg/assets/fpa_logo.png?raw=true
+.. |FPA| image:: https://github.com/danclab/laMEG/blob/main/lameg/assets/fpa_logo.png?raw=true
    :alt: FPA
    :title: Title
    :height: 100
+
+|ERC| |FPA|
