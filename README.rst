@@ -1,6 +1,5 @@
 .. image:: https://github.com/danclab/laMEG/blob/main/lameg/assets/logo.png?raw=true
    :alt: laMEG
-   :title: Title
    :width: 300
 
 Toolbox for laminar inference with MEG, powered by `FreeSurfer <https://surfer.nmr.mgh.harvard.edu/fswiki>`_ and `SPM <https://github.com/spm/>`_
@@ -61,7 +60,7 @@ Installation
 
    replacing ``<env name>`` with name of the environment you created.
 
-3. To install laMEG, run::
+3. To install ``laMEG``, run::
 
        pip install lameg
 
@@ -72,18 +71,23 @@ Installation
 
 5. If you want to run the tutorials, download and extract the `test data <https://osf.io/mgz9q/download>`_
 
+Documentation and Tutorials
+===========================
+Once you have installed ``laMEG``, check out the
+`example notebooks <https://github.com/danclab/laMEG/tree/main/examples>`_,
+`tutorials <https://github.com/danclab/laMEG/tree/main/tutorials>`_, and
+`documentation <https://danclab.github.io/laMEG/>`_.
+
 Funding
 =======
 *Supported by the European Research Council (ERC) under the European Union's Horizon 2020 research and innovation programme grant agreement 864550, and a seed grant from the Fondation pour l'Audition.*
 
 .. |ERC| image:: https://github.com/danclab/laMEG/blob/main/lameg/assets/erc_logo.jpg?raw=true
    :alt: ERC
-   :title: Title
    :height: 100
 
 .. |FPA| image:: https://github.com/danclab/laMEG/blob/main/lameg/assets/fpa_logo.png?raw=true
    :alt: FPA
-   :title: Title
    :height: 100
 
 |ERC| |FPA|
