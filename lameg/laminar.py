@@ -31,8 +31,7 @@ from lameg.util import ttest_rel_corrected
 
 def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='EBB', viz=True,
                      spm_instance=None, coregister_kwargs=None, invert_kwargs=None):
-    """
-    Compare model fits using different meshes by computing the free energy.
+    """Compare model fits using different meshes by computing the free energy.
 
     This function runs source reconstruction algorithms (either Empirical Bayesian Beamformer or
     Multiple Sparse Priors) on a set of meshes and compares their model fits using the free energy
@@ -40,6 +39,7 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
     inversion parameters through distinct keyword argument dictionaries.
 
     Parameters:
+    ------------
     nas (list): NASion fiducial coordinates.
     lpa (list): Left PreAuricular fiducial coordinates.
     rpa (list): Right PreAuricular fiducial coordinates.
@@ -53,10 +53,12 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
     invert_kwargs (dict, optional): Keyword arguments specifically for the invert function.
 
     Returns:
-    tuple: A tuple containing two numpy arrays: the first with the free energy values corresponding
-           to each mesh, and the second with the cross-validation error for each mesh.
+    ------------
+    f_vals (np.array): Free energy values for each mesh
+    cv_errs (np.array): The cross-validation error for each mesh
 
     Notes:
+    ------------
         - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
         - The function will automatically close the standalone SPM instance if it was started
           within the function.
@@ -115,14 +117,14 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
 def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname,
                                     viz=True, spm_instance=None, coregister_kwargs=None,
                                     invert_kwargs=None):
-    """
-    Compare model fits across different meshes using a sliding window approach.
+    """Compare model fits across different meshes using a sliding window approach.
 
     This function runs source reconstruction using the Multiple Sparse Priors (MSP) method in
     sliding time windows on a set of meshes. It compares the model fits for each mesh by computing
     the free energy in each window.
 
     Parameters:
+    ------------
     prior (float): Index of the vertex to be used as a prior.
     nas (list): NASion fiducial coordinates.
     lpa (list): Left PreAuricular fiducial coordinates.
@@ -137,10 +139,12 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
                                     function.
 
     Returns:
-    tuple: A tuple containing a list of free energy values for each mesh and the windows of
-           interest (wois).
+    ------------
+    f_vals (list): Free energy values for each mesh
+    wois (list): Windows of interest.
 
     Notes:
+    ------------
         - If `spm_instance` is not provided, the function will start a new standalone SPM
           instance.
         - The function will automatically close the standalone SPM instance if it was started
@@ -186,14 +190,14 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
 
 
 def compute_csd(signal, thickness, sfreq, smoothing=None):
-    """
-    Compute the laminar Current Source Density (CSD) from a given signal.
+    """Compute the laminar Current Source Density (CSD) from a given signal.
 
     This function calculates CSD using the Standard CSD method. It takes a multi-layered neural
     signal, typically from laminar probes, and computes the CSD. An optional smoothing step can
     be applied to the CSD output.
 
     Parameters:
+    -----------
     signal (numpy.ndarray): The neural signal matrix, where rows correspond to different layers
                             and columns to time points.
     thickness (float): The laminar thickness of the cortex from which the signal was recorded, in
@@ -205,11 +209,13 @@ def compute_csd(signal, thickness, sfreq, smoothing=None):
                                If None, no smoothing is applied. Default is None.
 
     Returns:
-    list: A list containing the CSD matrix as the first element. If smoothing is applied, the
+    -----------
+    ret_vals (list): A list containing the CSD matrix as the first element. If smoothing is applied, the
           second element is the smoothed CSD matrix. The CSD matrix dimensions are layers x time
           points.
 
     Notes:
+    -----------
     - The function requires the 'neo', 'quantities' (pq), 'numpy' (np), 'elephant', and
       'scipy.interpolate.interp1d' libraries.
     - The CSD is calculated using the Standard CSD method provided by the 'elephant' package.
@@ -249,8 +255,7 @@ def compute_csd(signal, thickness, sfreq, smoothing=None):
 
 def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thresh,
                          mu_matrix=None, chunk_size=None):
-    """
-    Computes and compares power changes in pial and white matter layers to define
+    """Computes and compares power changes in pial and white matter layers to define
     regions of interest (ROI) based on significant power shifts.
 
     This function calculates power changes in the pial and white matter layers during a specified
@@ -259,6 +264,7 @@ def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thr
     the layers to assess laminar differences.
 
     Parameters:
+    -----------
     data_fname (str): Filename of the data file containing source time series.
     woi (tuple): Window of interest, specified as a start and end time (in milliseconds).
     baseline_woi (tuple): Baseline window of interest for comparison, specified as start and end
@@ -271,8 +277,11 @@ def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thr
                       load all at the same time. Default is None.
 
     Returns:
-    tuple: Contains laminar t-statistic, laminar p-value, degrees of freedom and indices of
-        vertices considered as ROIs.
+    -----------
+    laminar_t_statistic: TODO
+    laminar_p_value: TODO
+    deg_of_freedom: degree of freedom
+    roi_idx: indices of vertices considered as ROIs.
     """
     verts_per_surf = int(mesh.darrays[0].data.shape[0] / n_layers)
     pial_vertices = np.arange(verts_per_surf)
