@@ -20,11 +20,11 @@ fail-on=
 fail-under=10.0
 
 # Files or directories to be skipped. They should be base names, not paths.
-ignore=CVS,spm,doc,tutorials
+ignore=CVS,doc,tutorials
 
 # Add files or directories matching the regex patterns to the ignore-list. The
 # regex matches against paths and can be in Posix or Windows format.
-ignore-paths=^spm.*$,^doc.*$
+ignore-paths=^tutorials.*$,^doc.*$
 
 # Files or directories matching the regex patterns are skipped. The regex
 # matches against base names, not paths. The default value ignores emacs file
@@ -92,7 +92,7 @@ disable=raw-checker-failed,
         deprecated-pragma,
         use-symbolic-message-instead
 
-ignored-modules=lameg.surf,matlab
+ignored-modules=
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -289,7 +289,7 @@ ignored-classes=optparse.Values,thread._local,_thread._local
 # (useful for modules/projects where namespaces are manipulated during runtime
 # and thus existing member attributes cannot be deduced by static analysis). It
 # supports qualified module names, as well as Unix pattern matching.
-ignored-modules=lameg.surf,matlab
+ignored-modules=
 
 # Show a hint with possible names when a member name was not found. The aspect
 # of finding the hint is based on edit distance.
