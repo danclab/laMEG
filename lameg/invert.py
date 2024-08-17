@@ -398,7 +398,8 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
 def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=1,
                           win_size=16, win_overlap=True, foi=None, hann_windowing=True, viz=True,
                           spm_instance=None):
-    """Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time window.
+    """Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time
+    window.
 
     This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data
     within sliding time windows. It involves mesh smoothing and running the MSP algorithm in
@@ -555,7 +556,8 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
 
     Returns:
     -------------
-    source_ts (np.array): An array containing the extracted source time series data (sources x time x trial).
+    source_ts (np.array): An array containing the extracted source time series data
+                          (sources x time x trial).
     time (np.array): An array containing the timestamps
     mu_matrix (np.array): The matrix needed to reconstruct source activity from sensor signals
 

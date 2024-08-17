@@ -187,7 +187,8 @@ def remove_unconnected_vertices(gifti_surf):
 
     Returns:
     -------------
-    cleaned_gifti_surf (nibabel.gifti.GiftiImage): A new GiftiImage object with unconnected vertices removed.
+    cleaned_gifti_surf (nibabel.gifti.GiftiImage): A new GiftiImage object with unconnected
+                                                   vertices removed.
     """
     # Get the pointset (vertices) and triangle array (faces) from the Gifti surface
     vertices = gifti_surf.darrays[0].data
@@ -221,8 +222,8 @@ def remove_vertices(gifti_surf, vertices_to_remove):
 
     Returns:
     -------------
-    new_gifti (nibabel.gifti.GiftiImage): A new GiftiImage object with the specified vertices removed and faces
-                              updated.
+    new_gifti (nibabel.gifti.GiftiImage): A new GiftiImage object with the specified vertices
+                                          removed and faces updated.
 
     Notes:
     -------------
@@ -295,8 +296,9 @@ def find_non_manifold_edges(faces):
 
     Returns:
     --------
-    non_manifold_edges (dict): A dictionary where keys are tuples representing non-manifold edges (vertices indices are
-          sorted), and values are lists of face indices that share the edge.
+    non_manifold_edges (dict): A dictionary where keys are tuples representing non-manifold edges
+                               (vertices indices are sorted), and values are lists of face indices
+                               that share the edge.
 
     The function uses a defaultdict to collect face indices for each edge encountered in the mesh.
     It then filters out edges that are associated with more than two faces, identifying them as
@@ -330,8 +332,8 @@ def fix_non_manifold_edges(vertices, faces):
     Returns:
     --------
     vertices (np.ndarray): The unchanged array of vertices.
-    NEW_FACES (np.ndarray): The modified array of faces, with faces associated with non-manifold edges
-                      removed.
+    NEW_FACES (np.ndarray): The modified array of faces, with faces associated with non-manifold
+                            edges removed.
 
     Examples:
     ---------
@@ -789,10 +791,10 @@ def create_layer_mesh(layer, hemispheres, fs_subject_dir) -> None:
 
     Returns:
     --------
-    layer_name (str or None): Returns a string representing the mesh layer ('pial', 'white', or a specific
-                 intermediate layer as a formatted string). Returns None if the input layer does
-                 not match any recognized pattern (e.g., a negative number or a number greater
-                 than 1).
+    layer_name (str or None): Returns a string representing the mesh layer ('pial', 'white', or a
+                              specific intermediate layer as a formatted string). Returns None if
+                              the input layer does not match any recognized pattern (e.g., a
+                              negative number or a number greater than 1).
 
     Behavior:
     ---------
@@ -1063,9 +1065,9 @@ def interpolate_data(original_mesh, downsampled_mesh, downsampled_data, adjacenc
 
     Returns:
     --------
-    vertex_data (np.ndarray): An array of interpolated data for each vertex in the 'original_mesh'. The data is
-                initially interpolated using nearest neighbors and can be further refined through
-                iterative smoothing.
+    vertex_data (np.ndarray): An array of interpolated data for each vertex in the 'original_mesh'.
+                              The data is initially interpolated using nearest neighbors and can be
+                              further refined through iterative smoothing.
 
     The function first finds the nearest vertex in the 'downsampled_mesh' for each vertex in the
     'original_mesh' using a KD-tree. It directly assigns corresponding data values where a close
@@ -1120,8 +1122,9 @@ def split_fv(faces, vertices):
 
     Returns:
     --------
-    fv_out (list of dicts): A list where each element is a dictionary with keys 'faces' and 'vertices'. Each
-                   dictionary represents a separately connected patch of the mesh.
+    fv_out (list of dicts): A list where each element is a dictionary with keys 'faces' and
+                            'vertices'. Each dictionary represents a separately connected patch
+                            of the mesh.
 
     Examples:
     ---------

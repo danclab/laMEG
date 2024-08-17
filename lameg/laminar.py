@@ -210,9 +210,9 @@ def compute_csd(signal, thickness, sfreq, smoothing=None):
 
     Returns:
     -----------
-    ret_vals (list): A list containing the CSD matrix as the first element. If smoothing is applied, the
-          second element is the smoothed CSD matrix. The CSD matrix dimensions are layers x time
-          points.
+    ret_vals (list): A list containing the CSD matrix as the first element. If smoothing is
+          applied, the second element is the smoothed CSD matrix. The CSD matrix dimensions are
+          layers x time points.
 
     Notes:
     -----------

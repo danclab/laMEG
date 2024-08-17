@@ -8,7 +8,7 @@ from unittest.mock import mock_open, patch, MagicMock
 import numpy as np
 
 import mne
-from spm import spm_standalone
+import spm_standalone
 
 from lameg.util import (check_many, spm_context, big_brain_proportional_layer_boundaries,
                         get_fiducial_coords, get_files, get_directories, make_directory,
