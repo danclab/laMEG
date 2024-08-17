@@ -252,9 +252,10 @@ def get_surface_names(n_layers, surf_path, orientation_method):
 
     Returns:
     --------
-    layer_fnames (list): A list of strings, where each string is the full file path to a mesh layer file. The
-            list order corresponds to the layers' order, starting from the outermost layer (pial
-            surface) to the innermost layer (white matter surface).
+    layer_fnames (list): A list of strings, where each string is the full file path to a mesh
+                         layer file. The list order corresponds to the layers' order, starting from
+                         the outermost layer (pial surface) to the innermost layer (white matter
+                         surface).
 
     This function assumes a specific naming convention for the mesh files. The outermost layer is
     named as 'pial', the innermost as 'white', and the intermediate layers are named based on their
@@ -444,8 +445,8 @@ def convert_fsaverage_to_native(subj_id, hemi, vert_idx):
 
     Returns:
     --------
-    subj_v_idx (int): Index of the vertex on the subject's native surface that corresponds to the input vertex
-         index.
+    subj_v_idx (int): Index of the vertex on the subject's native surface that corresponds to the
+                      input vertex index.
     """
 
     fs_subjects_dir = os.getenv('SUBJECTS_DIR')
@@ -498,9 +499,9 @@ def convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord):
     Returns:
     --------
     hemi (str): The hemisphere the vertex is found in ('lh' for left hemisphere, 'rh' for right
-         hemisphere).
-    fsave_v_idx (int): Index of the vertex on the fsaverage spherical surface that corresponds to the input
-         coordinates.
+                hemisphere).
+    fsave_v_idx (int): Index of the vertex on the fsaverage spherical surface that corresponds to
+                       the input coordinates.
     """
     fs_subjects_dir = os.getenv('SUBJECTS_DIR')
     fs_subject_dir = os.path.join(fs_subjects_dir, subj_id)

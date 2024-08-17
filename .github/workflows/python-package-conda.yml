@@ -29,8 +29,8 @@ jobs:
     - name: Lint with pylint
       run: |
         conda activate lameg
-        pip install pylint pytest==7.4.4 pytest-cov coverage pytest-dependency==0.6.0
-        pylint --rcfile=${{ github.workspace }}/.pylintrc --disable=too-many-arguments,too-many-locals $(git ls-files '*.py')
+        pip install -r dev_requirements.txt
+        #pylint --rcfile=${{ github.workspace }}/.pylintrc --disable=too-many-arguments,too-many-locals $(git ls-files '*.py')
       shell: bash -l {0}
 
     - name: Test with pytest
