@@ -23,7 +23,7 @@ jobs:
       run: |
         conda activate lameg
         pip install .
-        pip install sphinx sphinx-rtd-theme myst_parser sphinx_gallery sphinx_bootstrap_theme numpydoc sphinx_copybutton
+        pip install sphinx sphinx-rtd-theme myst_parser sphinx_gallery sphinx_bootstrap_theme numpydoc sphinx_copybutton jupyter_sphinx
         wget -c https://osf.io/mgz9q/download -O ${{ github.workspace }}/test_data.tar.gz
         tar -xzf ${{ github.workspace }}/test_data.tar.gz -C ${{ github.workspace }}
         rm ${{ github.workspace }}/test_data.tar.gz
