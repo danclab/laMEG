@@ -6,7 +6,12 @@ installer
 sphinx
 sphinx_rtd_theme
 myst_parser
+numpydoc
+jupyter_sphinx
+sphinx_gallery
+sphinxemoji
 sphinx_gallery
 sphinx_bootstrap_theme
 numpydoc
 sphinx_copybutton
+pydata_sphinx_theme

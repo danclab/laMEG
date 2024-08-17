@@ -1,10 +1,10 @@
-"""
-This module provides tools for converting and visualizing numerical data into color-coded formats.
+"""This module provides tools for converting and visualizing numerical data into color-coded formats.
 It includes functions for mapping data to RGB and hexadecimal color values, performing color
 normalization, and rendering 3D surface visualizations using K3D. Additional utilities are included
 for plotting Current Source Density (CSD) data and handling color transformations.
 
 Functions:
+----------
 - data_to_rgb: Converts numerical data into RGB or RGBA color arrays based on a specified colormap
   and normalization.
 - rgbtoint: Converts RGB color lists to a single 32-bit integer color representation.
@@ -14,6 +14,7 @@ Functions:
 - plot_csd: Plots Current Source Density (CSD) data as a 2D image over a specified time range.
 
 Utilities:
+----------
 - The module supports various color normalizations including linear, logarithmic, and diverging
   scales.
 - Includes handling of edge cases and data-specific adjustments to enhance the quality of visual
@@ -34,11 +35,11 @@ warnings.filterwarnings(
 
 
 def data_to_rgb(data, n_bins, cmap, vmin, vmax, vcenter=0.0, ret_map=False, norm="TS"):
-    """
-    Returns RGB values of a data mapped to the normalised matplotlib colormap.
+    """Returns RGB values of a data mapped to the normalised matplotlib colormap.
     (optionally) Returns a colormap to use for e.g. a colorbar.
     
     Parameters:
+    -----------
     data (iterable): 1d numerical data
     n_bins (int): amount of bins in the histogram
     vmin (float): lowest value on the histogram range 
@@ -46,8 +47,14 @@ def data_to_rgb(data, n_bins, cmap, vmin, vmax, vcenter=0.0, ret_map=False, norm
     vcenter (float): centre of the histogram range (default=0 for zero-centred color mapping)
     ret_map (bool): return a colormap object
     norm (str): type of normalisation ("TS", "N", "LOG")
-    
+
+    Returns:
+    --------
+    color_mapped
+    scalar_map
+
     Notes:
+    ------
     - function creates a normalisation based on the "norm" argument
     - creates a suitable colormap
     - maps data values based on the histogram bins
@@ -76,15 +83,21 @@ def data_to_rgb(data, n_bins, cmap, vmin, vmax, vcenter=0.0, ret_map=False, norm
 
 
 def rgbtoint(rgb):
-    """
-    Returns a 32bit representation of the color as an integer.
+    """Returns a 32bit representation of the color as an integer.
     
     Parameters:
+    -----------
     rgb (array): accepts integer [R, G, B] array
+
+    Return:
+    -------
+    color (int):
     
     Notes:
+    ------
     - function requires integer RGB (values 0-255)
     """
+    assert 0 <= rgb <= 255, "Requires integer RGB (values 0-255)"
     color = 0
     for rgb_val in rgb:
         color = (color << 8) + int(rgb_val)
@@ -92,19 +105,25 @@ def rgbtoint(rgb):
 
 
 def color_map(data, cmap, vmin, vmax, n_bins=1000, vcenter=0, norm="TS"):
-    """
-    Returns a data mapped to the color map in the hexadecimal format,
+    """Returns a data mapped to the color map in the hexadecimal format,
     and a colormap to use for e.g. a colorbar.
     
     Parameters:
+    -----------
     data (iterable): 1d numerical data
     n_bins (int): amount of bins in the histogram
     vmin (float): lowest value on the histogram range 
     vmax (float): highest value on the histogram range
     vcenter (float): centre of the histogram range (default=0 for zero-centred color mapping)
     norm (str): type of normalisation ("TS", "N", "LOG")
+
+    Returns:
+    --------
+    map_colors:
+    cmap:
     
     Notes:
+    ------
     - function creates a normalisation based on the "norm" argument
     - creates a suitable colormap
     - maps data values based on the histogram bins
@@ -125,11 +144,11 @@ def color_map(data, cmap, vmin, vmax, n_bins=1000, vcenter=0, norm="TS"):
 def show_surface(surface, color=None, grid=False, menu=False, vertex_colors=None, info=False,
                  camera_view=None, height=512, opacity=1.0, coords=None, coord_size=1,
                  coord_color=None):
-    """
-    Renders a 3D surface with optional data overlay. The rendering is persistent and does not
+    """Renders a 3D surface with optional data overlay. The rendering is persistent and does not
     require an active kernel.
 
     Parameters:
+    -----------
     - surface (nibabel.gifti.GiftiImage): The Gifti surface mesh to be rendered.
     - color (array, optional): Basic color of the surface in the absence of data. Specified as a
                                decimal RGB array. Default is [166, 166, 166].
@@ -148,6 +167,7 @@ def show_surface(surface, color=None, grid=False, menu=False, vertex_colors=None
                                  0.0 being fully transparent. Default is 1.0.
 
     Returns:
+    --------
     - plot: A k3d plot object containing the rendered surface.
 
     This function utilizes the k3d library for rendering the surface. It supports customization of
@@ -210,14 +230,14 @@ def show_surface(surface, color=None, grid=False, menu=False, vertex_colors=None
 
 
 def plot_csd(csd, times, axis, colorbar=True, cmap="RdBu_r", vmin_vmax=None, n_layers=11):
-    """
-    Plot the computed Current Source Density (CSD) data.
+    """Plot the computed Current Source Density (CSD) data.
 
     This function takes a CSD matrix and plots it over a specified time range. It offers options
     for color normalization, colormap selection, and including a colorbar. Optionally, it can
     return plot details.
 
     Parameters:
+    -----------
     csd (numpy.ndarray): The CSD matrix to be plotted, with dimensions corresponding to
                          layers x time points.
     times (numpy.ndarray): A 1D array of time points corresponding to the columns of the CSD
@@ -233,9 +253,11 @@ def plot_csd(csd, times, axis, colorbar=True, cmap="RdBu_r", vmin_vmax=None, n_l
     n_layers (int): Number of layers in the CSD
 
     Returns:
+    --------
     csd_imshow: The imshow object of the plot.
 
     Notes:
+    ------
     - This function requires 'numpy', 'matplotlib.colors', and 'matplotlib.pyplot' libraries.
     - The 'TwoSlopeNorm' from 'matplotlib.colors' is used for diverging color normalization.
     - The aspect ratio of the plot is automatically set to 'auto' for appropriate time-layer
