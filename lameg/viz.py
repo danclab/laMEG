@@ -97,7 +97,7 @@ def rgbtoint(rgb):
     ------
     - function requires integer RGB (values 0-255)
     """
-    assert 0 <= rgb <= 255, "Requires integer RGB (values 0-255)"
+    assert np.all(0 <= rgb <= 255), "Requires integer RGB (values 0-255)"
     color = 0
     for rgb_val in rgb:
         color = (color << 8) + int(rgb_val)
