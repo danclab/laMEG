@@ -24,9 +24,6 @@ jobs:
         conda activate lameg
         pip install .
         pip install -r dev_requirements.txt
-        wget -c https://osf.io/mgz9q/download -O ${{ github.workspace }}/test_data.tar.gz
-        tar -xzf ${{ github.workspace }}/test_data.tar.gz -C ${{ github.workspace }}
-        rm ${{ github.workspace }}/test_data.tar.gz
       shell: bash -l {0}
 
     - name: Generate API documentation
