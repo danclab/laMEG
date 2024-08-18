@@ -35,10 +35,10 @@ apidoc:
 	@echo
 	@echo "Sources built. The sources are in _sources/"
 
-html:
-	$(SPHINXBUILD) -b html $(SOURCEDIR) _build/html
+html-noplot:
+	$(SPHINXBUILD) -D plot_gallery=0 -b html $(ALLSPHINXOPTS) $(SOURCEDIR) $(BUILDDIR)/html
 	@echo
-	@echo "Build finished. The HTML pages are in _build/html."
+	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
 doc: clean html
 
@@ -58,7 +58,3 @@ view:
 
 show: view
 
-html-noplot:
-	$(SPHINXBUILD) -D plot_gallery=0 -b html $(ALLSPHINXOPTS) $(SOURCEDIR) $(BUILDDIR)/html
-	@echo
-	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
