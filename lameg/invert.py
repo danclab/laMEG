@@ -16,7 +16,7 @@ from scipy.io import savemat
 from scipy.sparse import csc_matrix
 
 from lameg.util import load_meg_sensor_data, spm_context, batch
-import matlab # pylint: disable=wrong-import-order
+import matlab # pylint: disable=wrong-import-order,import-error
 
 
 def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, fid_labels=('nas', 'lpa', 'rpa'),
@@ -131,7 +131,6 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
     ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integer
                            number of channels)
     viz (boolean, optional): Whether or not to show SPM visualization. Default is True
-    mat_eng (matlab.engine.MatlabEngine, optional): Instance of MATLAB engine. Default is None.
     return_mu_matrix (boolean, optional): Whether or not to return the matrix needed to reconstruct
                                           source activity. Default is False
     spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
