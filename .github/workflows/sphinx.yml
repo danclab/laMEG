@@ -37,7 +37,7 @@ jobs:
       run: |
         conda activate lameg
         cd docs
-        make html
+        make html-noplot
       shell: bash -l {0}
 
     - name: Deploy to GitHub Pages
