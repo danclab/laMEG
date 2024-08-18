@@ -128,7 +128,7 @@ sphinx_gallery_conf = {
     "doc_module": ("laMEG",),
     'examples_dirs': ['../tutorials'],   # Path to your tutorials
     'gallery_dirs': ['auto_tutorials'],  # Path to where you want to store the generated output
-    'filename_pattern': 'tutorial_',
+    'filename_pattern': r'^(?!.*config\.py).*tutorial_',  # Exclude config.py
     'within_subsection_order': FileNameSortKey,
     'min_reported_time': 0,
     'remove_config_comments': True,
