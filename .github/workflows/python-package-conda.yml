@@ -30,7 +30,7 @@ jobs:
       run: |
         conda activate lameg
         pip install -r dev_requirements.txt
-        #pylint --rcfile=${{ github.workspace }}/.pylintrc --disable=too-many-arguments,too-many-locals $(git ls-files '*.py')
+        pylint --rcfile=${{ github.workspace }}/.pylintrc $(git ls-files '*.py')
       shell: bash -l {0}
 
     - name: Test with pytest
