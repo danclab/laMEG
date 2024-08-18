@@ -1,0 +1,725 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Surface processing &#8212; laMEG 0.2.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/thebelab.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'auto_tutorials/tutorial_01_surface_processing';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Laminar model comparison using free energy" href="tutorial_02_model_comparison_free_energy.html" />
+    <link rel="prev" title="&lt;no title&gt;" href="config.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../_static/logo.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+    <p class="title logo__title">lameg</p>
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="index.html">
+                        Tutorials gallery
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://github.com/danclab/laMEG">
+                    GitHub
+                  </a>
+                </li>
+                
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/danclab/laMEG" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/danc_labo" title="Twitter" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-twitter"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="index.html">
+                        Tutorials gallery
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://github.com/danclab/laMEG">
+                    GitHub
+                  </a>
+                </li>
+                
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/danclab/laMEG" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/danc_labo" title="Twitter" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-twitter"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Surface processing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_02_model_comparison_free_energy.html">Laminar model comparison using free energy</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumbs">
+  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Tutorials gallery</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">Surface processing</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-tutorials-tutorial-01-surface-processing-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="surface-processing">
+<span id="sphx-glr-auto-tutorials-tutorial-01-surface-processing-py"></span><h1>Surface processing<a class="headerlink" href="#surface-processing" title="Permalink to this heading">#</a></h1>
+<p><strong>*Create layer surfaces*</strong>
+# Uses FreeSurfer mris-inflate. Based on the number of surfaces you
+# specify. Each will be approximately equidistant. Vertex correspondence
+# is maintained, i.e each layer will have vertices along the vector
+# connecting a white matter surface vertex with the corresponding
+# pial surface vertex. Each surface will then be converted to gifti
+# format and the vertex coordinates will adjusted by the RAS at the
+# center of the volume to put them in native space.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
+<span class="kn">import</span> <span class="nn">k3d</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">lameg.viz</span> <span class="kn">import</span> <span class="n">show_surface</span><span class="p">,</span> <span class="n">rgbtoint</span>
+
+<span class="c1"># Get name of each mesh that makes up the layers of the multilayer mesh</span>
+<span class="n">n_layers</span> <span class="o">=</span> <span class="mi">11</span>
+<span class="n">layers</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">)</span>
+
+<span class="n">surf_path</span> <span class="o">=</span> <span class="s1">&#39;../test_data/sub-104/surf&#39;</span>
+<span class="n">layer_fnames</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">l</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">layers</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">layer</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">layer_fnames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">surf_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;lh.pial.gii&#39;</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">layer</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">layer</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">layer_name</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{:.3f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+        <span class="n">layer_fnames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">surf_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;lh.</span><span class="si">{</span><span class="n">layer_name</span><span class="si">}</span><span class="s1">.gii&#39;</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">layer</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">layer_fnames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">surf_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;lh.white.gii&#39;</span><span class="p">))</span>
+
+<span class="n">cam_view</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">143</span><span class="p">,</span> <span class="mi">14</span><span class="p">,</span> <span class="mf">31.5</span><span class="p">,</span>
+          <span class="o">-</span><span class="mi">32</span><span class="p">,</span> <span class="mf">22.5</span><span class="p">,</span> <span class="mf">38.5</span><span class="p">,</span>
+          <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">col_r</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">cool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">n_layers</span><span class="p">))</span>
+
+<span class="k">for</span> <span class="n">l_idx</span><span class="p">,</span><span class="n">layer_fname</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">layer_fnames</span><span class="p">):</span>
+    <span class="n">mesh</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">layer_fname</span><span class="p">)</span>
+    <span class="n">plot</span> <span class="o">=</span> <span class="n">show_surface</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">camera_view</span><span class="o">=</span><span class="n">cam_view</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col_r</span><span class="p">[</span><span class="n">l_idx</span><span class="p">,:</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="mi">255</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>*Remove deep vertices*</strong>
+Freesurfer operates on hemispheres independently, resulting in deep vertices and mesh faces cutting through subcortical structures. These are removed because they are not part of the cortical source space. Any vertex not labelled or labelled as unknown in the Desikan-Killiany atlas are removed. This is applied to each hemisphere of each layer mesh.</p>
+<p><strong>**Before**</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">surf_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">surf_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;lh.pial.gii&#39;</span><span class="p">)</span>
+
+<span class="n">cam_view</span><span class="o">=</span><span class="p">[</span><span class="mi">110</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">36</span><span class="p">,</span>
+          <span class="o">-</span><span class="mi">32</span><span class="p">,</span> <span class="mi">22</span><span class="p">,</span> <span class="mi">42</span><span class="p">,</span>
+          <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">col_r</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">cool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">n_layers</span><span class="p">))</span>
+
+<span class="n">mesh</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">surf_fname</span><span class="p">)</span>
+<span class="n">plot</span> <span class="o">=</span> <span class="n">show_surface</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">camera_view</span><span class="o">=</span><span class="n">cam_view</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col_r</span><span class="p">[</span><span class="mi">0</span><span class="p">,:</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="mi">255</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>**After**</strong></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">surf_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">surf_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;lh.pial.nodeep.gii&#39;</span><span class="p">)</span>
+
+<span class="n">mesh</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">surf_fname</span><span class="p">)</span>
+<span class="n">plot</span> <span class="o">=</span> <span class="n">show_surface</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">camera_view</span><span class="o">=</span><span class="n">cam_view</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col_r</span><span class="p">[</span><span class="mi">0</span><span class="p">,:</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="mi">255</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>*Combine hemispheres*</strong>
+The left and right hemisphere meshes are combined by concatenation of their vertices and faces (left then right). No new faces are created. This is done for each layer.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">surf_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">surf_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;pial.gii&#39;</span><span class="p">)</span>
+
+<span class="n">cam_view</span><span class="o">=</span><span class="p">[</span><span class="mi">13</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">217</span><span class="p">,</span>
+          <span class="mi">21</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">33</span><span class="p">,</span>
+          <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">col_r</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">cool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">n_layers</span><span class="p">))</span>
+
+<span class="n">mesh</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">surf_fname</span><span class="p">)</span>
+<span class="n">plot</span> <span class="o">=</span> <span class="n">show_surface</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">camera_view</span><span class="o">=</span><span class="n">cam_view</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col_r</span><span class="p">[</span><span class="mi">0</span><span class="p">,:</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="mi">255</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>*Downsample*</strong>
+The surfaces are much too dense to use in source reconstruction. They must be downsampled, but we must maintain vertex correspondence between them (see [Bonaiuto et al. 2020, Estimates of cortical column orientation improve MEG source inversion](<a class="reference external" href="https://doi.org/10.1016/j.neuroimage.2020.116862">https://doi.org/10.1016/j.neuroimage.2020.116862</a>)). The pial surface is therefore downsampled by a factor of 10 using the vtkDecimatePro algorithm, which only removes vertices rather than creating new ones. The removed vertices are also removed from each other layer mesh, and the face structure from the pial mesh is copied to them (though the faces are not used in the source reconstruction if link vector orientations are used).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">surf_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">surf_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;pial.ds.link_vector.fixed.gii&#39;</span><span class="p">)</span>
+
+<span class="n">cam_view</span><span class="o">=</span><span class="p">[</span><span class="mi">13</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">217</span><span class="p">,</span>
+          <span class="mi">21</span><span class="p">,</span> <span class="mi">21</span><span class="p">,</span> <span class="mi">33</span><span class="p">,</span>
+          <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+<span class="n">col_r</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">cool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">n_layers</span><span class="p">))</span>
+
+<span class="n">mesh</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">surf_fname</span><span class="p">)</span>
+<span class="n">plot</span> <span class="o">=</span> <span class="n">show_surface</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">camera_view</span><span class="o">=</span><span class="n">cam_view</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col_r</span><span class="p">[</span><span class="mi">0</span><span class="p">,:</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="mi">255</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>*Compute link vectors*</strong>
+The dipole orientation at each source location is computed. Downsampled surface normals, original surface normals, cortical patch statistics, or link vectors can be specified (see [Bonaiuto et al. 2020, Estimates of cortical column orientation improve MEG source inversion](<a class="reference external" href="https://doi.org/10.1016/j.neuroimage.2020.116862">https://doi.org/10.1016/j.neuroimage.2020.116862</a>)). The first three compute vertex normals based on the orientation of the surrounding faces. They can be either computed separately for each layer, or the pial surface orientations can be used for all layers. The link vectors method computes vectors connecting corresponding pial and white matter vertices (pointing toward the white matter), which are therefore the same across layer. The orientation vectors are stored in the normals attribute of the gifti object.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">plot</span> <span class="o">=</span> <span class="n">k3d</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">grid_visible</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">menu_visibility</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">camera_auto_fit</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
+<span class="n">pial_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">surf_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;pial.ds.link_vector.fixed.gii&#39;</span><span class="p">)</span>
+<span class="n">pial_surf</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">pial_fname</span><span class="p">)</span>
+<span class="n">pial_vertices</span><span class="p">,</span> <span class="n">pial_faces</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">pial_surf</span><span class="o">.</span><span class="n">agg_data</span><span class="p">()</span>
+
+<span class="n">white_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">surf_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;white.ds.link_vector.fixed.gii&#39;</span><span class="p">)</span>
+<span class="n">white_surf</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">white_fname</span><span class="p">)</span>
+<span class="n">white_vertices</span><span class="p">,</span> <span class="n">white_faces</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">white_surf</span><span class="o">.</span><span class="n">agg_data</span><span class="p">()</span>
+
+<span class="n">cam_view</span><span class="o">=</span><span class="p">[</span><span class="mi">70</span><span class="p">,</span> <span class="mf">40.5</span><span class="p">,</span> <span class="mf">76.5</span><span class="p">,</span>
+          <span class="mf">22.5</span><span class="p">,</span> <span class="mi">26</span><span class="p">,</span> <span class="mf">73.5</span><span class="p">,</span>
+          <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+<span class="n">col_r</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">cool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">n_layers</span><span class="p">))</span>
+
+<span class="n">pial_mesh</span> <span class="o">=</span> <span class="n">k3d</span><span class="o">.</span><span class="n">mesh</span><span class="p">(</span><span class="n">pial_vertices</span><span class="p">,</span> <span class="n">pial_faces</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s2">&quot;double&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">rgbtoint</span><span class="p">(</span><span class="n">col_r</span><span class="p">[</span><span class="mi">0</span><span class="p">,:</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="mi">255</span><span class="p">),</span> <span class="n">opacity</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">plot</span> <span class="o">+=</span> <span class="n">pial_mesh</span>
+
+<span class="n">white_mesh</span> <span class="o">=</span> <span class="n">k3d</span><span class="o">.</span><span class="n">mesh</span><span class="p">(</span><span class="n">white_vertices</span><span class="p">,</span> <span class="n">white_faces</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s2">&quot;double&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">rgbtoint</span><span class="p">(</span><span class="n">col_r</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,:</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="mi">255</span><span class="p">),</span> <span class="n">opacity</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">plot</span> <span class="o">+=</span> <span class="n">white_mesh</span>
+
+<span class="n">dipole_vectors</span> <span class="o">=</span> <span class="n">k3d</span><span class="o">.</span><span class="n">vectors</span><span class="p">(</span>
+    <span class="n">white_vertices</span><span class="p">,</span>
+    <span class="n">vectors</span><span class="o">=</span><span class="n">pial_vertices</span> <span class="o">-</span> <span class="n">white_vertices</span><span class="p">,</span>
+    <span class="n">head_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+    <span class="n">line_width</span><span class="o">=</span><span class="mf">0.1</span>
+<span class="p">)</span>
+<span class="n">plot</span> <span class="o">+=</span> <span class="n">dipole_vectors</span>
+
+<span class="n">plot</span><span class="o">.</span><span class="n">camera</span><span class="o">=</span><span class="n">cam_view</span>
+
+<span class="n">plot</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+</pre></div>
+</div>
+<p><strong>*Combine layers*</strong>
+The layer meshes are then combined into a single mesh by concatenating their vertices and faces (from pial to white matter). No new faces are created (i.e. there are no edges connecting vertices across layers)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">layer_fnames</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">l</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">layers</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">layer</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">layer_fnames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">surf_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;pial.ds.link_vector.fixed.gii&#39;</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">layer</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">layer</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">layer_name</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">{:.3f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+        <span class="n">layer_fnames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">surf_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">layer_name</span><span class="si">}</span><span class="s1">.ds.link_vector.fixed.gii&#39;</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">layer</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">layer_fnames</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">surf_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;white.ds.link_vector.fixed.gii&#39;</span><span class="p">))</span>
+
+<span class="n">col_r</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">cool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">n_layers</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+
+<span class="n">plot</span> <span class="o">=</span> <span class="n">k3d</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">grid_visible</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">menu_visibility</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">camera_auto_fit</span><span class="o">=</span><span class="kc">False</span>
+<span class="p">)</span>
+
+<span class="k">for</span> <span class="n">l_idx</span><span class="p">,</span><span class="n">layer_fname</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">layer_fnames</span><span class="p">):</span>
+    <span class="n">surface</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">layer_fname</span><span class="p">)</span>
+    <span class="n">vertices</span><span class="p">,</span> <span class="n">faces</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">surface</span><span class="o">.</span><span class="n">agg_data</span><span class="p">()</span>
+
+    <span class="n">mesh</span> <span class="o">=</span> <span class="n">k3d</span><span class="o">.</span><span class="n">mesh</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">faces</span><span class="p">,</span> <span class="n">side</span><span class="o">=</span><span class="s2">&quot;double&quot;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">rgbtoint</span><span class="p">(</span><span class="n">col_r</span><span class="p">[</span><span class="n">l_idx</span><span class="p">,:</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="mi">255</span><span class="p">),</span> <span class="n">opacity</span><span class="o">=</span><span class="n">l_idx</span><span class="o">/</span><span class="p">(</span><span class="n">n_layers</span><span class="o">-</span><span class="mi">1</span><span class="p">))</span>
+    <span class="n">plot</span> <span class="o">+=</span> <span class="n">mesh</span>
+
+<span class="n">plot</span><span class="o">.</span><span class="n">camera</span><span class="o">=</span><span class="n">cam_view</span>
+
+<span class="n">plot</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
+</pre></div>
+</div>
+<p># Putting it all together
+All of these steps can be run using the function:
+&gt; postprocess_freesurfer_surfaces</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lameg.surf</span> <span class="kn">import</span> <span class="n">postprocess_freesurfer_surfaces</span>
+</pre></div>
+</div>
+<p>Create a 2-layer surface (only pial and white)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">postprocess_freesurfer_surfaces</span><span class="p">(</span>
+    <span class="s1">&#39;sub-104&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;../test_data/sub-104/surf&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;multilayer.2.ds.link_vector.fixed.gii&#39;</span><span class="p">,</span>
+    <span class="n">n_surfaces</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">ds_factor</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;link_vector&#39;</span><span class="p">,</span>
+    <span class="n">remove_deep</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Create an 11-layer surface</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">postprocess_freesurfer_surfaces</span><span class="p">(</span>
+    <span class="s1">&#39;sub-104&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;../test_data/sub-104/surf&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;multilayer.11.ds.link_vector.fixed.gii&#39;</span><span class="p">,</span>
+    <span class="n">n_surfaces</span><span class="o">=</span><span class="mi">11</span><span class="p">,</span>
+    <span class="n">ds_factor</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;link_vector&#39;</span><span class="p">,</span>
+    <span class="n">remove_deep</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Create a 15-layer surface</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">postprocess_freesurfer_surfaces</span><span class="p">(</span>
+    <span class="s1">&#39;sub-104&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;../test_data/sub-104/surf&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;multilayer.15.ds.link_vector.fixed.gii&#39;</span><span class="p">,</span>
+    <span class="n">n_surfaces</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span>
+    <span class="n">ds_factor</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;link_vector&#39;</span><span class="p">,</span>
+    <span class="n">remove_deep</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 0.000 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-tutorial-01-surface-processing-py">
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/e58200fb0c8954d6da6a103f46247fb5/tutorial_01_surface_processing.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">tutorial_01_surface_processing.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../_downloads/7e0d5e4edb47004b111f7cbd92d9e1ec/tutorial_01_surface_processing.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">tutorial_01_surface_processing.ipynb</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+
+
+                </article>
+              
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="config.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">&lt;no title&gt;</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="tutorial_02_model_comparison_free_energy.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Laminar model comparison using free energy</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/danclab/laMEG/edit/master/doc/auto_tutorials/tutorial_01_surface_processing.rst">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div class="tocsection sourcelink">
+    <a href="../_sources/auto_tutorials/tutorial_01_surface_processing.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright 2024, DANC lab.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.3.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

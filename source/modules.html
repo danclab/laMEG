@@ -1,0 +1,559 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>lameg &#8212; laMEG 0.2.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/thebelab.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'source/modules';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../_static/logo.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+    <p class="title logo__title">lameg</p>
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../auto_tutorials/index.html">
+                        Tutorials gallery
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://github.com/danclab/laMEG">
+                    GitHub
+                  </a>
+                </li>
+                
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/danclab/laMEG" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/danc_labo" title="Twitter" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-twitter"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../auto_tutorials/index.html">
+                        Tutorials gallery
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://github.com/danclab/laMEG">
+                    GitHub
+                  </a>
+                </li>
+                
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/danclab/laMEG" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/danc_labo" title="Twitter" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-twitter"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumbs">
+  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">lameg</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="lameg">
+<h1>lameg<a class="headerlink" href="#lameg" title="Permalink to this heading">#</a></h1>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="lameg.html">lameg package</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="lameg.html#submodules">Submodules</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg.invert">lameg.invert module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.coregister"><code class="docutils literal notranslate"><span class="pre">coregister()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.invert_ebb"><code class="docutils literal notranslate"><span class="pre">invert_ebb()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.invert_msp"><code class="docutils literal notranslate"><span class="pre">invert_msp()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.invert_sliding_window"><code class="docutils literal notranslate"><span class="pre">invert_sliding_window()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.load_source_time_series"><code class="docutils literal notranslate"><span class="pre">load_source_time_series()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg.laminar">lameg.laminar module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.laminar.compute_csd"><code class="docutils literal notranslate"><span class="pre">compute_csd()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.laminar.model_comparison"><code class="docutils literal notranslate"><span class="pre">model_comparison()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.laminar.roi_power_comparison"><code class="docutils literal notranslate"><span class="pre">roi_power_comparison()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.laminar.sliding_window_model_comparison"><code class="docutils literal notranslate"><span class="pre">sliding_window_model_comparison()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg.simulate">lameg.simulate module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#key-features">Key Features:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#examples-of-use">Examples of use:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.simulate.run_current_density_simulation"><code class="docutils literal notranslate"><span class="pre">run_current_density_simulation()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.simulate.run_dipole_simulation"><code class="docutils literal notranslate"><span class="pre">run_dipole_simulation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg.surf">lameg.surf module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.combine_surfaces"><code class="docutils literal notranslate"><span class="pre">combine_surfaces()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.compute_dipole_orientations"><code class="docutils literal notranslate"><span class="pre">compute_dipole_orientations()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.create_layer_mesh"><code class="docutils literal notranslate"><span class="pre">create_layer_mesh()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.create_surf_gifti"><code class="docutils literal notranslate"><span class="pre">create_surf_gifti()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.downsample_multiple_surfaces"><code class="docutils literal notranslate"><span class="pre">downsample_multiple_surfaces()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.downsample_single_surface"><code class="docutils literal notranslate"><span class="pre">downsample_single_surface()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.find_non_manifold_edges"><code class="docutils literal notranslate"><span class="pre">find_non_manifold_edges()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.fix_non_manifold_edges"><code class="docutils literal notranslate"><span class="pre">fix_non_manifold_edges()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.interpolate_data"><code class="docutils literal notranslate"><span class="pre">interpolate_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.iterative_downsample_single_surface"><code class="docutils literal notranslate"><span class="pre">iterative_downsample_single_surface()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.mesh_adjacency"><code class="docutils literal notranslate"><span class="pre">mesh_adjacency()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.mesh_normals"><code class="docutils literal notranslate"><span class="pre">mesh_normals()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.postprocess_freesurfer_surfaces"><code class="docutils literal notranslate"><span class="pre">postprocess_freesurfer_surfaces()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.remove_unconnected_vertices"><code class="docutils literal notranslate"><span class="pre">remove_unconnected_vertices()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.remove_vertices"><code class="docutils literal notranslate"><span class="pre">remove_vertices()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.split_fv"><code class="docutils literal notranslate"><span class="pre">split_fv()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg.util">lameg.util module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#key-functionalities">Key functionalities:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.batch"><code class="docutils literal notranslate"><span class="pre">batch()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.big_brain_proportional_layer_boundaries"><code class="docutils literal notranslate"><span class="pre">big_brain_proportional_layer_boundaries()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.calc_prop"><code class="docutils literal notranslate"><span class="pre">calc_prop()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.check_many"><code class="docutils literal notranslate"><span class="pre">check_many()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.convert_fsaverage_to_native"><code class="docutils literal notranslate"><span class="pre">convert_fsaverage_to_native()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.convert_native_to_fsaverage"><code class="docutils literal notranslate"><span class="pre">convert_native_to_fsaverage()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.ctf_fif_spm_conversion"><code class="docutils literal notranslate"><span class="pre">ctf_fif_spm_conversion()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.get_bigbrain_layer_boundaries"><code class="docutils literal notranslate"><span class="pre">get_bigbrain_layer_boundaries()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.get_directories"><code class="docutils literal notranslate"><span class="pre">get_directories()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.get_fiducial_coords"><code class="docutils literal notranslate"><span class="pre">get_fiducial_coords()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.get_files"><code class="docutils literal notranslate"><span class="pre">get_files()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.get_surface_names"><code class="docutils literal notranslate"><span class="pre">get_surface_names()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.load_meg_sensor_data"><code class="docutils literal notranslate"><span class="pre">load_meg_sensor_data()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.make_directory"><code class="docutils literal notranslate"><span class="pre">make_directory()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.spm_context"><code class="docutils literal notranslate"><span class="pre">spm_context()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.ttest_rel_corrected"><code class="docutils literal notranslate"><span class="pre">ttest_rel_corrected()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg.viz">lameg.viz module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#functions">Functions:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#utilities">Utilities:</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.viz.color_map"><code class="docutils literal notranslate"><span class="pre">color_map()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.viz.data_to_rgb"><code class="docutils literal notranslate"><span class="pre">data_to_rgb()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.viz.plot_csd"><code class="docutils literal notranslate"><span class="pre">plot_csd()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.viz.rgbtoint"><code class="docutils literal notranslate"><span class="pre">rgbtoint()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.viz.show_surface"><code class="docutils literal notranslate"><span class="pre">show_surface()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg">Module contents</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</section>
+
+
+                </article>
+              
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/danclab/laMEG/edit/master/doc/source/modules.rst">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div class="tocsection sourcelink">
+    <a href="../_sources/source/modules.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright 2024, DANC lab.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.3.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
