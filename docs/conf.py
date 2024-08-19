@@ -28,7 +28,7 @@ import lameg # noqa
 project = 'laMEG'
 copyright = '2024, DANC lab'
 author = 'DANC lab'
-release = "0.2.0"
+release = "0.0.3"
 # version = "0.2.0"
 
 # release = lameg.__release__
@@ -118,7 +118,7 @@ html_context = {
     "github_user": "danclab",
     "github_repo": "laMEG",
     "github_version": "master",
-    "doc_path": "doc",
+    "doc_path": "docs",
 }
 
 # -- Options for Sphinx-gallery HTML ------------------------------------------
@@ -128,7 +128,7 @@ sphinx_gallery_conf = {
     "doc_module": ("laMEG",),
     'examples_dirs': ['../tutorials'],   # Path to your tutorials
     'gallery_dirs': ['auto_tutorials'],  # Path to where you want to store the generated output
-    'filename_pattern': r'^(?!.*config\.py).*tutorial_',  # Exclude config.py
+    'filename_pattern': 'tutorial_',
     'within_subsection_order': FileNameSortKey,
     'min_reported_time': 0,
     'remove_config_comments': True,
