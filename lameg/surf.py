@@ -17,19 +17,6 @@ Key functionalities include:
 - Interpolation of data from a downsampled mesh back to its original high-resolution mesh.
 - Downsampling of meshes using VTK's decimation algorithms.
 - Combination and adjustment of multiple surface meshes into a single mesh.
-
-The module supports processing of both individual and multiple surfaces, ensuring that operations
-like downsampling, normal computation, and vertex manipulation are optimized for performance and
-applicability in both research and clinical environments.
-
-Example:
-    >>> import numpy as np
-    >>> import nibabel as nib
-    >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]])
-    >>> faces = np.array([[0, 1, 2], [0, 2, 3]])
-    >>> normals = np.array([[0, 0, 1], [0, 0, 1], [0, 0, 1], [0, 0, 1]])
-    >>> gifti_img = create_surf_gifti(vertices, faces, normals)
-
 """
 
 # pylint: disable=C0302
@@ -52,42 +39,49 @@ from vtkmodules.vtkCommonDataModel import vtkPolyData, vtkCellArray
 from vtkmodules.vtkFiltersCore import vtkDecimatePro
 from vtkmodules.util.numpy_support import vtk_to_numpy
 
-
 def _normit(vectors):
-    """Normalize a numpy array of vectors.
+    """
+    Normalize a numpy array of vectors.
 
-    This function normalizes each row in the array vectors to have a unit length. If the length of
+    This function normalizes each row in the array of vectors to have unit length. If the length of
     a vector is below a certain threshold (machine epsilon), it is set to 1 to avoid division by
     zero.
 
-    Parameters:
-    --------------
-    vectors (ndarray): Array of vectors to be normalized. Each row represents a vector.
+    Parameters
+    ----------
+    vectors : ndarray
+        Array of vectors to be normalized. Each row represents a vector.
 
-    Returns:
-    --------------
-    ndarray: Normalized array of vectors where each row has unit length.
+    Returns
+    -------
+    ndarray
+        Normalized array of vectors where each row has unit length.
     """
+
     norm_n = np.sqrt(np.sum(vectors ** 2, axis=1))
     norm_n[norm_n < np.finfo(float).eps] = 1
     return vectors / norm_n[:, np.newaxis]
 
 
 def mesh_normals(vertices, faces, unit=False):
-    """This function computes the normals of a mesh.
-
-    Parameters:
-    --------------
-    vertices (ndarray): Array of vertices of the mesh. Each row represents a vertex.
-    faces (ndarray): Array of faces of the mesh. Each row represents a face with indices to the
-                     vertices array.
-    unit (bool, optional): If True, the normals are normalized to unit length. Default is False.
-
-    Returns:
-    --------------
-    vertex_normal: Normal vectors for each vertex.
-    face_normal: Normal vectors for each face.
     """
+    Normalize a numpy array of vectors.
+
+    This function normalizes each row in the array of vectors to have unit length. If the length of
+    a vector is below a certain threshold (machine epsilon), it is set to 1 to avoid division by
+    zero.
+
+    Parameters
+    ----------
+    vectors : ndarray
+        Array of vectors to be normalized. Each row represents a vector.
+
+    Returns
+    -------
+    ndarray
+        Normalized array of vectors where each row has unit length.
+    """
+
     face_normal = np.cross(
         vertices[faces[:, 1], :] - vertices[faces[:, 0], :],
         vertices[faces[:, 2], :] - vertices[faces[:, 0], :]
@@ -113,30 +107,35 @@ def mesh_normals(vertices, faces, unit=False):
 
 
 def create_surf_gifti(vertices, faces, normals=None):
-    """Create a Gifti image object from surface mesh data.
+    """
+    Create a Gifti image object from surface mesh data.
 
     This function creates a GiftiImage object from the provided vertices, faces, and optional
     normals. The vertices and faces are required, while normals are optional. If normals are
     provided, they are added to the Gifti image. The function returns the GiftiImage object.
 
-    Parameters:
-    --------------
-    vertices (numpy.ndarray): Array of vertices. Each row represents a vertex with its x, y, z
-                              coordinates.
-    faces (numpy.ndarray): Array of faces. Each row represents a face with three integers
-                           corresponding to vertex indices.
-    normals (numpy.ndarray, optional): Array of vertex normals. Each row represents a normal vector
-                                       corresponding to a vertex.
+    Parameters
+    ----------
+    vertices : numpy.ndarray
+        Array of vertices. Each row represents a vertex with its x, y, z coordinates.
+    faces : numpy.ndarray
+        Array of faces. Each row represents a face with three integers corresponding to vertex
+        indices.
+    normals : numpy.ndarray, optional
+        Array of vertex normals. Each row represents a normal vector corresponding to a vertex.
 
-    Returns:
-    --------------
-    new_gifti: The GiftiImage object created from the provided mesh data.
+    Returns
+    -------
+    new_gifti : nibabel.gifti.GiftiImage
+        The GiftiImage object created from the provided mesh data.
 
-    Notes:
+    Notes
+    -----
     - Vertex, face, and normal arrays should be NumPy arrays.
     - Vertices and normals should be in float32 format, and faces should be in int32 format.
 
-    Example:
+    Example
+    -------
     >>> import numpy as np
     >>> import nibabel as nib
     >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]])
@@ -179,17 +178,20 @@ def create_surf_gifti(vertices, faces, normals=None):
 
 
 def remove_unconnected_vertices(gifti_surf):
-    """Removes vertices that are not connected to any faces from a Gifti surface object.
-
-    Parameters:
-    -------------
-    gifti_surf (nibabel.gifti.GiftiImage): The Gifti surface object to be processed.
-
-    Returns:
-    -------------
-    cleaned_gifti_surf (nibabel.gifti.GiftiImage): A new GiftiImage object with unconnected
-                                                   vertices removed.
     """
+    Remove vertices that are not connected to any faces from a Gifti surface object.
+
+    Parameters
+    ----------
+    gifti_surf : nibabel.gifti.GiftiImage
+        The Gifti surface object to be processed.
+
+    Returns
+    -------
+    cleaned_gifti_surf : nibabel.gifti.GiftiImage
+        A new GiftiImage object with unconnected vertices removed.
+    """
+
     # Get the pointset (vertices) and triangle array (faces) from the Gifti surface
     vertices = gifti_surf.darrays[0].data
     faces = gifti_surf.darrays[1].data
@@ -208,25 +210,27 @@ def remove_unconnected_vertices(gifti_surf):
 
 
 def remove_vertices(gifti_surf, vertices_to_remove):
-    """Remove specified vertices from a Gifti surface and update the faces accordingly.
+    """
+    Remove specified vertices from a Gifti surface and update the faces accordingly.
 
     This function modifies a Gifti surface by removing the specified vertices. It also updates
     the faces of the surface so that they only reference the remaining vertices. If normals
     are present in the surface, they are also updated to correspond to the new set of vertices.
 
-    Parameters:
-    -------------
-    gifti_surf (nibabel.gifti.GiftiImage): The Gifti surface object from which vertices will be
-                                           removed.
-    vertices_to_remove (array_like): An array of vertex indices to be removed from the surface.
+    Parameters
+    ----------
+    gifti_surf : nibabel.gifti.GiftiImage
+        The Gifti surface object from which vertices will be removed.
+    vertices_to_remove : array_like
+        An array of vertex indices to be removed from the surface.
 
-    Returns:
-    -------------
-    new_gifti (nibabel.gifti.GiftiImage): A new GiftiImage object with the specified vertices
-                                          removed and faces updated.
+    Returns
+    -------
+    new_gifti : nibabel.gifti.GiftiImage
+        A new GiftiImage object with the specified vertices removed and faces updated.
 
-    Notes:
-    -------------
+    Notes
+    -----
     - The function assumes that the GiftiImage object contains at least two data arrays: one for
       vertices and one for faces. If normals are present, they are also updated.
     - Vertex indices in `vertices_to_remove` should be zero-based (following Python's indexing
@@ -234,8 +238,8 @@ def remove_vertices(gifti_surf, vertices_to_remove):
     - The returned GiftiImage object is a new object; the original `gifti_surf` object is not
       modified in place.
 
-    Example:
-    -------------
+    Example
+    -------
     >>> import nibabel as nib
     >>> gifti_surf = nib.load('path_to_gifti_file.gii')
     >>> vertices_to_remove = np.array([0, 2, 5])  # Indices of vertices to remove
@@ -283,27 +287,31 @@ def remove_vertices(gifti_surf, vertices_to_remove):
 
 
 def find_non_manifold_edges(faces):
-    """Identifies non-manifold edges in a given mesh represented by its faces.
+    """
+    Identify non-manifold edges in a given mesh represented by its faces.
 
     A non-manifold edge is defined as an edge that is shared by more than two faces. This function
     processes an array of faces, each face represented by a tuple of vertex indices, and identifies
     edges that meet the non-manifold criteria.
 
-    Parameters:
-    -----------
-    faces (np.ndarray): An array where each row represents a face as a tuple of three vertex
-                        indices.
+    Parameters
+    ----------
+    faces : np.ndarray
+        An array where each row represents a face as a tuple of three vertex indices.
 
-    Returns:
-    --------
-    non_manifold_edges (dict): A dictionary where keys are tuples representing non-manifold edges
-                               (vertices indices are sorted), and values are lists of face indices
-                               that share the edge.
+    Returns
+    -------
+    non_manifold_edges : dict
+        A dictionary where keys are tuples representing non-manifold edges (vertex indices are
+        sorted), and values are lists of face indices that share the edge.
 
-    The function uses a defaultdict to collect face indices for each edge encountered in the mesh.
+    Notes
+    -----
+    The function uses a `defaultdict` to collect face indices for each edge encountered in the mesh.
     It then filters out edges that are associated with more than two faces, identifying them as
     non-manifold.
     """
+
     edge_faces = defaultdict(list)
 
     for i, (vertex_1, vertex_2, vertex_3) in enumerate(faces):
@@ -315,34 +323,36 @@ def find_non_manifold_edges(faces):
 
 
 def fix_non_manifold_edges(vertices, faces):
-    """Removes faces associated with non-manifold edges from a mesh defined by vertices and faces.
+    """
+    Remove faces associated with non-manifold edges from a mesh defined by vertices and faces.
 
     Non-manifold edges are edges that are shared by more than two faces, which can cause issues
     in various mesh processing tasks such as mesh simplification, smoothing, or 3D printing. This
     function identifies such edges and removes all faces associated with them to ensure
     manifoldness of the mesh.
 
-    Parameters:
-    -----------
-    vertices (np.ndarray): An array of vertices, where each row represents a vertex as [x, y, z]
-                           coordinates.
-    faces (np.ndarray): An array of faces, where each row represents a face as indices into the
-                        vertices array.
+    Parameters
+    ----------
+    vertices : np.ndarray
+        An array of vertices, where each row represents a vertex as [x, y, z] coordinates.
+    faces : np.ndarray
+        An array of faces, where each row represents a face as indices into the vertices array.
 
-    Returns:
+    Returns
+    -------
+    vertices : np.ndarray
+        The unchanged array of vertices.
+    new_faces : np.ndarray
+        The modified array of faces, with faces associated with non-manifold edges removed.
+
+    Examples
     --------
-    vertices (np.ndarray): The unchanged array of vertices.
-    NEW_FACES (np.ndarray): The modified array of faces, with faces associated with non-manifold
-                            edges removed.
-
-    Examples:
-    ---------
     >>> vertices = np.array([[0, 0, 0], [1, 0, 0], [1, 1, 0], [0, 1, 0]])
     >>> faces = np.array([[0, 1, 2], [0, 2, 3], [1, 2, 3]])
     >>> new_vertices, new_faces = fix_non_manifold_edges(vertices, faces)
     >>> new_faces
     array([[0, 1, 2], [0, 2, 3]])  # Assuming face [1, 2, 3] was associated with a non-manifold
-                                   # edge
+    edge.
     """
 
     non_manifold_edges = find_non_manifold_edges(faces)
@@ -359,33 +369,36 @@ def fix_non_manifold_edges(vertices, faces):
 
 
 def downsample_single_surface(gifti_surf, ds_factor=0.1):
-    """Downsample a Gifti surface using the VTK library.
+    """
+    Downsample a Gifti surface using the VTK library.
 
     This function takes a Gifti surface defined by its vertices and faces, and downsamples it using
-    VTK's vtkDecimatePro algorithm. The reduction ratio determines the degree of downsampling.
+    VTK's `vtkDecimatePro` algorithm. The reduction ratio determines the degree of downsampling.
     The function returns the downsampled Gifti surface.
 
-    Parameters:
-    -----------
-    gifti_surf (nibabel.gifti.GiftiImage): The Gifti surface object from which vertices will be
-                                           removed.
-    reduction_ratio (float): The proportion of the mesh to remove. For example, a reduction ratio
-                             of 0.1 retains 90% of the original mesh.
+    Parameters
+    ----------
+    gifti_surf : nibabel.gifti.GiftiImage
+        The Gifti surface object to be downsampled.
+    reduction_ratio : float
+        The proportion of the mesh to remove. For example, a reduction ratio of 0.1 retains 90% of
+        the original mesh.
 
-    Returns:
-    --------
-    new_gifti_surf (nibabel.gifti.GiftiImage): A new GiftiImage object with the downsampled surface.
+    Returns
+    -------
+    new_gifti_surf : nibabel.gifti.GiftiImage
+        A new GiftiImage object with the downsampled surface.
 
-    Notes:
-    ------
+    Notes
+    -----
     - The input faces array should be triangulated, i.e., each face should consist of exactly three
       vertex indices.
     - The VTK library is used for mesh decimation, which must be installed and properly configured.
     - The returned GiftiImage object is a new object; the original `gifti_surf` object is not
       modified in place.
 
-    Example:
-    --------
+    Example
+    -------
     >>> import numpy as np
     >>> gifti_surf = nib.load('path_to_gifti_file.gii')
     >>> new_gifti_surf = downsample_single_surface(gifti_surf, 0.1)
@@ -443,30 +456,34 @@ def downsample_single_surface(gifti_surf, ds_factor=0.1):
 
 
 def iterative_downsample_single_surface(gifti_surf, ds_factor=0.1):
-    """Iteratively downsample a single surface mesh to a target number of vertices.
+    """
+    Iteratively downsample a single surface mesh to a target number of vertices.
 
     This function reduces the number of vertices in a surface mesh (in GIFTI format) to a specified
     fraction of its original size. Downsampling is performed iteratively until the target number of
     vertices is reached or closely approximated.
 
-    Parameters:
-    -----------
-    gifti_surf (nibabel.gifti.GiftiImage): The surface mesh to be downsampled, provided as a GIFTI
-                                            image object.
-    ds_factor (float, optional): The downsampling factor representing the target fraction of the
-                                original number of vertices. Default is 0.1.
+    Parameters
+    ----------
+    gifti_surf : nibabel.gifti.GiftiImage
+        The surface mesh to be downsampled, provided as a GIFTI image object.
+    ds_factor : float, optional
+        The downsampling factor representing the target fraction of the original number of vertices.
+        Default is 0.1.
 
-    Returns:
-    --------
-    current_surf (nibabel.gifti.GiftiImage): The downsampled surface mesh as a GIFTI image object.
+    Returns
+    -------
+    current_surf : nibabel.gifti.GiftiImage
+        The downsampled surface mesh as a GIFTI image object.
 
-    Notes:
-    ------
+    Notes
+    -----
     - The downsampling process is iterative. In each iteration, the mesh is downsampled by a factor
-        calculated to approach the target number of vertices.
+      calculated to approach the target number of vertices.
     - If the calculated downsampling factor in an iteration equals or exceeds 1, the process is
-        terminated to prevent upsampling or infinite loops.
-   """
+      terminated to prevent upsampling or infinite loops.
+    """
+
     current_surf = gifti_surf
     current_vertices = gifti_surf.darrays[0].data.shape[0]
     target_vertices = int(current_vertices * ds_factor)
@@ -503,25 +520,29 @@ def iterative_downsample_single_surface(gifti_surf, ds_factor=0.1):
 
 
 def downsample_multiple_surfaces(in_surfs, ds_factor):
-    """Downampled multiple surface meshes using the VTK decimation algorithm.
+    """
+    Downsample multiple surface meshes using the VTK decimation algorithm.
 
-    This function takes a list of input surface meshes (in Gifti format) and applies a dowsampling
-    process to each surface. The downsampling is performed using VTK's vtkDecimatePro algorithm.
+    This function takes a list of input surface meshes (in Gifti format) and applies a downsampling
+    process to each surface. The downsampling is performed using VTK's `vtkDecimatePro` algorithm.
     The first surface in the list is downsampled, and its vertex mapping is then applied to all
     other surfaces in the list. The function returns a list of downsampled surface meshes.
 
-    Parameters:
-    -----------
-    in_surfs (list of nibabel.gifti.GiftiImage): Input Gifti surface meshes to be downsampled.
-    ratio (float): The reduction ratio for the downsampling process. For example, a ratio of 0.1
-                   implies that the mesh will be reduced to 90% of its original size.
+    Parameters
+    ----------
+    in_surfs : list of nibabel.gifti.GiftiImage
+        Input Gifti surface meshes to be downsampled.
+    ratio : float
+        The reduction ratio for the downsampling process. For example, a ratio of 0.1
+        implies that the mesh will be reduced to 90% of its original size.
 
-    Returns:
-    --------
-    out_surfs (list of nibabel.gifti.GiftiImage): List of downsampled Gifti surface meshes.
+    Returns
+    -------
+    out_surfs : list of nibabel.gifti.GiftiImage
+        List of downsampled Gifti surface meshes.
 
-    Notes:
-    ------
+    Notes
+    -----
     - The function prints the percentage of vertices retained in the first surface after
       downsampling.
     - If normals are present in the input surfaces, they are also downsampled and mapped to the
@@ -529,15 +550,16 @@ def downsample_multiple_surfaces(in_surfs, ds_factor):
     - The resulting surfaces maintain the original topology and are suitable for visualization and
       further processing.
 
-    Example:
-    --------
+    Example
+    -------
     >>> import nibabel as nib
     >>> in_surfs = [nib.load('path/to/input_surf1.gii'), nib.load('path/to/input_surf2.gii')]
     >>> ratio = 0.1
-    >>> out_surfs = downsample_multiple_surfaces(in_surfs, ds_factor)
+    >>> out_surfs = downsample_multiple_surfaces(in_surfs, ratio)
     >>> for i, ds_surf in enumerate(out_surfs):
     ...     nib.save(ds_surf, f'path/to/output_surf{i+1}.gii')
     """
+
     out_surfs = []
 
     primary_surf = in_surfs[0]
@@ -578,33 +600,37 @@ def downsample_multiple_surfaces(in_surfs, ds_factor):
 
 
 def combine_surfaces(surfaces):
-    """Combine multiple surface meshes into a single surface mesh.
+    """
+    Combine multiple surface meshes into a single surface mesh.
 
     This function takes a list of Gifti surface meshes and combines them into a single surface
     mesh. It concatenates the vertices, faces, and normals (if present) from each surface. The
     faces are re-indexed appropriately to maintain the correct references to the combined vertex
     array.
 
-    Parameters:
-    -----------
-    surfaces (list of nibabel.gifti.GiftiImage): List of Gifti surface meshes to be combined.
+    Parameters
+    ----------
+    surfaces : list of nibabel.gifti.GiftiImage
+        List of Gifti surface meshes to be combined.
 
-    Returns:
-    --------
-    combined_surf (nibabel.gifti.GiftiImage): A single combined Gifti surface mesh.
+    Returns
+    -------
+    combined_surf : nibabel.gifti.GiftiImage
+        A single combined Gifti surface mesh.
 
-    Notes:
-    ------
+    Notes
+    -----
     - The vertices, faces, and normals (if present) from each surface are concatenated.
     - The faces are re-indexed to reference the correct vertices in the combined vertex array.
     - If normals are present in any of the input surfaces, they are also combined.
 
-    Raises:
-    -------
-    ValueError: If the vertex or face arrays do not have the expected dimensions.
+    Raises
+    ------
+    ValueError
+        If the vertex or face arrays do not have the expected dimensions.
 
-    Example:
-    --------
+    Example
+    -------
     >>> import nibabel as nib
     >>> surfaces = [nib.load('path/to/surface1.gii'), nib.load('path/to/surface2.gii')]
     >>> combined_surf = combine_surfaces(surfaces)
@@ -656,33 +682,37 @@ def combine_surfaces(surfaces):
 
 # pylint: disable=R0912
 def compute_dipole_orientations(method, layer_names, surf_dir, fixed=True):
-    """Compute dipole orientations for cortical layers using different methods.
+    """
+    Compute dipole orientations for cortical layers using different methods.
 
-    Parameters:
-    -----------
-    method (str): Method for computing dipole orientations ('link_vector', 'ds_surf_norm',
-                  'orig_surf_norm', or 'cps').
-                  link_vector: vectors connecting pial vertices to corresponding white matter 
-                               vertices
-                  ds_surf_norm: surface normal vectors computed from the downsampled surface
-                  orig_surf_norm: surface normal vectors computed from the original
-                                  (non-downsampled) surface
-                  cps: cortical patch statistics - mean surface normal vectors from connected
-                       vertices in the original (non-downsampled) surface
-    layer_names (list): Names of the cortical layers.
-    surf_dir (str): Directory where the surface files are stored.
-    fixed (bool, optional): Flag to ensure that orientation of corresponding vertices across
-                            layers is the same (True by default). If true, for ds_surf_norm,
-                            orig_surf_norm, and cps, orientations computed from the pial surface
-                            are used for all layers.
+    Parameters
+    ----------
+    method : str
+        Method for computing dipole orientations ('link_vector', 'ds_surf_norm', 'orig_surf_norm',
+        or 'cps').
+        link_vector: Vectors connecting pial vertices to corresponding white matter vertices.
+        ds_surf_norm: Surface normal vectors computed from the downsampled surface.
+        orig_surf_norm: Surface normal vectors computed from the original (non-downsampled) surface.
+        cps: Cortical patch statistics - mean surface normal vectors from connected vertices in the
+        original (non-downsampled) surface.
+    layer_names : list
+        Names of the cortical layers.
+    surf_dir : str
+        Directory where the surface files are stored.
+    fixed : bool, optional
+        Flag to ensure that orientation of corresponding vertices across layers is the same (True
+        by default). If True, for 'ds_surf_norm', 'orig_surf_norm', and 'cps', orientations
+        computed from the pial surface are used for all layers.
 
-    Returns:
-    --------
-    orientations (nP.ndarray): An array of dipole orientations for each vertex in each layer.
-
-    Raises:
+    Returns
     -------
-    ValueError: If the number of vertices in pial and white surfaces do not match.
+    orientations : np.ndarray
+        An array of dipole orientations for each vertex in each layer.
+
+    Raises
+    ------
+    ValueError
+        If the number of vertices in pial and white matter surfaces do not match.
     """
 
     orientations = None
@@ -775,34 +805,38 @@ def compute_dipole_orientations(method, layer_names, surf_dir, fixed=True):
 
 
 def create_layer_mesh(layer, hemispheres, fs_subject_dir) -> None:
-    """Create or retrieve a specified cortical layer mesh file name or path based on the provided
+    """
+    Create or retrieve a specified cortical layer mesh file name or path based on the provided
     layer proportional thickness or identifier.
 
-    Parameters:
-    -----------
-    layer (float or int): Specifies the cortical layer. The value 1 corresponds to the 'pial'
-                          surface, values between 0 and 1 (exclusive) correspond to intermediate
-                          layers (specified as a decimal), and the value 0 corresponds to the
-                          'white' surface.
-    hemispheres (list of str): A list of hemisphere identifiers (e.g., ['lh', 'rh']) for which
-                               meshes should be created or retrieved.
-    fs_subject_dir (str): Path to the subject directory within the FreeSurfer environment. This
-                          directory should include a 'surf' directory where mesh files are stored.
+    Parameters
+    ----------
+    layer : float or int
+        Specifies the cortical layer. The value 1 corresponds to the 'pial' surface, values between
+        0 and 1 (exclusive) correspond to intermediate layers (specified as a decimal), and the
+        value 0 corresponds to the 'white matter' surface.
+    hemispheres : list of str
+        A list of hemisphere identifiers (e.g., ['lh', 'rh']) for which meshes should be created or
+        retrieved.
+    fs_subject_dir : str
+        Path to the subject directory within the FreeSurfer environment. This directory should
+        include a 'surf' directory where mesh files are stored.
 
-    Returns:
-    --------
-    layer_name (str or None): Returns a string representing the mesh layer ('pial', 'white', or a
-                              specific intermediate layer as a formatted string). Returns None if
-                              the input layer does not match any recognized pattern (e.g., a
-                              negative number or a number greater than 1).
+    Returns
+    -------
+    layer_name : str or None
+        Returns a string representing the mesh layer ('pial', 'white', or a specific intermediate
+        layer as a formatted string). Returns None if the input layer does not match any recognized
+        pattern (e.g., a negative number or a number greater than 1).
 
-    Behavior:
-    ---------
+    Notes
+    -----
     For intermediate layers (0 < layer < 1), the function will check for the existence of the mesh
     file corresponding to each hemisphere. If it does not exist, it uses 'mris_expand' to generate
     it using the white matter surface file. If the layer exactly matches 0 or 1, it returns the
     corresponding standard FreeSurfer mesh identifier ('white' or 'pial').
     """
+
     if layer == 1:
         return 'pial'
     if 0 < layer < 1:
@@ -829,39 +863,45 @@ def postprocess_freesurfer_surfaces(subj_id,
                                     fix_orientation=True,
                                     remove_deep=True,
                                     n_jobs=-1):
-    """Process and combine FreeSurfer surface meshes for a subject.
+    """
+    Process and combine FreeSurfer surface meshes for a subject.
 
     This function processes FreeSurfer surface meshes for a given subject by creating intermediate
     surfaces, adjusting for RAS offset, removing deep vertices, combining hemispheres,
     downsampling, and computing link vectors. The resulting surfaces are combined and saved to a
     specified output file.
 
-    Parameters:
-    -----------
-    subj_id (str): Subject ID corresponding to the FreeSurfer subject directory.
-    out_dir (str): Output directory where the processed files will be saved.
-    out_fname (str): Filename for the final combined surface mesh.
-    n_surfaces (int, optional): Number of intermediate surfaces to create between white and pial
-                                surfaces.
-    ds_factor (float, optional): Downsampling factor for surface decimation.
-    orientation (str, optional): Method to compute orientation vectors ('link_vector' for
-                                 pial-white link, 'ds_surf_norm' for downsampled surface normals,
-                                 'orig_surf_norm' for original surface normals, and 'cps' for
-                                 cortical patch statistics).
-    fix_orientation (bool, optional): Flag to ensure that orientation of corresponding vertices
-                                      across layers is the same (True by default)
-    remove_deep (bool, optional): Flag to remove vertices located in deep regions (labeled as
-                                  'unknown').
-    n_jobs (int, optional): Number of parallel processes to run. -1 for all available cores (-1 by
-                            default)
+    Parameters
+    ----------
+    subj_id : str
+        Subject ID corresponding to the FreeSurfer subject directory.
+    out_dir : str
+        Output directory where the processed files will be saved.
+    out_fname : str
+        Filename for the final combined surface mesh.
+    n_surfaces : int, optional
+        Number of intermediate surfaces to create between white and pial surfaces.
+    ds_factor : float, optional
+        Downsampling factor for surface decimation.
+    orientation : str, optional
+        Method to compute orientation vectors ('link_vector' for pial-white link, 'ds_surf_norm'
+        for downsampled surface normals, 'orig_surf_norm' for original surface normals, and 'cps'
+        for cortical patch statistics).
+    fix_orientation : bool, optional
+        Flag to ensure that orientation of corresponding vertices across layers is the same (True
+        by default).
+    remove_deep : bool, optional
+        Flag to remove vertices located in deep regions (labeled as 'unknown').
+    n_jobs : int, optional
+        Number of parallel processes to run. -1 for all available cores (default is -1).
 
-    Notes:
-    ------
+    Notes
+    -----
     - This function assumes the FreeSurfer 'SUBJECTS_DIR' environment variable is set.
     - Surfaces are processed in Gifti format and combined into a single surface mesh.
 
-    Example:
-    --------
+    Example
+    -------
     >>> postprocess_freesurfer_surfaces('subject1', '/path/to/output', 'combined_surface.gii')
     """
 
@@ -1013,16 +1053,22 @@ def postprocess_freesurfer_surfaces(subj_id,
 
 
 def mesh_adjacency(faces):
-    """Compute the adjacency matrix of a triangle mesh.
-
-    Parameters:
-    -----------
-    faces (np.array, (f, 3)): The mesh faces
-
-    Returns:
-    --------
-    adjacency (np.arrayn (v, v)): v is the number of vertices.
     """
+    Compute the adjacency matrix of a triangle mesh.
+
+    Parameters
+    ----------
+    faces : np.array, shape (f, 3)
+        The mesh faces, where `f` is the number of faces, and each face is represented by a tuple of
+        three vertex indices.
+
+    Returns
+    -------
+    adjacency : np.array, shape (v, v)
+        The adjacency matrix of the mesh, where `v` is the number of vertices. Each entry (i, j)
+        indicates whether vertices i and j are connected by an edge.
+    """
+
     faces = np.asarray(faces, dtype=int)
     n_vertices = np.max(faces)+1  # Assuming max vertex index represents the number of vertices
 
@@ -1046,29 +1092,34 @@ def mesh_adjacency(faces):
 
 def interpolate_data(original_mesh, downsampled_mesh, downsampled_data, adjacency_matrix=None,
                      max_iterations=10):
-    """Interpolates vertex data from a downsampled mesh back to the original mesh using nearest
+    """
+    Interpolate vertex data from a downsampled mesh back to the original mesh using nearest
     neighbor matching and optional smoothing based on an adjacency matrix. Both meshes are
     expected to be nibabel Gifti objects.
 
-    Parameters:
-    -----------
-    original_mesh (GiftiImage): The original high-resolution mesh as a nibabel Gifti object from
-                                which 'downsampled_mesh' is derived.
-    downsampled_mesh (GiftiImage): The downsampled version of the original mesh as a nibabel Gifti
-                                   object.
-    downsampled_data (array): Data associated with the vertices of 'downsampled_mesh'.
-    adjacency_matrix (sparse matrix, optional): A vertex-by-vertex adjacency matrix of the original
-                                                mesh. If None, it will be computed from the
-                                                'original_mesh'.
-    max_iterations (int, optional): The maximum number of iterations to perform for smoothing the
-                                    interpolated data.
+    Parameters
+    ----------
+    original_mesh : nibabel.gifti.GiftiImage
+        The original high-resolution mesh as a nibabel Gifti object from which 'downsampled_mesh'
+        is derived.
+    downsampled_mesh : nibabel.gifti.GiftiImage
+        The downsampled version of the original mesh as a nibabel Gifti object.
+    downsampled_data : array
+        Data associated with the vertices of 'downsampled_mesh'.
+    adjacency_matrix : sparse matrix, optional
+        A vertex-by-vertex adjacency matrix of the original mesh. If None, it will be computed from
+        the 'original_mesh'.
+    max_iterations : int, optional
+        The maximum number of iterations to perform for smoothing the interpolated data.
 
-    Returns:
-    --------
-    vertex_data (np.ndarray): An array of interpolated data for each vertex in the 'original_mesh'.
-                              The data is initially interpolated using nearest neighbors and can be
-                              further refined through iterative smoothing.
+    Returns
+    -------
+    vertex_data : np.ndarray
+        An array of interpolated data for each vertex in the 'original_mesh'. The data is initially
+        interpolated using nearest neighbors and can be further refined through iterative smoothing.
 
+    Notes
+    -----
     The function first finds the nearest vertex in the 'downsampled_mesh' for each vertex in the
     'original_mesh' using a KD-tree. It directly assigns corresponding data values where a close
     match is found. The function iteratively adjusts data values at vertices without direct matches
@@ -1112,33 +1163,36 @@ def interpolate_data(original_mesh, downsampled_mesh, downsampled_data, adjacenc
 
 
 def split_fv(faces, vertices):
-    """Splits faces and vertices into connected pieces based on the connectivity of the faces.
+    """
+    Split faces and vertices into connected pieces based on the connectivity of the faces.
 
-    Parameters:
-    -----------
-    faces (np.array): A 2D numpy array of faces, where each row represents a face and each element
-                      is an index to a vertex in vertices.
-    vertices (np.array): A 2D numpy array of vertices, where each row represents a vertex.
+    Parameters
+    ----------
+    faces : np.ndarray
+        A 2D numpy array of faces, where each row represents a face and each element is an index to
+        a vertex in `vertices`.
+    vertices : np.ndarray
+        A 2D numpy array of vertices, where each row represents a vertex.
 
-    Returns:
+    Returns
+    -------
+    fv_out : list of dict
+        A list where each element is a dictionary with keys 'faces' and 'vertices'. Each dictionary
+        represents a separately connected patch of the mesh.
+
+    Examples
     --------
-    fv_out (list of dicts): A list where each element is a dictionary with keys 'faces' and
-                            'vertices'. Each dictionary represents a separately connected patch
-                            of the mesh.
-
-    Examples:
-    ---------
     >>> faces = np.array([[1, 2, 3], [1, 3, 4], [5, 6, 1], [7, 8, 9], [11, 10, 4]])
     >>> vertices = np.array([[2, 4], [2, 8], [8, 4], [8, 0], [0, 4], [2, 6], [2, 2], [4, 2],
-                             [4, 0], [5, 2], [5, 0]])
+    >>>                      [4, 0], [5, 2], [5, 0]])
     >>> split_patches = split_fv(faces, vertices)
 
-    Note: 
+    Notes
     -----
-    Faces and vertices should be defined such that faces sharing a vertex reference the same
-          vertex number. This function does not explicitly test for duplicate vertices at the same
-          location.
+    Faces and vertices should be defined such that faces sharing a vertex reference the same vertex
+    number. This function does not explicitly test for duplicate vertices at the same location.
     """
+
     num_faces = faces.shape[0]
     f_sets = np.zeros(num_faces, dtype=np.uint32)
     current_set = 0
