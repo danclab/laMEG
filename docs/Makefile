@@ -26,6 +26,7 @@ help:
 clean:
 	-rm -rf _build/*
 	-rm -rf _source/*
+	-rm -rf _autosummary/*
 	-rm -rf auto_examples/*
 	-rm -rf auto_tutorials/*
 	-rm -rf generated
