@@ -21,16 +21,13 @@
 Surface processing
 ==================
 
-***Create layer surfaces***
-# Uses FreeSurfer mris-inflate. Based on the number of surfaces you 
-# specify. Each will be approximately equidistant. Vertex correspondence 
-# is maintained, i.e each layer will have vertices along the vector 
-# connecting a white matter surface vertex with the corresponding 
-# pial surface vertex. Each surface will then be converted to gifti 
-# format and the vertex coordinates will adjusted by the RAS at the 
-# center of the volume to put them in native space.
+.. GENERATED FROM PYTHON SOURCE LINES 7-10
 
-.. GENERATED FROM PYTHON SOURCE LINES 14-46
+Create layer surfaces
+---------------------
+Uses FreeSurfer mris-inflate. Based on the number of surfaces you specify. Each will be approximately equidistant. Vertex correspondence is maintained, i.e each layer will have vertices along the vector connecting a white matter surface vertex with the corresponding pial surface vertex. Each surface will then be converted to gifti format and the vertex coordinates will adjusted by the RAS at the center of the volume to put them in native space.
+
+.. GENERATED FROM PYTHON SOURCE LINES 10-42
 
 .. code-block:: default
 
@@ -67,16 +64,53 @@ Surface processing
         plot = show_surface(mesh, camera_view=cam_view, color=col_r[l_idx,:3]*255, height=256)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 47-49
+.. GENERATED FROM PYTHON SOURCE LINES 43-76
 
-***Remove deep vertices***
+.. image:: ../_static/pial.png
+   :width: 800
+   :alt:
+.. image:: ../_static/0.9.png
+   :width: 800
+   :alt:
+.. image:: ../_static/0.8.png
+   :width: 800
+   :alt:
+.. image:: ../_static/0.7.png
+   :width: 800
+   :alt:
+.. image:: ../_static/0.6.png
+   :width: 800
+   :alt:
+.. image:: ../_static/0.5.png
+   :width: 800
+   :alt:
+.. image:: ../_static/0.4.png
+   :width: 800
+   :alt:
+.. image:: ../_static/0.3.png
+   :width: 800
+   :alt:
+.. image:: ../_static/0.2.png
+   :width: 800
+   :alt:
+.. image:: ../_static/0.1.png
+   :width: 800
+   :alt:
+.. image:: ../_static/white.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 78-81
+
+Remove deep vertices
+--------------------
 Freesurfer operates on hemispheres independently, resulting in deep vertices and mesh faces cutting through subcortical structures. These are removed because they are not part of the cortical source space. Any vertex not labelled or labelled as unknown in the Desikan-Killiany atlas are removed. This is applied to each hemisphere of each layer mesh.
 
-.. GENERATED FROM PYTHON SOURCE LINES 51-52
+.. GENERATED FROM PYTHON SOURCE LINES 83-84
 
-****Before****
+**Before**
 
-.. GENERATED FROM PYTHON SOURCE LINES 54-64
+.. GENERATED FROM PYTHON SOURCE LINES 84-94
 
 .. code-block:: default
 
@@ -91,11 +125,17 @@ Freesurfer operates on hemispheres independently, resulting in deep vertices and
     plot = show_surface(mesh, camera_view=cam_view, color=col_r[0,:3]*255)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 65-66
+.. GENERATED FROM PYTHON SOURCE LINES 95-98
 
-****After****
+.. image:: ../_static/rm_deep_before.png
+   :width: 800
+   :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 68-73
+.. GENERATED FROM PYTHON SOURCE LINES 100-101
+
+**After**
+
+.. GENERATED FROM PYTHON SOURCE LINES 101-106
 
 .. code-block:: default
 
@@ -105,12 +145,19 @@ Freesurfer operates on hemispheres independently, resulting in deep vertices and
     plot = show_surface(mesh, camera_view=cam_view, color=col_r[0,:3]*255)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 74-76
+.. GENERATED FROM PYTHON SOURCE LINES 107-110
 
-***Combine hemispheres***
+.. image:: ../_static/rm_deep_after.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 112-115
+
+Combine hemispheres
+-------------------
 The left and right hemisphere meshes are combined by concatenation of their vertices and faces (left then right). No new faces are created. This is done for each layer.
 
-.. GENERATED FROM PYTHON SOURCE LINES 78-88
+.. GENERATED FROM PYTHON SOURCE LINES 115-125
 
 .. code-block:: default
 
@@ -125,12 +172,19 @@ The left and right hemisphere meshes are combined by concatenation of their vert
     plot = show_surface(mesh, camera_view=cam_view, color=col_r[0,:3]*255)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 89-91
+.. GENERATED FROM PYTHON SOURCE LINES 126-129
 
-***Downsample***
+.. image:: ../_static/combine_hemi.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 131-134
+
+Downsample
+----------
 The surfaces are much too dense to use in source reconstruction. They must be downsampled, but we must maintain vertex correspondence between them (see [Bonaiuto et al. 2020, Estimates of cortical column orientation improve MEG source inversion](https://doi.org/10.1016/j.neuroimage.2020.116862)). The pial surface is therefore downsampled by a factor of 10 using the vtkDecimatePro algorithm, which only removes vertices rather than creating new ones. The removed vertices are also removed from each other layer mesh, and the face structure from the pial mesh is copied to them (though the faces are not used in the source reconstruction if link vector orientations are used).
 
-.. GENERATED FROM PYTHON SOURCE LINES 93-103
+.. GENERATED FROM PYTHON SOURCE LINES 134-144
 
 .. code-block:: default
 
@@ -145,12 +199,19 @@ The surfaces are much too dense to use in source reconstruction. They must be do
     plot = show_surface(mesh, camera_view=cam_view, color=col_r[0,:3]*255)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 104-106
+.. GENERATED FROM PYTHON SOURCE LINES 145-148
 
-***Compute link vectors***
+.. image:: ../_static/downsample.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 150-153
+
+Compute link vectors
+--------------------
 The dipole orientation at each source location is computed. Downsampled surface normals, original surface normals, cortical patch statistics, or link vectors can be specified (see [Bonaiuto et al. 2020, Estimates of cortical column orientation improve MEG source inversion](https://doi.org/10.1016/j.neuroimage.2020.116862)). The first three compute vertex normals based on the orientation of the surrounding faces. They can be either computed separately for each layer, or the pial surface orientations can be used for all layers. The link vectors method computes vectors connecting corresponding pial and white matter vertices (pointing toward the white matter), which are therefore the same across layer. The orientation vectors are stored in the normals attribute of the gifti object.
 
-.. GENERATED FROM PYTHON SOURCE LINES 108-142
+.. GENERATED FROM PYTHON SOURCE LINES 153-187
 
 .. code-block:: default
 
@@ -189,12 +250,19 @@ The dipole orientation at each source location is computed. Downsampled surface 
     plot.display()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 143-145
+.. GENERATED FROM PYTHON SOURCE LINES 188-191
 
-***Combine layers***
+.. image:: ../_static/link_vectors.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 193-196
+
+Combine layers
+--------------
 The layer meshes are then combined into a single mesh by concatenating their vertices and faces (from pial to white matter). No new faces are created (i.e. there are no edges connecting vertices across layers)
 
-.. GENERATED FROM PYTHON SOURCE LINES 147-174
+.. GENERATED FROM PYTHON SOURCE LINES 196-223
 
 .. code-block:: default
 
@@ -226,28 +294,28 @@ The layer meshes are then combined into a single mesh by concatenating their ver
     plot.display()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 175-178
+.. GENERATED FROM PYTHON SOURCE LINES 224-227
 
-# Putting it all together
+.. image:: ../_static/combine_layers.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 229-234
+
+Putting it all together
+-----------------------
 All of these steps can be run using the function:
+
 > postprocess_freesurfer_surfaces
 
-.. GENERATED FROM PYTHON SOURCE LINES 180-183
+.. GENERATED FROM PYTHON SOURCE LINES 234-270
 
 .. code-block:: default
+
 
     from lameg.surf import postprocess_freesurfer_surfaces
 
-
-
-.. GENERATED FROM PYTHON SOURCE LINES 184-185
-
-Create a 2-layer surface (only pial and white)
-
-.. GENERATED FROM PYTHON SOURCE LINES 185-195
-
-.. code-block:: default
-
+    # Create a 2-layer surface (only pial and white)
     postprocess_freesurfer_surfaces(
         'sub-104',                                
         '../test_data/sub-104/surf', 
@@ -258,15 +326,7 @@ Create a 2-layer surface (only pial and white)
         remove_deep=True
     )
 
-
-.. GENERATED FROM PYTHON SOURCE LINES 196-197
-
-Create an 11-layer surface
-
-.. GENERATED FROM PYTHON SOURCE LINES 197-207
-
-.. code-block:: default
-
+    # Create an 11-layer surface
     postprocess_freesurfer_surfaces(
         'sub-104',                                
         '../test_data/sub-104/surf', 
@@ -277,15 +337,7 @@ Create an 11-layer surface
         remove_deep=True
     )
 
-
-.. GENERATED FROM PYTHON SOURCE LINES 208-209
-
-Create a 15-layer surface
-
-.. GENERATED FROM PYTHON SOURCE LINES 209-219
-
-.. code-block:: default
-
+    # Create a 15-layer surface
     postprocess_freesurfer_surfaces(
         'sub-104',                                
         '../test_data/sub-104/surf', 

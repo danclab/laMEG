@@ -488,14 +488,9 @@ to download the full example code</p>
 </div>
 <section class="sphx-glr-example-title" id="surface-processing">
 <span id="sphx-glr-auto-tutorials-tutorial-01-surface-processing-py"></span><h1>Surface processing<a class="headerlink" href="#surface-processing" title="Permalink to this heading">#</a></h1>
-<p><strong>*Create layer surfaces*</strong>
-# Uses FreeSurfer mris-inflate. Based on the number of surfaces you
-# specify. Each will be approximately equidistant. Vertex correspondence
-# is maintained, i.e each layer will have vertices along the vector
-# connecting a white matter surface vertex with the corresponding
-# pial surface vertex. Each surface will then be converted to gifti
-# format and the vertex coordinates will adjusted by the RAS at the
-# center of the volume to put them in native space.</p>
+<section id="create-layer-surfaces">
+<h2>Create layer surfaces<a class="headerlink" href="#create-layer-surfaces" title="Permalink to this heading">#</a></h2>
+<p>Uses FreeSurfer mris-inflate. Based on the number of surfaces you specify. Each will be approximately equidistant. Vertex correspondence is maintained, i.e each layer will have vertices along the vector connecting a white matter surface vertex with the corresponding pial surface vertex. Each surface will then be converted to gifti format and the vertex coordinates will adjusted by the RAS at the center of the volume to put them in native space.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
@@ -528,9 +523,22 @@ to download the full example code</p>
     <span class="n">plot</span> <span class="o">=</span> <span class="n">show_surface</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">camera_view</span><span class="o">=</span><span class="n">cam_view</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col_r</span><span class="p">[</span><span class="n">l_idx</span><span class="p">,:</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="mi">255</span><span class="p">,</span> <span class="n">height</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><strong>*Remove deep vertices*</strong>
-Freesurfer operates on hemispheres independently, resulting in deep vertices and mesh faces cutting through subcortical structures. These are removed because they are not part of the cortical source space. Any vertex not labelled or labelled as unknown in the Desikan-Killiany atlas are removed. This is applied to each hemisphere of each layer mesh.</p>
-<p><strong>**Before**</strong></p>
+<a class="reference internal image-reference" href="../_images/pial.png"><img alt="" src="../_images/pial.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/0.9.png"><img alt="" src="../_images/0.9.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/0.8.png"><img alt="" src="../_images/0.8.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/0.7.png"><img alt="" src="../_images/0.7.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/0.6.png"><img alt="" src="../_images/0.6.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/0.5.png"><img alt="" src="../_images/0.5.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/0.4.png"><img alt="" src="../_images/0.4.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/0.3.png"><img alt="" src="../_images/0.3.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/0.2.png"><img alt="" src="../_images/0.2.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/0.1.png"><img alt="" src="../_images/0.1.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/white.png"><img alt="" src="../_images/white.png" style="width: 800px;" /></a>
+</section>
+<section id="remove-deep-vertices">
+<h2>Remove deep vertices<a class="headerlink" href="#remove-deep-vertices" title="Permalink to this heading">#</a></h2>
+<p>Freesurfer operates on hemispheres independently, resulting in deep vertices and mesh faces cutting through subcortical structures. These are removed because they are not part of the cortical source space. Any vertex not labelled or labelled as unknown in the Desikan-Killiany atlas are removed. This is applied to each hemisphere of each layer mesh.</p>
+<p><strong>Before</strong></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">surf_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">surf_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;lh.pial.gii&#39;</span><span class="p">)</span>
 
 <span class="n">cam_view</span><span class="o">=</span><span class="p">[</span><span class="mi">110</span><span class="p">,</span> <span class="mi">18</span><span class="p">,</span> <span class="mi">36</span><span class="p">,</span>
@@ -542,15 +550,19 @@ Freesurfer operates on hemispheres independently, resulting in deep vertices and
 <span class="n">plot</span> <span class="o">=</span> <span class="n">show_surface</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">camera_view</span><span class="o">=</span><span class="n">cam_view</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col_r</span><span class="p">[</span><span class="mi">0</span><span class="p">,:</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="mi">255</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><strong>**After**</strong></p>
+<a class="reference internal image-reference" href="../_images/rm_deep_before.png"><img alt="" src="../_images/rm_deep_before.png" style="width: 800px;" /></a>
+<p><strong>After</strong></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">surf_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">surf_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;lh.pial.nodeep.gii&#39;</span><span class="p">)</span>
 
 <span class="n">mesh</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">surf_fname</span><span class="p">)</span>
 <span class="n">plot</span> <span class="o">=</span> <span class="n">show_surface</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">camera_view</span><span class="o">=</span><span class="n">cam_view</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col_r</span><span class="p">[</span><span class="mi">0</span><span class="p">,:</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="mi">255</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><strong>*Combine hemispheres*</strong>
-The left and right hemisphere meshes are combined by concatenation of their vertices and faces (left then right). No new faces are created. This is done for each layer.</p>
+<a class="reference internal image-reference" href="../_images/rm_deep_after.png"><img alt="" src="../_images/rm_deep_after.png" style="width: 800px;" /></a>
+</section>
+<section id="combine-hemispheres">
+<h2>Combine hemispheres<a class="headerlink" href="#combine-hemispheres" title="Permalink to this heading">#</a></h2>
+<p>The left and right hemisphere meshes are combined by concatenation of their vertices and faces (left then right). No new faces are created. This is done for each layer.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">surf_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">surf_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;pial.gii&#39;</span><span class="p">)</span>
 
 <span class="n">cam_view</span><span class="o">=</span><span class="p">[</span><span class="mi">13</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">217</span><span class="p">,</span>
@@ -562,8 +574,11 @@ The left and right hemisphere meshes are combined by concatenation of their vert
 <span class="n">plot</span> <span class="o">=</span> <span class="n">show_surface</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">camera_view</span><span class="o">=</span><span class="n">cam_view</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col_r</span><span class="p">[</span><span class="mi">0</span><span class="p">,:</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="mi">255</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><strong>*Downsample*</strong>
-The surfaces are much too dense to use in source reconstruction. They must be downsampled, but we must maintain vertex correspondence between them (see [Bonaiuto et al. 2020, Estimates of cortical column orientation improve MEG source inversion](<a class="reference external" href="https://doi.org/10.1016/j.neuroimage.2020.116862">https://doi.org/10.1016/j.neuroimage.2020.116862</a>)). The pial surface is therefore downsampled by a factor of 10 using the vtkDecimatePro algorithm, which only removes vertices rather than creating new ones. The removed vertices are also removed from each other layer mesh, and the face structure from the pial mesh is copied to them (though the faces are not used in the source reconstruction if link vector orientations are used).</p>
+<a class="reference internal image-reference" href="../_images/combine_hemi.png"><img alt="" src="../_images/combine_hemi.png" style="width: 800px;" /></a>
+</section>
+<section id="downsample">
+<h2>Downsample<a class="headerlink" href="#downsample" title="Permalink to this heading">#</a></h2>
+<p>The surfaces are much too dense to use in source reconstruction. They must be downsampled, but we must maintain vertex correspondence between them (see [Bonaiuto et al. 2020, Estimates of cortical column orientation improve MEG source inversion](<a class="reference external" href="https://doi.org/10.1016/j.neuroimage.2020.116862">https://doi.org/10.1016/j.neuroimage.2020.116862</a>)). The pial surface is therefore downsampled by a factor of 10 using the vtkDecimatePro algorithm, which only removes vertices rather than creating new ones. The removed vertices are also removed from each other layer mesh, and the face structure from the pial mesh is copied to them (though the faces are not used in the source reconstruction if link vector orientations are used).</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">surf_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">surf_path</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;pial.ds.link_vector.fixed.gii&#39;</span><span class="p">)</span>
 
 <span class="n">cam_view</span><span class="o">=</span><span class="p">[</span><span class="mi">13</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">217</span><span class="p">,</span>
@@ -575,8 +590,11 @@ The surfaces are much too dense to use in source reconstruction. They must be do
 <span class="n">plot</span> <span class="o">=</span> <span class="n">show_surface</span><span class="p">(</span><span class="n">mesh</span><span class="p">,</span> <span class="n">camera_view</span><span class="o">=</span><span class="n">cam_view</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col_r</span><span class="p">[</span><span class="mi">0</span><span class="p">,:</span><span class="mi">3</span><span class="p">]</span><span class="o">*</span><span class="mi">255</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><strong>*Compute link vectors*</strong>
-The dipole orientation at each source location is computed. Downsampled surface normals, original surface normals, cortical patch statistics, or link vectors can be specified (see [Bonaiuto et al. 2020, Estimates of cortical column orientation improve MEG source inversion](<a class="reference external" href="https://doi.org/10.1016/j.neuroimage.2020.116862">https://doi.org/10.1016/j.neuroimage.2020.116862</a>)). The first three compute vertex normals based on the orientation of the surrounding faces. They can be either computed separately for each layer, or the pial surface orientations can be used for all layers. The link vectors method computes vectors connecting corresponding pial and white matter vertices (pointing toward the white matter), which are therefore the same across layer. The orientation vectors are stored in the normals attribute of the gifti object.</p>
+<a class="reference internal image-reference" href="../_images/downsample.png"><img alt="" src="../_images/downsample.png" style="width: 800px;" /></a>
+</section>
+<section id="compute-link-vectors">
+<h2>Compute link vectors<a class="headerlink" href="#compute-link-vectors" title="Permalink to this heading">#</a></h2>
+<p>The dipole orientation at each source location is computed. Downsampled surface normals, original surface normals, cortical patch statistics, or link vectors can be specified (see [Bonaiuto et al. 2020, Estimates of cortical column orientation improve MEG source inversion](<a class="reference external" href="https://doi.org/10.1016/j.neuroimage.2020.116862">https://doi.org/10.1016/j.neuroimage.2020.116862</a>)). The first three compute vertex normals based on the orientation of the surrounding faces. They can be either computed separately for each layer, or the pial surface orientations can be used for all layers. The link vectors method computes vectors connecting corresponding pial and white matter vertices (pointing toward the white matter), which are therefore the same across layer. The orientation vectors are stored in the normals attribute of the gifti object.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">plot</span> <span class="o">=</span> <span class="n">k3d</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
     <span class="n">grid_visible</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">menu_visibility</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">camera_auto_fit</span><span class="o">=</span><span class="kc">False</span>
 <span class="p">)</span>
@@ -612,8 +630,11 @@ The dipole orientation at each source location is computed. Downsampled surface 
 <span class="n">plot</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
 </pre></div>
 </div>
-<p><strong>*Combine layers*</strong>
-The layer meshes are then combined into a single mesh by concatenating their vertices and faces (from pial to white matter). No new faces are created (i.e. there are no edges connecting vertices across layers)</p>
+<a class="reference internal image-reference" href="../_images/link_vectors.png"><img alt="" src="../_images/link_vectors.png" style="width: 800px;" /></a>
+</section>
+<section id="combine-layers">
+<h2>Combine layers<a class="headerlink" href="#combine-layers" title="Permalink to this heading">#</a></h2>
+<p>The layer meshes are then combined into a single mesh by concatenating their vertices and faces (from pial to white matter). No new faces are created (i.e. there are no edges connecting vertices across layers)</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">layer_fnames</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">l</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">layers</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">layer</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -642,14 +663,16 @@ The layer meshes are then combined into a single mesh by concatenating their ver
 <span class="n">plot</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
 </pre></div>
 </div>
-<p># Putting it all together
-All of these steps can be run using the function:
-&gt; postprocess_freesurfer_surfaces</p>
+<a class="reference internal image-reference" href="../_images/combine_layers.png"><img alt="" src="../_images/combine_layers.png" style="width: 800px;" /></a>
+</section>
+<section id="putting-it-all-together">
+<h2>Putting it all together<a class="headerlink" href="#putting-it-all-together" title="Permalink to this heading">#</a></h2>
+<p>All of these steps can be run using the function:</p>
+<p>&gt; postprocess_freesurfer_surfaces</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lameg.surf</span> <span class="kn">import</span> <span class="n">postprocess_freesurfer_surfaces</span>
-</pre></div>
-</div>
-<p>Create a 2-layer surface (only pial and white)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">postprocess_freesurfer_surfaces</span><span class="p">(</span>
+
+<span class="c1"># Create a 2-layer surface (only pial and white)</span>
+<span class="n">postprocess_freesurfer_surfaces</span><span class="p">(</span>
     <span class="s1">&#39;sub-104&#39;</span><span class="p">,</span>
     <span class="s1">&#39;../test_data/sub-104/surf&#39;</span><span class="p">,</span>
     <span class="s1">&#39;multilayer.2.ds.link_vector.fixed.gii&#39;</span><span class="p">,</span>
@@ -658,10 +681,9 @@ All of these steps can be run using the function:
     <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;link_vector&#39;</span><span class="p">,</span>
     <span class="n">remove_deep</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
-</pre></div>
-</div>
-<p>Create an 11-layer surface</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">postprocess_freesurfer_surfaces</span><span class="p">(</span>
+
+<span class="c1"># Create an 11-layer surface</span>
+<span class="n">postprocess_freesurfer_surfaces</span><span class="p">(</span>
     <span class="s1">&#39;sub-104&#39;</span><span class="p">,</span>
     <span class="s1">&#39;../test_data/sub-104/surf&#39;</span><span class="p">,</span>
     <span class="s1">&#39;multilayer.11.ds.link_vector.fixed.gii&#39;</span><span class="p">,</span>
@@ -670,10 +692,9 @@ All of these steps can be run using the function:
     <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;link_vector&#39;</span><span class="p">,</span>
     <span class="n">remove_deep</span><span class="o">=</span><span class="kc">True</span>
 <span class="p">)</span>
-</pre></div>
-</div>
-<p>Create a 15-layer surface</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">postprocess_freesurfer_surfaces</span><span class="p">(</span>
+
+<span class="c1"># Create a 15-layer surface</span>
+<span class="n">postprocess_freesurfer_surfaces</span><span class="p">(</span>
     <span class="s1">&#39;sub-104&#39;</span><span class="p">,</span>
     <span class="s1">&#39;../test_data/sub-104/surf&#39;</span><span class="p">,</span>
     <span class="s1">&#39;multilayer.15.ds.link_vector.fixed.gii&#39;</span><span class="p">,</span>
@@ -694,6 +715,7 @@ All of these steps can be run using the function:
 </div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
 </section>
 
 
@@ -736,6 +758,22 @@ All of these steps can be run using the function:
             
               
                 <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#create-layer-surfaces">Create layer surfaces</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#remove-deep-vertices">Remove deep vertices</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#combine-hemispheres">Combine hemispheres</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#downsample">Downsample</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compute-link-vectors">Compute link vectors</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#combine-layers">Combine layers</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#putting-it-all-together">Putting it all together</a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
   

@@ -17,7 +17,7 @@ The examples can be browsed directly on `Github <https://github.com/danclab/laME
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Create layer surfaces # Uses FreeSurfer mris-inflate. Based on the number of surfaces you  # sp...">
+    <div class="sphx-glr-thumbcontainer" tooltip="Surface processing">
 
 .. only:: html
 
