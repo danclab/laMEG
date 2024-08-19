@@ -21,28 +21,38 @@ import matlab # pylint: disable=wrong-import-order,import-error
 
 def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, fid_labels=('nas', 'lpa', 'rpa'),
                viz=True, spm_instance=None) -> None:
-    """Run head coregistration.
+    """
+    Run head coregistration.
 
     This function interfaces with MATLAB to perform head coregistration on MEG/EEG data using an
-    MRI and mesh
+    MRI and mesh.
 
-    Parameters:
-    -------------
-    nas (list): NASion fiducial coordinates.
-    lpa (list): Left PreAuricular fiducial coordinates.
-    rpa (list): Right PreAuricular fiducial coordinates.
-    mri_fname (str): Filename of the MRI data.
-    mesh_fname (str): Filename of the mesh data.
-    data_fname (str): Filename of the MEG/EEG data.
-    fid_labels (list): Fiducial coordinate labels. Default is ['nas', 'lpa', 'rpa']
-    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
-    spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
+    Parameters
+    ----------
+    nas : list
+        NASion fiducial coordinates.
+    lpa : list
+        Left PreAuricular fiducial coordinates.
+    rpa : list
+        Right PreAuricular fiducial coordinates.
+    mri_fname : str
+        Filename of the MRI data.
+    mesh_fname : str
+        Filename of the mesh data.
+    data_fname : str
+        Filename of the MEG/EEG data.
+    fid_labels : list, optional
+        Fiducial coordinate labels. Default is ['nas', 'lpa', 'rpa'].
+    viz : bool, optional
+        Whether or not to show SPM visualization. Default is True.
+    spm_instance : spm_standalone, optional
+        Instance of standalone SPM. Default is None.
 
-    Notes:
-    -------------
-        - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
-        - The function will automatically close the standalone SPM instance if it was started
-          within the function.
+    Notes
+    -----
+    If `spm_instance` is not provided, the function will start a new standalone SPM instance.
+    The function will automatically close the standalone SPM instance if it was started
+    within the function.
     """
 
     # Define the structured dtype for 'specification' with nested 'type'
@@ -111,40 +121,53 @@ def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, fid_labels=('na
 def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, foi=None, woi=None,
                hann_windowing=False, n_folds=1, ideal_pc_test=0, viz=True, return_mu_matrix=False,
                spm_instance=None):
-    """Run the Empirical Bayesian Beamformer (EBB) source reconstruction algorithm.
+    """
+    Run the Empirical Bayesian Beamformer (EBB) source reconstruction algorithm.
 
     This function interfaces with MATLAB to perform EBB source reconstruction on MEG/EEG data.
     It involves mesh smoothing and running the EBB algorithm in MATLAB. The MEG/EEG data must
     already be coregistered with the given mesh.
 
-    Parameters:
-    -------------
-    mesh_fname (str): Filename of the mesh data.
-    data_fname (str): Filename of the MEG/EEG data.
-    n_layers (int): Number of layers in the mesh.
-    patch_size (int, optional): Patch size for mesh smoothing. Default is 5.
-    n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 4.
-    foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
-    woi (list, optional): Window of interest as [start, end]. Default is [-np.inf, np.inf].
-    hann_windowing (int, option): Whether or not to perform Hann windowing. Default is False
-    n_folds (int): Number of cross validation folds. Must be >1 for cross validation error
-    ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integer
-                           number of channels)
-    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
-    return_mu_matrix (boolean, optional): Whether or not to return the matrix needed to reconstruct
-                                          source activity. Default is False
-    spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
+    Parameters
+    ----------
+    mesh_fname : str
+        Filename of the mesh data.
+    data_fname : str
+        Filename of the MEG/EEG data.
+    n_layers : int
+        Number of layers in the mesh.
+    patch_size : int, optional
+        Patch size for mesh smoothing. Default is 5.
+    n_temp_modes : int, optional
+        Number of temporal modes for the beamformer. Default is 4.
+    foi : list, optional
+        Frequency of interest range as [low, high]. Default is [0, 256].
+    woi : list, optional
+        Window of interest as [start, end]. Default is [-np.inf, np.inf].
+    hann_windowing : int, optional
+        Whether or not to perform Hann windowing. Default is False.
+    n_folds : int
+        Number of cross-validation folds. Must be >1 for cross-validation error.
+    ideal_pc_test : float
+        Percentage of channels to leave out (ideal because it needs an integer number of channels).
+    viz : bool, optional
+        Whether or not to show SPM visualization. Default is True.
+    return_mu_matrix : bool, optional
+        Whether or not to return the matrix needed to reconstruct source activity. Default is False.
+    spm_instance : spm_standalone, optional
+        Instance of standalone SPM. Default is None.
 
-    Returns:
-    -------------
-    list: A list containing the free energy, cross validation error (cv_err), and the matrix needed
-          to reconstruct source activity (mu_matrix; if return_mu_matrix is True).
+    Returns
+    -------
+    list
+        A list containing the free energy, cross-validation error (cv_err), and the matrix needed
+        to reconstruct source activity (mu_matrix; if return_mu_matrix is True).
 
-    Notes:
-    -------------
-        - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
-        - The function will automatically close the standalone SPM instance if it was started
-          within the function.
+    Notes
+    -----
+    - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
+    - The function will automatically close the standalone SPM instance if it was started
+      within the function.
     """
     if woi is None:
         woi = [-np.inf, np.inf]
@@ -244,42 +267,56 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
 def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_temp_modes=4,
                foi=None, woi=None, hann_windowing=False, n_folds=1, ideal_pc_test=0, viz=True,
                return_mu_matrix=False, spm_instance=None):
-    """Run the Multiple Sparse Priors (MSP) source reconstruction algorithm.
+    """
+    Run the Multiple Sparse Priors (MSP) source reconstruction algorithm.
 
     This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data.
     It involves mesh smoothing and running the MSP algorithm in MATLAB. The MEG/EEG data must
     already be coregistered with the given mesh.
 
-    Parameters:
-    -------------
-    mesh_fname (str): Filename of the mesh data.
-    data_fname (str): Filename of the MEG/EEG data.
-    n_layers (int): Number of layers in the mesh.
-    priors (list, optional): Indices of vertices to be used as priors. Default is an empty list.
-    patch_size (int, optional): Patch size for mesh smoothing. Default is 5.
-    n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 4.
-    foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
-    woi (list, optional): Window of interest as [start, end]. Default is [-np.inf, np.inf].
-    hann_windowing (int, option): Whether or not to perform Hann windowing. Default is False
-    n_folds (int): Number of cross validation folds. Must be >1 for cross validation error
-    ideal_pc_test (float): Percentage of channels to leave out (ideal because need an integer
-                           number of channels)
-    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
-    return_mu_matrix (boolean, optional): Whether or not to return the matrix needed to reconstruct
-                                          source activity. Default is False
-    spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
+    Parameters
+    ----------
+    mesh_fname : str
+        Filename of the mesh data.
+    data_fname : str
+        Filename of the MEG/EEG data.
+    n_layers : int
+        Number of layers in the mesh.
+    priors : list, optional
+        Indices of vertices to be used as priors. Default is an empty list.
+    patch_size : int, optional
+        Patch size for mesh smoothing. Default is 5.
+    n_temp_modes : int, optional
+        Number of temporal modes for the beamformer. Default is 4.
+    foi : list, optional
+        Frequency of interest range as [low, high]. Default is [0, 256].
+    woi : list, optional
+        Window of interest as [start, end]. Default is [-np.inf, np.inf].
+    hann_windowing : int, optional
+        Whether or not to perform Hann windowing. Default is False.
+    n_folds : int
+        Number of cross-validation folds. Must be >1 for cross-validation error.
+    ideal_pc_test : float
+        Percentage of channels to leave out (ideal because it needs an integer number of channels).
+    viz : bool, optional
+        Whether or not to show SPM visualization. Default is True.
+    return_mu_matrix : bool, optional
+        Whether or not to return the matrix needed to reconstruct source activity. Default is False.
+    spm_instance : spm_standalone, optional
+        Instance of standalone SPM. Default is None.
 
-    Returns:
-    -------------
-    list: A list containing the free energy, cross validation error (cv_err), and the matrix
-          needed to reconstruct source activity (mu_matrix; if return_mu_matrix is True).
+    Returns
+    -------
+    list
+        A list containing the free energy, cross-validation error (cv_err), and the matrix
+        needed to reconstruct source activity (mu_matrix; if return_mu_matrix is True).
 
-    Notes:
-    -------------
-        - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
-        - The function will automatically close the standalone SPM instance if it was started
-          within the function.
-        - Priors are adjusted by adding 1 to each index to align with MATLAB's 1-based indexing.
+    Notes
+    -----
+    - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
+    - The function will automatically close the standalone SPM instance if it was started
+      within the function.
+    - Priors are adjusted by adding 1 to each index to align with MATLAB's 1-based indexing.
     """
     if foi is None:
         foi = [0, 256]
@@ -397,42 +434,56 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
 def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=1,
                           win_size=16, win_overlap=True, foi=None, hann_windowing=True, viz=True,
                           spm_instance=None):
-    """Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time
-    window.
+    """
+    Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time window.
 
     This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data
     within sliding time windows. It involves mesh smoothing and running the MSP algorithm in
     MATLAB for each time window. The MEG/EEG data must already be coregistered with the given
     mesh.
 
-    Parameters:
-    -------------
-    prior (float): Index of the vertex to be used as a prior.
-    mesh_fname (str): Filename of the mesh data.
-    data_fname (str): Filename of the MEG/EEG data.
-    n_layers (int): Number of layers in the mesh.
-    patch_size (int, optional): Patch size for mesh smoothing. Default is 5.
-    n_temp_modes (int, optional): Number of temporal modes for the beamformer. Default is 1.
-    win_size (float, optional): Size of the sliding window in ms. Default is 16. If you increase
-                                win_size, you may have to increase n_temp_modes.
-    win_overlap (bool, optional): Whether the windows should overlap. Default is True.
-    foi (list, optional): Frequency of interest range as [low, high]. Default is [0, 256].
-    hann_windowing (bool, optional): Whether or not to use Hann windowing. Default is True
-    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
-    spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
+    Parameters
+    ----------
+    prior : float
+        Index of the vertex to be used as a prior.
+    mesh_fname : str
+        Filename of the mesh data.
+    data_fname : str
+        Filename of the MEG/EEG data.
+    n_layers : int
+        Number of layers in the mesh.
+    patch_size : int, optional
+        Patch size for mesh smoothing. Default is 5.
+    n_temp_modes : int, optional
+        Number of temporal modes for the beamformer. Default is 1.
+    win_size : float, optional
+        Size of the sliding window in ms. Default is 16. If you increase `win_size`, you may need
+        to increase `n_temp_modes`.
+    win_overlap : bool, optional
+        Whether the windows should overlap. Default is True.
+    foi : list, optional
+        Frequency of interest range as [low, high]. Default is [0, 256].
+    hann_windowing : bool, optional
+        Whether or not to use Hann windowing. Default is True.
+    viz : bool, optional
+        Whether or not to show SPM visualization. Default is True.
+    spm_instance : spm_standalone, optional
+        Instance of standalone SPM. Default is None.
 
-    Returns:
-    -------------
-    list: A list containing the free energy time series (free_energy), and the windows of interest
-          (wois).
+    Returns
+    -------
+    list
+        A list containing the free energy time series (free_energy), and the windows of interest
+        (wois).
 
-    Notes:
-    -------------
-        - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
-        - The function will automatically close the standalone SPM instance if it was started
-          within the function.
-        - The prior index is adjusted by adding 1 to align with MATLAB's 1-based indexing.
+    Notes
+    -----
+    - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
+    - The function will automatically close the standalone SPM instance if it was started
+      within the function.
+    - The prior index is adjusted by adding 1 to align with MATLAB's 1-based indexing.
     """
+
     if foi is None:
         foi = [0, 256]
 
@@ -536,35 +587,40 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
 
 
 def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices=None):
-    """Load source time series data from specified vertices using precomputed inverse solutions or a
+    """
+    Load source time series data from specified vertices using precomputed inverse solutions or a
     lead field matrix.
 
     This function interfaces with MATLAB to extract time series data from specific vertices, based
     on precomputed inverse solutions, or computes the source time series using a provided lead
     field matrix.
 
-    Parameters:
-    -------------
-    data_fname (str): Filename or path of the MEG/EEG data file.
-    mu_matrix (ndarray, optional): Lead field matrix (source x sensor). Default is None.
-    inv_fname (str, optional): Filename or path of the file containing the inverse solutions.
-                               Default is None.
-    vertices (list of int, optional): List of vertex indices from which to extract time series
-                                      data. Default is None, which implies all vertices will be
-                                      used.
+    Parameters
+    ----------
+    data_fname : str
+        Filename or path of the MEG/EEG data file.
+    mu_matrix : ndarray, optional
+        Lead field matrix (source x sensor). Default is None.
+    inv_fname : str, optional
+        Filename or path of the file containing the inverse solutions. Default is None.
+    vertices : list of int, optional
+        List of vertex indices from which to extract time series data. Default is None, which
+        implies all vertices will be used.
 
-    Returns:
-    -------------
-    source_ts (np.array): An array containing the extracted source time series data
-                          (sources x time x trial).
-    time (np.array): An array containing the timestamps
-    mu_matrix (np.array): The matrix needed to reconstruct source activity from sensor signals
+    Returns
+    -------
+    source_ts : np.array
+        An array containing the extracted source time series data (sources x time x trial).
+    time : np.array
+        An array containing the timestamps.
+    mu_matrix : np.array
+        The matrix needed to reconstruct source activity from sensor signals.
 
-    Notes:
-    -------------
-    - If 'inv_fname' is not provided, and 'mu_matrix' is None, the inverse solution from the
-      MEG/EEG data file specified by 'data_fname' will be used.
-    - If 'mu_matrix' is provided, the function will compute the source time series directly using
+    Notes
+    -----
+    - If `inv_fname` is not provided, and `mu_matrix` is None, the inverse solution from the
+      MEG/EEG data file specified by `data_fname` will be used.
+    - If `mu_matrix` is provided, the function will compute the source time series directly using
       the lead field matrix, without the need for precomputed inverse solutions.
     """
 
