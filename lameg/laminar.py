@@ -31,38 +31,52 @@ from lameg.util import ttest_rel_corrected
 
 def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='EBB', viz=True,
                      spm_instance=None, coregister_kwargs=None, invert_kwargs=None):
-    """Compare model fits using different meshes by computing the free energy.
+    """
+    Compare model fits using different meshes by computing the free energy.
 
     This function runs source reconstruction algorithms (either Empirical Bayesian Beamformer or
     Multiple Sparse Priors) on a set of meshes and compares their model fits using the free energy
-    and cross validation error metrics. It allows for separate configuration of coregistration and
+    and cross-validation error metrics. It allows for separate configuration of coregistration and
     inversion parameters through distinct keyword argument dictionaries.
 
-    Parameters:
-    ------------
-    nas (list): NASion fiducial coordinates.
-    lpa (list): Left PreAuricular fiducial coordinates.
-    rpa (list): Right PreAuricular fiducial coordinates.
-    mri_fname (str): Filename of the MRI data.
-    mesh_fnames (list): List of filenames for different meshes.
-    data_fname (str): Filename of the MEG/EEG data.
-    method (str, optional): Source reconstruction method, either 'EBB' or 'MSP'. Default is 'EBB'.
-    viz (boolean, optional): Whether to display SPM visualizations. Default is True.
-    spm_instance (spm_standalone, optional): Instance of standalone SPM software. Default is None.
-    coregister_kwargs (dict, optional): Keyword arguments specifically for the coregister function.
-    invert_kwargs (dict, optional): Keyword arguments specifically for the invert function.
+    Parameters
+    ----------
+    nas : list
+        NASion fiducial coordinates.
+    lpa : list
+        Left PreAuricular fiducial coordinates.
+    rpa : list
+        Right PreAuricular fiducial coordinates.
+    mri_fname : str
+        Filename of the MRI data.
+    mesh_fnames : list
+        List of filenames for different meshes.
+    data_fname : str
+        Filename of the MEG/EEG data.
+    method : str, optional
+        Source reconstruction method, either 'EBB' or 'MSP'. Default is 'EBB'.
+    viz : bool, optional
+        Whether to display SPM visualizations. Default is True.
+    spm_instance : spm_standalone, optional
+        Instance of standalone SPM software. Default is None.
+    coregister_kwargs : dict, optional
+        Keyword arguments specifically for the `coregister` function.
+    invert_kwargs : dict, optional
+        Keyword arguments specifically for the `invert` function.
 
-    Returns:
-    ------------
-    f_vals (np.array): Free energy values for each mesh
-    cv_errs (np.array): The cross-validation error for each mesh
+    Returns
+    -------
+    f_vals : np.array
+        Free energy values for each mesh.
+    cv_errs : np.array
+        The cross-validation error for each mesh.
 
-    Notes:
-    ------------
-        - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
-        - The function will automatically close the standalone SPM instance if it was started
-          within the function.
-        - Free energy is used as a measure of model fit, with higher values indicating better fit.
+    Notes
+    -----
+    - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
+    - The function will automatically close the standalone SPM instance if it was started
+      within the function.
+    - Free energy is used as a measure of model fit, with higher values indicating better fit.
     """
 
     if coregister_kwargs is None:
@@ -117,40 +131,52 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
 def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames, data_fname,
                                     viz=True, spm_instance=None, coregister_kwargs=None,
                                     invert_kwargs=None):
-    """Compare model fits across different meshes using a sliding window approach.
+    """
+    Compare model fits across different meshes using a sliding window approach.
 
     This function runs source reconstruction using the Multiple Sparse Priors (MSP) method in
     sliding time windows on a set of meshes. It compares the model fits for each mesh by computing
     the free energy in each window.
 
-    Parameters:
-    ------------
-    prior (float): Index of the vertex to be used as a prior.
-    nas (list): NASion fiducial coordinates.
-    lpa (list): Left PreAuricular fiducial coordinates.
-    rpa (list): Right PreAuricular fiducial coordinates.
-    mri_fname (str): Filename of the MRI data.
-    mesh_fnames (list): List of filenames for different meshes.
-    data_fname (str): Filename of the MEG/EEG data.
-    viz (boolean, optional): Whether or not to show SPM visualization. Default is True
-    spm_instance (spm_standalone, optional): Instance of standalone SPM. Default is None.
-    coregister_kwargs (dict, optional): Keyword arguments specifically for the coregister function.
-    invert_kwargs (dict, optional): Keyword arguments specifically for the invert_sliding_window
-                                    function.
+    Parameters
+    ----------
+    prior : float
+        Index of the vertex to be used as a prior.
+    nas : list
+        NASion fiducial coordinates.
+    lpa : list
+        Left PreAuricular fiducial coordinates.
+    rpa : list
+        Right PreAuricular fiducial coordinates.
+    mri_fname : str
+        Filename of the MRI data.
+    mesh_fnames : list
+        List of filenames for different meshes.
+    data_fname : str
+        Filename of the MEG/EEG data.
+    viz : bool, optional
+        Whether or not to show SPM visualization. Default is True.
+    spm_instance : spm_standalone, optional
+        Instance of standalone SPM. Default is None.
+    coregister_kwargs : dict, optional
+        Keyword arguments specifically for the `coregister` function.
+    invert_kwargs : dict, optional
+        Keyword arguments specifically for the `invert_sliding_window` function.
 
-    Returns:
-    ------------
-    f_vals (list): Free energy values for each mesh
-    wois (list): Windows of interest.
+    Returns
+    -------
+    f_vals : list
+        Free energy values for each mesh.
+    wois : list
+        Windows of interest.
 
-    Notes:
-    ------------
-        - If `spm_instance` is not provided, the function will start a new standalone SPM
-          instance.
-        - The function will automatically close the standalone SPM instance if it was started
-          within the function.
-        - Free energy is used as a measure of model fit, with higher values indicating better fit.
-        - The prior index is adjusted by adding 1 to align with MATLAB's 1-based indexing.
+    Notes
+    -----
+    - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
+    - The function will automatically close the standalone SPM instance if it was started
+      within the function.
+    - Free energy is used as a measure of model fit, with higher values indicating better fit.
+    - The prior index is adjusted by adding 1 to align with MATLAB's 1-based indexing.
     """
 
     if coregister_kwargs is None:
@@ -190,40 +216,43 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
 
 
 def compute_csd(signal, thickness, sfreq, smoothing=None):
-    """Compute the laminar Current Source Density (CSD) from a given signal.
+    """
+    Compute the laminar Current Source Density (CSD) from a given signal.
 
     This function calculates CSD using the Standard CSD method. It takes a multi-layered neural
     signal, typically from laminar probes, and computes the CSD. An optional smoothing step can
     be applied to the CSD output.
 
-    Parameters:
-    -----------
-    signal (numpy.ndarray): The neural signal matrix, where rows correspond to different layers
-                            and columns to time points.
-    thickness (float): The laminar thickness of the cortex from which the signal was recorded, in
-                       millimeters.
-    sfreq (float): Sampling frequency of the signal in Hertz.
-    smoothing (str, optional): Specifies the kind of smoothing to apply to the CSD. Acceptable
-                               values are those compatible with scipy.interpolate.interp1d, such as
-                               'linear', 'nearest', 'zero', 'slinear', 'quadratic', 'cubic', etc.
-                               If None, no smoothing is applied. Default is None.
+    Parameters
+    ----------
+    signal : numpy.ndarray
+        The neural signal matrix, where rows correspond to different layers and columns to time
+        points.
+    thickness : float
+        The laminar thickness of the cortex from which the signal was recorded, in millimeters.
+    sfreq : float
+        Sampling frequency of the signal in Hertz.
+    smoothing : str, optional
+        Specifies the kind of smoothing to apply to the CSD. Acceptable values are those compatible
+        with `scipy.interpolate.interp1d`, such as 'linear', 'nearest', 'zero', 'slinear',
+        'quadratic', 'cubic', etc. If None, no smoothing is applied. Default is None.
 
-    Returns:
-    -----------
-    ret_vals (list): A list containing the CSD matrix as the first element. If smoothing is
-          applied, the second element is the smoothed CSD matrix. The CSD matrix dimensions are
-          layers x time points.
+    Returns
+    -------
+    ret_vals : list
+        A list containing the CSD matrix as the first element. If smoothing is applied, the second
+        element is the smoothed CSD matrix. The CSD matrix dimensions are layers x time points.
 
-    Notes:
-    -----------
+    Notes
+    -----
     - The function requires the 'neo', 'quantities' (pq), 'numpy' (np), 'elephant', and
       'scipy.interpolate.interp1d' libraries.
     - The CSD is calculated using the Standard CSD method provided by the 'elephant' package.
     - Smoothing is applied across layers and is independent for each time point.
     - The returned CSD matrix has the same number of time points as the input signal but can have a
-      different number
-      of layers if smoothing is applied.
+      different number of layers if smoothing is applied.
     """
+
     signal = neo.core.AnalogSignal(
         signal.T, units="T", sampling_rate=sfreq*pq.Hz
     )
@@ -255,7 +284,8 @@ def compute_csd(signal, thickness, sfreq, smoothing=None):
 
 def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thresh,
                          mu_matrix=None, chunk_size=None):
-    """Computes and compares power changes in pial and white matter layers to define
+    """
+    Computes and compares power changes in pial and white matter layers to define
     regions of interest (ROI) based on significant power shifts.
 
     This function calculates power changes in the pial and white matter layers during a specified
@@ -263,26 +293,40 @@ def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thr
     against a percentile threshold and performs a relative comparison of power changes between
     the layers to assess laminar differences.
 
-    Parameters:
-    -----------
-    data_fname (str): Filename of the data file containing source time series.
-    woi (tuple): Window of interest, specified as a start and end time (in milliseconds).
-    baseline_woi (tuple): Baseline window of interest for comparison, specified as start and end
-                          time (in milliseconds).
-    mesh (nibabel.gifti.GiftiImage): Gifti surface mesh.
-    n_layers (int): Number of layers in the cortical model.
-    perc_thresh (float): Percentile threshold for determining significant changes in power.
-    mu_matrix (ndarray, optional): Lead field matrix (source x sensor). Default is None.
-    chunk_size (int): Number of vertices to load source time series from at ones. If None, will
-                      load all at the same time. Default is None.
+    Parameters
+    ----------
+    data_fname : str
+        Filename of the data file containing source time series.
+    woi : tuple
+        Window of interest, specified as a start and end time (in milliseconds).
+    baseline_woi : tuple
+        Baseline window of interest for comparison, specified as start and end time (in
+        milliseconds).
+    mesh : nibabel.gifti.GiftiImage
+        Gifti surface mesh.
+    n_layers : int
+        Number of layers in the cortical model.
+    perc_thresh : float
+        Percentile threshold for determining significant changes in power.
+    mu_matrix : ndarray, optional
+        Lead field matrix (source x sensor). Default is None.
+    chunk_size : int, optional
+        Number of vertices to load source time series from at once. If None, will load all at the
+        same time. Default is None.
 
-    Returns:
-    -----------
-    laminar_t_statistic: TODO
-    laminar_p_value: TODO
-    deg_of_freedom: degree of freedom
-    roi_idx: indices of vertices considered as ROIs.
+    Returns
+    -------
+    laminar_t_statistic : TODO
+        The t-statistic for laminar power comparison.
+    laminar_p_value : TODO
+        The p-value associated with the laminar power comparison.
+    deg_of_freedom : int
+        Degrees of freedom for the statistical test.
+    roi_idx : list of int
+        Indices of vertices considered as ROIs.
+
     """
+
     verts_per_surf = int(mesh.darrays[0].data.shape[0] / n_layers)
     pial_vertices = np.arange(verts_per_surf)
     white_vertices = (n_layers - 1) * verts_per_surf + np.arange(verts_per_surf)
