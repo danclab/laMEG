@@ -17,23 +17,6 @@ The examples can be browsed directly on `Github <https://github.com/danclab/laME
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Configuration file for examples.">
-
-.. only:: html
-
-  .. image:: /auto_tutorials/images/thumb/sphx_glr_config_thumb.png
-    :alt:
-
-  :ref:`sphx_glr_auto_tutorials_config.py`
-
-.. raw:: html
-
-      <div class="sphx-glr-thumbnail-title">Configuration file for examples.</div>
-    </div>
-
-
-.. raw:: html
-
     <div class="sphx-glr-thumbcontainer" tooltip="Create layer surfaces # Uses FreeSurfer mris-inflate. Based on the number of surfaces you  # sp...">
 
 .. only:: html
@@ -51,7 +34,7 @@ The examples can be browsed directly on `Github <https://github.com/danclab/laME
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Laminar model comparison using free energy">
+    <div class="sphx-glr-thumbcontainer" tooltip="This tutorial demonstrates how to perform laminar  inference using model comparison based on fr...">
 
 .. only:: html
 
@@ -68,7 +51,7 @@ The examples can be browsed directly on `Github <https://github.com/danclab/laME
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Laminar model comparison using cross-validation error">
+    <div class="sphx-glr-thumbcontainer" tooltip="This tutorial demonstrates how to perform laminar inference using model comparison based on cro...">
 
 .. only:: html
 
@@ -85,7 +68,7 @@ The examples can be browsed directly on `Github <https://github.com/danclab/laME
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Sliding time window laminar model comparison using free energy">
+    <div class="sphx-glr-thumbcontainer" tooltip="This tutorial demonstrates how to perform laminar inference of event-related responses in a sli...">
 
 .. only:: html
 
@@ -142,7 +125,6 @@ The examples can be browsed directly on `Github <https://github.com/danclab/laME
 .. toctree::
    :hidden:
 
-   /auto_tutorials/config
    /auto_tutorials/tutorial_01_surface_processing
    /auto_tutorials/tutorial_02_model_comparison_free_energy
    /auto_tutorials/tutorial_03_model_comparison_cv_error

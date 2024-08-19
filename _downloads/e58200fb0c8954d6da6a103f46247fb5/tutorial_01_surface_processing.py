@@ -1,6 +1,6 @@
 """
 Surface processing
-===========
+==================
 
 ***Create layer surfaces***
 # Uses FreeSurfer mris-inflate. Based on the number of surfaces you 

@@ -1,0 +1,33 @@
+﻿lameg.viz
+=========
+
+.. automodule:: lameg.viz
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      color_map
+      data_to_rgb
+      plot_csd
+      rgbtoint
+      show_surface
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

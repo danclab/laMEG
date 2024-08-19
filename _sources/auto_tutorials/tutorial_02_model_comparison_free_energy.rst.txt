@@ -19,7 +19,8 @@
 
 
 Laminar model comparison using free energy
-==========
+==========================================
+
 This tutorial demonstrates how to perform laminar 
 inference using model comparison based on free energy 
 as a metric of model fit, described in 
@@ -30,13 +31,13 @@ using the Empirical Bayesian Beamformer on the simulated
 sensor data using forward models based on different layer 
 meshes. These models are then compared using free energy.
 
-.. GENERATED FROM PYTHON SOURCE LINES 15-18
+.. GENERATED FROM PYTHON SOURCE LINES 16-19
 
 ## Setting up the simulations
 
 Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.
 
-.. GENERATED FROM PYTHON SOURCE LINES 18-53
+.. GENERATED FROM PYTHON SOURCE LINES 19-54
 
 .. code-block:: default
 
@@ -76,15 +77,15 @@ Simulations are based on an existing dataset, which is used to define the sampli
     spm = spm_standalone.initialize()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 54-55
+.. GENERATED FROM PYTHON SOURCE LINES 55-56
 
 For source reconstructions, we need an MRI and a surface mesh. The simulations will be based on a forward model using the multilayer mesh, and the model comparison will use each layer mesh
 
-.. GENERATED FROM PYTHON SOURCE LINES 57-58
+.. GENERATED FROM PYTHON SOURCE LINES 58-59
 
 Native space MRI to use for coregistration
 
-.. GENERATED FROM PYTHON SOURCE LINES 58-76
+.. GENERATED FROM PYTHON SOURCE LINES 59-77
 
 .. code-block:: default
 
@@ -107,15 +108,15 @@ Native space MRI to use for coregistration
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 77-78
+.. GENERATED FROM PYTHON SOURCE LINES 78-79
 
 We're going to copy the data file to a temporary directory and direct all output there.
 
-.. GENERATED FROM PYTHON SOURCE LINES 80-81
+.. GENERATED FROM PYTHON SOURCE LINES 81-82
 
 Extract base name and path of data file
 
-.. GENERATED FROM PYTHON SOURCE LINES 81-100
+.. GENERATED FROM PYTHON SOURCE LINES 82-101
 
 .. code-block:: default
 
@@ -139,15 +140,15 @@ Extract base name and path of data file
     base_fname = os.path.join(tmp_dir, f'{data_base}.mat')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 101-102
+.. GENERATED FROM PYTHON SOURCE LINES 102-103
 
 Invert the subject's data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations
 
-.. GENERATED FROM PYTHON SOURCE LINES 104-105
+.. GENERATED FROM PYTHON SOURCE LINES 105-106
 
 Patch size to use for inversion (in this case it matches the simulated patch size)
 
-.. GENERATED FROM PYTHON SOURCE LINES 105-130
+.. GENERATED FROM PYTHON SOURCE LINES 106-131
 
 .. code-block:: default
 
@@ -177,16 +178,16 @@ Patch size to use for inversion (in this case it matches the simulated patch siz
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 131-133
+.. GENERATED FROM PYTHON SOURCE LINES 132-134
 
 ## Simulating a signal on the pial surface
 We're going to simulate 1s of a 20Hz sine wave with a dipole moment of 10nAm
 
-.. GENERATED FROM PYTHON SOURCE LINES 135-136
+.. GENERATED FROM PYTHON SOURCE LINES 136-137
 
 Frequency of simulated sinusoid (Hz)
 
-.. GENERATED FROM PYTHON SOURCE LINES 136-150
+.. GENERATED FROM PYTHON SOURCE LINES 137-151
 
 .. code-block:: default
 
@@ -205,15 +206,15 @@ Frequency of simulated sinusoid (Hz)
     plt.ylabel('Amplitude (nAm)')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 151-152
+.. GENERATED FROM PYTHON SOURCE LINES 152-153
 
 We need to pick a location (mesh vertex) to simulate at
 
-.. GENERATED FROM PYTHON SOURCE LINES 154-155
+.. GENERATED FROM PYTHON SOURCE LINES 155-156
 
 Vertex to simulate activity at
 
-.. GENERATED FROM PYTHON SOURCE LINES 155-173
+.. GENERATED FROM PYTHON SOURCE LINES 156-174
 
 .. code-block:: default
 
@@ -236,15 +237,15 @@ Vertex to simulate activity at
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 174-175
+.. GENERATED FROM PYTHON SOURCE LINES 175-176
 
 We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-.. GENERATED FROM PYTHON SOURCE LINES 177-178
+.. GENERATED FROM PYTHON SOURCE LINES 178-179
 
 Simulate at a vertex on the pial surface
 
-.. GENERATED FROM PYTHON SOURCE LINES 178-205
+.. GENERATED FROM PYTHON SOURCE LINES 179-206
 
 .. code-block:: default
 
@@ -276,16 +277,16 @@ Simulate at a vertex on the pial surface
     plt.ylim([-225, 225])
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 206-208
+.. GENERATED FROM PYTHON SOURCE LINES 207-209
 
 ## Model comparison (pial - white matter)
 Now we can run model comparison between source models based on the pial and white matter surfaces using free energy. Specifically, we'll look at the difference in free energy between the two models (pial - white matter). This should be positive (more model evidence for the pial surface model) because we simulated activity on the pial surface
 
-.. GENERATED FROM PYTHON SOURCE LINES 210-211
+.. GENERATED FROM PYTHON SOURCE LINES 211-212
 
 Run model comparison between the first layer (pial) and the last layer (white matter)
 
-.. GENERATED FROM PYTHON SOURCE LINES 211-229
+.. GENERATED FROM PYTHON SOURCE LINES 212-230
 
 .. code-block:: default
 
@@ -308,16 +309,16 @@ Run model comparison between the first layer (pial) and the last layer (white ma
     F[0]-F[1]
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 230-232
+.. GENERATED FROM PYTHON SOURCE LINES 231-233
 
 ## White matter surface simulation with pial - white matter model comparison
 Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, model comparison should yield greater model evidence for the white matter surface, and therefore the difference in free energy (pial - white matter) should be negative.
 
-.. GENERATED FROM PYTHON SOURCE LINES 234-235
+.. GENERATED FROM PYTHON SOURCE LINES 235-236
 
 Simulate at the corresponding vertex on the white matter surface
 
-.. GENERATED FROM PYTHON SOURCE LINES 235-268
+.. GENERATED FROM PYTHON SOURCE LINES 236-269
 
 .. code-block:: default
 
@@ -355,15 +356,15 @@ Simulate at the corresponding vertex on the white matter surface
     F[0]-F[1]
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 269-270
+.. GENERATED FROM PYTHON SOURCE LINES 270-271
 
 Here's the sensor signals from the simulation of activity on the white matter surface. It's very similar to the sensor signals from the pial surface simulation
 
-.. GENERATED FROM PYTHON SOURCE LINES 272-273
+.. GENERATED FROM PYTHON SOURCE LINES 273-274
 
 Load simulated sensor data and plot
 
-.. GENERATED FROM PYTHON SOURCE LINES 273-279
+.. GENERATED FROM PYTHON SOURCE LINES 274-280
 
 .. code-block:: default
 
@@ -374,11 +375,11 @@ Load simulated sensor data and plot
     plt.ylim([-225, 225])
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 280-281
+.. GENERATED FROM PYTHON SOURCE LINES 281-282
 
 The difference between the two simulated sensor signals is quite small
 
-.. GENERATED FROM PYTHON SOURCE LINES 283-289
+.. GENERATED FROM PYTHON SOURCE LINES 284-290
 
 .. code-block:: default
 
@@ -389,17 +390,17 @@ The difference between the two simulated sensor signals is quite small
     plt.ylim([-225, 225])
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 290-292
+.. GENERATED FROM PYTHON SOURCE LINES 291-293
 
 ## Simulation in each layer with model comparison across layers
 That was model comparison with two candidate models: one based on the white matter surface, and one on the pial. Let's now simulate on each layer, and for each simulation, run model comparison across all layers. We'll turn off SPM visualization here.
 
-.. GENERATED FROM PYTHON SOURCE LINES 294-296
+.. GENERATED FROM PYTHON SOURCE LINES 295-297
 
 Now simulate at the corresponding vertex on each layer, and for each simulation, run model comparison across
 all layers
 
-.. GENERATED FROM PYTHON SOURCE LINES 296-331
+.. GENERATED FROM PYTHON SOURCE LINES 297-332
 
 .. code-block:: default
 
@@ -439,11 +440,11 @@ all layers
     all_layerF = np.array(all_layerF)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 332-333
+.. GENERATED FROM PYTHON SOURCE LINES 333-334
 
 For each simulation, we can plot the free energy for all models relative to the worst model. The layer model with the highest free energy should correspond to the layer that the activity was simulated in.
 
-.. GENERATED FROM PYTHON SOURCE LINES 335-363
+.. GENERATED FROM PYTHON SOURCE LINES 336-364
 
 .. code-block:: default
 
@@ -476,11 +477,11 @@ For each simulation, we can plot the free energy for all models relative to the 
     plt.tight_layout()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 364-365
+.. GENERATED FROM PYTHON SOURCE LINES 365-366
 
 Normalization step
 
-.. GENERATED FROM PYTHON SOURCE LINES 365-384
+.. GENERATED FROM PYTHON SOURCE LINES 366-385
 
 .. code-block:: default
 
@@ -504,7 +505,7 @@ Normalization step
     cb.set_label(r'$\Delta F$', fontsize=14)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 385-389
+.. GENERATED FROM PYTHON SOURCE LINES 386-390
 
 .. code-block:: default
 

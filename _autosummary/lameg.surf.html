@@ -1,0 +1,1191 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>lameg.surf &#8212; laMEG 0.0.3 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/thebelab.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_autosummary/lameg.surf';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="lameg.viz" href="lameg.viz.html" />
+    <link rel="prev" title="lameg.laminar" href="lameg.laminar.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../_static/logo.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+    <p class="title logo__title">lameg</p>
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="lameg.invert.html">
+                        lameg.invert
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="lameg.laminar.html">
+                        lameg.laminar
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="#">
+                        lameg.surf
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="lameg.viz.html">
+                        lameg.viz
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="lameg.simulate.html">
+                        lameg.simulate
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../auto_tutorials/index.html">
+                        Tutorials gallery
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://github.com/danclab/laMEG">
+                    GitHub
+                  </a>
+                </li>
+                
+                </div>
+            </div>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/danclab/laMEG" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/danc_labo" title="Twitter" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-twitter"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="lameg.invert.html">
+                        lameg.invert
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="lameg.laminar.html">
+                        lameg.laminar
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="#">
+                        lameg.surf
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="lameg.viz.html">
+                        lameg.viz
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="lameg.simulate.html">
+                        lameg.simulate
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../auto_tutorials/index.html">
+                        Tutorials gallery
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://github.com/danclab/laMEG">
+                    GitHub
+                  </a>
+                </li>
+                
+                </div>
+            </div>
+            
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/danclab/laMEG" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/danc_labo" title="Twitter" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-twitter"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumbs">
+  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">lameg.surf</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="module-lameg.surf">
+<span id="lameg-surf"></span><h1>lameg.surf<a class="headerlink" href="#module-lameg.surf" title="Permalink to this heading">#</a></h1>
+<p>This module provides a set of tools for handling and manipulating surface mesh data, primarily
+used within neuroimaging and computer graphics contexts. The functionalities include computing mesh
+normals, interpolating mesh data, handling non-manifold edges, creating and manipulating GIFTI
+surface files, and downsampling meshes using the VTK library.</p>
+<p>The functions within the module leverage external libraries such as nibabel for neuroimaging data
+management, numpy for numerical operations, scipy for scientific computing tasks like Delaunay
+triangulation, and the VTK toolkit for complex mesh processing tasks such as mesh decimation.</p>
+<p>Key functionalities include:
+- Normalization of vectors to unit length.
+- Calculation of normals for mesh surfaces using both Delaunay triangulation and custom methods.
+- Creation of GIFTI images from mesh data.
+- Removal of specified vertices from a mesh and updating the mesh topology accordingly.
+- Identification and handling of non-manifold edges to ensure mesh manifoldness.
+- Interpolation of data from a downsampled mesh back to its original high-resolution mesh.
+- Downsampling of meshes using VTK’s decimation algorithms.
+- Combination and adjustment of multiple surface meshes into a single mesh.</p>
+<p class="rubric">Functions</p>
+<table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.surf.combine_surfaces" title="lameg.surf.combine_surfaces"><code class="xref py py-obj docutils literal notranslate"><span class="pre">combine_surfaces</span></code></a>(surfaces)</p></td>
+<td><p>Combine multiple surface meshes into a single surface mesh.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.surf.compute_dipole_orientations" title="lameg.surf.compute_dipole_orientations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_dipole_orientations</span></code></a>(method, ...[, fixed])</p></td>
+<td><p>Compute dipole orientations for cortical layers using different methods.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.surf.create_layer_mesh" title="lameg.surf.create_layer_mesh"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_layer_mesh</span></code></a>(layer, hemispheres, ...)</p></td>
+<td><p>Create or retrieve a specified cortical layer mesh file name or path based on the provided layer proportional thickness or identifier.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.surf.create_surf_gifti" title="lameg.surf.create_surf_gifti"><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_surf_gifti</span></code></a>(vertices, faces[, normals])</p></td>
+<td><p>Create a Gifti image object from surface mesh data.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.surf.downsample_multiple_surfaces" title="lameg.surf.downsample_multiple_surfaces"><code class="xref py py-obj docutils literal notranslate"><span class="pre">downsample_multiple_surfaces</span></code></a>(in_surfs, ds_factor)</p></td>
+<td><p>Downsample multiple surface meshes using the VTK decimation algorithm.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.surf.downsample_single_surface" title="lameg.surf.downsample_single_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">downsample_single_surface</span></code></a>(gifti_surf[, ...])</p></td>
+<td><p>Downsample a Gifti surface using the VTK library.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.surf.find_non_manifold_edges" title="lameg.surf.find_non_manifold_edges"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_non_manifold_edges</span></code></a>(faces)</p></td>
+<td><p>Identify non-manifold edges in a given mesh represented by its faces.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.surf.fix_non_manifold_edges" title="lameg.surf.fix_non_manifold_edges"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fix_non_manifold_edges</span></code></a>(vertices, faces)</p></td>
+<td><p>Remove faces associated with non-manifold edges from a mesh defined by vertices and faces.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.surf.interpolate_data" title="lameg.surf.interpolate_data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">interpolate_data</span></code></a>(original_mesh, ...[, ...])</p></td>
+<td><p>Interpolate vertex data from a downsampled mesh back to the original mesh using nearest neighbor matching and optional smoothing based on an adjacency matrix.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.surf.iterative_downsample_single_surface" title="lameg.surf.iterative_downsample_single_surface"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iterative_downsample_single_surface</span></code></a>(gifti_surf)</p></td>
+<td><p>Iteratively downsample a single surface mesh to a target number of vertices.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.surf.mesh_adjacency" title="lameg.surf.mesh_adjacency"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mesh_adjacency</span></code></a>(faces)</p></td>
+<td><p>Compute the adjacency matrix of a triangle mesh.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.surf.mesh_normals" title="lameg.surf.mesh_normals"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mesh_normals</span></code></a>(vertices, faces[, unit])</p></td>
+<td><p>Normalize a numpy array of vectors.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.surf.postprocess_freesurfer_surfaces" title="lameg.surf.postprocess_freesurfer_surfaces"><code class="xref py py-obj docutils literal notranslate"><span class="pre">postprocess_freesurfer_surfaces</span></code></a>(subj_id, ...)</p></td>
+<td><p>Process and combine FreeSurfer surface meshes for a subject.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.surf.remove_unconnected_vertices" title="lameg.surf.remove_unconnected_vertices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_unconnected_vertices</span></code></a>(gifti_surf)</p></td>
+<td><p>Remove vertices that are not connected to any faces from a Gifti surface object.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.surf.remove_vertices" title="lameg.surf.remove_vertices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_vertices</span></code></a>(gifti_surf, vertices_to_remove)</p></td>
+<td><p>Remove specified vertices from a Gifti surface and update the faces accordingly.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.surf.split_fv" title="lameg.surf.split_fv"><code class="xref py py-obj docutils literal notranslate"><span class="pre">split_fv</span></code></a>(faces, vertices)</p></td>
+<td><p>Split faces and vertices into connected pieces based on the connectivity of the faces.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.combine_surfaces">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">combine_surfaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surfaces</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.combine_surfaces" title="Permalink to this definition">#</a></dt>
+<dd><p>Combine multiple surface meshes into a single surface mesh.</p>
+<p>This function takes a list of Gifti surface meshes and combines them into a single surface
+mesh. It concatenates the vertices, faces, and normals (if present) from each surface. The
+faces are re-indexed appropriately to maintain the correct references to the combined vertex
+array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>surfaces</strong> (<em>list</em><em> of </em><em>nibabel.gifti.GiftiImage</em>) – List of Gifti surface meshes to be combined.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>combined_surf</strong> – A single combined Gifti surface mesh.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nibabel.gifti.GiftiImage</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The vertices, faces, and normals (if present) from each surface are concatenated.</p></li>
+<li><p>The faces are re-indexed to reference the correct vertices in the combined vertex array.</p></li>
+<li><p>If normals are present in any of the input surfaces, they are also combined.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the vertex or face arrays do not have the expected dimensions.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">surfaces</span> <span class="o">=</span> <span class="p">[</span><span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;path/to/surface1.gii&#39;</span><span class="p">),</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;path/to/surface2.gii&#39;</span><span class="p">)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">combined_surf</span> <span class="o">=</span> <span class="n">combine_surfaces</span><span class="p">(</span><span class="n">surfaces</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">nib</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">combined_surf</span><span class="p">,</span> <span class="s1">&#39;path/to/combined_surface.gii&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.compute_dipole_orientations">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">compute_dipole_orientations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.compute_dipole_orientations" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute dipole orientations for cortical layers using different methods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>method</strong> (<em>str</em>) – Method for computing dipole orientations (‘link_vector’, ‘ds_surf_norm’, ‘orig_surf_norm’,
+or ‘cps’).
+link_vector: Vectors connecting pial vertices to corresponding white matter vertices.
+ds_surf_norm: Surface normal vectors computed from the downsampled surface.
+orig_surf_norm: Surface normal vectors computed from the original (non-downsampled) surface.
+cps: Cortical patch statistics - mean surface normal vectors from connected vertices in the
+original (non-downsampled) surface.</p></li>
+<li><p><strong>layer_names</strong> (<em>list</em>) – Names of the cortical layers.</p></li>
+<li><p><strong>surf_dir</strong> (<em>str</em>) – Directory where the surface files are stored.</p></li>
+<li><p><strong>fixed</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag to ensure that orientation of corresponding vertices across layers is the same (True
+by default). If True, for ‘ds_surf_norm’, ‘orig_surf_norm’, and ‘cps’, orientations
+computed from the pial surface are used for all layers.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>orientations</strong> – An array of dipole orientations for each vertex in each layer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the number of vertices in pial and white matter surfaces do not match.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.create_layer_mesh">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">create_layer_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hemispheres</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs_subject_dir</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#lameg.surf.create_layer_mesh" title="Permalink to this definition">#</a></dt>
+<dd><p>Create or retrieve a specified cortical layer mesh file name or path based on the provided
+layer proportional thickness or identifier.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<em>float</em><em> or </em><em>int</em>) – Specifies the cortical layer. The value 1 corresponds to the ‘pial’ surface, values between
+0 and 1 (exclusive) correspond to intermediate layers (specified as a decimal), and the
+value 0 corresponds to the ‘white matter’ surface.</p></li>
+<li><p><strong>hemispheres</strong> (<em>list</em><em> of </em><em>str</em>) – A list of hemisphere identifiers (e.g., [‘lh’, ‘rh’]) for which meshes should be created or
+retrieved.</p></li>
+<li><p><strong>fs_subject_dir</strong> (<em>str</em>) – Path to the subject directory within the FreeSurfer environment. This directory should
+include a ‘surf’ directory where mesh files are stored.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>layer_name</strong> – Returns a string representing the mesh layer (‘pial’, ‘white’, or a specific intermediate
+layer as a formatted string). Returns None if the input layer does not match any recognized
+pattern (e.g., a negative number or a number greater than 1).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str or None</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>For intermediate layers (0 &lt; layer &lt; 1), the function will check for the existence of the mesh
+file corresponding to each hemisphere. If it does not exist, it uses ‘mris_expand’ to generate
+it using the white matter surface file. If the layer exactly matches 0 or 1, it returns the
+corresponding standard FreeSurfer mesh identifier (‘white’ or ‘pial’).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.create_surf_gifti">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">create_surf_gifti</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">normals</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.create_surf_gifti" title="Permalink to this definition">#</a></dt>
+<dd><p>Create a Gifti image object from surface mesh data.</p>
+<p>This function creates a GiftiImage object from the provided vertices, faces, and optional
+normals. The vertices and faces are required, while normals are optional. If normals are
+provided, they are added to the Gifti image. The function returns the GiftiImage object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vertices</strong> (<em>numpy.ndarray</em>) – Array of vertices. Each row represents a vertex with its x, y, z coordinates.</p></li>
+<li><p><strong>faces</strong> (<em>numpy.ndarray</em>) – Array of faces. Each row represents a face with three integers corresponding to vertex
+indices.</p></li>
+<li><p><strong>normals</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – Array of vertex normals. Each row represents a normal vector corresponding to a vertex.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>new_gifti</strong> – The GiftiImage object created from the provided mesh data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nibabel.gifti.GiftiImage</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Vertex, face, and normal arrays should be NumPy arrays.</p></li>
+<li><p>Vertices and normals should be in float32 format, and faces should be in int32 format.</p></li>
+</ul>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">faces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gifti_img</span> <span class="o">=</span> <span class="n">create_surf_gifti</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">faces</span><span class="p">,</span> <span class="n">normals</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.downsample_multiple_surfaces">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">downsample_multiple_surfaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_surfs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.downsample_multiple_surfaces" title="Permalink to this definition">#</a></dt>
+<dd><p>Downsample multiple surface meshes using the VTK decimation algorithm.</p>
+<p>This function takes a list of input surface meshes (in Gifti format) and applies a downsampling
+process to each surface. The downsampling is performed using VTK’s <cite>vtkDecimatePro</cite> algorithm.
+The first surface in the list is downsampled, and its vertex mapping is then applied to all
+other surfaces in the list. The function returns a list of downsampled surface meshes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_surfs</strong> (<em>list</em><em> of </em><em>nibabel.gifti.GiftiImage</em>) – Input Gifti surface meshes to be downsampled.</p></li>
+<li><p><strong>ratio</strong> (<em>float</em>) – The reduction ratio for the downsampling process. For example, a ratio of 0.1
+implies that the mesh will be reduced to 90% of its original size.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>out_surfs</strong> – List of downsampled Gifti surface meshes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of nibabel.gifti.GiftiImage</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The function prints the percentage of vertices retained in the first surface after
+downsampling.</p></li>
+<li><p>If normals are present in the input surfaces, they are also downsampled and mapped to the
+new surfaces.</p></li>
+<li><p>The resulting surfaces maintain the original topology and are suitable for visualization and
+further processing.</p></li>
+</ul>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">in_surfs</span> <span class="o">=</span> <span class="p">[</span><span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;path/to/input_surf1.gii&#39;</span><span class="p">),</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;path/to/input_surf2.gii&#39;</span><span class="p">)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ratio</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">out_surfs</span> <span class="o">=</span> <span class="n">downsample_multiple_surfaces</span><span class="p">(</span><span class="n">in_surfs</span><span class="p">,</span> <span class="n">ratio</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ds_surf</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">out_surfs</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">nib</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">ds_surf</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;path/to/output_surf</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">.gii&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.downsample_single_surface">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">downsample_single_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.downsample_single_surface" title="Permalink to this definition">#</a></dt>
+<dd><p>Downsample a Gifti surface using the VTK library.</p>
+<p>This function takes a Gifti surface defined by its vertices and faces, and downsamples it using
+VTK’s <cite>vtkDecimatePro</cite> algorithm. The reduction ratio determines the degree of downsampling.
+The function returns the downsampled Gifti surface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gifti_surf</strong> (<em>nibabel.gifti.GiftiImage</em>) – The Gifti surface object to be downsampled.</p></li>
+<li><p><strong>reduction_ratio</strong> (<em>float</em>) – The proportion of the mesh to remove. For example, a reduction ratio of 0.1 retains 90% of
+the original mesh.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>new_gifti_surf</strong> – A new GiftiImage object with the downsampled surface.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nibabel.gifti.GiftiImage</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The input faces array should be triangulated, i.e., each face should consist of exactly three
+vertex indices.</p></li>
+<li><p>The VTK library is used for mesh decimation, which must be installed and properly configured.</p></li>
+<li><p>The returned GiftiImage object is a new object; the original <cite>gifti_surf</cite> object is not
+modified in place.</p></li>
+</ul>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gifti_surf</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;path_to_gifti_file.gii&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_gifti_surf</span> <span class="o">=</span> <span class="n">downsample_single_surface</span><span class="p">(</span><span class="n">gifti_surf</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.find_non_manifold_edges">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">find_non_manifold_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">faces</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.find_non_manifold_edges" title="Permalink to this definition">#</a></dt>
+<dd><p>Identify non-manifold edges in a given mesh represented by its faces.</p>
+<p>A non-manifold edge is defined as an edge that is shared by more than two faces. This function
+processes an array of faces, each face represented by a tuple of vertex indices, and identifies
+edges that meet the non-manifold criteria.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>faces</strong> (<em>np.ndarray</em>) – An array where each row represents a face as a tuple of three vertex indices.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>non_manifold_edges</strong> – A dictionary where keys are tuples representing non-manifold edges (vertex indices are
+sorted), and values are lists of face indices that share the edge.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function uses a <cite>defaultdict</cite> to collect face indices for each edge encountered in the mesh.
+It then filters out edges that are associated with more than two faces, identifying them as
+non-manifold.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.fix_non_manifold_edges">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">fix_non_manifold_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.fix_non_manifold_edges" title="Permalink to this definition">#</a></dt>
+<dd><p>Remove faces associated with non-manifold edges from a mesh defined by vertices and faces.</p>
+<p>Non-manifold edges are edges that are shared by more than two faces, which can cause issues
+in various mesh processing tasks such as mesh simplification, smoothing, or 3D printing. This
+function identifies such edges and removes all faces associated with them to ensure
+manifoldness of the mesh.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vertices</strong> (<em>np.ndarray</em>) – An array of vertices, where each row represents a vertex as [x, y, z] coordinates.</p></li>
+<li><p><strong>faces</strong> (<em>np.ndarray</em>) – An array of faces, where each row represents a face as indices into the vertices array.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>vertices</strong> (<em>np.ndarray</em>) – The unchanged array of vertices.</p></li>
+<li><p><strong>new_faces</strong> (<em>np.ndarray</em>) – The modified array of faces, with faces associated with non-manifold edges removed.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">faces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_vertices</span><span class="p">,</span> <span class="n">new_faces</span> <span class="o">=</span> <span class="n">fix_non_manifold_edges</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">faces</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_faces</span>
+<span class="go">array([[0, 1, 2], [0, 2, 3]])  # Assuming face [1, 2, 3] was associated with a non-manifold</span>
+<span class="go">edge.</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.interpolate_data">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">interpolate_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsampled_mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsampled_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjacency_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.interpolate_data" title="Permalink to this definition">#</a></dt>
+<dd><p>Interpolate vertex data from a downsampled mesh back to the original mesh using nearest
+neighbor matching and optional smoothing based on an adjacency matrix. Both meshes are
+expected to be nibabel Gifti objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>original_mesh</strong> (<em>nibabel.gifti.GiftiImage</em>) – The original high-resolution mesh as a nibabel Gifti object from which ‘downsampled_mesh’
+is derived.</p></li>
+<li><p><strong>downsampled_mesh</strong> (<em>nibabel.gifti.GiftiImage</em>) – The downsampled version of the original mesh as a nibabel Gifti object.</p></li>
+<li><p><strong>downsampled_data</strong> (<em>array</em>) – Data associated with the vertices of ‘downsampled_mesh’.</p></li>
+<li><p><strong>adjacency_matrix</strong> (<em>sparse matrix</em><em>, </em><em>optional</em>) – A vertex-by-vertex adjacency matrix of the original mesh. If None, it will be computed from
+the ‘original_mesh’.</p></li>
+<li><p><strong>max_iterations</strong> (<em>int</em><em>, </em><em>optional</em>) – The maximum number of iterations to perform for smoothing the interpolated data.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>vertex_data</strong> – An array of interpolated data for each vertex in the ‘original_mesh’. The data is initially
+interpolated using nearest neighbors and can be further refined through iterative smoothing.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function first finds the nearest vertex in the ‘downsampled_mesh’ for each vertex in the
+‘original_mesh’ using a KD-tree. It directly assigns corresponding data values where a close
+match is found. The function iteratively adjusts data values at vertices without direct matches
+by averaging over neighbors.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.iterative_downsample_single_surface">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">iterative_downsample_single_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.iterative_downsample_single_surface" title="Permalink to this definition">#</a></dt>
+<dd><p>Iteratively downsample a single surface mesh to a target number of vertices.</p>
+<p>This function reduces the number of vertices in a surface mesh (in GIFTI format) to a specified
+fraction of its original size. Downsampling is performed iteratively until the target number of
+vertices is reached or closely approximated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gifti_surf</strong> (<em>nibabel.gifti.GiftiImage</em>) – The surface mesh to be downsampled, provided as a GIFTI image object.</p></li>
+<li><p><strong>ds_factor</strong> (<em>float</em><em>, </em><em>optional</em>) – The downsampling factor representing the target fraction of the original number of vertices.
+Default is 0.1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>current_surf</strong> – The downsampled surface mesh as a GIFTI image object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nibabel.gifti.GiftiImage</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The downsampling process is iterative. In each iteration, the mesh is downsampled by a factor
+calculated to approach the target number of vertices.</p></li>
+<li><p>If the calculated downsampling factor in an iteration equals or exceeds 1, the process is
+terminated to prevent upsampling or infinite loops.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.mesh_adjacency">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">mesh_adjacency</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">faces</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.mesh_adjacency" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute the adjacency matrix of a triangle mesh.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>faces</strong> (<em>np.array</em><em>, </em><em>shape</em><em> (</em><em>f</em><em>, </em><em>3</em><em>)</em>) – The mesh faces, where <cite>f</cite> is the number of faces, and each face is represented by a tuple of
+three vertex indices.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>adjacency</strong> – The adjacency matrix of the mesh, where <cite>v</cite> is the number of vertices. Each entry (i, j)
+indicates whether vertices i and j are connected by an edge.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.array, shape (v, v)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.mesh_normals">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">mesh_normals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.mesh_normals" title="Permalink to this definition">#</a></dt>
+<dd><p>Normalize a numpy array of vectors.</p>
+<p>This function normalizes each row in the array of vectors to have unit length. If the length of
+a vector is below a certain threshold (machine epsilon), it is set to 1 to avoid division by
+zero.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>vectors</strong> (<em>ndarray</em>) – Array of vectors to be normalized. Each row represents a vector.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Normalized array of vectors where each row has unit length.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.postprocess_freesurfer_surfaces">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">postprocess_freesurfer_surfaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_surfaces</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">11</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">remove_deep</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.postprocess_freesurfer_surfaces" title="Permalink to this definition">#</a></dt>
+<dd><p>Process and combine FreeSurfer surface meshes for a subject.</p>
+<p>This function processes FreeSurfer surface meshes for a given subject by creating intermediate
+surfaces, adjusting for RAS offset, removing deep vertices, combining hemispheres,
+downsampling, and computing link vectors. The resulting surfaces are combined and saved to a
+specified output file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subj_id</strong> (<em>str</em>) – Subject ID corresponding to the FreeSurfer subject directory.</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Output directory where the processed files will be saved.</p></li>
+<li><p><strong>out_fname</strong> (<em>str</em>) – Filename for the final combined surface mesh.</p></li>
+<li><p><strong>n_surfaces</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of intermediate surfaces to create between white and pial surfaces.</p></li>
+<li><p><strong>ds_factor</strong> (<em>float</em><em>, </em><em>optional</em>) – Downsampling factor for surface decimation.</p></li>
+<li><p><strong>orientation</strong> (<em>str</em><em>, </em><em>optional</em>) – Method to compute orientation vectors (‘link_vector’ for pial-white link, ‘ds_surf_norm’
+for downsampled surface normals, ‘orig_surf_norm’ for original surface normals, and ‘cps’
+for cortical patch statistics).</p></li>
+<li><p><strong>fix_orientation</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag to ensure that orientation of corresponding vertices across layers is the same (True
+by default).</p></li>
+<li><p><strong>remove_deep</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag to remove vertices located in deep regions (labeled as ‘unknown’).</p></li>
+<li><p><strong>n_jobs</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of parallel processes to run. -1 for all available cores (default is -1).</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>This function assumes the FreeSurfer ‘SUBJECTS_DIR’ environment variable is set.</p></li>
+<li><p>Surfaces are processed in Gifti format and combined into a single surface mesh.</p></li>
+</ul>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">postprocess_freesurfer_surfaces</span><span class="p">(</span><span class="s1">&#39;subject1&#39;</span><span class="p">,</span> <span class="s1">&#39;/path/to/output&#39;</span><span class="p">,</span> <span class="s1">&#39;combined_surface.gii&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.remove_unconnected_vertices">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">remove_unconnected_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.remove_unconnected_vertices" title="Permalink to this definition">#</a></dt>
+<dd><p>Remove vertices that are not connected to any faces from a Gifti surface object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>gifti_surf</strong> (<em>nibabel.gifti.GiftiImage</em>) – The Gifti surface object to be processed.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>cleaned_gifti_surf</strong> – A new GiftiImage object with unconnected vertices removed.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nibabel.gifti.GiftiImage</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.remove_vertices">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">remove_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertices_to_remove</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.remove_vertices" title="Permalink to this definition">#</a></dt>
+<dd><p>Remove specified vertices from a Gifti surface and update the faces accordingly.</p>
+<p>This function modifies a Gifti surface by removing the specified vertices. It also updates
+the faces of the surface so that they only reference the remaining vertices. If normals
+are present in the surface, they are also updated to correspond to the new set of vertices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gifti_surf</strong> (<em>nibabel.gifti.GiftiImage</em>) – The Gifti surface object from which vertices will be removed.</p></li>
+<li><p><strong>vertices_to_remove</strong> (<em>array_like</em>) – An array of vertex indices to be removed from the surface.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>new_gifti</strong> – A new GiftiImage object with the specified vertices removed and faces updated.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nibabel.gifti.GiftiImage</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The function assumes that the GiftiImage object contains at least two data arrays: one for
+vertices and one for faces. If normals are present, they are also updated.</p></li>
+<li><p>Vertex indices in <cite>vertices_to_remove</cite> should be zero-based (following Python’s indexing
+convention).</p></li>
+<li><p>The returned GiftiImage object is a new object; the original <cite>gifti_surf</cite> object is not
+modified in place.</p></li>
+</ul>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gifti_surf</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;path_to_gifti_file.gii&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vertices_to_remove</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>  <span class="c1"># Indices of vertices to remove</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_gifti_surf</span> <span class="o">=</span> <span class="n">remove_vertices</span><span class="p">(</span><span class="n">gifti_surf</span><span class="p">,</span> <span class="n">vertices_to_remove</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.surf.split_fv">
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">split_fv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">faces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.split_fv" title="Permalink to this definition">#</a></dt>
+<dd><p>Split faces and vertices into connected pieces based on the connectivity of the faces.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>faces</strong> (<em>np.ndarray</em>) – A 2D numpy array of faces, where each row represents a face and each element is an index to
+a vertex in <cite>vertices</cite>.</p></li>
+<li><p><strong>vertices</strong> (<em>np.ndarray</em>) – A 2D numpy array of vertices, where each row represents a vertex.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>fv_out</strong> – A list where each element is a dictionary with keys ‘faces’ and ‘vertices’. Each dictionary
+represents a separately connected patch of the mesh.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of dict</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">faces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>                     <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">split_patches</span> <span class="o">=</span> <span class="n">split_fv</span><span class="p">(</span><span class="n">faces</span><span class="p">,</span> <span class="n">vertices</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="rubric">Notes</p>
+<p>Faces and vertices should be defined such that faces sharing a vertex reference the same vertex
+number. This function does not explicitly test for duplicate vertices at the same location.</p>
+</dd></dl>
+
+</section>
+
+
+                </article>
+              
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="lameg.laminar.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">lameg.laminar</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="lameg.viz.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">lameg.viz</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.combine_surfaces"><code class="docutils literal notranslate"><span class="pre">combine_surfaces()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.compute_dipole_orientations"><code class="docutils literal notranslate"><span class="pre">compute_dipole_orientations()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.create_layer_mesh"><code class="docutils literal notranslate"><span class="pre">create_layer_mesh()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.create_surf_gifti"><code class="docutils literal notranslate"><span class="pre">create_surf_gifti()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.downsample_multiple_surfaces"><code class="docutils literal notranslate"><span class="pre">downsample_multiple_surfaces()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.downsample_single_surface"><code class="docutils literal notranslate"><span class="pre">downsample_single_surface()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.find_non_manifold_edges"><code class="docutils literal notranslate"><span class="pre">find_non_manifold_edges()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.fix_non_manifold_edges"><code class="docutils literal notranslate"><span class="pre">fix_non_manifold_edges()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.interpolate_data"><code class="docutils literal notranslate"><span class="pre">interpolate_data()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.iterative_downsample_single_surface"><code class="docutils literal notranslate"><span class="pre">iterative_downsample_single_surface()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.mesh_adjacency"><code class="docutils literal notranslate"><span class="pre">mesh_adjacency()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.mesh_normals"><code class="docutils literal notranslate"><span class="pre">mesh_normals()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.postprocess_freesurfer_surfaces"><code class="docutils literal notranslate"><span class="pre">postprocess_freesurfer_surfaces()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.remove_unconnected_vertices"><code class="docutils literal notranslate"><span class="pre">remove_unconnected_vertices()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.remove_vertices"><code class="docutils literal notranslate"><span class="pre">remove_vertices()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.split_fv"><code class="docutils literal notranslate"><span class="pre">split_fv()</span></code></a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/danclab/laMEG/edit/master/docs/_autosummary/lameg.surf.rst">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div class="tocsection sourcelink">
+    <a href="../_sources/_autosummary/lameg.surf.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright 2024, DANC lab.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.3.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

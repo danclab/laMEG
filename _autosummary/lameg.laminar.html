@@ -1,0 +1,786 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>lameg.laminar &#8212; laMEG 0.0.3 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/thebelab.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
+    <script src="../_static/jquery.js"></script>
+    <script src="../_static/underscore.js"></script>
+    <script src="../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../_static/doctools.js"></script>
+    <script src="../_static/sphinx_highlight.js"></script>
+    <script src="../_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_autosummary/lameg.laminar';</script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="lameg.surf" href="lameg.surf.html" />
+    <link rel="prev" title="lameg.invert" href="lameg.invert.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../_static/logo.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../_static/logo.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+    <p class="title logo__title">lameg</p>
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="lameg.invert.html">
+                        lameg.invert
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="#">
+                        lameg.laminar
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="lameg.surf.html">
+                        lameg.surf
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="lameg.viz.html">
+                        lameg.viz
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="lameg.simulate.html">
+                        lameg.simulate
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../auto_tutorials/index.html">
+                        Tutorials gallery
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://github.com/danclab/laMEG">
+                    GitHub
+                  </a>
+                </li>
+                
+                </div>
+            </div>
+            
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/danclab/laMEG" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/danc_labo" title="Twitter" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-twitter"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="lameg.invert.html">
+                        lameg.invert
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="#">
+                        lameg.laminar
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="lameg.surf.html">
+                        lameg.surf
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="lameg.viz.html">
+                        lameg.viz
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="lameg.simulate.html">
+                        lameg.simulate
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../auto_tutorials/index.html">
+                        Tutorials gallery
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://github.com/danclab/laMEG">
+                    GitHub
+                  </a>
+                </li>
+                
+                </div>
+            </div>
+            
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/danclab/laMEG" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/danc_labo" title="Twitter" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-twitter"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumbs">
+  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">lameg.laminar</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="module-lameg.laminar">
+<span id="lameg-laminar"></span><h1>lameg.laminar<a class="headerlink" href="#module-lameg.laminar" title="Permalink to this heading">#</a></h1>
+<p>This module provides tools for performing laminar analysis of MEG signals.
+It integrates functionalities for coregistering head models, performing source reconstruction
+using different methods (Empirical Bayesian Beamformer and Multiple Sparse Priors),
+and assessing model fit via free energy calculations. It also includes capabilities
+for analyzing laminar current source density and comparing regional brain activity
+across different conditions or layers.</p>
+<p>The module leverages external libraries such as NumPy, SciPy, neo, quantities,
+and proprietary tools like MATLAB alongside the SPM toolkit.
+Functions provided allow for complex workflows such as sliding window analysis
+for dynamic source reconstruction and laminar analysis for studying laminar cortical activity.</p>
+<p>Key functionalities include:
+- Coregistration of MEG/EEG data with MRI and mesh models.
+- Source reconstruction with options to choose between different methods and evaluate model fits.
+- Calculation of current source density from laminar neural signals.
+- Comparison of power changes across different regions and layers to identify areas of interest.</p>
+<p class="rubric">Functions</p>
+<table class="autosummary longtable table autosummary">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.laminar.compute_csd" title="lameg.laminar.compute_csd"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_csd</span></code></a>(signal, thickness, sfreq[, ...])</p></td>
+<td><p>Compute the laminar Current Source Density (CSD) from a given signal.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.laminar.model_comparison" title="lameg.laminar.model_comparison"><code class="xref py py-obj docutils literal notranslate"><span class="pre">model_comparison</span></code></a>(nas, lpa, rpa, mri_fname, ...)</p></td>
+<td><p>Compare model fits using different meshes by computing the free energy.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.laminar.roi_power_comparison" title="lameg.laminar.roi_power_comparison"><code class="xref py py-obj docutils literal notranslate"><span class="pre">roi_power_comparison</span></code></a>(data_fname, woi, ...[, ...])</p></td>
+<td><p>Computes and compares power changes in pial and white matter layers to define regions of interest (ROI) based on significant power shifts.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.laminar.sliding_window_model_comparison" title="lameg.laminar.sliding_window_model_comparison"><code class="xref py py-obj docutils literal notranslate"><span class="pre">sliding_window_model_comparison</span></code></a>(prior, nas, ...)</p></td>
+<td><p>Compare model fits across different meshes using a sliding window approach.</p></td>
+</tr>
+</tbody>
+</table>
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.laminar.compute_csd">
+<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">compute_csd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sfreq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smoothing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.laminar.compute_csd" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute the laminar Current Source Density (CSD) from a given signal.</p>
+<p>This function calculates CSD using the Standard CSD method. It takes a multi-layered neural
+signal, typically from laminar probes, and computes the CSD. An optional smoothing step can
+be applied to the CSD output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>signal</strong> (<em>numpy.ndarray</em>) – The neural signal matrix, where rows correspond to different layers and columns to time
+points.</p></li>
+<li><p><strong>thickness</strong> (<em>float</em>) – The laminar thickness of the cortex from which the signal was recorded, in millimeters.</p></li>
+<li><p><strong>sfreq</strong> (<em>float</em>) – Sampling frequency of the signal in Hertz.</p></li>
+<li><p><strong>smoothing</strong> (<em>str</em><em>, </em><em>optional</em>) – Specifies the kind of smoothing to apply to the CSD. Acceptable values are those compatible
+with <cite>scipy.interpolate.interp1d</cite>, such as ‘linear’, ‘nearest’, ‘zero’, ‘slinear’,
+‘quadratic’, ‘cubic’, etc. If None, no smoothing is applied. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ret_vals</strong> – A list containing the CSD matrix as the first element. If smoothing is applied, the second
+element is the smoothed CSD matrix. The CSD matrix dimensions are layers x time points.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The function requires the ‘neo’, ‘quantities’ (pq), ‘numpy’ (np), ‘elephant’, and
+‘scipy.interpolate.interp1d’ libraries.</p></li>
+<li><p>The CSD is calculated using the Standard CSD method provided by the ‘elephant’ package.</p></li>
+<li><p>Smoothing is applied across layers and is independent for each time point.</p></li>
+<li><p>The returned CSD matrix has the same number of time points as the input signal but can have a
+different number of layers if smoothing is applied.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.laminar.model_comparison">
+<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">model_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_fnames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'EBB'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coregister_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">invert_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.laminar.model_comparison" title="Permalink to this definition">#</a></dt>
+<dd><p>Compare model fits using different meshes by computing the free energy.</p>
+<p>This function runs source reconstruction algorithms (either Empirical Bayesian Beamformer or
+Multiple Sparse Priors) on a set of meshes and compares their model fits using the free energy
+and cross-validation error metrics. It allows for separate configuration of coregistration and
+inversion parameters through distinct keyword argument dictionaries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nas</strong> (<em>list</em>) – NASion fiducial coordinates.</p></li>
+<li><p><strong>lpa</strong> (<em>list</em>) – Left PreAuricular fiducial coordinates.</p></li>
+<li><p><strong>rpa</strong> (<em>list</em>) – Right PreAuricular fiducial coordinates.</p></li>
+<li><p><strong>mri_fname</strong> (<em>str</em>) – Filename of the MRI data.</p></li>
+<li><p><strong>mesh_fnames</strong> (<em>list</em>) – List of filenames for different meshes.</p></li>
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG/EEG data.</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – Source reconstruction method, either ‘EBB’ or ‘MSP’. Default is ‘EBB’.</p></li>
+<li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to display SPM visualizations. Default is True.</p></li>
+<li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Instance of standalone SPM software. Default is None.</p></li>
+<li><p><strong>coregister_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments specifically for the <cite>coregister</cite> function.</p></li>
+<li><p><strong>invert_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments specifically for the <cite>invert</cite> function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>f_vals</strong> (<em>np.array</em>) – Free energy values for each mesh.</p></li>
+<li><p><strong>cv_errs</strong> (<em>np.array</em>) – The cross-validation error for each mesh.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>The function will automatically close the standalone SPM instance if it was started
+within the function.</p></li>
+<li><p>Free energy is used as a measure of model fit, with higher values indicating better fit.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.laminar.roi_power_comparison">
+<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">roi_power_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">woi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_woi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perc_thresh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.laminar.roi_power_comparison" title="Permalink to this definition">#</a></dt>
+<dd><p>Computes and compares power changes in pial and white matter layers to define
+regions of interest (ROI) based on significant power shifts.</p>
+<p>This function calculates power changes in the pial and white matter layers during a specified
+window of interest (WOI) and a baseline window. It identifies ROIs by comparing these changes
+against a percentile threshold and performs a relative comparison of power changes between
+the layers to assess laminar differences.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the data file containing source time series.</p></li>
+<li><p><strong>woi</strong> (<em>tuple</em>) – Window of interest, specified as a start and end time (in milliseconds).</p></li>
+<li><p><strong>baseline_woi</strong> (<em>tuple</em>) – Baseline window of interest for comparison, specified as start and end time (in
+milliseconds).</p></li>
+<li><p><strong>mesh</strong> (<em>nibabel.gifti.GiftiImage</em>) – Gifti surface mesh.</p></li>
+<li><p><strong>n_layers</strong> (<em>int</em>) – Number of layers in the cortical model.</p></li>
+<li><p><strong>perc_thresh</strong> (<em>float</em>) – Percentile threshold for determining significant changes in power.</p></li>
+<li><p><strong>mu_matrix</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – Lead field matrix (source x sensor). Default is None.</p></li>
+<li><p><strong>chunk_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of vertices to load source time series from at once. If None, will load all at the
+same time. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>laminar_t_statistic</strong> (<em>TODO</em>) – The t-statistic for laminar power comparison.</p></li>
+<li><p><strong>laminar_p_value</strong> (<em>TODO</em>) – The p-value associated with the laminar power comparison.</p></li>
+<li><p><strong>deg_of_freedom</strong> (<em>int</em>) – Degrees of freedom for the statistical test.</p></li>
+<li><p><strong>roi_idx</strong> (<em>list of int</em>) – Indices of vertices considered as ROIs.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.laminar.sliding_window_model_comparison">
+<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">sliding_window_model_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_fnames</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coregister_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">invert_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.laminar.sliding_window_model_comparison" title="Permalink to this definition">#</a></dt>
+<dd><p>Compare model fits across different meshes using a sliding window approach.</p>
+<p>This function runs source reconstruction using the Multiple Sparse Priors (MSP) method in
+sliding time windows on a set of meshes. It compares the model fits for each mesh by computing
+the free energy in each window.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prior</strong> (<em>float</em>) – Index of the vertex to be used as a prior.</p></li>
+<li><p><strong>nas</strong> (<em>list</em>) – NASion fiducial coordinates.</p></li>
+<li><p><strong>lpa</strong> (<em>list</em>) – Left PreAuricular fiducial coordinates.</p></li>
+<li><p><strong>rpa</strong> (<em>list</em>) – Right PreAuricular fiducial coordinates.</p></li>
+<li><p><strong>mri_fname</strong> (<em>str</em>) – Filename of the MRI data.</p></li>
+<li><p><strong>mesh_fnames</strong> (<em>list</em>) – List of filenames for different meshes.</p></li>
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG/EEG data.</p></li>
+<li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to show SPM visualization. Default is True.</p></li>
+<li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Instance of standalone SPM. Default is None.</p></li>
+<li><p><strong>coregister_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments specifically for the <cite>coregister</cite> function.</p></li>
+<li><p><strong>invert_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments specifically for the <cite>invert_sliding_window</cite> function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>f_vals</strong> (<em>list</em>) – Free energy values for each mesh.</p></li>
+<li><p><strong>wois</strong> (<em>list</em>) – Windows of interest.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>The function will automatically close the standalone SPM instance if it was started
+within the function.</p></li>
+<li><p>Free energy is used as a measure of model fit, with higher values indicating better fit.</p></li>
+<li><p>The prior index is adjusted by adding 1 to align with MATLAB’s 1-based indexing.</p></li>
+</ul>
+</dd></dl>
+
+</section>
+
+
+                </article>
+              
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="lameg.invert.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">lameg.invert</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="lameg.surf.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">lameg.surf</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.laminar.compute_csd"><code class="docutils literal notranslate"><span class="pre">compute_csd()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.laminar.model_comparison"><code class="docutils literal notranslate"><span class="pre">model_comparison()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.laminar.roi_power_comparison"><code class="docutils literal notranslate"><span class="pre">roi_power_comparison()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.laminar.sliding_window_model_comparison"><code class="docutils literal notranslate"><span class="pre">sliding_window_model_comparison()</span></code></a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/danclab/laMEG/edit/master/docs/_autosummary/lameg.laminar.rst">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div class="tocsection sourcelink">
+    <a href="../_sources/_autosummary/lameg.laminar.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright 2024, DANC lab.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.3.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

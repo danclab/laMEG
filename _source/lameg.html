@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>lameg package &#8212; laMEG 0.2.0 documentation</title>
+    <title>lameg package &#8212; laMEG 0.0.3 documentation</title>
   
   
   
@@ -50,7 +50,7 @@
     <script src="../_static/thebelab-helper.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'source/lameg';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_source/lameg';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -143,6 +143,46 @@
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.invert.html">
+                        lameg.invert
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.laminar.html">
+                        lameg.laminar
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.surf.html">
+                        lameg.surf
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.viz.html">
+                        lameg.viz
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.simulate.html">
+                        lameg.simulate
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
                       <a class="nav-link nav-internal" href="../auto_tutorials/index.html">
                         Tutorials gallery
                       </a>
@@ -155,6 +195,9 @@
                   </a>
                 </li>
                 
+                </div>
+            </div>
+            
   </ul>
 </nav></div>
       
@@ -261,6 +304,46 @@ document.write(`
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.invert.html">
+                        lameg.invert
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.laminar.html">
+                        lameg.laminar
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.surf.html">
+                        lameg.surf
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.viz.html">
+                        lameg.viz
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.simulate.html">
+                        lameg.simulate
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
                       <a class="nav-link nav-internal" href="../auto_tutorials/index.html">
                         Tutorials gallery
                       </a>
@@ -273,6 +356,9 @@ document.write(`
                   </a>
                 </li>
                 
+                </div>
+            </div>
+            
   </ul>
 </nav></div>
         
@@ -395,7 +481,26 @@ algorithms.</p></li>
 <span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">coregister</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fid_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('nas',</span> <span class="pre">'lpa',</span> <span class="pre">'rpa')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#lameg.invert.coregister" title="Permalink to this definition">#</a></dt>
 <dd><p>Run head coregistration.</p>
 <p>This function interfaces with MATLAB to perform head coregistration on MEG/EEG data using an
-MRI and mesh</p>
+MRI and mesh.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nas</strong> (<em>list</em>) – NASion fiducial coordinates.</p></li>
+<li><p><strong>lpa</strong> (<em>list</em>) – Left PreAuricular fiducial coordinates.</p></li>
+<li><p><strong>rpa</strong> (<em>list</em>) – Right PreAuricular fiducial coordinates.</p></li>
+<li><p><strong>mri_fname</strong> (<em>str</em>) – Filename of the MRI data.</p></li>
+<li><p><strong>mesh_fname</strong> (<em>str</em>) – Filename of the mesh data.</p></li>
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG/EEG data.</p></li>
+<li><p><strong>fid_labels</strong> (<em>list</em><em>, </em><em>optional</em>) – Fiducial coordinate labels. Default is [‘nas’, ‘lpa’, ‘rpa’].</p></li>
+<li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to show SPM visualization. Default is True.</p></li>
+<li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Instance of standalone SPM. Default is None.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.
+The function will automatically close the standalone SPM instance if it was started
+within the function.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -405,6 +510,38 @@ MRI and mesh</p>
 <p>This function interfaces with MATLAB to perform EBB source reconstruction on MEG/EEG data.
 It involves mesh smoothing and running the EBB algorithm in MATLAB. The MEG/EEG data must
 already be coregistered with the given mesh.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh_fname</strong> (<em>str</em>) – Filename of the mesh data.</p></li>
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG/EEG data.</p></li>
+<li><p><strong>n_layers</strong> (<em>int</em>) – Number of layers in the mesh.</p></li>
+<li><p><strong>patch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Patch size for mesh smoothing. Default is 5.</p></li>
+<li><p><strong>n_temp_modes</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of temporal modes for the beamformer. Default is 4.</p></li>
+<li><p><strong>foi</strong> (<em>list</em><em>, </em><em>optional</em>) – Frequency of interest range as [low, high]. Default is [0, 256].</p></li>
+<li><p><strong>woi</strong> (<em>list</em><em>, </em><em>optional</em>) – Window of interest as [start, end]. Default is [-np.inf, np.inf].</p></li>
+<li><p><strong>hann_windowing</strong> (<em>int</em><em>, </em><em>optional</em>) – Whether or not to perform Hann windowing. Default is False.</p></li>
+<li><p><strong>n_folds</strong> (<em>int</em>) – Number of cross-validation folds. Must be &gt;1 for cross-validation error.</p></li>
+<li><p><strong>ideal_pc_test</strong> (<em>float</em>) – Percentage of channels to leave out (ideal because it needs an integer number of channels).</p></li>
+<li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to show SPM visualization. Default is True.</p></li>
+<li><p><strong>return_mu_matrix</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to return the matrix needed to reconstruct source activity. Default is False.</p></li>
+<li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Instance of standalone SPM. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list containing the free energy, cross-validation error (cv_err), and the matrix needed
+to reconstruct source activity (mu_matrix; if return_mu_matrix is True).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>The function will automatically close the standalone SPM instance if it was started
+within the function.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
@@ -414,17 +551,83 @@ already be coregistered with the given mesh.</p>
 <p>This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data.
 It involves mesh smoothing and running the MSP algorithm in MATLAB. The MEG/EEG data must
 already be coregistered with the given mesh.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mesh_fname</strong> (<em>str</em>) – Filename of the mesh data.</p></li>
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG/EEG data.</p></li>
+<li><p><strong>n_layers</strong> (<em>int</em>) – Number of layers in the mesh.</p></li>
+<li><p><strong>priors</strong> (<em>list</em><em>, </em><em>optional</em>) – Indices of vertices to be used as priors. Default is an empty list.</p></li>
+<li><p><strong>patch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Patch size for mesh smoothing. Default is 5.</p></li>
+<li><p><strong>n_temp_modes</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of temporal modes for the beamformer. Default is 4.</p></li>
+<li><p><strong>foi</strong> (<em>list</em><em>, </em><em>optional</em>) – Frequency of interest range as [low, high]. Default is [0, 256].</p></li>
+<li><p><strong>woi</strong> (<em>list</em><em>, </em><em>optional</em>) – Window of interest as [start, end]. Default is [-np.inf, np.inf].</p></li>
+<li><p><strong>hann_windowing</strong> (<em>int</em><em>, </em><em>optional</em>) – Whether or not to perform Hann windowing. Default is False.</p></li>
+<li><p><strong>n_folds</strong> (<em>int</em>) – Number of cross-validation folds. Must be &gt;1 for cross-validation error.</p></li>
+<li><p><strong>ideal_pc_test</strong> (<em>float</em>) – Percentage of channels to leave out (ideal because it needs an integer number of channels).</p></li>
+<li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to show SPM visualization. Default is True.</p></li>
+<li><p><strong>return_mu_matrix</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to return the matrix needed to reconstruct source activity. Default is False.</p></li>
+<li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Instance of standalone SPM. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list containing the free energy, cross-validation error (cv_err), and the matrix
+needed to reconstruct source activity (mu_matrix; if return_mu_matrix is True).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>The function will automatically close the standalone SPM instance if it was started
+within the function.</p></li>
+<li><p>Priors are adjusted by adding 1 to each index to align with MATLAB’s 1-based indexing.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.invert.invert_sliding_window">
 <span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">invert_sliding_window</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_temp_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">win_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">win_overlap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">foi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hann_windowing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.invert.invert_sliding_window" title="Permalink to this definition">#</a></dt>
-<dd><p>Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time
-window.</p>
+<dd><p>Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time window.</p>
 <p>This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data
 within sliding time windows. It involves mesh smoothing and running the MSP algorithm in
 MATLAB for each time window. The MEG/EEG data must already be coregistered with the given
 mesh.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prior</strong> (<em>float</em>) – Index of the vertex to be used as a prior.</p></li>
+<li><p><strong>mesh_fname</strong> (<em>str</em>) – Filename of the mesh data.</p></li>
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG/EEG data.</p></li>
+<li><p><strong>n_layers</strong> (<em>int</em>) – Number of layers in the mesh.</p></li>
+<li><p><strong>patch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Patch size for mesh smoothing. Default is 5.</p></li>
+<li><p><strong>n_temp_modes</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of temporal modes for the beamformer. Default is 1.</p></li>
+<li><p><strong>win_size</strong> (<em>float</em><em>, </em><em>optional</em>) – Size of the sliding window in ms. Default is 16. If you increase <cite>win_size</cite>, you may need
+to increase <cite>n_temp_modes</cite>.</p></li>
+<li><p><strong>win_overlap</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether the windows should overlap. Default is True.</p></li>
+<li><p><strong>foi</strong> (<em>list</em><em>, </em><em>optional</em>) – Frequency of interest range as [low, high]. Default is [0, 256].</p></li>
+<li><p><strong>hann_windowing</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to use Hann windowing. Default is True.</p></li>
+<li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to show SPM visualization. Default is True.</p></li>
+<li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Instance of standalone SPM. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A list containing the free energy time series (free_energy), and the windows of interest
+(wois).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>The function will automatically close the standalone SPM instance if it was started
+within the function.</p></li>
+<li><p>The prior index is adjusted by adding 1 to align with MATLAB’s 1-based indexing.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
@@ -435,6 +638,32 @@ lead field matrix.</p>
 <p>This function interfaces with MATLAB to extract time series data from specific vertices, based
 on precomputed inverse solutions, or computes the source time series using a provided lead
 field matrix.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename or path of the MEG/EEG data file.</p></li>
+<li><p><strong>mu_matrix</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – Lead field matrix (source x sensor). Default is None.</p></li>
+<li><p><strong>inv_fname</strong> (<em>str</em><em>, </em><em>optional</em>) – Filename or path of the file containing the inverse solutions. Default is None.</p></li>
+<li><p><strong>vertices</strong> (<em>list</em><em> of </em><em>int</em><em>, </em><em>optional</em>) – List of vertex indices from which to extract time series data. Default is None, which
+implies all vertices will be used.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>source_ts</strong> (<em>np.array</em>) – An array containing the extracted source time series data (sources x time x trial).</p></li>
+<li><p><strong>time</strong> (<em>np.array</em>) – An array containing the timestamps.</p></li>
+<li><p><strong>mu_matrix</strong> (<em>np.array</em>) – The matrix needed to reconstruct source activity from sensor signals.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>If <cite>inv_fname</cite> is not provided, and <cite>mu_matrix</cite> is None, the inverse solution from the
+MEG/EEG data file specified by <cite>data_fname</cite> will be used.</p></li>
+<li><p>If <cite>mu_matrix</cite> is provided, the function will compute the source time series directly using
+the lead field matrix, without the need for precomputed inverse solutions.</p></li>
+</ul>
 </dd></dl>
 
 </section>
@@ -462,6 +691,35 @@ for dynamic source reconstruction and laminar analysis for studying laminar cort
 <p>This function calculates CSD using the Standard CSD method. It takes a multi-layered neural
 signal, typically from laminar probes, and computes the CSD. An optional smoothing step can
 be applied to the CSD output.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>signal</strong> (<em>numpy.ndarray</em>) – The neural signal matrix, where rows correspond to different layers and columns to time
+points.</p></li>
+<li><p><strong>thickness</strong> (<em>float</em>) – The laminar thickness of the cortex from which the signal was recorded, in millimeters.</p></li>
+<li><p><strong>sfreq</strong> (<em>float</em>) – Sampling frequency of the signal in Hertz.</p></li>
+<li><p><strong>smoothing</strong> (<em>str</em><em>, </em><em>optional</em>) – Specifies the kind of smoothing to apply to the CSD. Acceptable values are those compatible
+with <cite>scipy.interpolate.interp1d</cite>, such as ‘linear’, ‘nearest’, ‘zero’, ‘slinear’,
+‘quadratic’, ‘cubic’, etc. If None, no smoothing is applied. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ret_vals</strong> – A list containing the CSD matrix as the first element. If smoothing is applied, the second
+element is the smoothed CSD matrix. The CSD matrix dimensions are layers x time points.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The function requires the ‘neo’, ‘quantities’ (pq), ‘numpy’ (np), ‘elephant’, and
+‘scipy.interpolate.interp1d’ libraries.</p></li>
+<li><p>The CSD is calculated using the Standard CSD method provided by the ‘elephant’ package.</p></li>
+<li><p>Smoothing is applied across layers and is independent for each time point.</p></li>
+<li><p>The returned CSD matrix has the same number of time points as the input signal but can have a
+different number of layers if smoothing is applied.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
@@ -470,8 +728,39 @@ be applied to the CSD output.</p>
 <dd><p>Compare model fits using different meshes by computing the free energy.</p>
 <p>This function runs source reconstruction algorithms (either Empirical Bayesian Beamformer or
 Multiple Sparse Priors) on a set of meshes and compares their model fits using the free energy
-and cross validation error metrics. It allows for separate configuration of coregistration and
+and cross-validation error metrics. It allows for separate configuration of coregistration and
 inversion parameters through distinct keyword argument dictionaries.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>nas</strong> (<em>list</em>) – NASion fiducial coordinates.</p></li>
+<li><p><strong>lpa</strong> (<em>list</em>) – Left PreAuricular fiducial coordinates.</p></li>
+<li><p><strong>rpa</strong> (<em>list</em>) – Right PreAuricular fiducial coordinates.</p></li>
+<li><p><strong>mri_fname</strong> (<em>str</em>) – Filename of the MRI data.</p></li>
+<li><p><strong>mesh_fnames</strong> (<em>list</em>) – List of filenames for different meshes.</p></li>
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG/EEG data.</p></li>
+<li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – Source reconstruction method, either ‘EBB’ or ‘MSP’. Default is ‘EBB’.</p></li>
+<li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to display SPM visualizations. Default is True.</p></li>
+<li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Instance of standalone SPM software. Default is None.</p></li>
+<li><p><strong>coregister_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments specifically for the <cite>coregister</cite> function.</p></li>
+<li><p><strong>invert_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments specifically for the <cite>invert</cite> function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>f_vals</strong> (<em>np.array</em>) – Free energy values for each mesh.</p></li>
+<li><p><strong>cv_errs</strong> (<em>np.array</em>) – The cross-validation error for each mesh.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>The function will automatically close the standalone SPM instance if it was started
+within the function.</p></li>
+<li><p>Free energy is used as a measure of model fit, with higher values indicating better fit.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
@@ -483,6 +772,31 @@ regions of interest (ROI) based on significant power shifts.</p>
 window of interest (WOI) and a baseline window. It identifies ROIs by comparing these changes
 against a percentile threshold and performs a relative comparison of power changes between
 the layers to assess laminar differences.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the data file containing source time series.</p></li>
+<li><p><strong>woi</strong> (<em>tuple</em>) – Window of interest, specified as a start and end time (in milliseconds).</p></li>
+<li><p><strong>baseline_woi</strong> (<em>tuple</em>) – Baseline window of interest for comparison, specified as start and end time (in
+milliseconds).</p></li>
+<li><p><strong>mesh</strong> (<em>nibabel.gifti.GiftiImage</em>) – Gifti surface mesh.</p></li>
+<li><p><strong>n_layers</strong> (<em>int</em>) – Number of layers in the cortical model.</p></li>
+<li><p><strong>perc_thresh</strong> (<em>float</em>) – Percentile threshold for determining significant changes in power.</p></li>
+<li><p><strong>mu_matrix</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – Lead field matrix (source x sensor). Default is None.</p></li>
+<li><p><strong>chunk_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of vertices to load source time series from at once. If None, will load all at the
+same time. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>laminar_t_statistic</strong> (<em>TODO</em>) – The t-statistic for laminar power comparison.</p></li>
+<li><p><strong>laminar_p_value</strong> (<em>TODO</em>) – The p-value associated with the laminar power comparison.</p></li>
+<li><p><strong>deg_of_freedom</strong> (<em>int</em>) – Degrees of freedom for the statistical test.</p></li>
+<li><p><strong>roi_idx</strong> (<em>list of int</em>) – Indices of vertices considered as ROIs.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -492,6 +806,38 @@ the layers to assess laminar differences.</p>
 <p>This function runs source reconstruction using the Multiple Sparse Priors (MSP) method in
 sliding time windows on a set of meshes. It compares the model fits for each mesh by computing
 the free energy in each window.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>prior</strong> (<em>float</em>) – Index of the vertex to be used as a prior.</p></li>
+<li><p><strong>nas</strong> (<em>list</em>) – NASion fiducial coordinates.</p></li>
+<li><p><strong>lpa</strong> (<em>list</em>) – Left PreAuricular fiducial coordinates.</p></li>
+<li><p><strong>rpa</strong> (<em>list</em>) – Right PreAuricular fiducial coordinates.</p></li>
+<li><p><strong>mri_fname</strong> (<em>str</em>) – Filename of the MRI data.</p></li>
+<li><p><strong>mesh_fnames</strong> (<em>list</em>) – List of filenames for different meshes.</p></li>
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG/EEG data.</p></li>
+<li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to show SPM visualization. Default is True.</p></li>
+<li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Instance of standalone SPM. Default is None.</p></li>
+<li><p><strong>coregister_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments specifically for the <cite>coregister</cite> function.</p></li>
+<li><p><strong>invert_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments specifically for the <cite>invert_sliding_window</cite> function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>f_vals</strong> (<em>list</em>) – Free energy values for each mesh.</p></li>
+<li><p><strong>wois</strong> (<em>list</em>) – Windows of interest.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>The function will automatically close the standalone SPM instance if it was started
+within the function.</p></li>
+<li><p>Free energy is used as a measure of model fit, with higher values indicating better fit.</p></li>
+<li><p>The prior index is adjusted by adding 1 to align with MATLAB’s 1-based indexing.</p></li>
+</ul>
 </dd></dl>
 
 </section>
@@ -500,8 +846,7 @@ the free energy in each window.</p>
 <p>This module facilitates the simulation of MEG/EEG data using MATLAB’s computing environment and
 the Statistical Parametric Mapping (SPM) toolbox. It provides functionalities to simulate both
 current density and dipole-based MEG/EEG data under varying conditions and configurations.</p>
-<section id="key-features">
-<h3>Key Features:<a class="headerlink" href="#key-features" title="Permalink to this heading">#</a></h3>
+<p>Key Features:</p>
 <ul class="simple">
 <li><p>Current Density Simulation: Allows for the simulation of current density data based on
 user-defined parameters such as vertices, signals, dipole moments, and patch sizes. Includes the
@@ -520,16 +865,13 @@ analysis scenarios.</p>
 the spm_instance parameter, to handle computations directly within the SPM environment. If no
 instance is provided, the functions will initiate a new one and close it upon completion unless
 managed externally.</p>
-</section>
-<section id="examples-of-use">
-<h3>Examples of use:<a class="headerlink" href="#examples-of-use" title="Permalink to this heading">#</a></h3>
+<p>Examples of use:</p>
 <ul class="simple">
 <li><p>Simulating data with specific noise levels and analyzing the impact of noise on signal processing
 algorithms.</p></li>
 <li><p>Generating datasets with known properties to test the efficacy of dipole fitting routines or
 source localization methods.</p></li>
 </ul>
-</section>
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.simulate.run_current_density_simulation">
 <span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">run_current_density_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_signals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipole_moments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_patch_sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.run_current_density_simulation" title="Permalink to this definition">#</a></dt>
@@ -537,6 +879,33 @@ source localization methods.</p></li>
 <p>This function interfaces with MATLAB to generate simulated MEG/EEG data. It creates simulations
 based on specified vertices, signals, dipole moments, and patch sizes, incorporating a defined
 signal-to-noise ratio (SNR). White noise is added at the sensor level to yield the given SNR.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_file</strong> (<em>str</em>) – Filename or path of the MEG/EEG data file used as a template for simulation.</p></li>
+<li><p><strong>prefix</strong> (<em>str</em>) – Prefix for the output simulated data filename.</p></li>
+<li><p><strong>sim_vertices</strong> (<em>list</em><em> or </em><em>int</em>) – Indices of vertices where simulations are centered. Can be a single integer or a list.</p></li>
+<li><p><strong>sim_signals</strong> (<em>ndarray</em>) – Array of simulated signals.</p></li>
+<li><p><strong>dipole_moments</strong> (<em>list</em><em> or </em><em>float</em>) – Dipole moments for the simulation. Can be a single float or a list.</p></li>
+<li><p><strong>sim_patch_sizes</strong> (<em>list</em><em> or </em><em>int</em>) – Sizes of patches around each vertex for the simulation. Can be a single integer or a list.</p></li>
+<li><p><strong>snr</strong> (<em>float</em>) – Signal-to-noise ratio for the simulation.</p></li>
+<li><p><strong>sim_woi</strong> (<em>list</em><em>, </em><em>optional</em>) – Window of interest for the simulation as [start, end]. Default is [-np.inf, np.inf].</p></li>
+<li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Instance of standalone SPM. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>sim_fname</strong> – Filename of the generated simulated data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>The function will automatically close the standalone SPM instance if it was started
+within the function.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
@@ -547,6 +916,36 @@ signal-to-noise ratio (SNR). White noise is added at the sensor level to yield t
 configurations. It creates simulations based on specified vertices, signals, dipole
 orientations, moments, and patch sizes, incorporating a defined signal-to-noise ratio (SNR).
 White noise is added at the sensor level to yield the given SNR.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_file</strong> (<em>str</em>) – Filename or path of the MEG/EEG data file used as a template for simulation.</p></li>
+<li><p><strong>prefix</strong> (<em>str</em>) – Prefix for the output simulated data filename.</p></li>
+<li><p><strong>sim_vertices</strong> (<em>list</em><em> or </em><em>int</em>) – Indices of vertices where simulations are centered. Can be a single integer or a list.</p></li>
+<li><p><strong>sim_signals</strong> (<em>ndarray</em>) – Array of simulated signals. Either dipoles x time (signal will be used for each trial), or
+dipoles x time x trials (unique signal for each trial).</p></li>
+<li><p><strong>dipole_orientations</strong> (<em>ndarray</em>) – Array of dipole orientations for the simulation.</p></li>
+<li><p><strong>dipole_moments</strong> (<em>list</em><em> or </em><em>float</em>) – Dipole moments for the simulation. Can be a single float or a list.</p></li>
+<li><p><strong>sim_patch_sizes</strong> (<em>list</em><em> or </em><em>int</em>) – Sizes of patches around each vertex for the simulation. Can be a single integer or a list.</p></li>
+<li><p><strong>snr</strong> (<em>float</em>) – Signal-to-noise ratio for the simulation.</p></li>
+<li><p><strong>sim_woi</strong> (<em>list</em><em>, </em><em>optional</em>) – Window of interest for the simulation as [start, end]. Default is [-np.inf, np.inf].</p></li>
+<li><p><strong>average_trials</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to average the simulated data over trials. Default is False.</p></li>
+<li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Instance of standalone SPM. Default is None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>sim_fname</strong> – Filename of the generated simulated data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>If <cite>spm_instance</cite> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>The function will automatically close the standalone SPM instance if it was started
+within the function.</p></li>
+</ul>
 </dd></dl>
 
 </section>
@@ -568,18 +967,6 @@ triangulation, and the VTK toolkit for complex mesh processing tasks such as mes
 - Interpolation of data from a downsampled mesh back to its original high-resolution mesh.
 - Downsampling of meshes using VTK’s decimation algorithms.
 - Combination and adjustment of multiple surface meshes into a single mesh.</p>
-<p>The module supports processing of both individual and multiple surfaces, ensuring that operations
-like downsampling, normal computation, and vertex manipulation are optimized for performance and
-applicability in both research and clinical environments.</p>
-<p class="rubric">Example</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">faces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">normals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">gifti_img</span> <span class="o">=</span> <span class="n">create_surf_gifti</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">faces</span><span class="p">,</span> <span class="n">normals</span><span class="p">)</span>
-</pre></div>
-</div>
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.combine_surfaces">
 <span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">combine_surfaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surfaces</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.combine_surfaces" title="Permalink to this definition">#</a></dt>
@@ -588,12 +975,68 @@ applicability in both research and clinical environments.</p>
 mesh. It concatenates the vertices, faces, and normals (if present) from each surface. The
 faces are re-indexed appropriately to maintain the correct references to the combined vertex
 array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>surfaces</strong> (<em>list</em><em> of </em><em>nibabel.gifti.GiftiImage</em>) – List of Gifti surface meshes to be combined.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>combined_surf</strong> – A single combined Gifti surface mesh.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nibabel.gifti.GiftiImage</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The vertices, faces, and normals (if present) from each surface are concatenated.</p></li>
+<li><p>The faces are re-indexed to reference the correct vertices in the combined vertex array.</p></li>
+<li><p>If normals are present in any of the input surfaces, they are also combined.</p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>ValueError</strong> – If the vertex or face arrays do not have the expected dimensions.</p>
+</dd>
+</dl>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">surfaces</span> <span class="o">=</span> <span class="p">[</span><span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;path/to/surface1.gii&#39;</span><span class="p">),</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;path/to/surface2.gii&#39;</span><span class="p">)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">combined_surf</span> <span class="o">=</span> <span class="n">combine_surfaces</span><span class="p">(</span><span class="n">surfaces</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">nib</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">combined_surf</span><span class="p">,</span> <span class="s1">&#39;path/to/combined_surface.gii&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.compute_dipole_orientations">
 <span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">compute_dipole_orientations</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">method</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_names</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.compute_dipole_orientations" title="Permalink to this definition">#</a></dt>
 <dd><p>Compute dipole orientations for cortical layers using different methods.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>method</strong> (<em>str</em>) – Method for computing dipole orientations (‘link_vector’, ‘ds_surf_norm’, ‘orig_surf_norm’,
+or ‘cps’).
+link_vector: Vectors connecting pial vertices to corresponding white matter vertices.
+ds_surf_norm: Surface normal vectors computed from the downsampled surface.
+orig_surf_norm: Surface normal vectors computed from the original (non-downsampled) surface.
+cps: Cortical patch statistics - mean surface normal vectors from connected vertices in the
+original (non-downsampled) surface.</p></li>
+<li><p><strong>layer_names</strong> (<em>list</em>) – Names of the cortical layers.</p></li>
+<li><p><strong>surf_dir</strong> (<em>str</em>) – Directory where the surface files are stored.</p></li>
+<li><p><strong>fixed</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag to ensure that orientation of corresponding vertices across layers is the same (True
+by default). If True, for ‘ds_surf_norm’, ‘orig_surf_norm’, and ‘cps’, orientations
+computed from the pial surface are used for all layers.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>orientations</strong> – An array of dipole orientations for each vertex in each layer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the number of vertices in pial and white matter surfaces do not match.</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -601,6 +1044,32 @@ array.</p>
 <span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">create_layer_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hemispheres</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fs_subject_dir</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#lameg.surf.create_layer_mesh" title="Permalink to this definition">#</a></dt>
 <dd><p>Create or retrieve a specified cortical layer mesh file name or path based on the provided
 layer proportional thickness or identifier.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<em>float</em><em> or </em><em>int</em>) – Specifies the cortical layer. The value 1 corresponds to the ‘pial’ surface, values between
+0 and 1 (exclusive) correspond to intermediate layers (specified as a decimal), and the
+value 0 corresponds to the ‘white matter’ surface.</p></li>
+<li><p><strong>hemispheres</strong> (<em>list</em><em> of </em><em>str</em>) – A list of hemisphere identifiers (e.g., [‘lh’, ‘rh’]) for which meshes should be created or
+retrieved.</p></li>
+<li><p><strong>fs_subject_dir</strong> (<em>str</em>) – Path to the subject directory within the FreeSurfer environment. This directory should
+include a ‘surf’ directory where mesh files are stored.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>layer_name</strong> – Returns a string representing the mesh layer (‘pial’, ‘white’, or a specific intermediate
+layer as a formatted string). Returns None if the input layer does not match any recognized
+pattern (e.g., a negative number or a number greater than 1).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str or None</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>For intermediate layers (0 &lt; layer &lt; 1), the function will check for the existence of the mesh
+file corresponding to each hemisphere. If it does not exist, it uses ‘mris_expand’ to generate
+it using the white matter surface file. If the layer exactly matches 0 or 1, it returns the
+corresponding standard FreeSurfer mesh identifier (‘white’ or ‘pial’).</p>
 </dd></dl>
 
 <dl class="py function">
@@ -610,16 +1079,79 @@ layer proportional thickness or identifier.</p>
 <p>This function creates a GiftiImage object from the provided vertices, faces, and optional
 normals. The vertices and faces are required, while normals are optional. If normals are
 provided, they are added to the Gifti image. The function returns the GiftiImage object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vertices</strong> (<em>numpy.ndarray</em>) – Array of vertices. Each row represents a vertex with its x, y, z coordinates.</p></li>
+<li><p><strong>faces</strong> (<em>numpy.ndarray</em>) – Array of faces. Each row represents a face with three integers corresponding to vertex
+indices.</p></li>
+<li><p><strong>normals</strong> (<em>numpy.ndarray</em><em>, </em><em>optional</em>) – Array of vertex normals. Each row represents a normal vector corresponding to a vertex.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>new_gifti</strong> – The GiftiImage object created from the provided mesh data.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nibabel.gifti.GiftiImage</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Vertex, face, and normal arrays should be NumPy arrays.</p></li>
+<li><p>Vertices and normals should be in float32 format, and faces should be in int32 format.</p></li>
+</ul>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">faces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">normals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gifti_img</span> <span class="o">=</span> <span class="n">create_surf_gifti</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">faces</span><span class="p">,</span> <span class="n">normals</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.downsample_multiple_surfaces">
 <span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">downsample_multiple_surfaces</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">in_surfs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.downsample_multiple_surfaces" title="Permalink to this definition">#</a></dt>
-<dd><p>Downampled multiple surface meshes using the VTK decimation algorithm.</p>
-<p>This function takes a list of input surface meshes (in Gifti format) and applies a dowsampling
-process to each surface. The downsampling is performed using VTK’s vtkDecimatePro algorithm.
+<dd><p>Downsample multiple surface meshes using the VTK decimation algorithm.</p>
+<p>This function takes a list of input surface meshes (in Gifti format) and applies a downsampling
+process to each surface. The downsampling is performed using VTK’s <cite>vtkDecimatePro</cite> algorithm.
 The first surface in the list is downsampled, and its vertex mapping is then applied to all
 other surfaces in the list. The function returns a list of downsampled surface meshes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>in_surfs</strong> (<em>list</em><em> of </em><em>nibabel.gifti.GiftiImage</em>) – Input Gifti surface meshes to be downsampled.</p></li>
+<li><p><strong>ratio</strong> (<em>float</em>) – The reduction ratio for the downsampling process. For example, a ratio of 0.1
+implies that the mesh will be reduced to 90% of its original size.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>out_surfs</strong> – List of downsampled Gifti surface meshes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of nibabel.gifti.GiftiImage</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The function prints the percentage of vertices retained in the first surface after
+downsampling.</p></li>
+<li><p>If normals are present in the input surfaces, they are also downsampled and mapped to the
+new surfaces.</p></li>
+<li><p>The resulting surfaces maintain the original topology and are suitable for visualization and
+further processing.</p></li>
+</ul>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">in_surfs</span> <span class="o">=</span> <span class="p">[</span><span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;path/to/input_surf1.gii&#39;</span><span class="p">),</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;path/to/input_surf2.gii&#39;</span><span class="p">)]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ratio</span> <span class="o">=</span> <span class="mf">0.1</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">out_surfs</span> <span class="o">=</span> <span class="n">downsample_multiple_surfaces</span><span class="p">(</span><span class="n">in_surfs</span><span class="p">,</span> <span class="n">ratio</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">ds_surf</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">out_surfs</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="n">nib</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">ds_surf</span><span class="p">,</span> <span class="sa">f</span><span class="s1">&#39;path/to/output_surf</span><span class="si">{</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s1">.gii&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
@@ -627,35 +1159,129 @@ other surfaces in the list. The function returns a list of downsampled surface m
 <span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">downsample_single_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.downsample_single_surface" title="Permalink to this definition">#</a></dt>
 <dd><p>Downsample a Gifti surface using the VTK library.</p>
 <p>This function takes a Gifti surface defined by its vertices and faces, and downsamples it using
-VTK’s vtkDecimatePro algorithm. The reduction ratio determines the degree of downsampling.
+VTK’s <cite>vtkDecimatePro</cite> algorithm. The reduction ratio determines the degree of downsampling.
 The function returns the downsampled Gifti surface.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gifti_surf</strong> (<em>nibabel.gifti.GiftiImage</em>) – The Gifti surface object to be downsampled.</p></li>
+<li><p><strong>reduction_ratio</strong> (<em>float</em>) – The proportion of the mesh to remove. For example, a reduction ratio of 0.1 retains 90% of
+the original mesh.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>new_gifti_surf</strong> – A new GiftiImage object with the downsampled surface.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nibabel.gifti.GiftiImage</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The input faces array should be triangulated, i.e., each face should consist of exactly three
+vertex indices.</p></li>
+<li><p>The VTK library is used for mesh decimation, which must be installed and properly configured.</p></li>
+<li><p>The returned GiftiImage object is a new object; the original <cite>gifti_surf</cite> object is not
+modified in place.</p></li>
+</ul>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gifti_surf</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;path_to_gifti_file.gii&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_gifti_surf</span> <span class="o">=</span> <span class="n">downsample_single_surface</span><span class="p">(</span><span class="n">gifti_surf</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.find_non_manifold_edges">
 <span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">find_non_manifold_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">faces</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.find_non_manifold_edges" title="Permalink to this definition">#</a></dt>
-<dd><p>Identifies non-manifold edges in a given mesh represented by its faces.</p>
+<dd><p>Identify non-manifold edges in a given mesh represented by its faces.</p>
 <p>A non-manifold edge is defined as an edge that is shared by more than two faces. This function
 processes an array of faces, each face represented by a tuple of vertex indices, and identifies
 edges that meet the non-manifold criteria.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>faces</strong> (<em>np.ndarray</em>) – An array where each row represents a face as a tuple of three vertex indices.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>non_manifold_edges</strong> – A dictionary where keys are tuples representing non-manifold edges (vertex indices are
+sorted), and values are lists of face indices that share the edge.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function uses a <cite>defaultdict</cite> to collect face indices for each edge encountered in the mesh.
+It then filters out edges that are associated with more than two faces, identifying them as
+non-manifold.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.fix_non_manifold_edges">
 <span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">fix_non_manifold_edges</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.fix_non_manifold_edges" title="Permalink to this definition">#</a></dt>
-<dd><p>Removes faces associated with non-manifold edges from a mesh defined by vertices and faces.</p>
+<dd><p>Remove faces associated with non-manifold edges from a mesh defined by vertices and faces.</p>
 <p>Non-manifold edges are edges that are shared by more than two faces, which can cause issues
 in various mesh processing tasks such as mesh simplification, smoothing, or 3D printing. This
 function identifies such edges and removes all faces associated with them to ensure
 manifoldness of the mesh.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>vertices</strong> (<em>np.ndarray</em>) – An array of vertices, where each row represents a vertex as [x, y, z] coordinates.</p></li>
+<li><p><strong>faces</strong> (<em>np.ndarray</em>) – An array of faces, where each row represents a face as indices into the vertices array.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>vertices</strong> (<em>np.ndarray</em>) – The unchanged array of vertices.</p></li>
+<li><p><strong>new_faces</strong> (<em>np.ndarray</em>) – The modified array of faces, with faces associated with non-manifold edges removed.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">faces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_vertices</span><span class="p">,</span> <span class="n">new_faces</span> <span class="o">=</span> <span class="n">fix_non_manifold_edges</span><span class="p">(</span><span class="n">vertices</span><span class="p">,</span> <span class="n">faces</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_faces</span>
+<span class="go">array([[0, 1, 2], [0, 2, 3]])  # Assuming face [1, 2, 3] was associated with a non-manifold</span>
+<span class="go">edge.</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.interpolate_data">
 <span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">interpolate_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsampled_mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsampled_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjacency_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.interpolate_data" title="Permalink to this definition">#</a></dt>
-<dd><p>Interpolates vertex data from a downsampled mesh back to the original mesh using nearest
+<dd><p>Interpolate vertex data from a downsampled mesh back to the original mesh using nearest
 neighbor matching and optional smoothing based on an adjacency matrix. Both meshes are
 expected to be nibabel Gifti objects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>original_mesh</strong> (<em>nibabel.gifti.GiftiImage</em>) – The original high-resolution mesh as a nibabel Gifti object from which ‘downsampled_mesh’
+is derived.</p></li>
+<li><p><strong>downsampled_mesh</strong> (<em>nibabel.gifti.GiftiImage</em>) – The downsampled version of the original mesh as a nibabel Gifti object.</p></li>
+<li><p><strong>downsampled_data</strong> (<em>array</em>) – Data associated with the vertices of ‘downsampled_mesh’.</p></li>
+<li><p><strong>adjacency_matrix</strong> (<em>sparse matrix</em><em>, </em><em>optional</em>) – A vertex-by-vertex adjacency matrix of the original mesh. If None, it will be computed from
+the ‘original_mesh’.</p></li>
+<li><p><strong>max_iterations</strong> (<em>int</em><em>, </em><em>optional</em>) – The maximum number of iterations to perform for smoothing the interpolated data.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>vertex_data</strong> – An array of interpolated data for each vertex in the ‘original_mesh’. The data is initially
+interpolated using nearest neighbors and can be further refined through iterative smoothing.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The function first finds the nearest vertex in the ‘downsampled_mesh’ for each vertex in the
+‘original_mesh’ using a KD-tree. It directly assigns corresponding data values where a close
+match is found. The function iteratively adjusts data values at vertices without direct matches
+by averaging over neighbors.</p>
 </dd></dl>
 
 <dl class="py function">
@@ -665,18 +1291,67 @@ expected to be nibabel Gifti objects.</p>
 <p>This function reduces the number of vertices in a surface mesh (in GIFTI format) to a specified
 fraction of its original size. Downsampling is performed iteratively until the target number of
 vertices is reached or closely approximated.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gifti_surf</strong> (<em>nibabel.gifti.GiftiImage</em>) – The surface mesh to be downsampled, provided as a GIFTI image object.</p></li>
+<li><p><strong>ds_factor</strong> (<em>float</em><em>, </em><em>optional</em>) – The downsampling factor representing the target fraction of the original number of vertices.
+Default is 0.1.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>current_surf</strong> – The downsampled surface mesh as a GIFTI image object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nibabel.gifti.GiftiImage</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The downsampling process is iterative. In each iteration, the mesh is downsampled by a factor
+calculated to approach the target number of vertices.</p></li>
+<li><p>If the calculated downsampling factor in an iteration equals or exceeds 1, the process is
+terminated to prevent upsampling or infinite loops.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.mesh_adjacency">
 <span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">mesh_adjacency</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">faces</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.mesh_adjacency" title="Permalink to this definition">#</a></dt>
 <dd><p>Compute the adjacency matrix of a triangle mesh.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>faces</strong> (<em>np.array</em><em>, </em><em>shape</em><em> (</em><em>f</em><em>, </em><em>3</em><em>)</em>) – The mesh faces, where <cite>f</cite> is the number of faces, and each face is represented by a tuple of
+three vertex indices.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>adjacency</strong> – The adjacency matrix of the mesh, where <cite>v</cite> is the number of vertices. Each entry (i, j)
+indicates whether vertices i and j are connected by an edge.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.array, shape (v, v)</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.mesh_normals">
 <span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">mesh_normals</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">unit</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.mesh_normals" title="Permalink to this definition">#</a></dt>
-<dd><p>This function computes the normals of a mesh.</p>
+<dd><p>Normalize a numpy array of vectors.</p>
+<p>This function normalizes each row in the array of vectors to have unit length. If the length of
+a vector is below a certain threshold (machine epsilon), it is set to 1 to avoid division by
+zero.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>vectors</strong> (<em>ndarray</em>) – Array of vectors to be normalized. Each row represents a vector.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Normalized array of vectors where each row has unit length.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>ndarray</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -687,12 +1362,50 @@ vertices is reached or closely approximated.</p>
 surfaces, adjusting for RAS offset, removing deep vertices, combining hemispheres,
 downsampling, and computing link vectors. The resulting surfaces are combined and saved to a
 specified output file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subj_id</strong> (<em>str</em>) – Subject ID corresponding to the FreeSurfer subject directory.</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em>) – Output directory where the processed files will be saved.</p></li>
+<li><p><strong>out_fname</strong> (<em>str</em>) – Filename for the final combined surface mesh.</p></li>
+<li><p><strong>n_surfaces</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of intermediate surfaces to create between white and pial surfaces.</p></li>
+<li><p><strong>ds_factor</strong> (<em>float</em><em>, </em><em>optional</em>) – Downsampling factor for surface decimation.</p></li>
+<li><p><strong>orientation</strong> (<em>str</em><em>, </em><em>optional</em>) – Method to compute orientation vectors (‘link_vector’ for pial-white link, ‘ds_surf_norm’
+for downsampled surface normals, ‘orig_surf_norm’ for original surface normals, and ‘cps’
+for cortical patch statistics).</p></li>
+<li><p><strong>fix_orientation</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag to ensure that orientation of corresponding vertices across layers is the same (True
+by default).</p></li>
+<li><p><strong>remove_deep</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag to remove vertices located in deep regions (labeled as ‘unknown’).</p></li>
+<li><p><strong>n_jobs</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of parallel processes to run. -1 for all available cores (default is -1).</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>This function assumes the FreeSurfer ‘SUBJECTS_DIR’ environment variable is set.</p></li>
+<li><p>Surfaces are processed in Gifti format and combined into a single surface mesh.</p></li>
+</ul>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">postprocess_freesurfer_surfaces</span><span class="p">(</span><span class="s1">&#39;subject1&#39;</span><span class="p">,</span> <span class="s1">&#39;/path/to/output&#39;</span><span class="p">,</span> <span class="s1">&#39;combined_surface.gii&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.remove_unconnected_vertices">
 <span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">remove_unconnected_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gifti_surf</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.remove_unconnected_vertices" title="Permalink to this definition">#</a></dt>
-<dd><p>Removes vertices that are not connected to any faces from a Gifti surface object.</p>
+<dd><p>Remove vertices that are not connected to any faces from a Gifti surface object.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>gifti_surf</strong> (<em>nibabel.gifti.GiftiImage</em>) – The Gifti surface object to be processed.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>cleaned_gifti_surf</strong> – A new GiftiImage object with unconnected vertices removed.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nibabel.gifti.GiftiImage</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -702,12 +1415,68 @@ specified output file.</p>
 <p>This function modifies a Gifti surface by removing the specified vertices. It also updates
 the faces of the surface so that they only reference the remaining vertices. If normals
 are present in the surface, they are also updated to correspond to the new set of vertices.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>gifti_surf</strong> (<em>nibabel.gifti.GiftiImage</em>) – The Gifti surface object from which vertices will be removed.</p></li>
+<li><p><strong>vertices_to_remove</strong> (<em>array_like</em>) – An array of vertex indices to be removed from the surface.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>new_gifti</strong> – A new GiftiImage object with the specified vertices removed and faces updated.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>nibabel.gifti.GiftiImage</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The function assumes that the GiftiImage object contains at least two data arrays: one for
+vertices and one for faces. If normals are present, they are also updated.</p></li>
+<li><p>Vertex indices in <cite>vertices_to_remove</cite> should be zero-based (following Python’s indexing
+convention).</p></li>
+<li><p>The returned GiftiImage object is a new object; the original <cite>gifti_surf</cite> object is not
+modified in place.</p></li>
+</ul>
+<p class="rubric">Example</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">gifti_surf</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;path_to_gifti_file.gii&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vertices_to_remove</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">5</span><span class="p">])</span>  <span class="c1"># Indices of vertices to remove</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">new_gifti_surf</span> <span class="o">=</span> <span class="n">remove_vertices</span><span class="p">(</span><span class="n">gifti_surf</span><span class="p">,</span> <span class="n">vertices_to_remove</span><span class="p">)</span>
+</pre></div>
+</div>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.split_fv">
 <span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">split_fv</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">faces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.split_fv" title="Permalink to this definition">#</a></dt>
-<dd><p>Splits faces and vertices into connected pieces based on the connectivity of the faces.</p>
+<dd><p>Split faces and vertices into connected pieces based on the connectivity of the faces.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>faces</strong> (<em>np.ndarray</em>) – A 2D numpy array of faces, where each row represents a face and each element is an index to
+a vertex in <cite>vertices</cite>.</p></li>
+<li><p><strong>vertices</strong> (<em>np.ndarray</em>) – A 2D numpy array of vertices, where each row represents a vertex.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>fv_out</strong> – A list where each element is a dictionary with keys ‘faces’ and ‘vertices’. Each dictionary
+represents a separately connected patch of the mesh.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list of dict</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">faces</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">7</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span> <span class="p">[</span><span class="mi">11</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">4</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">vertices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">8</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">6</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>                     <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">2</span><span class="p">],</span> <span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">split_patches</span> <span class="o">=</span> <span class="n">split_fv</span><span class="p">(</span><span class="n">faces</span><span class="p">,</span> <span class="n">vertices</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="rubric">Notes</p>
+<p>Faces and vertices should be defined such that faces sharing a vertex reference the same vertex
+number. This function does not explicitly test for duplicate vertices at the same location.</p>
 </dd></dl>
 
 </section>
@@ -718,45 +1487,119 @@ managing MEG sensor data, and working with neuroimaging data in various formats 
 GIFTI, and MATLAB files. It includes functions for batch processing in SPM, converting data
 formats, loading and processing sensor data, and working with anatomical structures through
 cortical mesh analysis.</p>
-<section id="key-functionalities">
-<h3>Key functionalities:<a class="headerlink" href="#key-functionalities" title="Permalink to this heading">#</a></h3>
+<p>Key functionalities:</p>
 <ul class="simple">
 <li><p>Context management for SPM operations.</p></li>
 <li><p>Batch processing for neuroimaging tasks.</p></li>
 <li><p>Loading MEG sensor data and managing related file operations.</p></li>
 <li><p>Utility functions for anatomical and spatial data transformations.</p></li>
 </ul>
-</section>
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.batch">
 <span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">batch</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#lameg.util.batch" title="Permalink to this definition">#</a></dt>
 <dd><p>Execute a batch processing job in SPM (Statistical Parametric Mapping) using MATLAB.</p>
 <p>This function prepares a configuration for an SPM batch job, saves it to a temporary MATLAB
 file, and executes it within an SPM instance. The function is capable of running any batch
-configuration passed to it as long as it adheres to SPM’s batch configuration structure.
+configuration passed to it, as long as it adheres to SPM’s batch configuration structure.
 After processing, it cleans up by deleting the temporary file used for the job.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>cfg</strong> (<em>dict</em>) – A dictionary containing the configuration settings for the SPM job. The dictionary should
+follow the structure required by SPM’s <cite>matlabbatch</cite> system.</p></li>
+<li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, the SPM GUI will display progress and results, allowing user interaction. If
+False, the process runs entirely in the background. Defaults to True.</p></li>
+<li><p><strong>spm_instance</strong> (<em>optional</em>) – An instance of an SPM session. If None, a new SPM session is created and used for the job.
+Defaults to None.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<p>To run an SPM job with a given configuration, you might call the function as follows:</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">cfg</span> <span class="o">=</span> <span class="p">{</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="s1">&#39;spm.stats.fmri_spec.dir&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;/path/to/output&#39;</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="s1">&#39;spm.stats.fmri_spec.timing.units&#39;</span><span class="p">:</span> <span class="s1">&#39;secs&#39;</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="s1">&#39;spm.stats.fmri_spec.sess&#39;</span><span class="p">:</span> <span class="p">{</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="s1">&#39;scans&#39;</span><span class="p">:</span> <span class="p">[</span><span class="s1">&#39;scan1.nii&#39;</span><span class="p">,</span> <span class="s1">&#39;scan2.nii&#39;</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="s1">&#39;cond&#39;</span><span class="p">:</span> <span class="p">{</span>
+<span class="gp">&gt;&gt;&gt; </span>            <span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;ExampleCondition&#39;</span><span class="p">,</span>
+<span class="gp">&gt;&gt;&gt; </span>            <span class="s1">&#39;onset&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">30</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>            <span class="s1">&#39;duration&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="p">},</span>
+<span class="gp">&gt;&gt;&gt; </span>        <span class="s1">&#39;multi&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;regress&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;name&#39;</span><span class="p">:</span> <span class="s1">&#39;movement&#39;</span><span class="p">,</span> <span class="s1">&#39;val&#39;</span><span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]}}</span>
+<span class="gp">&gt;&gt;&gt; </span>    <span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="p">}</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">batch</span><span class="p">(</span><span class="n">cfg</span><span class="p">,</span> <span class="n">viz</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The temporary MATLAB file is created in the system’s default temp directory.</p></li>
+<li><p>This function assumes that an SPM and MATLAB environment is properly set up and accessible
+through the provided <cite>spm_instance</cite> or through a default SPM environment.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.big_brain_proportional_layer_boundaries">
 <span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">big_brain_proportional_layer_boundaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.big_brain_proportional_layer_boundaries" title="Permalink to this definition">#</a></dt>
-<dd><p>Get the proportional layer boundaries (6 values between 0 and 1) from
-fsaverage converted Big Brain atlas, included in the laMEG.</p>
-<p>Function uses the included fsaverage converted Big Brain cortical thickness atlas to calculate
-normalised distances between cortical layer (from layer 1 to layer 6) boundaries (values
-between 0 and 1). To speed up the computation, the results are stored in the numpy dictionary.</p>
+<dd><p>Get the proportional layer boundaries (6 values between 0 and 1) from the fsaverage-converted
+Big Brain atlas included in laMEG.</p>
+<p>This function uses the fsaverage-converted Big Brain cortical thickness atlas to calculate
+normalized distances between cortical layer boundaries (from layer 1 to layer 6) with values
+between 0 and 1. To speed up computation, the results are stored in a NumPy dictionary.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>overwrite</strong> (<em>bool</em>) – Whether to overwrite the existing file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>bb_data</strong> – Dictionary with keys “lh” (left hemisphere) and “rh” (right hemisphere) containing arrays
+with layer boundaries for each vertex in the hemisphere.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.calc_prop">
 <span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">calc_prop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">vec</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.calc_prop" title="Permalink to this definition">#</a></dt>
-<dd><p>From independent thickness to overall proportion, while respecting the zeros</p>
+<dd><p>Convert independent thickness values to cumulative proportions, while respecting zeros.</p>
+<p>This function calculates the cumulative sum of the input vector and normalizes it by the total
+sum of the vector. If the total sum is zero, the original vector is returned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>vec</strong> (<em>array-like</em>) – Input array of thickness values.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>vec</strong> – The cumulative proportion of the input values, normalized by the total sum. If the sum of
+the input values is zero, the original vector is returned.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.check_many">
 <span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">check_many</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">multiple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.check_many" title="Permalink to this definition">#</a></dt>
-<dd><p>Checks for a presence of strings in a target strings.</p>
+<dd><p>Check for the presence of strings in a target string.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>multiple</strong> (<em>list</em>) – List of strings to be found in the target string.</p></li>
+<li><p><strong>target</strong> (<em>str</em>) – The target string in which to search for the specified strings.</p></li>
+<li><p><strong>func</strong> (<em>str</em>) – Specifies the search mode: “all” to check if all strings are present, or “any” to check if
+any string is present.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>This function works well with <cite>if</cite> statements in list comprehensions.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
@@ -768,8 +1611,24 @@ corresponding vertex index in a subject’s native surface space. It loads the f
 spherical surface, identifies the coordinates of the given vertex index, and then finds the
 nearest corresponding vertex on the subject’s registered spherical surface. If the hemisphere
 is right, it adjusts the index by adding the number of vertices in the left hemisphere pial
-surface so that it matches the combined hemishere mesh. It returns the adjusted vertex index in
+surface so that it matches the combined hemisphere mesh. It returns the adjusted vertex index in
 the subject’s native space.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subj_id</strong> (<em>str</em>) – The subject identifier for which the conversion is being performed.</p></li>
+<li><p><strong>hemi</strong> (<em>str</em>) – Hemisphere specifier (‘lh’ for left hemisphere, ‘rh’ for right hemisphere).</p></li>
+<li><p><strong>vert_idx</strong> (<em>int</em>) – Index of the vertex in the fsaverage surface to be converted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>subj_v_idx</strong> – Index of the vertex on the subject’s native surface that corresponds to the input vertex
+index.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -777,17 +1636,53 @@ the subject’s native space.</p>
 <span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">convert_native_to_fsaverage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_surf_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_coord</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.convert_native_to_fsaverage" title="Permalink to this definition">#</a></dt>
 <dd><p>Convert coordinates from a subject’s native surface space to the fsaverage surface space.</p>
 <p>This function maps a vertex coordinate from a subject’s native combined pial surface to the
-corresponding vertex index in the fsaverage template space. It does this by determining which
-hemisphere the vertex belongs to based on the closest match in the left and right hemispheres’
-pial surfaces. It then finds the nearest vertex in the subject’s registered spherical surface,
-maps this to the nearest vertex in the fsaverage spherical surface, and returns the index of
-this fsaverage vertex.</p>
+corresponding vertex index in the fsaverage template space. It determines which hemisphere the
+vertex belongs to based on the closest match in the left and right hemispheres’ pial surfaces.
+It then finds the nearest vertex in the subject’s registered spherical surface, maps this to
+the nearest vertex in the fsaverage spherical surface, and returns the index of this fsaverage
+vertex.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subj_id</strong> (<em>str</em>) – The subject identifier for which the conversion is being performed.</p></li>
+<li><p><strong>subj_surf_dir</strong> (<em>str</em>) – The path containing the laMEG-processed subject surfaces.</p></li>
+<li><p><strong>subj_coord</strong> (<em>array-like</em>) – The x, y, z coordinates on the subject’s combined hemisphere pial surface to be converted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>hemi</strong> (<em>str</em>) – The hemisphere the vertex is found in (‘lh’ for left hemisphere, ‘rh’ for right
+hemisphere).</p></li>
+<li><p><strong>fsave_v_idx</strong> (<em>int</em>) – Index of the vertex on the fsaverage spherical surface that corresponds to the input
+coordinates.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.ctf_fif_spm_conversion">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">ctf_fif_spm_conversion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mne_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res4_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoched</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spm_'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#lameg.util.ctf_fif_spm_conversion" title="Permalink to this definition">#</a></dt>
-<dd><p>Converts <a href="#id1"><span class="problematic" id="id2">*</span></a>.fif file to SPM data format.</p>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">ctf_fif_spm_conversion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mne_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res4_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoched</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spm_'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.ctf_fif_spm_conversion" title="Permalink to this definition">#</a></dt>
+<dd><p>Convert a *.fif file containing data from a CTF scanner to SPM data format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mne_file</strong> (<em>str</em><em> or </em><em>pathlib.Path</em><em> or </em><em>os.Path</em>) – Path to the “*-raw.fif” or “*-epo.fif” file.</p></li>
+<li><p><strong>res4_file</strong> (<em>str</em><em> or </em><em>pathlib.Path</em><em> or </em><em>os.Path</em>) – Location of the sensor position data (*.res4 for CTF).</p></li>
+<li><p><strong>output_path</strong> (<em>str</em><em> or </em><em>pathlib.Path</em><em> or </em><em>os.Path</em>) – Location of the converted file.</p></li>
+<li><p><strong>epoched</strong> (<em>bool</em>) – Specify if the data is epoched (True) or not (False).</p></li>
+<li><p><strong>prefix</strong> (<em>str</em>) – A string appended to the output file name after conversion. Default: <code class="docutils literal notranslate"><span class="pre">&quot;spm_&quot;</span></code>.</p></li>
+<li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Instance of standalone SPM. Default is None.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>If <code class="docutils literal notranslate"><span class="pre">spm_instance</span></code> is not provided, the function will start a new standalone SPM instance.</p></li>
+<li><p>The function will automatically close the standalone SPM instance if it was started
+within the function.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
@@ -795,55 +1690,184 @@ this fsaverage vertex.</p>
 <span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_bigbrain_layer_boundaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_surf_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_coord</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.get_bigbrain_layer_boundaries" title="Permalink to this definition">#</a></dt>
 <dd><p>Get the cortical layer boundaries based on Big Brain atlas for a specified coordinate in the
 subject’s downsampled combined space.</p>
-<p>Function maps a vertex coordinate from a subject’s native combined pial surface to the
-corresponding vertex index in the fsaverage template space, in a specific hemisphere. Then,
-the proportional layer boundaries (6 values between 0 and 1) from fsaverage converted Big
-Brain atlas are returned (from layer 1 to layer 6). To get the subjects prpportional values,
-those values have to be multiplied by the observed cortical thickness.</p>
+<p>This function maps a vertex coordinate from a subject’s native combined pial surface to the
+corresponding vertex index in the fsaverage template space for a specific hemisphere. Then,
+the proportional layer boundaries (6 values between 0 and 1) from the fsaverage-converted Big
+Brain atlas are returned (from layer 1 to layer 6). To get the subject’s proportional values,
+these values must be multiplied by the observed cortical thickness.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subj_id</strong> (<em>str</em>) – The subject identifier for which the conversion is being performed.</p></li>
+<li><p><strong>subj_surf_dir</strong> (<em>str</em>) – The path containing the laMEG-processed subject surfaces.</p></li>
+<li><p><strong>subj_coord</strong> (<em>array-like</em>) – The x, y, z coordinates on the subject’s combined hemisphere pial surface to be converted.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>vert_bb_prop</strong> – Proportional layer boundaries (6 values between 0 and 1) from the fsaverage-converted Big
+Brain atlas.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>array-like</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.get_directories">
 <span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_directories</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.get_directories" title="Permalink to this definition">#</a></dt>
-<dd><p>Returns a list of directories in the path (or all subdirectories) containing
-specified strings.</p>
+<dd><p>Return a list of directories in the path (or all subdirectories) containing specified strings.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target_path</strong> (<em>str</em><em> or </em><em>pathlib.Path</em><em> or </em><em>os.Path</em>) – The most shallow searched directory.</p></li>
+<li><p><strong>depth</strong> (<em>str</em>) – Specifies the depth of the search: “all” for recursive search, “one” for shallow search.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>subdirs</strong> – List of pathlib.Path objects representing the found directories.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.get_fiducial_coords">
 <span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_fiducial_coords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.get_fiducial_coords" title="Permalink to this definition">#</a></dt>
-<dd><p>Fetches fiducial coordinates from a tab-separated values (TSV) file for a given subject ID.</p>
+<dd><p>Fetch fiducial coordinates from a tab-separated values (TSV) file for a given subject ID.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subj_id</strong> (<em>str</em>) – The subject ID to search for in the TSV file.</p></li>
+<li><p><strong>fname</strong> (<em>str</em>) – Path to the TSV file.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>NAS</strong> (<em>list</em>) – List of floats representing the NASion fiducial coordinates.</p></li>
+<li><p><strong>LPA</strong> (<em>list</em>) – List of floats representing the Left Preauricular fiducial coordinates.</p></li>
+<li><p><strong>RPA</strong> (<em>list</em>) – List of floats representing the Right Preauricular fiducial coordinates.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.get_files">
 <span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">target_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suffix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">strings</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">check</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">depth</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'all'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.get_files" title="Permalink to this definition">#</a></dt>
-<dd><p>Returns a list of the files with specific extension, prefix and name containing
-specific strings. Either all files in the directory or in this directory.</p>
+<dd><p>Return a list of files with a specific extension, prefix, and name containing specific strings.</p>
+<p>Searches either all files in the target directory or within a specified directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>target_path</strong> (<em>str</em><em> or </em><em>pathlib.Path</em><em> or </em><em>os.Path</em>) – The most shallow searched directory.</p></li>
+<li><p><strong>suffix</strong> (<em>str</em>) – File extension in “*.ext” format.</p></li>
+<li><p><strong>strings</strong> (<em>list</em><em> of </em><em>str</em>) – List of strings to search for in the file name.</p></li>
+<li><p><strong>prefix</strong> (<em>str</em>) – Limits the output list to file names starting with this prefix.</p></li>
+<li><p><strong>check</strong> (<em>str</em>) – Specifies the search mode: “all” to check if all strings are present, or “any” to check if
+any string is present.</p></li>
+<li><p><strong>depth</strong> (<em>str</em>) – Specifies the depth of the search: “all” for recursive search, “one” for shallow search.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>subdirs</strong> – List of pathlib.Path objects representing the found files.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.get_surface_names">
 <span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_surface_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation_method</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.get_surface_names" title="Permalink to this definition">#</a></dt>
-<dd><p>Generates a list of filenames for each mesh layer in a multi-layer mesh setup.</p>
+<dd><p>Generate a list of filenames for each mesh layer in a multi-layer mesh setup.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>n_layers</strong> (<em>int</em>) – The number of layers in the mesh.</p></li>
+<li><p><strong>surf_path</strong> (<em>str</em>) – The file path where the mesh files are located.</p></li>
+<li><p><strong>orientation_method</strong> (<em>str</em>) – The method used for orientation in the naming of mesh files.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>layer_fnames</strong> – A list of strings, where each string is the full file path to a mesh layer file. The list
+order corresponds to the layers’ order, starting from the outermost layer (pial surface)
+to the innermost layer (white matter surface).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This function assumes a specific naming convention for the mesh files. The outermost layer is
+named as ‘pial’, the innermost as ‘white’, and the intermediate layers are named based on their
+relative position between 1 (pial) and 0 (white), with the position formatted to three decimal
+places. Each filename also includes an orientation method specifier.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.load_meg_sensor_data">
 <span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">load_meg_sensor_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.load_meg_sensor_data" title="Permalink to this definition">#</a></dt>
 <dd><p>Load sensor data from a MEG dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data_fname</strong> (<em>str</em>) – Filename or path of the MEG/EEG data file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>sensor_data</strong> (<em>ndarray</em>) – An array containing the MEG sensor data (channels x time x trial).</p></li>
+<li><p><strong>time</strong> (<em>ndarray</em>) – An array containing the MEG data timestamps.</p></li>
+<li><p><strong>ch_names</strong> (<em>list</em>) – A list of channel names.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.make_directory">
 <span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">make_directory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">root_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extended_dir</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.make_directory" title="Permalink to this definition">#</a></dt>
-<dd><p>Creates a directory along with the intermediate directories.</p>
+<dd><p>Create a directory along with intermediate directories.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>root_path</strong> (<em>str</em><em> or </em><em>pathlib.Path</em><em> or </em><em>os.Path</em>) – The root directory.</p></li>
+<li><p><strong>extended_dir</strong> (<em>str</em><em> or </em><em>list</em>) – Directory or directories to create within <cite>root_path</cite>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>root_path</strong> – The updated root directory.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str or pathlib.Path or os.Path</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.spm_context">
 <span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">spm_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.spm_context" title="Permalink to this definition">#</a></dt>
 <dd><p>Context manager for handling standalone SPM instances.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>spm</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – An existing standalone instance. Default is None.</p>
+</dd>
+<dt class="field-even">Yields<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>spm</strong> (<em>spm_standalone</em>) – A standalone SPM instance for use within the context.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>If <cite>spm</cite> is None, the function starts a new standalone SPM instance.</p></li>
+<li><p>The new standalone SPM instance will be closed automatically upon exiting the context.</p></li>
+<li><p>If <cite>spm</cite> is provided, it will be used as is and not closed automatically.</p></li>
+<li><p>This function is intended for use in a <cite>with</cite> statement to ensure proper management of
+standalone SPM resources.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
@@ -851,8 +1875,38 @@ specific strings. Either all files in the directory or in this directory.</p>
 <span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">ttest_rel_corrected</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">correction</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tail</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.ttest_rel_corrected" title="Permalink to this definition">#</a></dt>
 <dd><p>Perform a corrected paired t-test on a sample of data.</p>
 <p>This function handles missing data (NaNs) and applies a variance correction to the t-test
-calculation.
-It computes the t-statistic and corresponding p-value for the hypothesis test.</p>
+calculation. It computes the t-statistic and corresponding p-value for the hypothesis test.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>array_like</em>) – A 2-D array containing the sample data. NaN values are allowed and are handled
+appropriately.</p></li>
+<li><p><strong>correction</strong> (<em>float</em><em>, </em><em>optional</em>) – The correction value to be added to the variance to avoid division by zero issues. If set
+to 0 (default), an automatic correction of 0.01 * max(variance) is applied.</p></li>
+<li><p><strong>tail</strong> (<em>int</em><em>, </em><em>optional</em>) – Specifies the type of t-test to be performed:
+- 0 for a two-tailed test (default),
+- 1 for a right one-tailed test,
+- -1 for a left one-tailed test.</p></li>
+<li><p><strong>axis</strong> (<em>int</em><em>, </em><em>optional</em>) – Axis along which to perform the t-test. Default is 0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>t-statistic</strong> (<em>float</em>) – The computed t-statistic for the test.</p></li>
+<li><p><strong>degrees_of_freedom</strong> (<em>int</em>) – The degrees of freedom for the t-test.</p></li>
+<li><p><strong>p-value</strong> (<em>float</em>) – The p-value for the test.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The function handles NaNs by computing the sample size, mean, and variance while ignoring
+NaNs.</p></li>
+<li><p>The degrees of freedom for the t-test are computed as <cite>max(sample size - 1, 0)</cite>.</p></li>
+<li><p>The standard error of the mean is adjusted with the variance correction.</p></li>
+<li><p>The p-value is computed based on the specified tail type of the t-test.</p></li>
+</ul>
 </dd></dl>
 
 </section>
@@ -886,15 +1940,67 @@ outputs.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.viz.color_map">
 <span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">color_map</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bins</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vcenter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TS'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.viz.color_map" title="Permalink to this definition">#</a></dt>
-<dd><p>Returns a data mapped to the color map in the hexadecimal format,
-and a colormap to use for e.g. a colorbar.</p>
+<dd><p>Return data mapped to the colormap in hexadecimal format, and a colormap for use, e.g., with
+a colorbar.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>iterable</em>) – 1D numerical data.</p></li>
+<li><p><strong>n_bins</strong> (<em>int</em>) – Number of bins in the histogram.</p></li>
+<li><p><strong>vmin</strong> (<em>float</em>) – Lowest value on the histogram range.</p></li>
+<li><p><strong>vmax</strong> (<em>float</em>) – Highest value on the histogram range.</p></li>
+<li><p><strong>vcenter</strong> (<em>float</em><em>, </em><em>optional</em>) – Center of the histogram range (default is 0 for zero-centered color mapping).</p></li>
+<li><p><strong>norm</strong> (<em>str</em>) – Type of normalization (“TS”, “N”, “LOG”).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>map_colors</strong> (<em>array-like</em>) – Data mapped to the colormap in hexadecimal format.</p></li>
+<li><p><strong>cmap</strong> (<em>matplotlib.colors.Colormap</em>) – The colormap object for use with visualizations like colorbars.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The function creates normalization based on the “norm” argument.</p></li>
+<li><p>It generates a suitable colormap and maps data values based on histogram bins.</p></li>
+<li><p>Returns RGB values for each data point, converts percent-based RGB to decimal, and then
+converts RGB to hexadecimal in a format appropriate for visualization functions.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.viz.data_to_rgb">
 <span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">data_to_rgb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_bins</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cmap</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmin</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vmax</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vcenter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ret_map</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">norm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'TS'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.viz.data_to_rgb" title="Permalink to this definition">#</a></dt>
-<dd><p>Returns RGB values of a data mapped to the normalised matplotlib colormap.
-(optionally) Returns a colormap to use for e.g. a colorbar.</p>
+<dd><p>Return RGB values of data mapped to the normalized matplotlib colormap. Optionally, return a
+colormap for use, e.g., with a colorbar.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data</strong> (<em>iterable</em>) – 1D numerical data.</p></li>
+<li><p><strong>n_bins</strong> (<em>int</em>) – Number of bins in the histogram.</p></li>
+<li><p><strong>vmin</strong> (<em>float</em>) – Lowest value on the histogram range.</p></li>
+<li><p><strong>vmax</strong> (<em>float</em>) – Highest value on the histogram range.</p></li>
+<li><p><strong>vcenter</strong> (<em>float</em><em>, </em><em>optional</em>) – Center of the histogram range (default is 0 for zero-centered color mapping).</p></li>
+<li><p><strong>ret_map</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to return a colormap object.</p></li>
+<li><p><strong>norm</strong> (<em>str</em>) – Type of normalization (“TS”, “N”, “LOG”).</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>color_mapped</strong> (<em>array-like</em>) – RGB values mapped to the colormap for each data point.</p></li>
+<li><p><strong>scalar_map</strong> (<em>matplotlib.colors.ScalarMappable, optional</em>) – The colormap object if <cite>ret_map</cite> is True.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The function creates normalization based on the “norm” argument.</p></li>
+<li><p>It generates a suitable colormap and maps data values based on histogram bins.</p></li>
+<li><p>It returns RGB values for each data point.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
@@ -904,19 +2010,93 @@ and a colormap to use for e.g. a colorbar.</p>
 <p>This function takes a CSD matrix and plots it over a specified time range. It offers options
 for color normalization, colormap selection, and including a colorbar. Optionally, it can
 return plot details.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>csd</strong> (<em>numpy.ndarray</em>) – The CSD matrix to be plotted, with dimensions corresponding to layers x time points.</p></li>
+<li><p><strong>times</strong> (<em>numpy.ndarray</em>) – A 1D array of time points corresponding to the columns of the CSD matrix.</p></li>
+<li><p><strong>ax</strong> (<em>matplotlib.axes.Axes</em>) – The matplotlib axes object where the CSD data will be plotted.</p></li>
+<li><p><strong>colorbar</strong> (<em>bool</em><em>, </em><em>optional</em>) – Flag to indicate whether a colorbar should be added to the plot. Default is True.</p></li>
+<li><p><strong>cmap</strong> (<em>str</em><em>, </em><em>optional</em>) – The colormap used for plotting the CSD data. Default is “RdBu_r”.</p></li>
+<li><p><strong>vmin_vmax</strong> (<em>tuple</em><em> or </em><em>str</em><em>, </em><em>optional</em>) – A tuple specifying the (vmin, vmax) range for color normalization. If “norm”, a standard
+normalization is used. If None, the range is set to the maximum absolute value in the CSD
+matrix. Default is None.</p></li>
+<li><p><strong>n_layers</strong> (<em>int</em>) – Number of layers in the CSD.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>csd_imshow</strong> – The imshow object of the plot.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>matplotlib.image.AxesImage</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>This function requires the ‘numpy’, ‘matplotlib.colors’, and ‘matplotlib.pyplot’ libraries.</p></li>
+<li><p>The ‘TwoSlopeNorm’ from ‘matplotlib.colors’ is used for diverging color normalization.</p></li>
+<li><p>The aspect ratio of the plot is automatically set to ‘auto’ for appropriate time-layer
+representation.</p></li>
+<li><p>Layer labels are set from 1 to n_layers</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.viz.rgbtoint">
 <span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">rgbtoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">rgb</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.viz.rgbtoint" title="Permalink to this definition">#</a></dt>
-<dd><p>Returns a 32bit representation of the color as an integer.</p>
+<dd><p>Return a 32-bit representation of the color as an integer.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>rgb</strong> (<em>array-like</em>) – An integer array [R, G, B] representing the red, green, and blue color components.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>color</strong> – The 32-bit integer representation of the color.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The function requires integer RGB values (0-255).</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.viz.show_surface">
 <span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">show_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surface</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">menu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertex_colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camera_view</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coord_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coord_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.viz.show_surface" title="Permalink to this definition">#</a></dt>
-<dd><p>Renders a 3D surface with optional data overlay. The rendering is persistent and does not
+<dd><p>Render a 3D surface with optional data overlay. The rendering is persistent and does not
 require an active kernel.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>surface</strong> (<em>nibabel.gifti.GiftiImage</em>) – The Gifti surface mesh to be rendered.</p></li>
+<li><p><strong>color</strong> (<em>array</em><em>, </em><em>optional</em>) – Basic color of the surface in the absence of data, specified as a decimal RGB array.
+Default is [166, 166, 166].</p></li>
+<li><p><strong>grid</strong> (<em>bool</em><em>, </em><em>optional</em>) – Toggles the rendering of a grid. Default is False.</p></li>
+<li><p><strong>menu</strong> (<em>bool</em><em>, </em><em>optional</em>) – Toggles the display of a menu with options such as lighting adjustments. Default is False.</p></li>
+<li><p><strong>vertex_colors</strong> (<em>array</em><em>, </em><em>optional</em>) – An array of vertex colors specified as hexadecimal 32-bit color values. Each color
+corresponds to a vertex on the surface. Default is None.</p></li>
+<li><p><strong>info</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, prints information about the surface, such as the number of vertices. Default is
+False.</p></li>
+<li><p><strong>camera_view</strong> (<em>array</em><em>, </em><em>optional</em>) – Specifies a camera view for the rendering. If None, an automatic camera view is set.
+Default is None.</p></li>
+<li><p><strong>height</strong> (<em>int</em><em>, </em><em>optional</em>) – Height of the widget in pixels. Default is 512.</p></li>
+<li><p><strong>opacity</strong> (<em>float</em><em>, </em><em>optional</em>) – Sets the opacity of the surface, with 1.0 being fully opaque and 0.0 being fully
+transparent. Default is 1.0.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>plot</strong> – A k3d plot object containing the rendered surface.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>k3d.plot.Plot</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>This function utilizes the k3d library for rendering the surface. It supports customization of
+surface color, opacity, and additional features like grid and menu display. The <cite>vertex_colors</cite>
+parameter allows for vertex-level color customization.</p>
 </dd></dl>
 
 </section>
@@ -971,8 +2151,6 @@ require an active kernel.</p>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-lameg.simulate">lameg.simulate module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-features">Key Features:</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#examples-of-use">Examples of use:</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.simulate.run_current_density_simulation"><code class="docutils literal notranslate"><span class="pre">run_current_density_simulation()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.simulate.run_dipole_simulation"><code class="docutils literal notranslate"><span class="pre">run_dipole_simulation()</span></code></a></li>
 </ul>
@@ -997,7 +2175,6 @@ require an active kernel.</p>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-lameg.util">lameg.util module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#key-functionalities">Key functionalities:</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.util.batch"><code class="docutils literal notranslate"><span class="pre">batch()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.util.big_brain_proportional_layer_boundaries"><code class="docutils literal notranslate"><span class="pre">big_brain_proportional_layer_boundaries()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.util.calc_prop"><code class="docutils literal notranslate"><span class="pre">calc_prop()</span></code></a></li>
@@ -1033,7 +2210,7 @@ require an active kernel.</p>
   <div class="sidebar-secondary-item">
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/danclab/laMEG/edit/master/doc/source/lameg.rst">
+    <a href="https://github.com/danclab/laMEG/edit/master/docs/_source/lameg.rst">
       <i class="fa-solid fa-pencil"></i>
       
       
@@ -1047,7 +2224,7 @@ require an active kernel.</p>
 
   <div class="sidebar-secondary-item">
   <div class="tocsection sourcelink">
-    <a href="../_sources/source/lameg.rst.txt">
+    <a href="../_sources/_source/lameg.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>

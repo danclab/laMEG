@@ -1,10 +1,5 @@
-.. laMEG documentation master file, created by
-   sphinx-quickstart on Sun Aug 11 14:02:55 2024.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 |Logo| ``laMEG``: laminar inference with MEG
-======================================================
+============================================
 
 Introduction
 ------------
@@ -26,7 +21,7 @@ Operating system
 Available modules
 -----------------
 
-Here is a list of the methods and techniques available in ``laMEG``:
+Here is a list of the modules available in ``laMEG``:
 
 .. currentmodule:: lameg
 
@@ -35,6 +30,7 @@ Here is a list of the methods and techniques available in ``laMEG``:
 
 .. autosummary::
    :caption: laMEG
+   :toctree: _autosummary
 
    lameg.invert
    lameg.laminar
@@ -67,7 +63,7 @@ Funding
 
 .. |Logo| image:: https://github.com/danclab/laMEG/blob/main/lameg/assets/logo.png?raw=true
    :alt: laMEG
-   :width: 100
+   :width: 200
 
 .. |ERC| image:: https://github.com/danclab/laMEG/blob/main/lameg/assets/erc_logo.jpg?raw=true
    :alt: ERC

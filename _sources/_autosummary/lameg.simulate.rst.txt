@@ -1,0 +1,30 @@
+﻿lameg.simulate
+==============
+
+.. automodule:: lameg.simulate
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      run_current_density_simulation
+      run_dipole_simulation
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>laMEG: laminar inference with MEG &#8212; laMEG 0.2.0 documentation</title>
+    <title>laMEG: laminar inference with MEG &#8212; laMEG 0.0.3 documentation</title>
   
   
   
@@ -53,7 +53,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'index';</script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Tutorials gallery" href="auto_tutorials/index.html" />
+    <link rel="next" title="lameg.invert" href="_autosummary/lameg.invert.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -144,6 +144,46 @@
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item">
+                      <a class="nav-link nav-internal" href="_autosummary/lameg.invert.html">
+                        lameg.invert
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="_autosummary/lameg.laminar.html">
+                        lameg.laminar
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="_autosummary/lameg.surf.html">
+                        lameg.surf
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="_autosummary/lameg.viz.html">
+                        lameg.viz
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="_autosummary/lameg.simulate.html">
+                        lameg.simulate
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
                       <a class="nav-link nav-internal" href="auto_tutorials/index.html">
                         Tutorials gallery
                       </a>
@@ -156,6 +196,9 @@
                   </a>
                 </li>
                 
+                </div>
+            </div>
+            
   </ul>
 </nav></div>
       
@@ -262,6 +305,46 @@ document.write(`
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item">
+                      <a class="nav-link nav-internal" href="_autosummary/lameg.invert.html">
+                        lameg.invert
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="_autosummary/lameg.laminar.html">
+                        lameg.laminar
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="_autosummary/lameg.surf.html">
+                        lameg.surf
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="_autosummary/lameg.viz.html">
+                        lameg.viz
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="_autosummary/lameg.simulate.html">
+                        lameg.simulate
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
+                    <li class="nav-item">
                       <a class="nav-link nav-internal" href="auto_tutorials/index.html">
                         Tutorials gallery
                       </a>
@@ -274,6 +357,9 @@ document.write(`
                   </a>
                 </li>
                 
+                </div>
+            </div>
+            
   </ul>
 </nav></div>
         
@@ -350,7 +436,7 @@ document.write(`
                 <article class="bd-article" role="main">
                   
   <section id="logo-lameg-laminar-inference-with-meg">
-<h1><a class="reference internal" href="https://github.com/danclab/laMEG/blob/main/lameg/assets/logo.png?raw=true"><img alt="laMEG" src="https://github.com/danclab/laMEG/blob/main/lameg/assets/logo.png?raw=true" style="width: 100px;" /></a> <code class="docutils literal notranslate"><span class="pre">laMEG</span></code>: laminar inference with MEG<a class="headerlink" href="#logo-lameg-laminar-inference-with-meg" title="Permalink to this heading">#</a></h1>
+<h1><a class="reference internal" href="https://github.com/danclab/laMEG/blob/main/lameg/assets/logo.png?raw=true"><img alt="laMEG" src="https://github.com/danclab/laMEG/blob/main/lameg/assets/logo.png?raw=true" style="width: 200px;" /></a> <code class="docutils literal notranslate"><span class="pre">laMEG</span></code>: laminar inference with MEG<a class="headerlink" href="#logo-lameg-laminar-inference-with-meg" title="Permalink to this heading">#</a></h1>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading">#</a></h2>
 <p>Toolbox for laminar inference with MEG, powered by FreeSurfer (<a class="reference external" href="https://surfer.nmr.mgh.harvard.edu/fswiki">https://surfer.nmr.mgh.harvard.edu/fswiki</a>) and SPM (<a class="github reference external" href="https://github.com/spm/">spm/</a>) for
@@ -369,24 +455,24 @@ document.write(`
 </section>
 <section id="available-modules">
 <h2>Available modules<a class="headerlink" href="#available-modules" title="Permalink to this heading">#</a></h2>
-<p>Here is a list of the methods and techniques available in <code class="docutils literal notranslate"><span class="pre">laMEG</span></code>:</p>
+<p>Here is a list of the modules available in <code class="docutils literal notranslate"><span class="pre">laMEG</span></code>:</p>
 <div class="toctree-wrapper compound">
 </div>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="source/lameg.html#module-lameg.invert" title="lameg.invert"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lameg.invert</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.invert" title="lameg.invert"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lameg.invert</span></code></a></p></td>
 <td><p>This module provides tools for the coregistration, and source reconstruction of MEG/EEG data utilizing MATLAB and SPM (Statistical Parametric Mapping) functionalities.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="source/lameg.html#module-lameg.laminar" title="lameg.laminar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lameg.laminar</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.laminar" title="lameg.laminar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lameg.laminar</span></code></a></p></td>
 <td><p>This module provides tools for performing laminar analysis of MEG signals.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="source/lameg.html#module-lameg.surf" title="lameg.surf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lameg.surf</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.surf" title="lameg.surf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lameg.surf</span></code></a></p></td>
 <td><p>This module provides a set of tools for handling and manipulating surface mesh data, primarily used within neuroimaging and computer graphics contexts.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="source/lameg.html#module-lameg.viz" title="lameg.viz"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lameg.viz</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.viz" title="lameg.viz"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lameg.viz</span></code></a></p></td>
 <td><p>This module provides tools for converting and visualizing numerical data into color-coded formats.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="source/lameg.html#module-lameg.simulate" title="lameg.simulate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lameg.simulate</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.simulate" title="lameg.simulate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">lameg.simulate</span></code></a></p></td>
 <td><p>This module facilitates the simulation of MEG/EEG data using MATLAB's computing environment and the Statistical Parametric Mapping (SPM) toolbox.</p></td>
 </tr>
 </tbody>
@@ -428,11 +514,11 @@ document.write(`
     <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
     <a class="right-next"
-       href="auto_tutorials/index.html"
+       href="_autosummary/lameg.invert.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Tutorials gallery</p>
+        <p class="prev-next-title">lameg.invert</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -456,7 +542,9 @@ document.write(`
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#operating-system">Operating system</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#available-modules">Available modules</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#available-modules">Available modules</a><ul class="nav section-nav flex-column">
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tutorials">Tutorials</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#indices-and-tables">Indices and tables</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#funding">Funding</a></li>
@@ -466,7 +554,7 @@ document.write(`
   <div class="sidebar-secondary-item">
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/danclab/laMEG/edit/master/doc/index.rst">
+    <a href="https://github.com/danclab/laMEG/edit/master/docs/index.rst">
       <i class="fa-solid fa-pencil"></i>
       
       

@@ -1,0 +1,32 @@
+﻿lameg.laminar
+=============
+
+.. automodule:: lameg.laminar
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Functions
+
+   .. autosummary::
+   
+      compute_csd
+      model_comparison
+      roi_power_comparison
+      sliding_window_model_comparison
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

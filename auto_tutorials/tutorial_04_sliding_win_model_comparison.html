@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>&lt;no title&gt; &#8212; laMEG 0.2.0 documentation</title>
+    <title>Sliding time window laminar model comparison using free energy &#8212; laMEG 0.0.3 documentation</title>
   
   
   
@@ -53,8 +53,8 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'auto_tutorials/tutorial_04_sliding_win_model_comparison';</script>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="next" title="&lt;no title&gt;" href="tutorial_05_roi_power_analysis.html" />
-    <link rel="prev" title="&lt;no title&gt;" href="tutorial_03_model_comparison_cv_error.html" />
+    <link rel="next" title="Laminar ROI analysis of power in source space" href="tutorial_05_roi_power_analysis.html" />
+    <link rel="prev" title="Laminar model comparison using cross-validation error" href="tutorial_03_model_comparison_cv_error.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -144,6 +144,46 @@
   </p>
   <ul class="bd-navbar-elements navbar-nav">
     
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.invert.html">
+                        lameg.invert
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.laminar.html">
+                        lameg.laminar
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.surf.html">
+                        lameg.surf
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.viz.html">
+                        lameg.viz
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.simulate.html">
+                        lameg.simulate
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
                     <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="index.html">
                         Tutorials gallery
@@ -157,6 +197,9 @@
                   </a>
                 </li>
                 
+                </div>
+            </div>
+            
   </ul>
 </nav></div>
       
@@ -262,6 +305,46 @@ document.write(`
   </p>
   <ul class="bd-navbar-elements navbar-nav">
     
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.invert.html">
+                        lameg.invert
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.laminar.html">
+                        lameg.laminar
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.surf.html">
+                        lameg.surf
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.viz.html">
+                        lameg.viz
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../_autosummary/lameg.simulate.html">
+                        lameg.simulate
+                      </a>
+                    </li>
+                
+            <div class="nav-item dropdown">
+                <button class="btn dropdown-toggle nav-item" type="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    More
+                </button>
+                <div class="dropdown-menu">
+                    
                     <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="index.html">
                         Tutorials gallery
@@ -275,6 +358,9 @@ document.write(`
                   </a>
                 </li>
                 
+                </div>
+            </div>
+            
   </ul>
 </nav></div>
         
@@ -331,9 +417,13 @@ document.write(`
         <div class="sidebar-primary-item"><nav class="bd-docs-nav bd-links"
      aria-label="Section Navigation">
   <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
-  <div class="bd-toc-item navbar-nav"><ul class="nav bd-sidenav">
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
 <li class="toctree-l1"><a class="reference internal" href="tutorial_01_surface_processing.html">Surface processing</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial_02_model_comparison_free_energy.html">Laminar model comparison using free energy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_03_model_comparison_cv_error.html">Laminar model comparison using cross-validation error</a></li>
+<li class="toctree-l1 current active"><a class="current reference internal" href="#">Sliding time window laminar model comparison using free energy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_05_roi_power_analysis.html">Laminar ROI analysis of power in source space</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_06_csd.html">Laminar CSD analysis</a></li>
 </ul>
 </div>
 </nav></div>
@@ -374,7 +464,7 @@ document.write(`
     
     <li class="breadcrumb-item"><a href="index.html" class="nav-link">Tutorials gallery</a></li>
     
-    <li class="breadcrumb-item active" aria-current="page">&lt;no title&gt;</li>
+    <li class="breadcrumb-item active" aria-current="page">Sliding time window laminar model comparison using free energy</li>
   </ul>
 </nav>
 </div>
@@ -396,7 +486,8 @@ document.write(`
 <p><a class="reference internal" href="#sphx-glr-download-auto-tutorials-tutorial-04-sliding-win-model-comparison-py"><span class="std std-ref">Go to the end</span></a>
 to download the full example code</p>
 </div>
-<p class="sphx-glr-example-title" id="sphx-glr-auto-tutorials-tutorial-04-sliding-win-model-comparison-py">Sliding time window laminar model comparison using free energy</p>
+<section class="sphx-glr-example-title" id="sliding-time-window-laminar-model-comparison-using-free-energy">
+<span id="sphx-glr-auto-tutorials-tutorial-04-sliding-win-model-comparison-py"></span><h1>Sliding time window laminar model comparison using free energy<a class="headerlink" href="#sliding-time-window-laminar-model-comparison-using-free-energy" title="Permalink to this heading">#</a></h1>
 <p>This tutorial demonstrates how to perform laminar inference of event-related responses in a sliding time window using model comparison based on free energy as a metric of model fit, described in [Bonaiuto et al., 2021, Laminar dynamics of high amplitude beta bursts in human motor cortex](<a class="reference external" href="https://doi.org/10.1016/j.neuroimage.2021.118479">https://doi.org/10.1016/j.neuroimage.2021.118479</a>). A temporal Gaussian function is simulated at a particular cortical location in various layers. Source reconstruction is performed on the whole time window using the Empirical Bayesian Beamformer on the simulated sensor data using a forward model based on the multilayer mesh as a localizer. This is used to select priors on each layer mesh for a sliding time window model comparison using free energy.</p>
 <p>## Setting up the simulations</p>
 <p>Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.</p>
@@ -892,6 +983,7 @@ comparison across all layers</p>
 </div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
 
 
                 </article>
@@ -910,7 +1002,7 @@ comparison across all layers</p>
       <i class="fa-solid fa-angle-left"></i>
       <div class="prev-next-info">
         <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">&lt;no title&gt;</p>
+        <p class="prev-next-title">Laminar model comparison using cross-validation error</p>
       </div>
     </a>
     <a class="right-next"
@@ -918,7 +1010,7 @@ comparison across all layers</p>
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">&lt;no title&gt;</p>
+        <p class="prev-next-title">Laminar ROI analysis of power in source space</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>
@@ -935,19 +1027,9 @@ comparison across all layers</p>
                 <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
   <div class="sidebar-secondary-item">
-  <div class="page-toc tocsection onthispage">
-    <i class="fa-solid fa-list"></i> On this page
-  </div>
-  <nav class="bd-toc-nav page-toc">
-    <ul class="simple visible nav section-nav flex-column">
-</ul>
-
-  </nav></div>
-
-  <div class="sidebar-secondary-item">
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/danclab/laMEG/edit/master/doc/auto_tutorials/tutorial_04_sliding_win_model_comparison.rst">
+    <a href="https://github.com/danclab/laMEG/edit/master/docs/auto_tutorials/tutorial_04_sliding_win_model_comparison.rst">
       <i class="fa-solid fa-pencil"></i>
       
       
