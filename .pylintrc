@@ -25,7 +25,8 @@ disable=raw-checker-failed,
         deprecated-pragma,
         use-symbolic-message-instead,
         too-many-arguments,
-        too-many-locals
+        too-many-locals,
+        W1401
 
 ignored-modules=conf
 
