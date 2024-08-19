@@ -1,6 +1,7 @@
 """
 Laminar model comparison using free energy
-==========
+==========================================
+
 This tutorial demonstrates how to perform laminar 
 inference using model comparison based on free energy 
 as a metric of model fit, described in 

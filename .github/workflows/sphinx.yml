@@ -30,7 +30,7 @@ jobs:
       run: |
         conda activate lameg
         cd docs
-        sphinx-apidoc -o source ../lameg/
+        make apidoc
       shell: bash -l {0}
 
     - name: Build the documentation

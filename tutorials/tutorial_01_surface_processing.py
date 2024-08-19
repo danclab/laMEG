@@ -1,16 +1,12 @@
 """
 Surface processing
-===========
-
-***Create layer surfaces***
-# Uses FreeSurfer mris-inflate. Based on the number of surfaces you 
-# specify. Each will be approximately equidistant. Vertex correspondence 
-# is maintained, i.e each layer will have vertices along the vector 
-# connecting a white matter surface vertex with the corresponding 
-# pial surface vertex. Each surface will then be converted to gifti 
-# format and the vertex coordinates will adjusted by the RAS at the 
-# center of the volume to put them in native space.
+==================
 """
+
+# %%
+# Create layer surfaces
+# ---------------------
+# Uses FreeSurfer mris-inflate. Based on the number of surfaces you specify. Each will be approximately equidistant. Vertex correspondence is maintained, i.e each layer will have vertices along the vector connecting a white matter surface vertex with the corresponding pial surface vertex. Each surface will then be converted to gifti format and the vertex coordinates will adjusted by the RAS at the center of the volume to put them in native space.
 
 import os
 import numpy as np
@@ -43,14 +39,48 @@ for l_idx,layer_fname in enumerate(layer_fnames):
     mesh = nib.load(layer_fname)
     plot = show_surface(mesh, camera_view=cam_view, color=col_r[l_idx,:3]*255, height=256)
 
-# %% [markdown]
-# ***Remove deep vertices***
-# Freesurfer operates on hemispheres independently, resulting in deep vertices and mesh faces cutting through subcortical structures. These are removed because they are not part of the cortical source space. Any vertex not labelled or labelled as unknown in the Desikan-Killiany atlas are removed. This is applied to each hemisphere of each layer mesh.
-
-# %% [markdown]
-# ****Before****
+# %%
+#.. image:: ../_static/pial.png
+#   :width: 800
+#   :alt:
+#.. image:: ../_static/0.9.png
+#   :width: 800
+#   :alt:
+#.. image:: ../_static/0.8.png
+#   :width: 800
+#   :alt:
+#.. image:: ../_static/0.7.png
+#   :width: 800
+#   :alt:
+#.. image:: ../_static/0.6.png
+#   :width: 800
+#   :alt:
+#.. image:: ../_static/0.5.png
+#   :width: 800
+#   :alt:
+#.. image:: ../_static/0.4.png
+#   :width: 800
+#   :alt:
+#.. image:: ../_static/0.3.png
+#   :width: 800
+#   :alt:
+#.. image:: ../_static/0.2.png
+#   :width: 800
+#   :alt:
+#.. image:: ../_static/0.1.png
+#   :width: 800
+#   :alt:
+#.. image:: ../_static/white.png
+#   :width: 800
+#   :alt:
 
 # %%
+# Remove deep vertices
+# --------------------
+# Freesurfer operates on hemispheres independently, resulting in deep vertices and mesh faces cutting through subcortical structures. These are removed because they are not part of the cortical source space. Any vertex not labelled or labelled as unknown in the Desikan-Killiany atlas are removed. This is applied to each hemisphere of each layer mesh.
+
+# %%
+# **Before**
 surf_fname = os.path.join(surf_path, f'lh.pial.gii')
 
 cam_view=[110, 18, 36,
@@ -61,20 +91,27 @@ col_r = plt.cm.cool(np.linspace(0,1, num=n_layers))
 mesh = nib.load(surf_fname)
 plot = show_surface(mesh, camera_view=cam_view, color=col_r[0,:3]*255)
 
-# %% [markdown]
-# ****After****
+# %%
+#.. image:: ../_static/rm_deep_before.png
+#   :width: 800
+#   :alt:
 
 # %%
+# **After**
 surf_fname = os.path.join(surf_path, f'lh.pial.nodeep.gii')
 
 mesh = nib.load(surf_fname)
 plot = show_surface(mesh, camera_view=cam_view, color=col_r[0,:3]*255)
 
-# %% [markdown]
-# ***Combine hemispheres***
-# The left and right hemisphere meshes are combined by concatenation of their vertices and faces (left then right). No new faces are created. This is done for each layer.
+# %%
+#.. image:: ../_static/rm_deep_after.png
+#   :width: 800
+#   :alt:
 
 # %%
+# Combine hemispheres
+# -------------------
+# The left and right hemisphere meshes are combined by concatenation of their vertices and faces (left then right). No new faces are created. This is done for each layer.
 surf_fname = os.path.join(surf_path, f'pial.gii')
 
 cam_view=[13, 64, 217,
@@ -85,11 +122,15 @@ col_r = plt.cm.cool(np.linspace(0,1, num=n_layers))
 mesh = nib.load(surf_fname)
 plot = show_surface(mesh, camera_view=cam_view, color=col_r[0,:3]*255)
 
-# %% [markdown]
-# ***Downsample***
-# The surfaces are much too dense to use in source reconstruction. They must be downsampled, but we must maintain vertex correspondence between them (see [Bonaiuto et al. 2020, Estimates of cortical column orientation improve MEG source inversion](https://doi.org/10.1016/j.neuroimage.2020.116862)). The pial surface is therefore downsampled by a factor of 10 using the vtkDecimatePro algorithm, which only removes vertices rather than creating new ones. The removed vertices are also removed from each other layer mesh, and the face structure from the pial mesh is copied to them (though the faces are not used in the source reconstruction if link vector orientations are used).
+# %%
+#.. image:: ../_static/combine_hemi.png
+#   :width: 800
+#   :alt:
 
 # %%
+# Downsample
+# ----------
+# The surfaces are much too dense to use in source reconstruction. They must be downsampled, but we must maintain vertex correspondence between them (see [Bonaiuto et al. 2020, Estimates of cortical column orientation improve MEG source inversion](https://doi.org/10.1016/j.neuroimage.2020.116862)). The pial surface is therefore downsampled by a factor of 10 using the vtkDecimatePro algorithm, which only removes vertices rather than creating new ones. The removed vertices are also removed from each other layer mesh, and the face structure from the pial mesh is copied to them (though the faces are not used in the source reconstruction if link vector orientations are used).
 surf_fname = os.path.join(surf_path, f'pial.ds.link_vector.fixed.gii')
 
 cam_view=[13, 64, 217,
@@ -100,11 +141,15 @@ col_r = plt.cm.cool(np.linspace(0,1, num=n_layers))
 mesh = nib.load(surf_fname)
 plot = show_surface(mesh, camera_view=cam_view, color=col_r[0,:3]*255)
 
-# %% [markdown]
-# ***Compute link vectors***
-# The dipole orientation at each source location is computed. Downsampled surface normals, original surface normals, cortical patch statistics, or link vectors can be specified (see [Bonaiuto et al. 2020, Estimates of cortical column orientation improve MEG source inversion](https://doi.org/10.1016/j.neuroimage.2020.116862)). The first three compute vertex normals based on the orientation of the surrounding faces. They can be either computed separately for each layer, or the pial surface orientations can be used for all layers. The link vectors method computes vectors connecting corresponding pial and white matter vertices (pointing toward the white matter), which are therefore the same across layer. The orientation vectors are stored in the normals attribute of the gifti object.
+# %%
+#.. image:: ../_static/downsample.png
+#   :width: 800
+#   :alt:
 
 # %%
+# Compute link vectors
+# --------------------
+# The dipole orientation at each source location is computed. Downsampled surface normals, original surface normals, cortical patch statistics, or link vectors can be specified (see [Bonaiuto et al. 2020, Estimates of cortical column orientation improve MEG source inversion](https://doi.org/10.1016/j.neuroimage.2020.116862)). The first three compute vertex normals based on the orientation of the surrounding faces. They can be either computed separately for each layer, or the pial surface orientations can be used for all layers. The link vectors method computes vectors connecting corresponding pial and white matter vertices (pointing toward the white matter), which are therefore the same across layer. The orientation vectors are stored in the normals attribute of the gifti object.
 plot = k3d.plot(
     grid_visible=False, menu_visibility=False, camera_auto_fit=False
 )
@@ -139,11 +184,15 @@ plot.camera=cam_view
 
 plot.display()
 
-# %% [markdown]
-# ***Combine layers***
-# The layer meshes are then combined into a single mesh by concatenating their vertices and faces (from pial to white matter). No new faces are created (i.e. there are no edges connecting vertices across layers)
+# %%
+#.. image:: ../_static/link_vectors.png
+#   :width: 800
+#   :alt:
 
 # %%
+# Combine layers
+# --------------
+# The layer meshes are then combined into a single mesh by concatenating their vertices and faces (from pial to white matter). No new faces are created (i.e. there are no edges connecting vertices across layers)
 layer_fnames = []
 for l, layer in enumerate(layers):
     if layer == 1:
@@ -171,16 +220,20 @@ plot.camera=cam_view
 
 plot.display()
 
-# %% [markdown]
-# # Putting it all together
+# %%
+#.. image:: ../_static/combine_layers.png
+#   :width: 800
+#   :alt:
+
+# %%
+# Putting it all together
+# -----------------------
 # All of these steps can be run using the function:
+#
 # > postprocess_freesurfer_surfaces
 
-# %%
 from lameg.surf import postprocess_freesurfer_surfaces
 
-
-# %%
 # Create a 2-layer surface (only pial and white)
 postprocess_freesurfer_surfaces(
     'sub-104',                                
@@ -192,7 +245,6 @@ postprocess_freesurfer_surfaces(
     remove_deep=True
 )
 
-# %%
 # Create an 11-layer surface
 postprocess_freesurfer_surfaces(
     'sub-104',                                
@@ -204,7 +256,6 @@ postprocess_freesurfer_surfaces(
     remove_deep=True
 )
 
-# %%
 # Create a 15-layer surface
 postprocess_freesurfer_surfaces(
     'sub-104',                                
