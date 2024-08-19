@@ -12,8 +12,10 @@ using the Empirical Bayesian Beamformer on the simulated
 sensor data using forward models based on different layer 
 meshes. These models are then compared using free energy.
 """
+
 # %%
-# ## Setting up the simulations
+# Setting up the simulations
+# --------------------------
 # 
 # Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.
 
@@ -22,7 +24,6 @@ import os
 import shutil
 import numpy as np
 import nibabel as nib
-from matplotlib import colors
 import matplotlib.pyplot as plt
 import tempfile
 
@@ -54,7 +55,6 @@ spm = spm_standalone.initialize()
 # %% [markdown]
 # For source reconstructions, we need an MRI and a surface mesh. The simulations will be based on a forward model using the multilayer mesh, and the model comparison will use each layer mesh
 
-# %%
 # Native space MRI to use for coregistration
 mri_fname = os.path.join('../test_data', subj_id, 'mri', 's2023-02-28_13-33-133958-00001-00224-1.nii' )
 
@@ -77,7 +77,6 @@ layer_fnames = get_surface_names(
 # %% [markdown]
 # We're going to copy the data file to a temporary directory and direct all output there.
 
-# %%
 # Extract base name and path of data file
 data_path, data_file_name = os.path.split(data_file)
 data_base = os.path.splitext(data_file_name)[0]
@@ -101,7 +100,6 @@ base_fname = os.path.join(tmp_dir, f'{data_base}.mat')
 # %% [markdown]
 # Invert the subject's data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations
 
-# %%
 # Patch size to use for inversion (in this case it matches the simulated patch size)
 patch_size = 5
 # Number of temporal modes to use for EBB inversion
@@ -129,10 +127,10 @@ coregister(
 )
 
 # %% [markdown]
-# ## Simulating a signal on the pial surface
+# Simulating a signal on the pial surface
+# ---------------------------------------
 # We're going to simulate 1s of a 20Hz sine wave with a dipole moment of 10nAm
 
-# %%
 # Frequency of simulated sinusoid (Hz)
 freq = 20
 # Strength of simulated activity (nAm)
@@ -148,10 +146,14 @@ plt.plot(time,dipole_moment*sim_signal[0,:])
 plt.xlabel('Time (s)')
 plt.ylabel('Amplitude (nAm)')
 
+# %%
+#.. image:: ../_static/tutorial_02_sim_signal.png
+#   :width: 800
+#   :alt:
+
 # %% [markdown]
 # We need to pick a location (mesh vertex) to simulate at
 
-# %%
 # Vertex to simulate activity at
 sim_vertex=24585
 
@@ -171,10 +173,14 @@ plot = show_surface(
     camera_view=cam_view
 )
 
+# %%
+#.. image:: ../_static/tutorial_02_sim_location.png
+#   :width: 800
+#   :alt:
+
 # %% [markdown]
 # We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-# %%
 # Simulate at a vertex on the pial surface
 pial_vertex = sim_vertex
 prefix = f'sim_{sim_vertex}_pial_'
@@ -203,11 +209,16 @@ plt.xlabel('Time (s)')
 plt.ylabel('Amplitude (fT)')
 plt.ylim([-225, 225])
 
+# %%
+#.. image:: ../_static/tutorial_02_pial_sim_sensor_signal.png
+#   :width: 800
+#   :alt:
+
 # %% [markdown]
-# ## Model comparison (pial - white matter)
+# Model comparison (pial - white matter)
+# --------------------------------------
 # Now we can run model comparison between source models based on the pial and white matter surfaces using free energy. Specifically, we'll look at the difference in free energy between the two models (pial - white matter). This should be positive (more model evidence for the pial surface model) because we simulated activity on the pial surface
 
-# %%
 # Run model comparison between the first layer (pial) and the last layer (white matter)
 [F,_] = model_comparison(
     nas, 
@@ -228,10 +239,10 @@ plt.ylim([-225, 225])
 F[0]-F[1]
 
 # %% [markdown]
-# ## White matter surface simulation with pial - white matter model comparison
+# White matter surface simulation with pial - white matter model comparison
+# -------------------------------------------------------------------------
 # Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, model comparison should yield greater model evidence for the white matter surface, and therefore the difference in free energy (pial - white matter) should be negative.
 
-# %%
 # Simulate at the corresponding vertex on the white matter surface
 white_vertex = (n_layers-1)*verts_per_surf+sim_vertex
 prefix = f'sim_{sim_vertex}_white_'
@@ -269,7 +280,6 @@ F[0]-F[1]
 # %% [markdown]
 # Here's the sensor signals from the simulation of activity on the white matter surface. It's very similar to the sensor signals from the pial surface simulation
 
-# %%
 # Load simulated sensor data and plot
 white_sim_sensor_data, time, ch_names = load_meg_sensor_data(white_sim_fname)
 _ = plt.plot(time, np.mean(white_sim_sensor_data,axis=-1).T)
@@ -277,21 +287,30 @@ plt.xlabel('Time (s)')
 plt.ylabel('Amplitude (fT)')
 plt.ylim([-225, 225])
 
+# %%
+#.. image:: ../_static/tutorial_02_white_sim_sensor_signal.png
+#   :width: 800
+#   :alt:
+
 # %% [markdown]
 # The difference between the two simulated sensor signals is quite small
 
-# %%
 sensor_diff = pial_sim_sensor_data - white_sim_sensor_data
 _ = plt.plot(time, np.mean(sensor_diff,axis=-1).T)
 plt.xlabel('Time (s)')
 plt.ylabel('Amplitude (fT)')
 plt.ylim([-225, 225])
 
+# %%
+#.. image:: ../_static/tutorial_02_pial_white_sim_sensor_difference.png
+#   :width: 800
+#   :alt:
+
 # %% [markdown]
-# ## Simulation in each layer with model comparison across layers
+# Simulation in each layer with model comparison across layers
+# ------------------------------------------------------------
 # That was model comparison with two candidate models: one based on the white matter surface, and one on the pial. Let's now simulate on each layer, and for each simulation, run model comparison across all layers. We'll turn off SPM visualization here.
 
-# %%
 # Now simulate at the corresponding vertex on each layer, and for each simulation, run model comparison across
 # all layers
 all_layerF = []
@@ -332,7 +351,6 @@ all_layerF = np.array(all_layerF)
 # %% [markdown]
 # For each simulation, we can plot the free energy for all models relative to the worst model. The layer model with the highest free energy should correspond to the layer that the activity was simulated in.
 
-# %%
 col_r = plt.cm.cool(np.linspace(0,1, num=n_layers))
 plt.figure(figsize=(10,4))
 
@@ -362,6 +380,10 @@ plt.ylabel(r'Peak $\Delta$F')
 plt.tight_layout()
 
 # %%
+#.. image:: ../_static/tutorial_02_results.png
+#   :width: 800
+#   :alt:
+
 # Normalization step
 norm_layerF = np.zeros(all_layerF.shape)
 for l in range(n_layers):
@@ -383,11 +405,15 @@ cb=plt.colorbar(im)
 cb.set_label(r'$\Delta F$', fontsize=14)
 
 # %%
+#.. image:: ../_static/tutorial_02_results_matrix.png
+#   :width: 800
+#   :alt:
+
+# %%
 spm.terminate()
 
 # Delete simulation files
 shutil.rmtree(tmp_dir)
-# %%
 
 
 
