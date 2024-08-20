@@ -489,14 +489,13 @@ to download the full example code</p>
 <section class="sphx-glr-example-title" id="laminar-roi-analysis-of-power-in-source-space">
 <span id="sphx-glr-auto-tutorials-tutorial-05-roi-power-analysis-py"></span><h1>Laminar ROI analysis of power in source space<a class="headerlink" href="#laminar-roi-analysis-of-power-in-source-space" title="Permalink to this heading">#</a></h1>
 <p>This tutorial demonstrates how to perform laminar inference using an ROI analysis of power in source space, described in [Bonaiuto et al., 2018, Non-invasive laminar inference with MEG: Comparison of methods and source inversion algorithms](<a class="reference external" href="https://doi.org/10.1016/j.neuroimage.2017.11.068">https://doi.org/10.1016/j.neuroimage.2017.11.068</a>), and used in [Bonaiuto et al., 2018, Lamina-specific cortical dynamics in human visual and sensorimotor cortices](<a class="reference external" href="https://doi.org/10.7554/eLife.33977">https://doi.org/10.7554/eLife.33977</a>). A 20Hz oscillation is simulated at a particular cortical location in various layers. Source reconstruction is performed using the Empirical Bayesian Beamformer on the simulated sensor data using a forward model based on a multilayer mesh, thus providing an estimate of source activity on each layer. An ROI is defined by comparing power in the 10-30 Hz frequency band during the time period containing the simulated activity with a prior baseline period at each vertex using paired t-tests. Vertices in either surface with a t-statistic above a percentile threshold of the t-statistics over all vertices in that surface, as well as the corresponding vertices in the other surface, are included in the ROI. This ensures that the contrast used to define the ROI was orthogonal to the subsequent laminar contrast. For each trial, ROI values for each layer are computed by averaging the absolute value of the change in power compared to baseline in that surface within the ROI. Finally, a paired t-test is used to compare the ROI values from each layer over trials. All t-tests are done using corrected noise variance estimates in order to attenuate artifactually high significance values [Ridgway et al., 2012](<a class="reference external" href="https://doi.org/10.1016/j.neuroimage.2011.10.027">https://doi.org/10.1016/j.neuroimage.2011.10.027</a>).</p>
-<p>## Setting up the simulations</p>
+<section id="setting-up-the-simulations">
+<h2>Setting up the simulations<a class="headerlink" href="#setting-up-the-simulations" title="Permalink to this heading">#</a></h2>
 <p>Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
-<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">stats</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">colors</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
 
@@ -529,8 +528,8 @@ to download the full example code</p>
 </pre></div>
 </div>
 <p>For source reconstructions, we need an MRI and a surface mesh. The simulations and source reconstructions will be based on a forward model using the multilayer mesh</p>
-<p>Native space MRI to use for coregistration</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mri_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;mri/s2023-02-28_13-33-133958-00001-00224-1.nii&#39;</span> <span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Native space MRI to use for coregistration</span>
+<span class="n">mri_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;mri/s2023-02-28_13-33-133958-00001-00224-1.nii&#39;</span> <span class="p">)</span>
 
 <span class="c1"># Mesh to use for forward model in the simulations</span>
 <span class="n">multilayer_mesh_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;surf/multilayer.11.ds.link_vector.fixed.gii&#39;</span><span class="p">)</span>
@@ -546,8 +545,8 @@ to download the full example code</p>
 </pre></div>
 </div>
 <p>We’re going to copy the data file to a temporary directory and direct all output there.</p>
-<p>Extract base name and path of data file</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data_path</span><span class="p">,</span> <span class="n">data_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Extract base name and path of data file</span>
+<span class="n">data_path</span><span class="p">,</span> <span class="n">data_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span>
 <span class="n">data_base</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">data_file_name</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
 <span class="c1"># Where to put simulated data</span>
@@ -568,8 +567,8 @@ to download the full example code</p>
 </pre></div>
 </div>
 <p>Invert the subject’s data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations</p>
-<p>Patch size to use for inversion (in this case it matches the simulated patch size)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">patch_size</span> <span class="o">=</span> <span class="mi">5</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Patch size to use for inversion (in this case it matches the simulated patch size)</span>
+<span class="n">patch_size</span> <span class="o">=</span> <span class="mi">5</span>
 <span class="c1"># Number of temporal modes to use for EBB inversion</span>
 <span class="n">n_temp_modes</span> <span class="o">=</span> <span class="mi">4</span>
 
@@ -595,10 +594,12 @@ to download the full example code</p>
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>## Simulating a signal on the pial surface
-We’re going to simulate 1s of signal with a 20Hz sine wave that starts at 0.5s with a dipole moment of 10nAm</p>
-<p>Frequency of simulated sinusoid (Hz)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">freq</span> <span class="o">=</span> <span class="mi">20</span>
+</section>
+<section id="simulating-a-signal-on-the-pial-surface">
+<h2>Simulating a signal on the pial surface<a class="headerlink" href="#simulating-a-signal-on-the-pial-surface" title="Permalink to this heading">#</a></h2>
+<p>We’re going to simulate 1s of signal with a 20Hz sine wave that starts at 0.5s with a dipole moment of 10nAm</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Frequency of simulated sinusoid (Hz)</span>
+<span class="n">freq</span> <span class="o">=</span> <span class="mi">20</span>
 <span class="c1"># Strength of simulated activity (nAm)</span>
 <span class="n">dipole_moment</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="c1"># Sampling rate (must match the data file)</span>
@@ -615,9 +616,10 @@ We’re going to simulate 1s of signal with a 20Hz sine wave that starts at 0.5s
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Amplitude (nAm)&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+<a class="reference internal image-reference" href="../_images/tutorial_05_sim_signal.png"><img alt="" src="../_images/tutorial_05_sim_signal.png" style="width: 800px;" /></a>
 <p>We need to pick a location (mesh vertex) to simulate at</p>
-<p>Vertex to simulate activity at</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sim_vertex</span><span class="o">=</span><span class="mi">24585</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Vertex to simulate activity at</span>
+<span class="n">sim_vertex</span><span class="o">=</span><span class="mi">24585</span>
 
 <span class="n">pial_ds_mesh_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;surf&#39;</span><span class="p">,</span> <span class="s1">&#39;pial.ds.link_vector.fixed.gii&#39;</span><span class="p">)</span>
 <span class="n">pial_ds_mesh</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">pial_ds_mesh_fname</span><span class="p">)</span>
@@ -636,9 +638,10 @@ We’re going to simulate 1s of signal with a 20Hz sine wave that starts at 0.5s
 <span class="p">)</span>
 </pre></div>
 </div>
+<a class="reference internal image-reference" href="../_images/tutorial_05_sim_location.png"><img alt="" src="../_images/tutorial_05_sim_location.png" style="width: 800px;" /></a>
 <p>We’ll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals</p>
-<p>Simulate at a vertex on the pial surface</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pial_vertex</span> <span class="o">=</span> <span class="n">sim_vertex</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate at a vertex on the pial surface</span>
+<span class="n">pial_vertex</span> <span class="o">=</span> <span class="n">sim_vertex</span>
 <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_pial_&#39;</span>
 
 <span class="c1"># Size of simulated patch of activity (mm)</span>
@@ -659,10 +662,10 @@ We’re going to simulate 1s of signal with a 20Hz sine wave that starts at 0.5s
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>## Laminar comparison (pial - white matter)
-Now we can run source reconstruction using a source model based on the multi-laminar surface, define an ROI based on the change in power from a baseline time period, and then compare the change in power between the pial and white matter surfaces. First we’ll run the inversion.</p>
-<p>Coregister data to multilayer mesh</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">coregister</span><span class="p">(</span>
+<p>Laminar comparison (pial - white matter)</p>
+<p>Now we can run source reconstruction using a source model based on the multi-laminar surface, define an ROI based on the change in power from a baseline time period, and then compare the change in power between the pial and white matter surfaces. First we’ll run the inversion.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Coregister data to multilayer mesh</span>
+<span class="n">coregister</span><span class="p">(</span>
     <span class="n">nas</span><span class="p">,</span>
     <span class="n">lpa</span><span class="p">,</span>
     <span class="n">rpa</span><span class="p">,</span>
@@ -719,10 +722,13 @@ Now we can run source reconstruction using a source model based on the multi-lam
 <span class="n">plot</span> <span class="o">=</span> <span class="n">show_surface</span><span class="p">(</span><span class="n">orig_inflated</span><span class="p">,</span> <span class="n">vertex_colors</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">camera_view</span><span class="o">=</span><span class="n">cam_view</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>## White matter surface simulation with pial - white matter ROI comparison
-Let’s simulate the same pattern of activity, in the same location, but on the white matter surface. This time, there should be a greater change in power on the white matter surface.</p>
-<p>Simulate at the corresponding vertex on the white matter surface</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">white_vertex</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_layers</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">verts_per_surf</span><span class="o">+</span><span class="n">sim_vertex</span>
+<a class="reference internal image-reference" href="../_images/tutorial_05_localizer.png"><img alt="" src="../_images/tutorial_05_localizer.png" style="width: 800px;" /></a>
+</section>
+<section id="white-matter-surface-simulation-with-pial-white-matter-roi-comparison">
+<h2>White matter surface simulation with pial - white matter ROI comparison<a class="headerlink" href="#white-matter-surface-simulation-with-pial-white-matter-roi-comparison" title="Permalink to this heading">#</a></h2>
+<p>Let’s simulate the same pattern of activity, in the same location, but on the white matter surface. This time, there should be a greater change in power on the white matter surface.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate at the corresponding vertex on the white matter surface</span>
+<span class="n">white_vertex</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_layers</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">verts_per_surf</span><span class="o">+</span><span class="n">sim_vertex</span>
 <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_white_&#39;</span>
 
 <span class="c1"># Generate simulated data</span>
@@ -773,11 +779,13 @@ Let’s simulate the same pattern of activity, in the same location, but on the 
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;t(</span><span class="si">{</span><span class="n">df</span><span class="si">}</span><span class="s1">)=</span><span class="si">{</span><span class="n">laminar_t_statistic</span><span class="si">}</span><span class="s1">, p=</span><span class="si">{</span><span class="n">laminar_p_value</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>## Simulation in each layer with ROI power analysis across layers
-That was the ROI analysis with two surfaces: the white matter and pial surfaces. Let’s now simulate on each layer, and for each simulation, look at the change in power from baseline within the ROI across all layers. We’ll turn off SPM visualization here.</p>
-<p>Now simulate at the corresponding vertex on each layer, and for each simulation, compute power in
-all layers</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">all_layerPow</span><span class="o">=</span><span class="p">[]</span>
+</section>
+<section id="simulation-in-each-layer-with-roi-power-analysis-across-layers">
+<h2>Simulation in each layer with ROI power analysis across layers<a class="headerlink" href="#simulation-in-each-layer-with-roi-power-analysis-across-layers" title="Permalink to this heading">#</a></h2>
+<p>That was the ROI analysis with two surfaces: the white matter and pial surfaces. Let’s now simulate on each layer, and for each simulation, look at the change in power from baseline within the ROI across all layers. We’ll turn off SPM visualization here.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Now simulate at the corresponding vertex on each layer, and for each simulation, compute power in</span>
+<span class="c1"># all layers</span>
+<span class="n">all_layerPow</span><span class="o">=</span><span class="p">[]</span>
 
 <span class="k">for</span> <span class="n">sl</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_layers</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Simulating in layer </span><span class="si">{</span><span class="n">sl</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -848,10 +856,9 @@ all layers</p>
 
     <span class="n">all_layerPow</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">roi_pow</span><span class="p">)</span>
 <span class="n">all_layerPow</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">all_layerPow</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Average power over trials</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mean_layerPow</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">all_layerPow</span><span class="p">,</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Average power over trials</span>
+<span class="n">mean_layerPow</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">all_layerPow</span><span class="p">,</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
 <span class="n">col_r</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">cool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">n_layers</span><span class="p">))</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
@@ -882,6 +889,7 @@ all layers</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;roi_power.pdf&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+<a class="reference internal image-reference" href="../_images/tutorial_05_results.png"><img alt="" src="../_images/tutorial_05_results.png" style="width: 800px;" /></a>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mean_layerPow</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">all_layerPow</span><span class="p">,</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 
 <span class="c1"># Normalization step</span>
@@ -906,6 +914,7 @@ all layers</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span><span class="s1">&#39;roi_power_matrix.pdf&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+<a class="reference internal image-reference" href="../_images/tutorial_05_results_matrix.png"><img alt="" src="../_images/tutorial_05_results_matrix.png" style="width: 800px;" /></a>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spm</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
 
 <span class="c1"># Delete simulation files</span>
@@ -922,6 +931,7 @@ all layers</p>
 </div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
 </section>
 
 
@@ -964,6 +974,19 @@ all layers</p>
             
               
                 <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setting-up-the-simulations">Setting up the simulations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulating-a-signal-on-the-pial-surface">Simulating a signal on the pial surface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#white-matter-surface-simulation-with-pial-white-matter-roi-comparison">White matter surface simulation with pial - white matter ROI comparison</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-in-each-layer-with-roi-power-analysis-across-layers">Simulation in each layer with ROI power analysis across layers</a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
   

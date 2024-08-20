@@ -489,13 +489,13 @@ to download the full example code</p>
 <section class="sphx-glr-example-title" id="sliding-time-window-laminar-model-comparison-using-free-energy">
 <span id="sphx-glr-auto-tutorials-tutorial-04-sliding-win-model-comparison-py"></span><h1>Sliding time window laminar model comparison using free energy<a class="headerlink" href="#sliding-time-window-laminar-model-comparison-using-free-energy" title="Permalink to this heading">#</a></h1>
 <p>This tutorial demonstrates how to perform laminar inference of event-related responses in a sliding time window using model comparison based on free energy as a metric of model fit, described in [Bonaiuto et al., 2021, Laminar dynamics of high amplitude beta bursts in human motor cortex](<a class="reference external" href="https://doi.org/10.1016/j.neuroimage.2021.118479">https://doi.org/10.1016/j.neuroimage.2021.118479</a>). A temporal Gaussian function is simulated at a particular cortical location in various layers. Source reconstruction is performed on the whole time window using the Empirical Bayesian Beamformer on the simulated sensor data using a forward model based on the multilayer mesh as a localizer. This is used to select priors on each layer mesh for a sliding time window model comparison using free energy.</p>
-<p>## Setting up the simulations</p>
+<section id="setting-up-the-simulations">
+<h2>Setting up the simulations<a class="headerlink" href="#setting-up-the-simulations" title="Permalink to this heading">#</a></h2>
 <p>Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">colors</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
 
@@ -529,8 +529,8 @@ to download the full example code</p>
 </pre></div>
 </div>
 <p>For source reconstructions, we need an MRI and a surface mesh. The simulations will be based on a forward model using the multilayer mesh, and the model comparison will use each layer mesh</p>
-<p>Native space MRI to use for coregistration</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mri_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;mri/s2023-02-28_13-33-133958-00001-00224-1.nii&#39;</span> <span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Native space MRI to use for coregistration</span>
+<span class="n">mri_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;mri/s2023-02-28_13-33-133958-00001-00224-1.nii&#39;</span> <span class="p">)</span>
 
 <span class="c1"># Mesh to use for forward model in the simulations</span>
 <span class="n">multilayer_mesh_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;surf/multilayer.11.ds.link_vector.fixed.gii&#39;</span><span class="p">)</span>
@@ -554,8 +554,8 @@ to download the full example code</p>
 </pre></div>
 </div>
 <p>We’re going to copy the data file to a temporary directory and direct all output there.</p>
-<p>Extract base name and path of data file</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data_path</span><span class="p">,</span> <span class="n">data_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Extract base name and path of data file</span>
+<span class="n">data_path</span><span class="p">,</span> <span class="n">data_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span>
 <span class="n">data_base</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">data_file_name</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
 <span class="c1"># Where to put simulated data</span>
@@ -576,8 +576,8 @@ to download the full example code</p>
 </pre></div>
 </div>
 <p>Invert the subject’s data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations</p>
-<p>Patch size to use for inversion (in this case it matches the simulated patch size)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">patch_size</span> <span class="o">=</span> <span class="mi">5</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Patch size to use for inversion (in this case it matches the simulated patch size)</span>
+<span class="n">patch_size</span> <span class="o">=</span> <span class="mi">5</span>
 <span class="c1"># Number of temporal modes to use for EBB inversion</span>
 <span class="n">n_temp_modes</span> <span class="o">=</span> <span class="mi">4</span>
 
@@ -603,10 +603,12 @@ to download the full example code</p>
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>## Simulating a signal on the pial surface
-We’re going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a width of 25ms</p>
-<p>Strength of simulated activity (nAm)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dipole_moment</span> <span class="o">=</span> <span class="mi">8</span>
+</section>
+<section id="simulating-a-signal-on-the-pial-surface">
+<h2>Simulating a signal on the pial surface<a class="headerlink" href="#simulating-a-signal-on-the-pial-surface" title="Permalink to this heading">#</a></h2>
+<p>We’re going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a width of 25ms</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Strength of simulated activity (nAm)</span>
+<span class="n">dipole_moment</span> <span class="o">=</span> <span class="mi">8</span>
 <span class="c1"># Temporal width of the simulated Gaussian</span>
 <span class="n">signal_width</span><span class="o">=</span><span class="mf">.025</span> <span class="c1"># 25ms</span>
 <span class="c1"># Sampling rate (must match the data file)</span>
@@ -621,9 +623,10 @@ We’re going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Amplitude (nAm)&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+<a class="reference internal image-reference" href="../_images/tutorial_04_sim_signal.png"><img alt="" src="../_images/tutorial_04_sim_signal.png" style="width: 800px;" /></a>
 <p>We need to pick a location (mesh vertex) to simulate at</p>
-<p>Vertex to simulate activity at</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sim_vertex</span><span class="o">=</span><span class="mi">24585</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Vertex to simulate activity at</span>
+<span class="n">sim_vertex</span><span class="o">=</span><span class="mi">24585</span>
 
 <span class="n">pial_ds_mesh_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;surf&#39;</span><span class="p">,</span> <span class="s1">&#39;pial.ds.link_vector.fixed.gii&#39;</span><span class="p">)</span>
 <span class="n">pial_ds_mesh</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">pial_ds_mesh_fname</span><span class="p">)</span>
@@ -642,9 +645,10 @@ We’re going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a
 <span class="p">)</span>
 </pre></div>
 </div>
+<a class="reference internal image-reference" href="../_images/tutorial_04_sim_location.png"><img alt="" src="../_images/tutorial_04_sim_location.png" style="width: 800px;" /></a>
 <p>We’ll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals</p>
-<p>Simulate at a vertex on the pial surface</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pial_vertex</span> <span class="o">=</span> <span class="n">sim_vertex</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate at a vertex on the pial surface</span>
+<span class="n">pial_vertex</span> <span class="o">=</span> <span class="n">sim_vertex</span>
 <span class="c1"># Orientation of the simulated dipole</span>
 <span class="n">pial_unit_norm</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">darrays</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">pial_vertex</span><span class="p">,:]</span>
 <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_pial_&#39;</span>
@@ -668,8 +672,10 @@ We’re going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>## Localizer inversion
-Now we’ll run a source reconstruction using the multilayer mesh, extract the signal in the pial layer, and select a prior based on the peak.</p>
+</section>
+<section id="localizer-inversion">
+<h2>Localizer inversion<a class="headerlink" href="#localizer-inversion" title="Permalink to this heading">#</a></h2>
+<p>Now we’ll run a source reconstruction using the multilayer mesh, extract the signal in the pial layer, and select a prior based on the peak.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">_</span><span class="p">,</span><span class="n">_</span><span class="p">,</span><span class="n">MU</span><span class="p">]</span> <span class="o">=</span> <span class="n">invert_ebb</span><span class="p">(</span>
     <span class="n">multilayer_mesh_fname</span><span class="p">,</span>
     <span class="n">pial_sim_fname</span><span class="p">,</span>
@@ -702,8 +708,8 @@ Now we’ll run a source reconstruction using the multilayer mesh, extract the s
 </pre></div>
 </div>
 <p>We can see that the prior is the same as the location we simulated at</p>
-<p>Interpolate for display on the original inflated surface</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">interpolated_data</span> <span class="o">=</span> <span class="n">interpolate_data</span><span class="p">(</span><span class="n">orig_inflated</span><span class="p">,</span> <span class="n">ds_inflated</span><span class="p">,</span> <span class="n">m_layer_max</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Interpolate for display on the original inflated surface</span>
+<span class="n">interpolated_data</span> <span class="o">=</span> <span class="n">interpolate_data</span><span class="p">(</span><span class="n">orig_inflated</span><span class="p">,</span> <span class="n">ds_inflated</span><span class="p">,</span> <span class="n">m_layer_max</span><span class="p">)</span>
 
 <span class="c1"># Plot colors and camera view</span>
 <span class="n">max_abs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">m_layer_max</span><span class="p">))</span>
@@ -731,10 +737,13 @@ Now we’ll run a source reconstruction using the multilayer mesh, extract the s
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>## Sliding time window model comparison (pial - white matter)
-Now we can run sliding time window model comparison between source models based on the pial and white matter surfaces using free energy. Specifically, we’ll look at the difference in free energy between the two models (pial - white matter), in sliding and overlapping windows of 16ms. The free energy difference (pial - white matter) should be positive (more model evidence for the pial surface model) because we simulated activity on the pial surface.</p>
-<p>Number of temporal models for sliding time window inversion</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sliding_n_temp_modes</span> <span class="o">=</span> <span class="mi">4</span>
+<a class="reference internal image-reference" href="../_images/tutorial_04_localizer.png"><img alt="" src="../_images/tutorial_04_localizer.png" style="width: 800px;" /></a>
+</section>
+<section id="sliding-time-window-model-comparison-pial-white-matter">
+<h2>Sliding time window model comparison (pial - white matter)<a class="headerlink" href="#sliding-time-window-model-comparison-pial-white-matter" title="Permalink to this heading">#</a></h2>
+<p>Now we can run sliding time window model comparison between source models based on the pial and white matter surfaces using free energy. Specifically, we’ll look at the difference in free energy between the two models (pial - white matter), in sliding and overlapping windows of 16ms. The free energy difference (pial - white matter) should be positive (more model evidence for the pial surface model) because we simulated activity on the pial surface.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Number of temporal models for sliding time window inversion</span>
+<span class="n">sliding_n_temp_modes</span> <span class="o">=</span> <span class="mi">4</span>
 <span class="c1"># Size of sliding window (in ms)</span>
 <span class="n">win_size</span> <span class="o">=</span> <span class="mi">50</span>
 <span class="c1"># Whether or not windows overlap</span>
@@ -764,10 +773,13 @@ Now we can run sliding time window model comparison between source models based 
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$\Delta$F&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>## White matter surface simulation with pial - white matter sliding time window model comparison
-Let’s simulate the same pattern of activity, in the same location, but on the white matter surface. This time, sliding time window model comparison should yield greater model evidence for the white matter surface, and therefore the difference in free energy (pial - white matter) should be negative.</p>
-<p>Simulate at the corresponding vertex on the white matter surface</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">white_vertex</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_layers</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">verts_per_surf</span><span class="o">+</span><span class="n">sim_vertex</span>
+<a class="reference internal image-reference" href="../_images/tutorial_04_pial_sim_results.png"><img alt="" src="../_images/tutorial_04_pial_sim_results.png" style="width: 800px;" /></a>
+</section>
+<section id="white-matter-surface-simulation-with-pial-white-matter-sliding-time-window-model-comparison">
+<h2>White matter surface simulation with pial - white matter sliding time window model comparison<a class="headerlink" href="#white-matter-surface-simulation-with-pial-white-matter-sliding-time-window-model-comparison" title="Permalink to this heading">#</a></h2>
+<p>Let’s simulate the same pattern of activity, in the same location, but on the white matter surface. This time, sliding time window model comparison should yield greater model evidence for the white matter surface, and therefore the difference in free energy (pial - white matter) should be negative.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate at the corresponding vertex on the white matter surface</span>
+<span class="n">white_vertex</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_layers</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">verts_per_surf</span><span class="o">+</span><span class="n">sim_vertex</span>
 <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_white_&#39;</span>
 
 <span class="c1"># Generate simulated data</span>
@@ -836,11 +848,14 @@ Let’s simulate the same pattern of activity, in the same location, but on the 
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$\Delta$F&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>## Simulation in each layer with sliding time window model comparison across layers
-That was sliding time window model comparison with two candidate models: one based on the white matter surface, and one on the pial. Let’s now simulate on each layer, and for each simulation, run sliding time window model comparison across all layers. We’ll turn off SPM visualization here.</p>
-<p>Now simulate at the corresponding vertex on each layer, and for each simulation, run sliding window model
-comparison across all layers</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">all_layerF</span> <span class="o">=</span> <span class="p">[]</span>
+<a class="reference internal image-reference" href="../_images/tutorial_04_white_sim_results.png"><img alt="" src="../_images/tutorial_04_white_sim_results.png" style="width: 800px;" /></a>
+</section>
+<section id="simulation-in-each-layer-with-sliding-time-window-model-comparison-across-layers">
+<h2>Simulation in each layer with sliding time window model comparison across layers<a class="headerlink" href="#simulation-in-each-layer-with-sliding-time-window-model-comparison-across-layers" title="Permalink to this heading">#</a></h2>
+<p>That was sliding time window model comparison with two candidate models: one based on the white matter surface, and one on the pial. Let’s now simulate on each layer, and for each simulation, run sliding time window model comparison across all layers. We’ll turn off SPM visualization here.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Now simulate at the corresponding vertex on each layer, and for each simulation, run sliding window model</span>
+<span class="c1"># comparison across all layers</span>
+<span class="n">all_layerF</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_layers</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Simulating in layer </span><span class="si">{</span><span class="n">l</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
     <span class="n">l_vertex</span> <span class="o">=</span> <span class="n">l</span><span class="o">*</span><span class="n">verts_per_surf</span><span class="o">+</span><span class="n">sim_vertex</span>
@@ -911,8 +926,8 @@ comparison across all layers</p>
 </pre></div>
 </div>
 <p>For each simulation, we can plot the free energy for all models relative to the worst model within a central time window. The layer model with the highest free energy should correspond to the layer that the activity was simulated in.</p>
-<p>Average free energy within small time window in center of the epoch</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">woi_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">wois</span><span class="p">,</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Average free energy within small time window in center of the epoch</span>
+<span class="n">woi_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">wois</span><span class="p">,</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">woi_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">woi_t</span><span class="o">&gt;=-</span><span class="mi">20</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">woi_t</span><span class="o">&lt;=</span><span class="mi">20</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
 <span class="n">m_all_layerF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">all_layerF</span><span class="p">[:,:,</span><span class="n">woi_idx</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
@@ -946,8 +961,9 @@ comparison across all layers</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>Normalization step</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">norm_layerF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">m_all_layerF</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+<a class="reference internal image-reference" href="../_images/tutorial_04_results.png"><img alt="" src="../_images/tutorial_04_results.png" style="width: 800px;" /></a>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Normalization step</span>
+<span class="n">norm_layerF</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">m_all_layerF</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_layers</span><span class="p">):</span>
     <span class="n">norm_layerF</span><span class="p">[</span><span class="n">l</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">m_all_layerF</span><span class="p">[</span><span class="n">l</span><span class="p">,:]</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">m_all_layerF</span><span class="p">[</span><span class="n">l</span><span class="p">,:])</span>
 
@@ -967,6 +983,7 @@ comparison across all layers</p>
 <span class="n">cb</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;$\Delta F$&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
 </pre></div>
 </div>
+<a class="reference internal image-reference" href="../_images/tutorial_04_results_matrix.png"><img alt="" src="../_images/tutorial_04_results_matrix.png" style="width: 800px;" /></a>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spm</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
 
 <span class="c1"># Delete simulation files</span>
@@ -983,6 +1000,7 @@ comparison across all layers</p>
 </div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
 </section>
 
 
@@ -1025,6 +1043,21 @@ comparison across all layers</p>
             
               
                 <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setting-up-the-simulations">Setting up the simulations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulating-a-signal-on-the-pial-surface">Simulating a signal on the pial surface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#localizer-inversion">Localizer inversion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#sliding-time-window-model-comparison-pial-white-matter">Sliding time window model comparison (pial - white matter)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#white-matter-surface-simulation-with-pial-white-matter-sliding-time-window-model-comparison">White matter surface simulation with pial - white matter sliding time window model comparison</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-in-each-layer-with-sliding-time-window-model-comparison-across-layers">Simulation in each layer with sliding time window model comparison across layers</a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
   

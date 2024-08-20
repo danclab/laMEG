@@ -3,18 +3,18 @@ Laminar ROI analysis of power in source space
 =============================================
 This tutorial demonstrates how to perform laminar inference using an ROI analysis of power in source space, described in [Bonaiuto et al., 2018, Non-invasive laminar inference with MEG: Comparison of methods and source inversion algorithms](https://doi.org/10.1016/j.neuroimage.2017.11.068), and used in [Bonaiuto et al., 2018, Lamina-specific cortical dynamics in human visual and sensorimotor cortices](https://doi.org/10.7554/eLife.33977). A 20Hz oscillation is simulated at a particular cortical location in various layers. Source reconstruction is performed using the Empirical Bayesian Beamformer on the simulated sensor data using a forward model based on a multilayer mesh, thus providing an estimate of source activity on each layer. An ROI is defined by comparing power in the 10-30 Hz frequency band during the time period containing the simulated activity with a prior baseline period at each vertex using paired t-tests. Vertices in either surface with a t-statistic above a percentile threshold of the t-statistics over all vertices in that surface, as well as the corresponding vertices in the other surface, are included in the ROI. This ensures that the contrast used to define the ROI was orthogonal to the subsequent laminar contrast. For each trial, ROI values for each layer are computed by averaging the absolute value of the change in power compared to baseline in that surface within the ROI. Finally, a paired t-test is used to compare the ROI values from each layer over trials. All t-tests are done using corrected noise variance estimates in order to attenuate artifactually high significance values [Ridgway et al., 2012](https://doi.org/10.1016/j.neuroimage.2011.10.027).
 """
+
 # %%
-# ## Setting up the simulations
+# Setting up the simulations
+# --------------------------
 # 
 # Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.
 
-# %%
+
 import os
 import shutil
 import numpy as np
 import nibabel as nib
-from scipy import stats
-from matplotlib import colors
 import matplotlib.pyplot as plt
 import tempfile
 
@@ -48,7 +48,6 @@ spm = spm_standalone.initialize()
 # %% [markdown]
 # For source reconstructions, we need an MRI and a surface mesh. The simulations and source reconstructions will be based on a forward model using the multilayer mesh
 
-# %%
 # Native space MRI to use for coregistration
 mri_fname = os.path.join('../test_data', subj_id, 'mri/s2023-02-28_13-33-133958-00001-00224-1.nii' )
 
@@ -67,7 +66,6 @@ orig_inflated = nib.load(os.path.join('../test_data', subj_id, 'surf', 'inflated
 # %% [markdown]
 # We're going to copy the data file to a temporary directory and direct all output there.
 
-# %%
 # Extract base name and path of data file
 data_path, data_file_name = os.path.split(data_file)
 data_base = os.path.splitext(data_file_name)[0]
@@ -91,7 +89,6 @@ base_fname = os.path.join(tmp_dir, f'{data_base}.mat')
 # %% [markdown]
 # Invert the subject's data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations
 
-# %%
 # Patch size to use for inversion (in this case it matches the simulated patch size)
 patch_size = 5
 # Number of temporal modes to use for EBB inversion
@@ -119,10 +116,10 @@ coregister(
 )
 
 # %% [markdown]
-# ## Simulating a signal on the pial surface
+# Simulating a signal on the pial surface
+# ---------------------------------------
 # We're going to simulate 1s of signal with a 20Hz sine wave that starts at 0.5s with a dipole moment of 10nAm
 
-# %%
 # Frequency of simulated sinusoid (Hz)
 freq = 20
 # Strength of simulated activity (nAm)
@@ -140,10 +137,14 @@ plt.plot(time,dipole_moment*sim_signal[0,:])
 plt.xlabel('Time (s)')
 plt.ylabel('Amplitude (nAm)')
 
+# %%
+#.. image:: ../_static/tutorial_05_sim_signal.png
+#   :width: 800
+#   :alt:
+
 # %% [markdown]
 # We need to pick a location (mesh vertex) to simulate at
 
-# %%
 # Vertex to simulate activity at
 sim_vertex=24585
 
@@ -163,10 +164,14 @@ plot = show_surface(
     camera_view=cam_view
 )
 
+# %%
+#.. image:: ../_static/tutorial_05_sim_location.png
+#   :width: 800
+#   :alt:
+
 # %% [markdown]
 # We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-# %%
 # Simulate at a vertex on the pial surface
 pial_vertex = sim_vertex
 prefix = f'sim_{sim_vertex}_pial_'
@@ -189,10 +194,10 @@ pial_sim_fname = run_current_density_simulation(
 )   
 
 # %% [markdown]
-# ## Laminar comparison (pial - white matter)
+# Laminar comparison (pial - white matter)
+#
 # Now we can run source reconstruction using a source model based on the multi-laminar surface, define an ROI based on the change in power from a baseline time period, and then compare the change in power between the pial and white matter surfaces. First we'll run the inversion.
 
-# %%
 # Coregister data to multilayer mesh
 coregister(
     nas, 
@@ -219,7 +224,6 @@ coregister(
 # %% [markdown]
 # Now we can defined the ROI based on where the change in power from baseline exceeds some percentile threshold in either the pial or the white matter surface, then average the change in power within the ROI, and compare the magnitude of the change between layers. The t-statistic here should be positive, indicating a greater change in power from baseline in the pial surface, because we simulated activity on the pial surface
 
-# %%
 laminar_t_statistic, laminar_p_value, df, roi_idx = roi_power_comparison(
     pial_sim_fname, 
     [0, 500], 
@@ -252,11 +256,17 @@ colors,_ = color_map(
 )
 plot = show_surface(orig_inflated, vertex_colors=colors, info=True, camera_view=cam_view)
 
+# %%
+#.. image:: ../_static/tutorial_05_localizer.png
+#   :width: 800
+#   :alt:
+
+
 # %% [markdown]
-# ## White matter surface simulation with pial - white matter ROI comparison
+# White matter surface simulation with pial - white matter ROI comparison
+# -----------------------------------------------------------------------
 # Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, there should be a greater change in power on the white matter surface.
 
-# %%
 # Simulate at the corresponding vertex on the white matter surface
 white_vertex = (n_layers-1)*verts_per_surf+sim_vertex
 prefix = f'sim_{sim_vertex}_white_'
@@ -309,10 +319,10 @@ laminar_t_statistic, laminar_p_value, df, roi_idx = roi_power_comparison(
 print(f't({df})={laminar_t_statistic}, p={laminar_p_value}')
 
 # %% [markdown]
-# ## Simulation in each layer with ROI power analysis across layers
+# Simulation in each layer with ROI power analysis across layers
+# --------------------------------------------------------------
 # That was the ROI analysis with two surfaces: the white matter and pial surfaces. Let's now simulate on each layer, and for each simulation, look at the change in power from baseline within the ROI across all layers. We'll turn off SPM visualization here.
 
-# %%
 # Now simulate at the corresponding vertex on each layer, and for each simulation, compute power in
 # all layers
 all_layerPow=[]
@@ -387,7 +397,6 @@ for sl in range(n_layers):
     all_layerPow.append(roi_pow)
 all_layerPow=np.array(all_layerPow)
 
-# %%
 # Average power over trials
 mean_layerPow=np.mean(all_layerPow,axis=-1)
 
@@ -420,6 +429,11 @@ plt.tight_layout()
 plt.savefig('roi_power.pdf')
 
 # %%
+#.. image:: ../_static/tutorial_05_results.png
+#   :width: 800
+#   :alt:
+
+# %%
 mean_layerPow=np.mean(all_layerPow,axis=-1)
 
 # Normalization step
@@ -442,6 +456,11 @@ plt.ylabel('Evaluated layer', fontsize=14)
 cb=plt.colorbar(im)
 cb.set_label('ROI mean power', fontsize=14)
 plt.savefig('roi_power_matrix.pdf')
+
+# %%
+#.. image:: ../_static/tutorial_05_results_matrix.png
+#   :width: 800
+#   :alt:
 
 # %%
 spm.terminate()

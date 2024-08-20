@@ -22,23 +22,24 @@ Laminar CSD analysis
 ====================
 This tutorial demonstrates how to perform laminar inference using a CSD analysis of event-related source signals. A temporal Gaussian function is simulated at a particular cortical location in various layers. Source reconstruction is performed on the whole time window using the Empirical Bayesian Beamformer on the simulated sensor data using a forward model based on the multilayer mesh, thus providing an estimate of source activity on each layer. A laminar CSD is run on the laminar signals at the location with the peak variance.
 
-.. GENERATED FROM PYTHON SOURCE LINES 7-10
+.. GENERATED FROM PYTHON SOURCE LINES 7-11
 
-## Setting up the simulations
+Setting up the simulations
+--------------------------
 
 Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.
 
-.. GENERATED FROM PYTHON SOURCE LINES 12-49
+.. GENERATED FROM PYTHON SOURCE LINES 11-48
 
 .. code-block:: default
+
+
 
     import os
     import shutil
     import numpy as np
     import nibabel as nib
     import k3d
-    from scipy import stats
-    from matplotlib import colors
     import matplotlib.pyplot as plt
     import tempfile
 
@@ -70,18 +71,16 @@ Simulations are based on an existing dataset, which is used to define the sampli
     spm = spm_standalone.initialize()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 50-51
+.. GENERATED FROM PYTHON SOURCE LINES 49-50
 
 For source reconstructions, we need an MRI and a surface mesh. The simulations and source reconstructions will be based on a forward model using the multilayer mesh
 
-.. GENERATED FROM PYTHON SOURCE LINES 53-54
-
-Native space MRI to use for coregistration
-
-.. GENERATED FROM PYTHON SOURCE LINES 54-68
+.. GENERATED FROM PYTHON SOURCE LINES 50-66
 
 .. code-block:: default
 
+
+    # Native space MRI to use for coregistration
     mri_fname = os.path.join('../test_data', subj_id, 'mri/s2023-02-28_13-33-133958-00001-00224-1.nii' )
 
     # Mesh to use for forward model in the simulations
@@ -97,18 +96,16 @@ Native space MRI to use for coregistration
     orig_inflated = nib.load(os.path.join('../test_data', subj_id, 'surf', 'inflated.gii'))
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 69-70
+.. GENERATED FROM PYTHON SOURCE LINES 67-68
 
 We're going to copy the data file to a temporary directory and direct all output there.
 
-.. GENERATED FROM PYTHON SOURCE LINES 72-73
-
-Extract base name and path of data file
-
-.. GENERATED FROM PYTHON SOURCE LINES 73-92
+.. GENERATED FROM PYTHON SOURCE LINES 68-89
 
 .. code-block:: default
 
+
+    # Extract base name and path of data file
     data_path, data_file_name = os.path.split(data_file)
     data_base = os.path.splitext(data_file_name)[0]
 
@@ -129,18 +126,16 @@ Extract base name and path of data file
     base_fname = os.path.join(tmp_dir, f'{data_base}.mat')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 93-94
+.. GENERATED FROM PYTHON SOURCE LINES 90-91
 
 Invert the subject's data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations
 
-.. GENERATED FROM PYTHON SOURCE LINES 96-97
-
-Patch size to use for inversion (in this case it matches the simulated patch size)
-
-.. GENERATED FROM PYTHON SOURCE LINES 97-122
+.. GENERATED FROM PYTHON SOURCE LINES 91-118
 
 .. code-block:: default
 
+
+    # Patch size to use for inversion (in this case it matches the simulated patch size)
     patch_size = 5
     # Number of temporal modes to use for EBB inversion
     n_temp_modes = 4
@@ -167,19 +162,18 @@ Patch size to use for inversion (in this case it matches the simulated patch siz
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 123-125
+.. GENERATED FROM PYTHON SOURCE LINES 119-122
 
-## Simulating a signal on a superficial surface
+Simulating a signal on a superficial surface
+--------------------------------------------
 We're going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a width of 25ms
 
-.. GENERATED FROM PYTHON SOURCE LINES 127-128
-
-Strength of simulated activity (nAm)
-
-.. GENERATED FROM PYTHON SOURCE LINES 128-142
+.. GENERATED FROM PYTHON SOURCE LINES 122-138
 
 .. code-block:: default
 
+
+    # Strength of simulated activity (nAm)
     dipole_moment = 5
     # Temporal width of the simulated Gaussian
     signal_width=.025 # 25ms
@@ -195,18 +189,22 @@ Strength of simulated activity (nAm)
     plt.ylabel('Amplitude (nAm)')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 143-144
+.. GENERATED FROM PYTHON SOURCE LINES 139-142
+
+.. image:: ../_static/tutorial_06_sim_signal.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 144-145
 
 We need to pick a location (mesh vertex) to simulate at
 
-.. GENERATED FROM PYTHON SOURCE LINES 146-147
-
-Vertex to simulate activity at
-
-.. GENERATED FROM PYTHON SOURCE LINES 147-165
+.. GENERATED FROM PYTHON SOURCE LINES 145-165
 
 .. code-block:: default
 
+
+    # Vertex to simulate activity at
     sim_vertex=24585
 
     pial_ds_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'pial.ds.link_vector.fixed.gii')
@@ -226,34 +224,22 @@ Vertex to simulate activity at
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 166-177
+.. GENERATED FROM PYTHON SOURCE LINES 166-169
 
-.. code-block:: default
+.. image:: ../_static/tutorial_06_sim_location.png
+   :width: 800
+   :alt:
 
-    sim_vertex=24585
-
-    pial_ds_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'pial.ds.link_vector.fixed.gii')
-    pial_ds_mesh = nib.load(pial_ds_mesh_fname)
-    pial_coord = pial_ds_mesh.darrays[0].data[sim_vertex,:]
-    pial_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'pial.gii')
-    pial_mesh = nib.load(pial_mesh_fname)
-    cam_view = [152, 28, 15,
-                3.5, 26, 38.5,
-                0, 0, 1]
-
-
-.. GENERATED FROM PYTHON SOURCE LINES 178-179
+.. GENERATED FROM PYTHON SOURCE LINES 171-172
 
 We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-.. GENERATED FROM PYTHON SOURCE LINES 181-182
-
-Simulate at a vertex on the pial surface
-
-.. GENERATED FROM PYTHON SOURCE LINES 182-205
+.. GENERATED FROM PYTHON SOURCE LINES 172-197
 
 .. code-block:: default
 
+
+    # Simulate at a vertex on the pial surface
     pial_vertex = sim_vertex
     # Orientation of the simulated dipole
     sim_unit_norm = mesh.darrays[2].data[sim_vertex,:]
@@ -278,14 +264,16 @@ Simulate at a vertex on the pial surface
     ) 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 206-208
+.. GENERATED FROM PYTHON SOURCE LINES 198-201
 
-## Inversion
+Inversion
+---------
 Now we'll run a source reconstruction using the multilayer mesh, select the vertex to examine, extract the source signals at each layer in that location, and compute a laminar CSD
 
-.. GENERATED FROM PYTHON SOURCE LINES 210-240
+.. GENERATED FROM PYTHON SOURCE LINES 201-232
 
 .. code-block:: default
+
 
     [_,_,MU] = invert_ebb(
         multilayer_mesh_fname, 
@@ -318,18 +306,16 @@ Now we'll run a source reconstruction using the multilayer mesh, select the vert
     print(peak_coord)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 241-242
+.. GENERATED FROM PYTHON SOURCE LINES 233-234
 
 We can see that the peak is the same as the location we simulated at
 
-.. GENERATED FROM PYTHON SOURCE LINES 244-245
-
-Interpolate for display on the original inflated surface
-
-.. GENERATED FROM PYTHON SOURCE LINES 245-272
+.. GENERATED FROM PYTHON SOURCE LINES 234-263
 
 .. code-block:: default
 
+
+    # Interpolate for display on the original inflated surface
     interpolated_data = interpolate_data(orig_inflated, ds_inflated, m_layer_max)
           
     # Plot colors and camera view
@@ -358,13 +344,20 @@ Interpolate for display on the original inflated surface
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 273-274
+.. GENERATED FROM PYTHON SOURCE LINES 264-267
+
+.. image:: ../_static/tutorial_06_localizer.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 270-271
 
 We need the indices of the vertex at each layer for this location, and the distances between them
 
-.. GENERATED FROM PYTHON SOURCE LINES 276-281
+.. GENERATED FROM PYTHON SOURCE LINES 271-277
 
 .. code-block:: default
+
 
     layer_verts = [l*int(verts_per_surf)+peak for l in range(n_layers)]
     layer_coords = mesh.darrays[0].data[layer_verts,:]
@@ -372,18 +365,16 @@ We need the indices of the vertex at each layer for this location, and the dista
     print(layer_dists)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 282-283
+.. GENERATED FROM PYTHON SOURCE LINES 278-279
 
 Now we can compute and plot the laminar CSD
 
-.. GENERATED FROM PYTHON SOURCE LINES 285-286
-
-Get source time series for each layer
-
-.. GENERATED FROM PYTHON SOURCE LINES 286-314
+.. GENERATED FROM PYTHON SOURCE LINES 279-309
 
 .. code-block:: default
 
+
+    # Get source time series for each layer
     layer_ts, time, _ = load_source_time_series(pial_sim_fname, vertices=layer_verts)
     
     # Average over trials and compute CSD and smoothed CSD
@@ -413,19 +404,24 @@ Get source time series for each layer
     plt.tight_layout()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 315-317
+.. GENERATED FROM PYTHON SOURCE LINES 310-313
 
-## White matter surface simulation with laminar CSD
+.. image:: ../_static/tutorial_06_pial_sim_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 316-319
+
+White matter surface simulation with laminar CSD
+------------------------------------------------
 Let's simulate the same pattern of activity, in the same location, but on the white matter surface.
 
-.. GENERATED FROM PYTHON SOURCE LINES 319-320
-
-Simulate at the corresponding vertex on the white matter surface
-
-.. GENERATED FROM PYTHON SOURCE LINES 320-399
+.. GENERATED FROM PYTHON SOURCE LINES 319-400
 
 .. code-block:: default
 
+
+    # Simulate at the corresponding vertex on the white matter surface
     white_vertex = (n_layers-1)*int(verts_per_surf)+sim_vertex
     prefix = f'sim_{sim_vertex}_white_'
 
@@ -506,19 +502,24 @@ Simulate at the corresponding vertex on the white matter surface
     plt.tight_layout()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 400-402
+.. GENERATED FROM PYTHON SOURCE LINES 401-404
 
-## Simulation in each layer
+.. image:: ../_static/tutorial_06_white_sim_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 407-410
+
+Simulation in each layer
+------------------------
 Let's now simulate on each layer, and for each simulation, run the laminar CSD. We'll turn off SPM visualization here.
 
-.. GENERATED FROM PYTHON SOURCE LINES 404-405
-
-Now simulate at the corresponding vertex on each layer, and for each simulation compute CSD
-
-.. GENERATED FROM PYTHON SOURCE LINES 405-488
+.. GENERATED FROM PYTHON SOURCE LINES 410-495
 
 .. code-block:: default
 
+
+    # Now simulate at the corresponding vertex on each layer, and for each simulation compute CSD
     layer_csds = []
     for l in range(n_layers):
         print(f'Simulating in layer {l}')
@@ -603,11 +604,101 @@ Now simulate at the corresponding vertex on each layer, and for each simulation 
         layer_csds.append(smooth_csd)        
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 489-490
+.. GENERATED FROM PYTHON SOURCE LINES 496-499
+
+.. image:: ../_static/tutorial_06_pial_sim_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 501-504
+
+.. image:: ../_static/tutorial_06_1_sim_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 506-509
+
+.. image:: ../_static/tutorial_06_2_sim_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 511-514
+
+.. image:: ../_static/tutorial_06_3_sim_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 516-519
+
+.. image:: ../_static/tutorial_06_4_sim_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 521-524
+
+.. image:: ../_static/tutorial_06_5_sim_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 526-529
+
+.. image:: ../_static/tutorial_06_6_sim_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 531-534
+
+.. image:: ../_static/tutorial_06_7_sim_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 536-539
+
+.. image:: ../_static/tutorial_06_8_sim_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 541-544
+
+.. image:: ../_static/tutorial_06_9_sim_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 546-549
+
+.. image:: ../_static/tutorial_06_10_sim_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 551-554
+
+.. image:: ../_static/tutorial_06_11_sim_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 556-559
+
+.. image:: ../_static/tutorial_06_12_sim_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 561-564
+
+.. image:: ../_static/tutorial_06_13_sim_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 566-569
+
+.. image:: ../_static/tutorial_06_white_sim_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 571-572
 
 For each simulation, we can plot a slice of the CSD through layers around a central time window. The layer model where the CSD signal crosses from negative to positive should correspond to the layer that the activity was simulated in.
 
-.. GENERATED FROM PYTHON SOURCE LINES 492-525
+.. GENERATED FROM PYTHON SOURCE LINES 574-606
 
 .. code-block:: default
 
@@ -618,8 +709,7 @@ For each simulation, we can plot a slice of the CSD through layers around a cent
         t_idx = np.where((time>=-0.05) & (time<=0.05))[0]
         csd_pattern = np.mean(layer_csd[:,t_idx],axis=1)
         peak = np.argmax(np.abs(csd_pattern))
-        #cross_before = np.argmax(0-csd_pattern[:peak]))
-        peaks.append(np.argmax(np.abs(csd_pattern))/scale_factor)    
+        peaks.append(np.argmax(np.abs(csd_pattern))/scale_factor)
         csd_patterns.append(csd_pattern)
 
     col_r = plt.cm.cool(np.linspace(0,1, num=n_layers))
@@ -645,7 +735,13 @@ For each simulation, we can plot a slice of the CSD through layers around a cent
     plt.tight_layout()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 526-542
+.. GENERATED FROM PYTHON SOURCE LINES 607-610
+
+.. image:: ../_static/tutorial_06_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 613-629
 
 .. code-block:: default
 
@@ -666,19 +762,24 @@ For each simulation, we can plot a slice of the CSD through layers around a cent
     cb.set_label('CSD', fontsize=14)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 543-545
+.. GENERATED FROM PYTHON SOURCE LINES 630-633
 
-## Beta burst CSD
+.. image:: ../_static/tutorial_06_results_matrix.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 635-638
+
+Beta burst CSD
+--------------
 That was a simulation of a source in a single layer. Let's try a beta burst simulation, with simultaneous sources in deep and superficial layers (see [Bonaiuto et al., 2021, Laminar dynamics of high amplitude beta bursts in human motor cortex](https://doi.org/10.1016/j.neuroimage.2021.118479))
 
-.. GENERATED FROM PYTHON SOURCE LINES 547-548
-
-Strength of each simulated source (nAm)
-
-.. GENERATED FROM PYTHON SOURCE LINES 548-569
+.. GENERATED FROM PYTHON SOURCE LINES 638-661
 
 .. code-block:: default
 
+
+    # Strength of each simulated source (nAm)
     dipole_moment = [8, 6]
     # Temporal width of the simulated superficial signal
     superficial_width = .01 # 10ms
@@ -701,18 +802,22 @@ Strength of each simulated source (nAm)
     plt.ylabel('Amplitude (nAm)')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 570-571
+.. GENERATED FROM PYTHON SOURCE LINES 662-665
+
+.. image:: ../_static/tutorial_06_burst_sim_signal.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 667-668
 
 We need to pick a location (mesh vertex) to simulate at. The superficial signal will be simulated as a dipole at the corresponding vertex on the pial surface, and the deep signal on the white matter surface. The dipole orientations will be in opposite directions (with the superficial one pointing toward the deep one, and vice versa). This will yield a cumulative dipole moment with a beta burst-like shape
 
-.. GENERATED FROM PYTHON SOURCE LINES 573-574
-
-Location to simulate activity at
-
-.. GENERATED FROM PYTHON SOURCE LINES 574-630
+.. GENERATED FROM PYTHON SOURCE LINES 668-726
 
 .. code-block:: default
 
+
+    # Location to simulate activity at
     sim_vertex = 24585
     # Corresponding pial and white matter vertices
     pial_vertex = sim_vertex
@@ -770,18 +875,22 @@ Location to simulate activity at
     plot.display()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 631-632
+.. GENERATED FROM PYTHON SOURCE LINES 727-730
+
+.. image:: ../_static/tutorial_06_burst_orientation.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 732-733
 
 We'll simulate a 5mm patch of activity with -10 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-.. GENERATED FROM PYTHON SOURCE LINES 634-635
-
-Simulate a beta burst as two sources: one deep and one superficial
-
-.. GENERATED FROM PYTHON SOURCE LINES 635-655
+.. GENERATED FROM PYTHON SOURCE LINES 733-755
 
 .. code-block:: default
 
+
+    # Simulate a beta burst as two sources: one deep and one superficial
     prefix=f'sim_{sim_vertex}_burst_'
 
     # Size of simulated sources (mm)
@@ -803,14 +912,14 @@ Simulate a beta burst as two sources: one deep and one superficial
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 656-658
+.. GENERATED FROM PYTHON SOURCE LINES 756-757
 
-## Inversion and CSD
 Now we'll run a source reconstruction using the multilayer mesh, select the vertex to examine, extract the source signals at each layer in that location, and compute a laminar CSD
 
-.. GENERATED FROM PYTHON SOURCE LINES 660-724
+.. GENERATED FROM PYTHON SOURCE LINES 757-822
 
 .. code-block:: default
+
 
     [_,_,MU] = invert_ebb(
         multilayer_mesh_fname, 
@@ -877,7 +986,13 @@ Now we'll run a source reconstruction using the multilayer mesh, select the vert
     plt.tight_layout()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 725-730
+.. GENERATED FROM PYTHON SOURCE LINES 823-826
+
+.. image:: ../_static/tutorial_06_burst_results.png
+   :width: 800
+   :alt:
+
+.. GENERATED FROM PYTHON SOURCE LINES 828-833
 
 .. code-block:: default
 

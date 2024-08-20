@@ -489,13 +489,13 @@ to download the full example code</p>
 <section class="sphx-glr-example-title" id="laminar-model-comparison-using-cross-validation-error">
 <span id="sphx-glr-auto-tutorials-tutorial-03-model-comparison-cv-error-py"></span><h1>Laminar model comparison using cross-validation error<a class="headerlink" href="#laminar-model-comparison-using-cross-validation-error" title="Permalink to this heading">#</a></h1>
 <p>This tutorial demonstrates how to perform laminar inference using model comparison based on cross-validation error as a metric of model fit, described in [Bonaiuto et al., 2018, Non-invasive laminar inference with MEG: Comparison of methods and source inversion algorithms](<a class="reference external" href="https://doi.org/10.1016/j.neuroimage.2017.11.068">https://doi.org/10.1016/j.neuroimage.2017.11.068</a>). A 20Hz oscillation is simulated at a particular cortical location in various layers. Source reconstruction is performed using the Empirical Bayesian Beamformer on the simulated sensor data using forward models based on different layer meshes. These models are then compared using cross-validation error. Cross-validation error is computed by fitting the model N times, each time leaving out a certain percentage of the channels and seeing how well the resulting model can predict the signal in those channels</p>
-<p>## Setting up the simulations</p>
+<section id="setting-up-the-simulations">
+<h2>Setting up the simulations<a class="headerlink" href="#setting-up-the-simulations" title="Permalink to this heading">#</a></h2>
 <p>Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">colors</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
 
@@ -526,8 +526,8 @@ to download the full example code</p>
 </pre></div>
 </div>
 <p>For source reconstructions, we need an MRI and a surface mesh. The simulations will be based on a forward model using the multilayer mesh, and the model comparison will use each layer mesh</p>
-<p>Native space MRI to use for coregistration</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mri_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;mri&#39;</span><span class="p">,</span> <span class="s1">&#39;s2023-02-28_13-33-133958-00001-00224-1.nii&#39;</span> <span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Native space MRI to use for coregistration</span>
+<span class="n">mri_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;mri&#39;</span><span class="p">,</span> <span class="s1">&#39;s2023-02-28_13-33-133958-00001-00224-1.nii&#39;</span> <span class="p">)</span>
 
 <span class="c1"># Mesh to use for forward model in the simulations</span>
 <span class="n">multilayer_mesh_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;surf&#39;</span><span class="p">,</span> <span class="s1">&#39;multilayer.11.ds.link_vector.fixed.gii&#39;</span><span class="p">)</span>
@@ -547,8 +547,8 @@ to download the full example code</p>
 </pre></div>
 </div>
 <p>We’re going to copy the data file to a temporary directory and direct all output there.</p>
-<p>Extract base name and path of data file</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data_path</span><span class="p">,</span> <span class="n">data_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Extract base name and path of data file</span>
+<span class="n">data_path</span><span class="p">,</span> <span class="n">data_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span>
 <span class="n">data_base</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">data_file_name</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
 <span class="c1"># Where to put simulated data</span>
@@ -569,8 +569,8 @@ to download the full example code</p>
 </pre></div>
 </div>
 <p>Invert the subject’s data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations</p>
-<p>Patch size to use for inversion (in this case it matches the simulated patch size)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">patch_size</span> <span class="o">=</span> <span class="mi">5</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Patch size to use for inversion (in this case it matches the simulated patch size)</span>
+<span class="n">patch_size</span> <span class="o">=</span> <span class="mi">5</span>
 <span class="c1"># Number of temporal modes to use for EBB inversion</span>
 <span class="n">n_temp_modes</span> <span class="o">=</span> <span class="mi">4</span>
 
@@ -596,10 +596,12 @@ to download the full example code</p>
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>## Simulating a signal on the pial surface
-We’re going to simulate 1s of a 20Hz sine wave with a dipole moment of 10nAm</p>
-<p>Frequency of simulated sinusoid (Hz)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">freq</span> <span class="o">=</span> <span class="mi">20</span>
+</section>
+<section id="simulating-a-signal-on-the-pial-surface">
+<h2>Simulating a signal on the pial surface<a class="headerlink" href="#simulating-a-signal-on-the-pial-surface" title="Permalink to this heading">#</a></h2>
+<p>We’re going to simulate 1s of a 20Hz sine wave with a dipole moment of 10nAm</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Frequency of simulated sinusoid (Hz)</span>
+<span class="n">freq</span> <span class="o">=</span> <span class="mi">20</span>
 <span class="c1"># Strength of simulated activity (nAm)</span>
 <span class="n">dipole_moment</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="c1"># Sampling rate (must match the data file)</span>
@@ -614,9 +616,10 @@ We’re going to simulate 1s of a 20Hz sine wave with a dipole moment of 10nAm</
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Amplitude (nAm)&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+<a class="reference internal image-reference" href="../_images/tutorial_03_sim_signal.png"><img alt="" src="../_images/tutorial_03_sim_signal.png" style="width: 800px;" /></a>
 <p>We need to pick a location (mesh vertex) to simulate at</p>
-<p>Vertex to simulate activity at</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sim_vertex</span><span class="o">=</span><span class="mi">24585</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Vertex to simulate activity at</span>
+<span class="n">sim_vertex</span><span class="o">=</span><span class="mi">24585</span>
 
 <span class="n">pial_ds_mesh_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;surf&#39;</span><span class="p">,</span> <span class="s1">&#39;pial.ds.link_vector.fixed.gii&#39;</span><span class="p">)</span>
 <span class="n">pial_ds_mesh</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">pial_ds_mesh_fname</span><span class="p">)</span>
@@ -635,6 +638,7 @@ We’re going to simulate 1s of a 20Hz sine wave with a dipole moment of 10nAm</
 <span class="p">)</span>
 </pre></div>
 </div>
+<a class="reference internal image-reference" href="../_images/tutorial_03_sim_location.png"><img alt="" src="../_images/tutorial_03_sim_location.png" style="width: 800px;" /></a>
 <p>We’ll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals</p>
 <p>Simulate at a vertex on the pial surface</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pial_vertex</span> <span class="o">=</span> <span class="n">sim_vertex</span>
@@ -658,10 +662,12 @@ We’re going to simulate 1s of a 20Hz sine wave with a dipole moment of 10nAm</
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>## Model comparison (pial - white matter)
-Now we can run model comparison between source models based on the pial and white matter surfaces using cross-validation error. For computing cross-validation error, we’ll run 10 folds, leaving out 10% of the channels in each fold. We’ll then look at the difference in cross-validation error between the two models (pial - white matter). This should be lower for the pial surface model because we simulated activity on the pial surface</p>
-<p>Number of cross validation folds</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n_folds</span> <span class="o">=</span> <span class="mi">10</span>
+</section>
+<section id="model-comparison-pial-white-matter">
+<h2>Model comparison (pial - white matter)<a class="headerlink" href="#model-comparison-pial-white-matter" title="Permalink to this heading">#</a></h2>
+<p>Now we can run model comparison between source models based on the pial and white matter surfaces using cross-validation error. For computing cross-validation error, we’ll run 10 folds, leaving out 10% of the channels in each fold. We’ll then look at the difference in cross-validation error between the two models (pial - white matter). This should be lower for the pial surface model because we simulated activity on the pial surface</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Number of cross validation folds</span>
+<span class="n">n_folds</span> <span class="o">=</span> <span class="mi">10</span>
 <span class="c1"># Percentage of test channels in cross validation</span>
 <span class="n">ideal_pc_test</span> <span class="o">=</span> <span class="mi">10</span> <span class="c1"># may not use this number as we need integer number of channels</span>
 
@@ -687,10 +693,12 @@ Now we can run model comparison between source models based on the pial and whit
 <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cvErr</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cvErr</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>## White matter surface simulation with pial - white matter model comparison
-Let’s simulate the same pattern of activity, in the same location, but on the white matter surface. This time, model comparison should yield lower cross-validation error for the white matter surface.</p>
-<p>Simulate at the corresponding vertex on the white matter surface</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">white_vertex</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_layers</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">verts_per_surf</span><span class="o">+</span><span class="n">sim_vertex</span>
+</section>
+<section id="white-matter-surface-simulation-with-pial-white-matter-model-comparison">
+<h2>White matter surface simulation with pial - white matter model comparison<a class="headerlink" href="#white-matter-surface-simulation-with-pial-white-matter-model-comparison" title="Permalink to this heading">#</a></h2>
+<p>Let’s simulate the same pattern of activity, in the same location, but on the white matter surface. This time, model comparison should yield lower cross-validation error for the white matter surface.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate at the corresponding vertex on the white matter surface</span>
+<span class="n">white_vertex</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_layers</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">verts_per_surf</span><span class="o">+</span><span class="n">sim_vertex</span>
 <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_white_&#39;</span>
 
 <span class="c1"># Generate simulated data</span>
@@ -727,11 +735,13 @@ Let’s simulate the same pattern of activity, in the same location, but on the 
 <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cvErr</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cvErr</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>## Simulation in each layer with model comparison across layers
-That was model comparison with two candidate models: one based on the white matter surface, and one on the pial. Let’s now simulate on each layer, and for each simulation, run model comparison across all layers. We’ll turn off SPM visualization here.</p>
-<p>Now simulate at the corresponding vertex on each layer, and for each simulation, run model comparison across
-all layers</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">all_layerCvErr</span> <span class="o">=</span> <span class="p">[]</span>
+</section>
+<section id="simulation-in-each-layer-with-model-comparison-across-layers">
+<h2>Simulation in each layer with model comparison across layers<a class="headerlink" href="#simulation-in-each-layer-with-model-comparison-across-layers" title="Permalink to this heading">#</a></h2>
+<p>That was model comparison with two candidate models: one based on the white matter surface, and one on the pial. Let’s now simulate on each layer, and for each simulation, run model comparison across all layers. We’ll turn off SPM visualization here.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Now simulate at the corresponding vertex on each layer, and for each simulation, run model comparison across</span>
+<span class="c1"># all layers</span>
+<span class="n">all_layerCvErr</span> <span class="o">=</span> <span class="p">[]</span>
 
 <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_layers</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Simulating in layer </span><span class="si">{</span><span class="n">l</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
@@ -802,8 +812,9 @@ all layers</p>
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>Transpose for visualization</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">im</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">all_layerCvErr</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Spectral_r&#39;</span><span class="p">)</span>
+<a class="reference internal image-reference" href="../_images/tutorial_03_results.png"><img alt="" src="../_images/tutorial_03_results.png" style="width: 800px;" /></a>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Transpose for visualization</span>
+<span class="n">im</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">all_layerCvErr</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Spectral_r&#39;</span><span class="p">)</span>
 
 <span class="c1"># Find the indices of the min value in each column</span>
 <span class="n">min_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">all_layerCvErr</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -818,6 +829,7 @@ all layers</p>
 <span class="n">cb</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s1">&#39;CVerr&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
 </pre></div>
 </div>
+<a class="reference internal image-reference" href="../_images/tutorial_03_results_matrix.png"><img alt="" src="../_images/tutorial_03_results_matrix.png" style="width: 800px;" /></a>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spm</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
 
 <span class="c1"># Delete simulation files</span>
@@ -834,6 +846,7 @@ all layers</p>
 </div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
 </section>
 
 
@@ -876,6 +889,20 @@ all layers</p>
             
               
                 <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setting-up-the-simulations">Setting up the simulations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulating-a-signal-on-the-pial-surface">Simulating a signal on the pial surface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#model-comparison-pial-white-matter">Model comparison (pial - white matter)</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#white-matter-surface-simulation-with-pial-white-matter-model-comparison">White matter surface simulation with pial - white matter model comparison</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-in-each-layer-with-model-comparison-across-layers">Simulation in each layer with model comparison across layers</a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
   

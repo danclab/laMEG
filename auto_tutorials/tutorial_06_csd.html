@@ -488,15 +488,14 @@ to download the full example code</p>
 <section class="sphx-glr-example-title" id="laminar-csd-analysis">
 <span id="sphx-glr-auto-tutorials-tutorial-06-csd-py"></span><h1>Laminar CSD analysis<a class="headerlink" href="#laminar-csd-analysis" title="Permalink to this heading">#</a></h1>
 <p>This tutorial demonstrates how to perform laminar inference using a CSD analysis of event-related source signals. A temporal Gaussian function is simulated at a particular cortical location in various layers. Source reconstruction is performed on the whole time window using the Empirical Bayesian Beamformer on the simulated sensor data using a forward model based on the multilayer mesh, thus providing an estimate of source activity on each layer. A laminar CSD is run on the laminar signals at the location with the peak variance.</p>
-<p>## Setting up the simulations</p>
+<section id="setting-up-the-simulations">
+<h2>Setting up the simulations<a class="headerlink" href="#setting-up-the-simulations" title="Permalink to this heading">#</a></h2>
 <p>Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
 <span class="kn">import</span> <span class="nn">k3d</span>
-<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">stats</span>
-<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">colors</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
 
@@ -529,8 +528,8 @@ to download the full example code</p>
 </pre></div>
 </div>
 <p>For source reconstructions, we need an MRI and a surface mesh. The simulations and source reconstructions will be based on a forward model using the multilayer mesh</p>
-<p>Native space MRI to use for coregistration</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mri_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;mri/s2023-02-28_13-33-133958-00001-00224-1.nii&#39;</span> <span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Native space MRI to use for coregistration</span>
+<span class="n">mri_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;mri/s2023-02-28_13-33-133958-00001-00224-1.nii&#39;</span> <span class="p">)</span>
 
 <span class="c1"># Mesh to use for forward model in the simulations</span>
 <span class="n">multilayer_mesh_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;surf/multilayer.15.ds.link_vector.fixed.gii&#39;</span><span class="p">)</span>
@@ -546,8 +545,8 @@ to download the full example code</p>
 </pre></div>
 </div>
 <p>We’re going to copy the data file to a temporary directory and direct all output there.</p>
-<p>Extract base name and path of data file</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data_path</span><span class="p">,</span> <span class="n">data_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Extract base name and path of data file</span>
+<span class="n">data_path</span><span class="p">,</span> <span class="n">data_file_name</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">data_file</span><span class="p">)</span>
 <span class="n">data_base</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">data_file_name</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
 <span class="c1"># Where to put simulated data</span>
@@ -568,8 +567,8 @@ to download the full example code</p>
 </pre></div>
 </div>
 <p>Invert the subject’s data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations</p>
-<p>Patch size to use for inversion (in this case it matches the simulated patch size)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">patch_size</span> <span class="o">=</span> <span class="mi">5</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Patch size to use for inversion (in this case it matches the simulated patch size)</span>
+<span class="n">patch_size</span> <span class="o">=</span> <span class="mi">5</span>
 <span class="c1"># Number of temporal modes to use for EBB inversion</span>
 <span class="n">n_temp_modes</span> <span class="o">=</span> <span class="mi">4</span>
 
@@ -595,10 +594,12 @@ to download the full example code</p>
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>## Simulating a signal on a superficial surface
-We’re going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a width of 25ms</p>
-<p>Strength of simulated activity (nAm)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dipole_moment</span> <span class="o">=</span> <span class="mi">5</span>
+</section>
+<section id="simulating-a-signal-on-a-superficial-surface">
+<h2>Simulating a signal on a superficial surface<a class="headerlink" href="#simulating-a-signal-on-a-superficial-surface" title="Permalink to this heading">#</a></h2>
+<p>We’re going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a width of 25ms</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Strength of simulated activity (nAm)</span>
+<span class="n">dipole_moment</span> <span class="o">=</span> <span class="mi">5</span>
 <span class="c1"># Temporal width of the simulated Gaussian</span>
 <span class="n">signal_width</span><span class="o">=</span><span class="mf">.025</span> <span class="c1"># 25ms</span>
 <span class="c1"># Sampling rate (must match the data file)</span>
@@ -613,9 +614,10 @@ We’re going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Amplitude (nAm)&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+<a class="reference internal image-reference" href="../_images/tutorial_06_sim_signal.png"><img alt="" src="../_images/tutorial_06_sim_signal.png" style="width: 800px;" /></a>
 <p>We need to pick a location (mesh vertex) to simulate at</p>
-<p>Vertex to simulate activity at</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sim_vertex</span><span class="o">=</span><span class="mi">24585</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Vertex to simulate activity at</span>
+<span class="n">sim_vertex</span><span class="o">=</span><span class="mi">24585</span>
 
 <span class="n">pial_ds_mesh_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;surf&#39;</span><span class="p">,</span> <span class="s1">&#39;pial.ds.link_vector.fixed.gii&#39;</span><span class="p">)</span>
 <span class="n">pial_ds_mesh</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">pial_ds_mesh_fname</span><span class="p">)</span>
@@ -634,21 +636,10 @@ We’re going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a
 <span class="p">)</span>
 </pre></div>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sim_vertex</span><span class="o">=</span><span class="mi">24585</span>
-
-<span class="n">pial_ds_mesh_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;surf&#39;</span><span class="p">,</span> <span class="s1">&#39;pial.ds.link_vector.fixed.gii&#39;</span><span class="p">)</span>
-<span class="n">pial_ds_mesh</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">pial_ds_mesh_fname</span><span class="p">)</span>
-<span class="n">pial_coord</span> <span class="o">=</span> <span class="n">pial_ds_mesh</span><span class="o">.</span><span class="n">darrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sim_vertex</span><span class="p">,:]</span>
-<span class="n">pial_mesh_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;surf&#39;</span><span class="p">,</span> <span class="s1">&#39;pial.gii&#39;</span><span class="p">)</span>
-<span class="n">pial_mesh</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">pial_mesh_fname</span><span class="p">)</span>
-<span class="n">cam_view</span> <span class="o">=</span> <span class="p">[</span><span class="mi">152</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span>
-            <span class="mf">3.5</span><span class="p">,</span> <span class="mi">26</span><span class="p">,</span> <span class="mf">38.5</span><span class="p">,</span>
-            <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
-</pre></div>
-</div>
+<a class="reference internal image-reference" href="../_images/tutorial_06_sim_location.png"><img alt="" src="../_images/tutorial_06_sim_location.png" style="width: 800px;" /></a>
 <p>We’ll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals</p>
-<p>Simulate at a vertex on the pial surface</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pial_vertex</span> <span class="o">=</span> <span class="n">sim_vertex</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate at a vertex on the pial surface</span>
+<span class="n">pial_vertex</span> <span class="o">=</span> <span class="n">sim_vertex</span>
 <span class="c1"># Orientation of the simulated dipole</span>
 <span class="n">sim_unit_norm</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">darrays</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sim_vertex</span><span class="p">,:]</span>
 <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_pial_&#39;</span>
@@ -672,8 +663,10 @@ We’re going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>## Inversion
-Now we’ll run a source reconstruction using the multilayer mesh, select the vertex to examine, extract the source signals at each layer in that location, and compute a laminar CSD</p>
+</section>
+<section id="inversion">
+<h2>Inversion<a class="headerlink" href="#inversion" title="Permalink to this heading">#</a></h2>
+<p>Now we’ll run a source reconstruction using the multilayer mesh, select the vertex to examine, extract the source signals at each layer in that location, and compute a laminar CSD</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">_</span><span class="p">,</span><span class="n">_</span><span class="p">,</span><span class="n">MU</span><span class="p">]</span> <span class="o">=</span> <span class="n">invert_ebb</span><span class="p">(</span>
     <span class="n">multilayer_mesh_fname</span><span class="p">,</span>
     <span class="n">pial_sim_fname</span><span class="p">,</span>
@@ -706,8 +699,8 @@ Now we’ll run a source reconstruction using the multilayer mesh, select the ve
 </pre></div>
 </div>
 <p>We can see that the peak is the same as the location we simulated at</p>
-<p>Interpolate for display on the original inflated surface</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">interpolated_data</span> <span class="o">=</span> <span class="n">interpolate_data</span><span class="p">(</span><span class="n">orig_inflated</span><span class="p">,</span> <span class="n">ds_inflated</span><span class="p">,</span> <span class="n">m_layer_max</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Interpolate for display on the original inflated surface</span>
+<span class="n">interpolated_data</span> <span class="o">=</span> <span class="n">interpolate_data</span><span class="p">(</span><span class="n">orig_inflated</span><span class="p">,</span> <span class="n">ds_inflated</span><span class="p">,</span> <span class="n">m_layer_max</span><span class="p">)</span>
 
 <span class="c1"># Plot colors and camera view</span>
 <span class="n">max_abs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">m_layer_max</span><span class="p">))</span>
@@ -735,6 +728,7 @@ Now we’ll run a source reconstruction using the multilayer mesh, select the ve
 <span class="p">)</span>
 </pre></div>
 </div>
+<a class="reference internal image-reference" href="../_images/tutorial_06_localizer.png"><img alt="" src="../_images/tutorial_06_localizer.png" style="width: 800px;" /></a>
 <p>We need the indices of the vertex at each layer for this location, and the distances between them</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">layer_verts</span> <span class="o">=</span> <span class="p">[</span><span class="n">l</span><span class="o">*</span><span class="nb">int</span><span class="p">(</span><span class="n">verts_per_surf</span><span class="p">)</span><span class="o">+</span><span class="n">peak</span> <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_layers</span><span class="p">)]</span>
 <span class="n">layer_coords</span> <span class="o">=</span> <span class="n">mesh</span><span class="o">.</span><span class="n">darrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">layer_verts</span><span class="p">,:]</span>
@@ -743,8 +737,8 @@ Now we’ll run a source reconstruction using the multilayer mesh, select the ve
 </pre></div>
 </div>
 <p>Now we can compute and plot the laminar CSD</p>
-<p>Get source time series for each layer</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">layer_ts</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">load_source_time_series</span><span class="p">(</span><span class="n">pial_sim_fname</span><span class="p">,</span> <span class="n">vertices</span><span class="o">=</span><span class="n">layer_verts</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Get source time series for each layer</span>
+<span class="n">layer_ts</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">load_source_time_series</span><span class="p">(</span><span class="n">pial_sim_fname</span><span class="p">,</span> <span class="n">vertices</span><span class="o">=</span><span class="n">layer_verts</span><span class="p">)</span>
 
 <span class="c1"># Average over trials and compute CSD and smoothed CSD</span>
 <span class="n">mean_layer_ts</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">layer_ts</span><span class="p">,</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
@@ -773,10 +767,13 @@ Now we’ll run a source reconstruction using the multilayer mesh, select the ve
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>## White matter surface simulation with laminar CSD
-Let’s simulate the same pattern of activity, in the same location, but on the white matter surface.</p>
-<p>Simulate at the corresponding vertex on the white matter surface</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">white_vertex</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_layers</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="nb">int</span><span class="p">(</span><span class="n">verts_per_surf</span><span class="p">)</span><span class="o">+</span><span class="n">sim_vertex</span>
+<a class="reference internal image-reference" href="../_images/tutorial_06_pial_sim_results.png"><img alt="" src="../_images/tutorial_06_pial_sim_results.png" style="width: 800px;" /></a>
+</section>
+<section id="white-matter-surface-simulation-with-laminar-csd">
+<h2>White matter surface simulation with laminar CSD<a class="headerlink" href="#white-matter-surface-simulation-with-laminar-csd" title="Permalink to this heading">#</a></h2>
+<p>Let’s simulate the same pattern of activity, in the same location, but on the white matter surface.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate at the corresponding vertex on the white matter surface</span>
+<span class="n">white_vertex</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_layers</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="nb">int</span><span class="p">(</span><span class="n">verts_per_surf</span><span class="p">)</span><span class="o">+</span><span class="n">sim_vertex</span>
 <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_white_&#39;</span>
 
 <span class="c1"># Generate simulated data</span>
@@ -856,10 +853,13 @@ Let’s simulate the same pattern of activity, in the same location, but on the 
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>## Simulation in each layer
-Let’s now simulate on each layer, and for each simulation, run the laminar CSD. We’ll turn off SPM visualization here.</p>
-<p>Now simulate at the corresponding vertex on each layer, and for each simulation compute CSD</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">layer_csds</span> <span class="o">=</span> <span class="p">[]</span>
+<a class="reference internal image-reference" href="../_images/tutorial_06_white_sim_results.png"><img alt="" src="../_images/tutorial_06_white_sim_results.png" style="width: 800px;" /></a>
+</section>
+<section id="simulation-in-each-layer">
+<h2>Simulation in each layer<a class="headerlink" href="#simulation-in-each-layer" title="Permalink to this heading">#</a></h2>
+<p>Let’s now simulate on each layer, and for each simulation, run the laminar CSD. We’ll turn off SPM visualization here.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Now simulate at the corresponding vertex on each layer, and for each simulation compute CSD</span>
+<span class="n">layer_csds</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_layers</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Simulating in layer </span><span class="si">{</span><span class="n">l</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
     <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">l</span><span class="si">}</span><span class="s1">_&#39;</span>
@@ -943,6 +943,21 @@ Let’s now simulate on each layer, and for each simulation, run the laminar CSD
     <span class="n">layer_csds</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">smooth_csd</span><span class="p">)</span>
 </pre></div>
 </div>
+<a class="reference internal image-reference" href="../_images/tutorial_06_pial_sim_results.png"><img alt="" src="../_images/tutorial_06_pial_sim_results.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/tutorial_06_1_sim_results.png"><img alt="" src="../_images/tutorial_06_1_sim_results.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/tutorial_06_2_sim_results.png"><img alt="" src="../_images/tutorial_06_2_sim_results.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/tutorial_06_3_sim_results.png"><img alt="" src="../_images/tutorial_06_3_sim_results.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/tutorial_06_4_sim_results.png"><img alt="" src="../_images/tutorial_06_4_sim_results.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/tutorial_06_5_sim_results.png"><img alt="" src="../_images/tutorial_06_5_sim_results.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/tutorial_06_6_sim_results.png"><img alt="" src="../_images/tutorial_06_6_sim_results.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/tutorial_06_7_sim_results.png"><img alt="" src="../_images/tutorial_06_7_sim_results.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/tutorial_06_8_sim_results.png"><img alt="" src="../_images/tutorial_06_8_sim_results.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/tutorial_06_9_sim_results.png"><img alt="" src="../_images/tutorial_06_9_sim_results.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/tutorial_06_10_sim_results.png"><img alt="" src="../_images/tutorial_06_10_sim_results.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/tutorial_06_11_sim_results.png"><img alt="" src="../_images/tutorial_06_11_sim_results.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/tutorial_06_12_sim_results.png"><img alt="" src="../_images/tutorial_06_12_sim_results.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/tutorial_06_13_sim_results.png"><img alt="" src="../_images/tutorial_06_13_sim_results.png" style="width: 800px;" /></a>
+<a class="reference internal image-reference" href="../_images/tutorial_06_white_sim_results.png"><img alt="" src="../_images/tutorial_06_white_sim_results.png" style="width: 800px;" /></a>
 <p>For each simulation, we can plot a slice of the CSD through layers around a central time window. The layer model where the CSD signal crosses from negative to positive should correspond to the layer that the activity was simulated in.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">scale_factor</span><span class="o">=</span><span class="mi">500</span><span class="o">/</span><span class="n">n_layers</span>
 <span class="n">csd_patterns</span> <span class="o">=</span> <span class="p">[]</span>
@@ -951,7 +966,6 @@ Let’s now simulate on each layer, and for each simulation, run the laminar CSD
     <span class="n">t_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="n">time</span><span class="o">&gt;=-</span><span class="mf">0.05</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">time</span><span class="o">&lt;=</span><span class="mf">0.05</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">csd_pattern</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">layer_csd</span><span class="p">[:,</span><span class="n">t_idx</span><span class="p">],</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">peak</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">csd_pattern</span><span class="p">))</span>
-    <span class="c1">#cross_before = np.argmax(0-csd_pattern[:peak]))</span>
     <span class="n">peaks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">csd_pattern</span><span class="p">))</span><span class="o">/</span><span class="n">scale_factor</span><span class="p">)</span>
     <span class="n">csd_patterns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">csd_pattern</span><span class="p">)</span>
 
@@ -978,6 +992,7 @@ Let’s now simulate on each layer, and for each simulation, run the laminar CSD
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
 </div>
+<a class="reference internal image-reference" href="../_images/tutorial_06_results.png"><img alt="" src="../_images/tutorial_06_results.png" style="width: 800px;" /></a>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">csd_patterns</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">csd_patterns</span><span class="p">)</span>
 <span class="c1"># Transpose for visualization</span>
 <span class="n">im</span><span class="o">=</span><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">csd_patterns</span><span class="o">.</span><span class="n">T</span><span class="p">,</span><span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Spectral_r&#39;</span><span class="p">,</span><span class="n">extent</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">,</span> <span class="n">n_layers</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
@@ -995,10 +1010,13 @@ Let’s now simulate on each layer, and for each simulation, run the laminar CSD
 <span class="n">cb</span><span class="o">.</span><span class="n">set_label</span><span class="p">(</span><span class="s1">&#39;CSD&#39;</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>## Beta burst CSD
-That was a simulation of a source in a single layer. Let’s try a beta burst simulation, with simultaneous sources in deep and superficial layers (see [Bonaiuto et al., 2021, Laminar dynamics of high amplitude beta bursts in human motor cortex](<a class="reference external" href="https://doi.org/10.1016/j.neuroimage.2021.118479">https://doi.org/10.1016/j.neuroimage.2021.118479</a>))</p>
-<p>Strength of each simulated source (nAm)</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">dipole_moment</span> <span class="o">=</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>
+<a class="reference internal image-reference" href="../_images/tutorial_06_results_matrix.png"><img alt="" src="../_images/tutorial_06_results_matrix.png" style="width: 800px;" /></a>
+</section>
+<section id="beta-burst-csd">
+<h2>Beta burst CSD<a class="headerlink" href="#beta-burst-csd" title="Permalink to this heading">#</a></h2>
+<p>That was a simulation of a source in a single layer. Let’s try a beta burst simulation, with simultaneous sources in deep and superficial layers (see [Bonaiuto et al., 2021, Laminar dynamics of high amplitude beta bursts in human motor cortex](<a class="reference external" href="https://doi.org/10.1016/j.neuroimage.2021.118479">https://doi.org/10.1016/j.neuroimage.2021.118479</a>))</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Strength of each simulated source (nAm)</span>
+<span class="n">dipole_moment</span> <span class="o">=</span> <span class="p">[</span><span class="mi">8</span><span class="p">,</span> <span class="mi">6</span><span class="p">]</span>
 <span class="c1"># Temporal width of the simulated superficial signal</span>
 <span class="n">superficial_width</span> <span class="o">=</span> <span class="mf">.01</span> <span class="c1"># 10ms</span>
 <span class="c1"># Temporal width of the simulated deep signal</span>
@@ -1020,9 +1038,10 @@ That was a simulation of a source in a single layer. Let’s try a beta burst si
 <span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span><span class="p">(</span><span class="s1">&#39;Amplitude (nAm)&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+<a class="reference internal image-reference" href="../_images/tutorial_06_burst_sim_signal.png"><img alt="" src="../_images/tutorial_06_burst_sim_signal.png" style="width: 800px;" /></a>
 <p>We need to pick a location (mesh vertex) to simulate at. The superficial signal will be simulated as a dipole at the corresponding vertex on the pial surface, and the deep signal on the white matter surface. The dipole orientations will be in opposite directions (with the superficial one pointing toward the deep one, and vice versa). This will yield a cumulative dipole moment with a beta burst-like shape</p>
-<p>Location to simulate activity at</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sim_vertex</span> <span class="o">=</span> <span class="mi">24585</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Location to simulate activity at</span>
+<span class="n">sim_vertex</span> <span class="o">=</span> <span class="mi">24585</span>
 <span class="c1"># Corresponding pial and white matter vertices</span>
 <span class="n">pial_vertex</span> <span class="o">=</span> <span class="n">sim_vertex</span>
 <span class="n">white_vertex</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_layers</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="nb">int</span><span class="p">(</span><span class="n">verts_per_surf</span><span class="p">)</span><span class="o">+</span><span class="n">sim_vertex</span>
@@ -1079,9 +1098,10 @@ That was a simulation of a source in a single layer. Let’s try a beta burst si
 <span class="n">plot</span><span class="o">.</span><span class="n">display</span><span class="p">()</span>
 </pre></div>
 </div>
+<a class="reference internal image-reference" href="../_images/tutorial_06_burst_orientation.png"><img alt="" src="../_images/tutorial_06_burst_orientation.png" style="width: 800px;" /></a>
 <p>We’ll simulate a 5mm patch of activity with -10 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals</p>
-<p>Simulate a beta burst as two sources: one deep and one superficial</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_burst_&#39;</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate a beta burst as two sources: one deep and one superficial</span>
+<span class="n">prefix</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_burst_&#39;</span>
 
 <span class="c1"># Size of simulated sources (mm)</span>
 <span class="n">sim_dipfwhm</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">5</span><span class="p">]</span> <span class="c1"># mm</span>
@@ -1102,8 +1122,7 @@ That was a simulation of a source in a single layer. Let’s try a beta burst si
 <span class="p">)</span>
 </pre></div>
 </div>
-<p>## Inversion and CSD
-Now we’ll run a source reconstruction using the multilayer mesh, select the vertex to examine, extract the source signals at each layer in that location, and compute a laminar CSD</p>
+<p>Now we’ll run a source reconstruction using the multilayer mesh, select the vertex to examine, extract the source signals at each layer in that location, and compute a laminar CSD</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">_</span><span class="p">,</span><span class="n">_</span><span class="p">,</span><span class="n">MU</span><span class="p">]</span> <span class="o">=</span> <span class="n">invert_ebb</span><span class="p">(</span>
     <span class="n">multilayer_mesh_fname</span><span class="p">,</span>
     <span class="n">burst_sim_fname</span><span class="p">,</span>
@@ -1169,6 +1188,7 @@ Now we’ll run a source reconstruction using the multilayer mesh, select the ve
 <span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 </pre></div>
 </div>
+<a class="reference internal image-reference" href="../_images/tutorial_06_burst_results.png"><img alt="" src="../_images/tutorial_06_burst_results.png" style="width: 800px;" /></a>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spm</span><span class="o">.</span><span class="n">terminate</span><span class="p">()</span>
 
 <span class="c1"># Delete simulation files</span>
@@ -1185,6 +1205,7 @@ Now we’ll run a source reconstruction using the multilayer mesh, select the ve
 </div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
 </section>
 
 
@@ -1218,6 +1239,21 @@ Now we’ll run a source reconstruction using the multilayer mesh, select the ve
             
               
                 <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setting-up-the-simulations">Setting up the simulations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulating-a-signal-on-a-superficial-surface">Simulating a signal on a superficial surface</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#inversion">Inversion</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#white-matter-surface-simulation-with-laminar-csd">White matter surface simulation with laminar CSD</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#simulation-in-each-layer">Simulation in each layer</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#beta-burst-csd">Beta burst CSD</a></li>
+</ul>
+  </nav></div>
 
   <div class="sidebar-secondary-item">
   
