@@ -4,17 +4,18 @@ Laminar model comparison using cross-validation error
 
 This tutorial demonstrates how to perform laminar inference using model comparison based on cross-validation error as a metric of model fit, described in [Bonaiuto et al., 2018, Non-invasive laminar inference with MEG: Comparison of methods and source inversion algorithms](https://doi.org/10.1016/j.neuroimage.2017.11.068). A 20Hz oscillation is simulated at a particular cortical location in various layers. Source reconstruction is performed using the Empirical Bayesian Beamformer on the simulated sensor data using forward models based on different layer meshes. These models are then compared using cross-validation error. Cross-validation error is computed by fitting the model N times, each time leaving out a certain percentage of the channels and seeing how well the resulting model can predict the signal in those channels
 """
+
 # %%
-# ## Setting up the simulations
+# Setting up the simulations
+# --------------------------
 # 
 # Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.
 
-# %%
+
 import os
 import shutil
 import numpy as np
 import nibabel as nib
-from matplotlib import colors
 import matplotlib.pyplot as plt
 import tempfile
 
@@ -46,7 +47,6 @@ spm = spm_standalone.initialize()
 # %% [markdown]
 # For source reconstructions, we need an MRI and a surface mesh. The simulations will be based on a forward model using the multilayer mesh, and the model comparison will use each layer mesh
 
-# %%
 # Native space MRI to use for coregistration
 mri_fname = os.path.join('../test_data', subj_id, 'mri', 's2023-02-28_13-33-133958-00001-00224-1.nii' )
 
@@ -69,7 +69,6 @@ layer_fnames = get_surface_names(
 # %% [markdown]
 # We're going to copy the data file to a temporary directory and direct all output there.
 
-# %%
 # Extract base name and path of data file
 data_path, data_file_name = os.path.split(data_file)
 data_base = os.path.splitext(data_file_name)[0]
@@ -93,7 +92,6 @@ base_fname = os.path.join(tmp_dir, f'{data_base}.mat')
 # %% [markdown]
 # Invert the subject's data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations
 
-# %%
 # Patch size to use for inversion (in this case it matches the simulated patch size)
 patch_size = 5
 # Number of temporal modes to use for EBB inversion
@@ -121,10 +119,10 @@ coregister(
 )
 
 # %% [markdown]
-# ## Simulating a signal on the pial surface
+# Simulating a signal on the pial surface
+# ---------------------------------------
 # We're going to simulate 1s of a 20Hz sine wave with a dipole moment of 10nAm
 
-# %%
 # Frequency of simulated sinusoid (Hz)
 freq = 20
 # Strength of simulated activity (nAm)
@@ -140,10 +138,14 @@ plt.plot(time,dipole_moment*sim_signal[0,:])
 plt.xlabel('Time (s)')
 plt.ylabel('Amplitude (nAm)')
 
+# %%
+#.. image:: ../_static/tutorial_03_sim_signal.png
+#   :width: 800
+#   :alt:
+
 # %% [markdown]
 # We need to pick a location (mesh vertex) to simulate at
 
-# %%
 # Vertex to simulate activity at
 sim_vertex=24585
 
@@ -162,6 +164,11 @@ plot = show_surface(
     coord_size=2,
     camera_view=cam_view
 )
+
+# %%
+#.. image:: ../_static/tutorial_03_sim_location.png
+#   :width: 800
+#   :alt:
 
 # %% [markdown]
 # We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
@@ -189,10 +196,10 @@ pial_sim_fname = run_current_density_simulation(
 )   
 
 # %% [markdown]
-# ## Model comparison (pial - white matter)
+# Model comparison (pial - white matter)
+# --------------------------------------
 # Now we can run model comparison between source models based on the pial and white matter surfaces using cross-validation error. For computing cross-validation error, we'll run 10 folds, leaving out 10% of the channels in each fold. We'll then look at the difference in cross-validation error between the two models (pial - white matter). This should be lower for the pial surface model because we simulated activity on the pial surface
 
-# %%
 # Number of cross validation folds
 n_folds = 10
 # Percentage of test channels in cross validation
@@ -220,10 +227,10 @@ ideal_pc_test = 10 # may not use this number as we need integer number of channe
 np.mean(np.mean(cvErr[0],axis=-1),axis=-1)-np.mean(np.mean(cvErr[1],axis=-1),axis=-1)
 
 # %% [markdown]
-# ## White matter surface simulation with pial - white matter model comparison
+# White matter surface simulation with pial - white matter model comparison
+# -------------------------------------------------------------------------
 # Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, model comparison should yield lower cross-validation error for the white matter surface.
 
-# %%
 # Simulate at the corresponding vertex on the white matter surface
 white_vertex = (n_layers-1)*verts_per_surf+sim_vertex
 prefix = f'sim_{sim_vertex}_white_'
@@ -262,10 +269,10 @@ white_sim_fname = run_current_density_simulation(
 np.mean(np.mean(cvErr[0],axis=-1),axis=-1)-np.mean(np.mean(cvErr[1],axis=-1),axis=-1)
 
 # %% [markdown]
-# ## Simulation in each layer with model comparison across layers
+# Simulation in each layer with model comparison across layers
+# ------------------------------------------------------------
 # That was model comparison with two candidate models: one based on the white matter surface, and one on the pial. Let's now simulate on each layer, and for each simulation, run model comparison across all layers. We'll turn off SPM visualization here.
 
-# %%
 # Now simulate at the corresponding vertex on each layer, and for each simulation, run model comparison across
 # all layers
 all_layerCvErr = []
@@ -311,7 +318,6 @@ all_layerCvErr = np.mean(np.mean(all_layerCvErr, axis=-1), axis=-1)
 # %% [markdown]
 # For each simulation, we can plot the cross-validation error for all models relative to the worst model. The layer model with the lowest cross-validation error should correspond to the layer that the activity was simulated in.
 
-# %%
 col_r = plt.cm.cool(np.linspace(0,1, num=n_layers))
 plt.figure(figsize=(10,4))
 
@@ -341,6 +347,10 @@ plt.ylabel('Min CVErr')
 plt.tight_layout()
 
 # %%
+#.. image:: ../_static/tutorial_03_results.png
+#   :width: 800
+#   :alt:
+
 # Transpose for visualization
 im=plt.imshow(all_layerCvErr.T, cmap='Spectral_r')
 
@@ -355,6 +365,11 @@ plt.xlabel('Simulated layer', fontsize=14)
 plt.ylabel('Evaluated layer', fontsize=14)
 cb=plt.colorbar(im)
 cb.set_label('CVerr', fontsize=14)
+
+# %%
+#.. image:: ../_static/tutorial_03_results_matrix.png
+#   :width: 800
+#   :alt:
 
 # %%
 spm.terminate()
