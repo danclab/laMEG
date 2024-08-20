@@ -4,17 +4,18 @@ Sliding time window laminar model comparison using free energy
 
 This tutorial demonstrates how to perform laminar inference of event-related responses in a sliding time window using model comparison based on free energy as a metric of model fit, described in [Bonaiuto et al., 2021, Laminar dynamics of high amplitude beta bursts in human motor cortex](https://doi.org/10.1016/j.neuroimage.2021.118479). A temporal Gaussian function is simulated at a particular cortical location in various layers. Source reconstruction is performed on the whole time window using the Empirical Bayesian Beamformer on the simulated sensor data using a forward model based on the multilayer mesh as a localizer. This is used to select priors on each layer mesh for a sliding time window model comparison using free energy.
 """
-# %%
-# ## Setting up the simulations
-# 
-# Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.
 
 # %%
+# Setting up the simulations
+# --------------------------
+#
+# Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.
+
+
 import os
 import shutil
 import numpy as np
 import nibabel as nib
-from matplotlib import colors
 import matplotlib.pyplot as plt
 import tempfile
 
@@ -49,7 +50,6 @@ spm = spm_standalone.initialize()
 # %% [markdown]
 # For source reconstructions, we need an MRI and a surface mesh. The simulations will be based on a forward model using the multilayer mesh, and the model comparison will use each layer mesh
 
-# %%
 # Native space MRI to use for coregistration
 mri_fname = os.path.join('../test_data', subj_id, 'mri/s2023-02-28_13-33-133958-00001-00224-1.nii' )
 
@@ -76,7 +76,6 @@ orig_inflated = nib.load(os.path.join('../test_data', subj_id, 'surf', 'inflated
 # %% [markdown]
 # We're going to copy the data file to a temporary directory and direct all output there.
 
-# %%
 # Extract base name and path of data file
 data_path, data_file_name = os.path.split(data_file)
 data_base = os.path.splitext(data_file_name)[0]
@@ -100,7 +99,6 @@ base_fname = os.path.join(tmp_dir, f'{data_base}.mat')
 # %% [markdown]
 # Invert the subject's data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations
 
-# %%
 # Patch size to use for inversion (in this case it matches the simulated patch size)
 patch_size = 5
 # Number of temporal modes to use for EBB inversion
@@ -128,10 +126,10 @@ coregister(
 )
 
 # %% [markdown]
-# ## Simulating a signal on the pial surface
+# Simulating a signal on the pial surface
+# ---------------------------------------
 # We're going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a width of 25ms
 
-# %%
 # Strength of simulated activity (nAm)
 dipole_moment = 8
 # Temporal width of the simulated Gaussian
@@ -147,10 +145,14 @@ plt.plot(time,dipole_moment*sim_signal[0,:])
 plt.xlabel('Time (s)')
 plt.ylabel('Amplitude (nAm)')
 
+# %%
+#.. image:: ../_static/tutorial_04_sim_signal.png
+#   :width: 800
+#   :alt:
+
 # %% [markdown]
 # We need to pick a location (mesh vertex) to simulate at
 
-# %%
 # Vertex to simulate activity at
 sim_vertex=24585
 
@@ -170,10 +172,14 @@ plot = show_surface(
     camera_view=cam_view
 )
 
+# %%
+#.. image:: ../_static/tutorial_04_sim_location.png
+#   :width: 800
+#   :alt:
+
 # %% [markdown]
 # We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-# %%
 # Simulate at a vertex on the pial surface
 pial_vertex = sim_vertex
 # Orientation of the simulated dipole
@@ -199,10 +205,11 @@ pial_sim_fname = run_dipole_simulation(
 ) 
 
 # %% [markdown]
-# ## Localizer inversion
+# Localizer inversion
+# -------------------
 # Now we'll run a source reconstruction using the multilayer mesh, extract the signal in the pial layer, and select a prior based on the peak.
 
-# %%
+
 [_,_,MU] = invert_ebb(
     multilayer_mesh_fname, 
     pial_sim_fname, 
@@ -236,7 +243,6 @@ print(prior_coord)
 # %% [markdown]
 # We can see that the prior is the same as the location we simulated at
 
-# %%
 # Interpolate for display on the original inflated surface
 interpolated_data = interpolate_data(orig_inflated, ds_inflated, m_layer_max)
           
@@ -265,11 +271,16 @@ plot = show_surface(
     coord_color=[0,0,255]
 )
 
+# %%
+#.. image:: ../_static/tutorial_04_localizer.png
+#   :width: 800
+#   :alt:
+
 # %% [markdown]
-# ## Sliding time window model comparison (pial - white matter)
+# Sliding time window model comparison (pial - white matter)
+# ----------------------------------------------------------
 # Now we can run sliding time window model comparison between source models based on the pial and white matter surfaces using free energy. Specifically, we'll look at the difference in free energy between the two models (pial - white matter), in sliding and overlapping windows of 16ms. The free energy difference (pial - white matter) should be positive (more model evidence for the pial surface model) because we simulated activity on the pial surface.
 
-# %%
 # Number of temporal models for sliding time window inversion
 sliding_n_temp_modes = 4
 # Size of sliding window (in ms)
@@ -300,11 +311,17 @@ plt.plot(np.mean(wois,axis=-1), Fs[0,:]-Fs[1,:])
 plt.xlabel('Time (ms)')
 plt.ylabel(r'$\Delta$F')
 
+# %%
+#.. image:: ../_static/tutorial_04_pial_sim_results.png
+#   :width: 800
+#   :alt:
+
 # %% [markdown]
-# ## White matter surface simulation with pial - white matter sliding time window model comparison
+# White matter surface simulation with pial - white matter sliding time window model comparison
+# ---------------------------------------------------------------------------------------------
 # Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, sliding time window model comparison should yield greater model evidence for the white matter surface, and therefore the difference in free energy (pial - white matter) should be negative.
 
-# %%
+
 # Simulate at the corresponding vertex on the white matter surface
 white_vertex = (n_layers-1)*verts_per_surf+sim_vertex
 prefix = f'sim_{sim_vertex}_white_'
@@ -374,12 +391,18 @@ plt.plot(np.mean(wois,axis=-1), Fs[0,:]-Fs[1,:])
 plt.xlabel('Time (ms)')
 plt.ylabel(r'$\Delta$F')
 
+# %%
+#.. image:: ../_static/tutorial_04_white_sim_results.png
+#   :width: 800
+#   :alt:
+
+
 # %% [markdown]
-# ## Simulation in each layer with sliding time window model comparison across layers
+# Simulation in each layer with sliding time window model comparison across layers
+# --------------------------------------------------------------------------------
 # That was sliding time window model comparison with two candidate models: one based on the white matter surface, and one on the pial. Let's now simulate on each layer, and for each simulation, run sliding time window model comparison across all layers. We'll turn off SPM visualization here.
 
-# %%
-# Now simulate at the corresponding vertex on each layer, and for each simulation, run sliding window model 
+# Now simulate at the corresponding vertex on each layer, and for each simulation, run sliding window model
 # comparison across all layers
 all_layerF = []
 for l in range(n_layers):
@@ -453,7 +476,6 @@ all_layerF = np.squeeze(np.array(all_layerF))
 # %% [markdown]
 # For each simulation, we can plot the free energy for all models relative to the worst model within a central time window. The layer model with the highest free energy should correspond to the layer that the activity was simulated in.
 
-# %%
 # Average free energy within small time window in center of the epoch
 woi_t = np.mean(wois,axis=-1)
 woi_idx = np.where((woi_t>=-20) & (woi_t<=20))[0]
@@ -489,6 +511,10 @@ plt.ylabel(r'Peak $\Delta$F')
 plt.tight_layout()
 
 # %%
+#.. image:: ../_static/tutorial_04_results.png
+#   :width: 800
+#   :alt:
+
 # Normalization step
 norm_layerF = np.zeros(m_all_layerF.shape)
 for l in range(n_layers):
@@ -508,6 +534,11 @@ plt.xlabel('Simulated layer', fontsize=14)
 plt.ylabel('Evaluated layer', fontsize=14)
 cb=plt.colorbar(im)
 cb.set_label(r'$\Delta F$', fontsize=14)
+
+# %%
+#.. image:: ../_static/tutorial_04_results_matrix.png
+#   :width: 800
+#   :alt:
 
 # %%
 spm.terminate()
