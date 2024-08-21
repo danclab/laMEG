@@ -158,7 +158,7 @@ def load_meg_sensor_data(data_fname):
     Parameters
     ----------
     data_fname : str
-        Filename or path of the MEG/EEG data file.
+        Filename or path of the MEG data file.
 
     Returns
     -------

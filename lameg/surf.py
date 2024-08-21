@@ -1,12 +1,8 @@
 """
-This module provides a set of tools for handling and manipulating surface mesh data, primarily
-used within neuroimaging and computer graphics contexts. The functionalities include computing mesh
-normals, interpolating mesh data, handling non-manifold edges, creating and manipulating GIFTI
-surface files, and downsampling meshes using the VTK library.
-
-The functions within the module leverage external libraries such as nibabel for neuroimaging data
-management, numpy for numerical operations, scipy for scientific computing tasks like Delaunay
-triangulation, and the VTK toolkit for complex mesh processing tasks such as mesh decimation.
+This module provides a set of tools for handling and manipulating surface mesh data. The
+functionalities include computing mesh normals, interpolating mesh data, handling non-manifold
+edges, creating and manipulating GIFTI surface files, and downsampling meshes using the VTK
+library.
 
 Key functionalities include:
 - Normalization of vectors to unit length.

@@ -1,6 +1,7 @@
-"""This module facilitates the simulation of MEG/EEG data using MATLAB's computing environment and
+"""
+This module facilitates the simulation of MEG data using MATLAB's computing environment and
 the Statistical Parametric Mapping (SPM) toolbox. It provides functionalities to simulate both
-current density and dipole-based MEG/EEG data under varying conditions and configurations.
+current density and dipole-based MEG data under varying conditions and configurations.
 
 Key Features:
 
@@ -10,18 +11,6 @@ Key Features:
 - Dipole Simulation: Facilitates the simulation of dipole-based data, providing options to
   configure dipole orientations, moments, and noise levels. It supports the simulation of unique
   signals per trial and can average data across trials if needed.
-- Integration with MATLAB and SPM: Utilizes MATLAB functions and SPM routines to perform the
-  simulations.
-
-The module's functions accept various inputs to define the simulation conditions and output
-simulated MEG/EEG datasets that can be used for further analysis or testing. Both types of
-simulations are designed to be flexible, supporting multiple vertices, signal configurations, and
-analysis scenarios.
-
-Each function within the module is capable of starting an instance of standalone SPM, provided via
-the spm_instance parameter, to handle computations directly within the SPM environment. If no
-instance is provided, the functions will initiate a new one and close it upon completion unless
-managed externally.
 
 Examples of use:
 
@@ -46,14 +35,14 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
     """
     Simulate current density data based on specified parameters.
 
-    This function interfaces with MATLAB to generate simulated MEG/EEG data. It creates simulations
-    based on specified vertices, signals, dipole moments, and patch sizes, incorporating a defined
-    signal-to-noise ratio (SNR). White noise is added at the sensor level to yield the given SNR.
+    This function generates simulated MEG data based on specified vertices, signals, dipole
+    moments, and patch sizes, incorporating a defined signal-to-noise ratio (SNR). White noise is
+    added at the sensor level to yield the given SNR.
 
     Parameters
     ----------
     data_file : str
-        Filename or path of the MEG/EEG data file used as a template for simulation.
+        Filename or path of the MEG data file used as a template for simulation.
     prefix : str
         Prefix for the output simulated data filename.
     sim_vertices : list or int
@@ -128,17 +117,17 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
                           dipole_moments, sim_patch_sizes, snr, sim_woi=None, average_trials=False,
                           spm_instance=None):
     """
-    Simulate dipole-based MEG/EEG data based on specified parameters.
+    Simulate dipole-based MEG data based on specified parameters.
 
-    This function interfaces with MATLAB to generate simulated MEG/EEG data with specific dipole
-    configurations. It creates simulations based on specified vertices, signals, dipole
-    orientations, moments, and patch sizes, incorporating a defined signal-to-noise ratio (SNR).
-    White noise is added at the sensor level to yield the given SNR.
+    This function generates simulated MEG data with specific dipole configurations. It creates
+    simulations based on specified vertices, signals, dipole orientations, moments, and patch
+    sizes, incorporating a defined signal-to-noise ratio (SNR). White noise is added at the sensor
+    level to yield the given SNR.
 
     Parameters
     ----------
     data_file : str
-        Filename or path of the MEG/EEG data file used as a template for simulation.
+        Filename or path of the MEG data file used as a template for simulation.
     prefix : str
         Prefix for the output simulated data filename.
     sim_vertices : list or int
