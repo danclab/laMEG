@@ -467,21 +467,22 @@ document.write(`
 </section>
 <section id="module-lameg.invert">
 <span id="lameg-invert-module"></span><h2>lameg.invert module<a class="headerlink" href="#module-lameg.invert" title="Permalink to this heading">#</a></h2>
-<p>This module provides tools for the coregistration, and source reconstruction of MEG/EEG data
-utilizing MATLAB and SPM (Statistical Parametric Mapping) functionalities.
+<p>This module provides tools for the coregistration, and source reconstruction of MEG data
+using SPM (Statistical Parametric Mapping).
 Key operations include:</p>
 <ul class="simple">
-<li><p>Coregistration of head models with MRI and mesh data.</p></li>
+<li><p>Coregistration of MRI and surface meshes with MEG data.</p></li>
 <li><p>Empirical Bayesian Beamformer (EBB) and Multiple Sparse Priors (MSP) source reconstruction
 algorithms.</p></li>
+<li><p>Sliding time window source reconstruction using MSP</p></li>
 <li><p>Utility function for loading source data after source reconstruction.</p></li>
 </ul>
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.invert.coregister">
 <span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">coregister</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fid_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('nas',</span> <span class="pre">'lpa',</span> <span class="pre">'rpa')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#lameg.invert.coregister" title="Permalink to this definition">#</a></dt>
 <dd><p>Run head coregistration.</p>
-<p>This function interfaces with MATLAB to perform head coregistration on MEG/EEG data using an
-MRI and mesh.</p>
+<p>This function performs head coregistration on MEG data using an MRI and mesh, and computes
+a forward model using the Nolte single shell model.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -490,7 +491,7 @@ MRI and mesh.</p>
 <li><p><strong>rpa</strong> (<em>list</em>) – Right PreAuricular fiducial coordinates.</p></li>
 <li><p><strong>mri_fname</strong> (<em>str</em>) – Filename of the MRI data.</p></li>
 <li><p><strong>mesh_fname</strong> (<em>str</em>) – Filename of the mesh data.</p></li>
-<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG/EEG data.</p></li>
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG data.</p></li>
 <li><p><strong>fid_labels</strong> (<em>list</em><em>, </em><em>optional</em>) – Fiducial coordinate labels. Default is [‘nas’, ‘lpa’, ‘rpa’].</p></li>
 <li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to show SPM visualization. Default is True.</p></li>
 <li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Instance of standalone SPM. Default is None.</p></li>
@@ -507,14 +508,13 @@ within the function.</p>
 <dt class="sig sig-object py" id="lameg.invert.invert_ebb">
 <span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">invert_ebb</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_temp_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">foi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hann_windowing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_folds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ideal_pc_test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.invert.invert_ebb" title="Permalink to this definition">#</a></dt>
 <dd><p>Run the Empirical Bayesian Beamformer (EBB) source reconstruction algorithm.</p>
-<p>This function interfaces with MATLAB to perform EBB source reconstruction on MEG/EEG data.
-It involves mesh smoothing and running the EBB algorithm in MATLAB. The MEG/EEG data must
-already be coregistered with the given mesh.</p>
+<p>This function performs EBB source reconstruction on MEG data. It involves mesh smoothing
+and running the EBB algorithm. The MEG data must already be coregistered with the given mesh.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mesh_fname</strong> (<em>str</em>) – Filename of the mesh data.</p></li>
-<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG/EEG data.</p></li>
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG data.</p></li>
 <li><p><strong>n_layers</strong> (<em>int</em>) – Number of layers in the mesh.</p></li>
 <li><p><strong>patch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Patch size for mesh smoothing. Default is 5.</p></li>
 <li><p><strong>n_temp_modes</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of temporal modes for the beamformer. Default is 4.</p></li>
@@ -548,14 +548,13 @@ within the function.</p></li>
 <dt class="sig sig-object py" id="lameg.invert.invert_msp">
 <span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">invert_msp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_temp_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">foi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hann_windowing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_folds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ideal_pc_test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.invert.invert_msp" title="Permalink to this definition">#</a></dt>
 <dd><p>Run the Multiple Sparse Priors (MSP) source reconstruction algorithm.</p>
-<p>This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data.
-It involves mesh smoothing and running the MSP algorithm in MATLAB. The MEG/EEG data must
-already be coregistered with the given mesh.</p>
+<p>This function performs MSP source reconstruction on MEG data. It involves mesh smoothing and
+running the MSP algorithm. The MEG data must already be coregistered with the given mesh.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>mesh_fname</strong> (<em>str</em>) – Filename of the mesh data.</p></li>
-<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG/EEG data.</p></li>
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG data.</p></li>
 <li><p><strong>n_layers</strong> (<em>int</em>) – Number of layers in the mesh.</p></li>
 <li><p><strong>priors</strong> (<em>list</em><em>, </em><em>optional</em>) – Indices of vertices to be used as priors. Default is an empty list.</p></li>
 <li><p><strong>patch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Patch size for mesh smoothing. Default is 5.</p></li>
@@ -591,16 +590,15 @@ within the function.</p></li>
 <dt class="sig sig-object py" id="lameg.invert.invert_sliding_window">
 <span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">invert_sliding_window</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_temp_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">win_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">win_overlap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">foi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hann_windowing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.invert.invert_sliding_window" title="Permalink to this definition">#</a></dt>
 <dd><p>Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time window.</p>
-<p>This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data
-within sliding time windows. It involves mesh smoothing and running the MSP algorithm in
-MATLAB for each time window. The MEG/EEG data must already be coregistered with the given
-mesh.</p>
+<p>This function performs MSP source reconstruction on MEG data within sliding time windows. It
+involves mesh smoothing and running the MSP algorithm. The MEG data must already be
+coregistered with the given mesh.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>prior</strong> (<em>float</em>) – Index of the vertex to be used as a prior.</p></li>
 <li><p><strong>mesh_fname</strong> (<em>str</em>) – Filename of the mesh data.</p></li>
-<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG/EEG data.</p></li>
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG data.</p></li>
 <li><p><strong>n_layers</strong> (<em>int</em>) – Number of layers in the mesh.</p></li>
 <li><p><strong>patch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Patch size for mesh smoothing. Default is 5.</p></li>
 <li><p><strong>n_temp_modes</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of temporal modes for the beamformer. Default is 1.</p></li>
@@ -635,13 +633,12 @@ within the function.</p></li>
 <span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">load_source_time_series</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.invert.load_source_time_series" title="Permalink to this definition">#</a></dt>
 <dd><p>Load source time series data from specified vertices using precomputed inverse solutions or a
 lead field matrix.</p>
-<p>This function interfaces with MATLAB to extract time series data from specific vertices, based
-on precomputed inverse solutions, or computes the source time series using a provided lead
-field matrix.</p>
+<p>This function extracts time series data from specific vertices, based on precomputed inverse
+solutions, or computes the source time series using a provided lead field matrix.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_fname</strong> (<em>str</em>) – Filename or path of the MEG/EEG data file.</p></li>
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename or path of the MEG data file.</p></li>
 <li><p><strong>mu_matrix</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – Lead field matrix (source x sensor). Default is None.</p></li>
 <li><p><strong>inv_fname</strong> (<em>str</em><em>, </em><em>optional</em>) – Filename or path of the file containing the inverse solutions. Default is None.</p></li>
 <li><p><strong>vertices</strong> (<em>list</em><em> of </em><em>int</em><em>, </em><em>optional</em>) – List of vertex indices from which to extract time series data. Default is None, which
@@ -660,7 +657,7 @@ implies all vertices will be used.</p></li>
 <p class="rubric">Notes</p>
 <ul class="simple">
 <li><p>If <cite>inv_fname</cite> is not provided, and <cite>mu_matrix</cite> is None, the inverse solution from the
-MEG/EEG data file specified by <cite>data_fname</cite> will be used.</p></li>
+MEG data file specified by <cite>data_fname</cite> will be used.</p></li>
 <li><p>If <cite>mu_matrix</cite> is provided, the function will compute the source time series directly using
 the lead field matrix, without the need for precomputed inverse solutions.</p></li>
 </ul>
@@ -670,17 +667,11 @@ the lead field matrix, without the need for precomputed inverse solutions.</p></
 <section id="module-lameg.laminar">
 <span id="lameg-laminar-module"></span><h2>lameg.laminar module<a class="headerlink" href="#module-lameg.laminar" title="Permalink to this heading">#</a></h2>
 <p>This module provides tools for performing laminar analysis of MEG signals.
-It integrates functionalities for coregistering head models, performing source reconstruction
-using different methods (Empirical Bayesian Beamformer and Multiple Sparse Priors),
-and assessing model fit via free energy calculations. It also includes capabilities
-for analyzing laminar current source density and comparing regional brain activity
-across different conditions or layers.</p>
-<p>The module leverages external libraries such as NumPy, SciPy, neo, quantities,
-and proprietary tools like MATLAB alongside the SPM toolkit.
-Functions provided allow for complex workflows such as sliding window analysis
-for dynamic source reconstruction and laminar analysis for studying laminar cortical activity.</p>
+It integrates functionalities for performing source reconstruction using different methods
+(Empirical Bayesian Beamformer and Multiple Sparse Priors), and assessing model fit via free
+energy and cross validation error. It also includes capabilities for analyzing laminar current
+source density and comparing regional brain activity across different conditions or layers.</p>
 <p>Key functionalities include:
-- Coregistration of MEG/EEG data with MRI and mesh models.
 - Source reconstruction with options to choose between different methods and evaluate model fits.
 - Calculation of current source density from laminar neural signals.
 - Comparison of power changes across different regions and layers to identify areas of interest.</p>
@@ -689,8 +680,7 @@ for dynamic source reconstruction and laminar analysis for studying laminar cort
 <span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">compute_csd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sfreq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smoothing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.laminar.compute_csd" title="Permalink to this definition">#</a></dt>
 <dd><p>Compute the laminar Current Source Density (CSD) from a given signal.</p>
 <p>This function calculates CSD using the Standard CSD method. It takes a multi-layered neural
-signal, typically from laminar probes, and computes the CSD. An optional smoothing step can
-be applied to the CSD output.</p>
+signal, and computes the CSD. An optional smoothing step can be applied to the CSD output.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -728,8 +718,7 @@ different number of layers if smoothing is applied.</p></li>
 <dd><p>Compare model fits using different meshes by computing the free energy.</p>
 <p>This function runs source reconstruction algorithms (either Empirical Bayesian Beamformer or
 Multiple Sparse Priors) on a set of meshes and compares their model fits using the free energy
-and cross-validation error metrics. It allows for separate configuration of coregistration and
-inversion parameters through distinct keyword argument dictionaries.</p>
+and cross-validation error metrics.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -738,7 +727,7 @@ inversion parameters through distinct keyword argument dictionaries.</p>
 <li><p><strong>rpa</strong> (<em>list</em>) – Right PreAuricular fiducial coordinates.</p></li>
 <li><p><strong>mri_fname</strong> (<em>str</em>) – Filename of the MRI data.</p></li>
 <li><p><strong>mesh_fnames</strong> (<em>list</em>) – List of filenames for different meshes.</p></li>
-<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG/EEG data.</p></li>
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG data.</p></li>
 <li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – Source reconstruction method, either ‘EBB’ or ‘MSP’. Default is ‘EBB’.</p></li>
 <li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to display SPM visualizations. Default is True.</p></li>
 <li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Instance of standalone SPM software. Default is None.</p></li>
@@ -789,8 +778,8 @@ same time. Default is None.</p></li>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><strong>laminar_t_statistic</strong> (<em>TODO</em>) – The t-statistic for laminar power comparison.</p></li>
-<li><p><strong>laminar_p_value</strong> (<em>TODO</em>) – The p-value associated with the laminar power comparison.</p></li>
+<li><p><strong>laminar_t_statistic</strong> (<em>float</em>) – The t-statistic for laminar power comparison.</p></li>
+<li><p><strong>laminar_p_value</strong> (<em>float</em>) – The p-value associated with the laminar power comparison.</p></li>
 <li><p><strong>deg_of_freedom</strong> (<em>int</em>) – Degrees of freedom for the statistical test.</p></li>
 <li><p><strong>roi_idx</strong> (<em>list of int</em>) – Indices of vertices considered as ROIs.</p></li>
 </ul>
@@ -815,7 +804,7 @@ the free energy in each window.</p>
 <li><p><strong>rpa</strong> (<em>list</em>) – Right PreAuricular fiducial coordinates.</p></li>
 <li><p><strong>mri_fname</strong> (<em>str</em>) – Filename of the MRI data.</p></li>
 <li><p><strong>mesh_fnames</strong> (<em>list</em>) – List of filenames for different meshes.</p></li>
-<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG/EEG data.</p></li>
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG data.</p></li>
 <li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to show SPM visualization. Default is True.</p></li>
 <li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Instance of standalone SPM. Default is None.</p></li>
 <li><p><strong>coregister_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments specifically for the <cite>coregister</cite> function.</p></li>
@@ -843,9 +832,9 @@ within the function.</p></li>
 </section>
 <section id="module-lameg.simulate">
 <span id="lameg-simulate-module"></span><h2>lameg.simulate module<a class="headerlink" href="#module-lameg.simulate" title="Permalink to this heading">#</a></h2>
-<p>This module facilitates the simulation of MEG/EEG data using MATLAB’s computing environment and
+<p>This module facilitates the simulation of MEG data using MATLAB’s computing environment and
 the Statistical Parametric Mapping (SPM) toolbox. It provides functionalities to simulate both
-current density and dipole-based MEG/EEG data under varying conditions and configurations.</p>
+current density and dipole-based MEG data under varying conditions and configurations.</p>
 <p>Key Features:</p>
 <ul class="simple">
 <li><p>Current Density Simulation: Allows for the simulation of current density data based on
@@ -854,17 +843,7 @@ ability to specify the signal-to-noise ratio and window of interest for the simu
 <li><p>Dipole Simulation: Facilitates the simulation of dipole-based data, providing options to
 configure dipole orientations, moments, and noise levels. It supports the simulation of unique
 signals per trial and can average data across trials if needed.</p></li>
-<li><p>Integration with MATLAB and SPM: Utilizes MATLAB functions and SPM routines to perform the
-simulations.</p></li>
 </ul>
-<p>The module’s functions accept various inputs to define the simulation conditions and output
-simulated MEG/EEG datasets that can be used for further analysis or testing. Both types of
-simulations are designed to be flexible, supporting multiple vertices, signal configurations, and
-analysis scenarios.</p>
-<p>Each function within the module is capable of starting an instance of standalone SPM, provided via
-the spm_instance parameter, to handle computations directly within the SPM environment. If no
-instance is provided, the functions will initiate a new one and close it upon completion unless
-managed externally.</p>
 <p>Examples of use:</p>
 <ul class="simple">
 <li><p>Simulating data with specific noise levels and analyzing the impact of noise on signal processing
@@ -876,13 +855,13 @@ source localization methods.</p></li>
 <dt class="sig sig-object py" id="lameg.simulate.run_current_density_simulation">
 <span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">run_current_density_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_signals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipole_moments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_patch_sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.run_current_density_simulation" title="Permalink to this definition">#</a></dt>
 <dd><p>Simulate current density data based on specified parameters.</p>
-<p>This function interfaces with MATLAB to generate simulated MEG/EEG data. It creates simulations
-based on specified vertices, signals, dipole moments, and patch sizes, incorporating a defined
-signal-to-noise ratio (SNR). White noise is added at the sensor level to yield the given SNR.</p>
+<p>This function generates simulated MEG data based on specified vertices, signals, dipole
+moments, and patch sizes, incorporating a defined signal-to-noise ratio (SNR). White noise is
+added at the sensor level to yield the given SNR.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_file</strong> (<em>str</em>) – Filename or path of the MEG/EEG data file used as a template for simulation.</p></li>
+<li><p><strong>data_file</strong> (<em>str</em>) – Filename or path of the MEG data file used as a template for simulation.</p></li>
 <li><p><strong>prefix</strong> (<em>str</em>) – Prefix for the output simulated data filename.</p></li>
 <li><p><strong>sim_vertices</strong> (<em>list</em><em> or </em><em>int</em>) – Indices of vertices where simulations are centered. Can be a single integer or a list.</p></li>
 <li><p><strong>sim_signals</strong> (<em>ndarray</em>) – Array of simulated signals.</p></li>
@@ -911,15 +890,15 @@ within the function.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.simulate.run_dipole_simulation">
 <span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">run_dipole_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_signals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipole_orientations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipole_moments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_patch_sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">average_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.run_dipole_simulation" title="Permalink to this definition">#</a></dt>
-<dd><p>Simulate dipole-based MEG/EEG data based on specified parameters.</p>
-<p>This function interfaces with MATLAB to generate simulated MEG/EEG data with specific dipole
-configurations. It creates simulations based on specified vertices, signals, dipole
-orientations, moments, and patch sizes, incorporating a defined signal-to-noise ratio (SNR).
-White noise is added at the sensor level to yield the given SNR.</p>
+<dd><p>Simulate dipole-based MEG data based on specified parameters.</p>
+<p>This function generates simulated MEG data with specific dipole configurations. It creates
+simulations based on specified vertices, signals, dipole orientations, moments, and patch
+sizes, incorporating a defined signal-to-noise ratio (SNR). White noise is added at the sensor
+level to yield the given SNR.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_file</strong> (<em>str</em>) – Filename or path of the MEG/EEG data file used as a template for simulation.</p></li>
+<li><p><strong>data_file</strong> (<em>str</em>) – Filename or path of the MEG data file used as a template for simulation.</p></li>
 <li><p><strong>prefix</strong> (<em>str</em>) – Prefix for the output simulated data filename.</p></li>
 <li><p><strong>sim_vertices</strong> (<em>list</em><em> or </em><em>int</em>) – Indices of vertices where simulations are centered. Can be a single integer or a list.</p></li>
 <li><p><strong>sim_signals</strong> (<em>ndarray</em>) – Array of simulated signals. Either dipoles x time (signal will be used for each trial), or
@@ -951,13 +930,10 @@ within the function.</p></li>
 </section>
 <section id="module-lameg.surf">
 <span id="lameg-surf-module"></span><h2>lameg.surf module<a class="headerlink" href="#module-lameg.surf" title="Permalink to this heading">#</a></h2>
-<p>This module provides a set of tools for handling and manipulating surface mesh data, primarily
-used within neuroimaging and computer graphics contexts. The functionalities include computing mesh
-normals, interpolating mesh data, handling non-manifold edges, creating and manipulating GIFTI
-surface files, and downsampling meshes using the VTK library.</p>
-<p>The functions within the module leverage external libraries such as nibabel for neuroimaging data
-management, numpy for numerical operations, scipy for scientific computing tasks like Delaunay
-triangulation, and the VTK toolkit for complex mesh processing tasks such as mesh decimation.</p>
+<p>This module provides a set of tools for handling and manipulating surface mesh data. The
+functionalities include computing mesh normals, interpolating mesh data, handling non-manifold
+edges, creating and manipulating GIFTI surface files, and downsampling meshes using the VTK
+library.</p>
 <p>Key functionalities include:
 - Normalization of vectors to unit length.
 - Calculation of normals for mesh surfaces using both Delaunay triangulation and custom methods.
@@ -1815,7 +1791,7 @@ places. Each filename also includes an orientation method specifier.</p>
 <dd><p>Load sensor data from a MEG dataset.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data_fname</strong> (<em>str</em>) – Filename or path of the MEG/EEG data file.</p>
+<dd class="field-odd"><p><strong>data_fname</strong> (<em>str</em>) – Filename or path of the MEG data file.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
@@ -1912,10 +1888,10 @@ NaNs.</p></li>
 </section>
 <section id="module-lameg.viz">
 <span id="lameg-viz-module"></span><h2>lameg.viz module<a class="headerlink" href="#module-lameg.viz" title="Permalink to this heading">#</a></h2>
-<p>This module provides tools for converting and visualizing numerical data into color-coded
-formats. It includes functions for mapping data to RGB and hexadecimal color values, performing
-color normalization, and rendering 3D surface visualizations using K3D. Additional utilities are
-included for plotting Current Source Density (CSD) data and handling color transformations.</p>
+<p>This module provides tools for converting and visualizing data. It includes functions for mapping
+data to RGB and hexadecimal color values, performing color normalization, and rendering 3D surface
+visualizations using K3D. Additional utilities are included for plotting Current Source Density
+(CSD) data and handling color transformations.</p>
 <section id="functions">
 <h3>Functions:<a class="headerlink" href="#functions" title="Permalink to this heading">#</a></h3>
 <ul class="simple">

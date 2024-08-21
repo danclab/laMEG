@@ -465,17 +465,11 @@ document.write(`
   <section id="module-lameg.laminar">
 <span id="lameg-laminar"></span><h1>lameg.laminar<a class="headerlink" href="#module-lameg.laminar" title="Permalink to this heading">#</a></h1>
 <p>This module provides tools for performing laminar analysis of MEG signals.
-It integrates functionalities for coregistering head models, performing source reconstruction
-using different methods (Empirical Bayesian Beamformer and Multiple Sparse Priors),
-and assessing model fit via free energy calculations. It also includes capabilities
-for analyzing laminar current source density and comparing regional brain activity
-across different conditions or layers.</p>
-<p>The module leverages external libraries such as NumPy, SciPy, neo, quantities,
-and proprietary tools like MATLAB alongside the SPM toolkit.
-Functions provided allow for complex workflows such as sliding window analysis
-for dynamic source reconstruction and laminar analysis for studying laminar cortical activity.</p>
+It integrates functionalities for performing source reconstruction using different methods
+(Empirical Bayesian Beamformer and Multiple Sparse Priors), and assessing model fit via free
+energy and cross validation error. It also includes capabilities for analyzing laminar current
+source density and comparing regional brain activity across different conditions or layers.</p>
 <p>Key functionalities include:
-- Coregistration of MEG/EEG data with MRI and mesh models.
 - Source reconstruction with options to choose between different methods and evaluate model fits.
 - Calculation of current source density from laminar neural signals.
 - Comparison of power changes across different regions and layers to identify areas of interest.</p>
@@ -501,8 +495,7 @@ for dynamic source reconstruction and laminar analysis for studying laminar cort
 <span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">compute_csd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sfreq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smoothing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.laminar.compute_csd" title="Permalink to this definition">#</a></dt>
 <dd><p>Compute the laminar Current Source Density (CSD) from a given signal.</p>
 <p>This function calculates CSD using the Standard CSD method. It takes a multi-layered neural
-signal, typically from laminar probes, and computes the CSD. An optional smoothing step can
-be applied to the CSD output.</p>
+signal, and computes the CSD. An optional smoothing step can be applied to the CSD output.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -540,8 +533,7 @@ different number of layers if smoothing is applied.</p></li>
 <dd><p>Compare model fits using different meshes by computing the free energy.</p>
 <p>This function runs source reconstruction algorithms (either Empirical Bayesian Beamformer or
 Multiple Sparse Priors) on a set of meshes and compares their model fits using the free energy
-and cross-validation error metrics. It allows for separate configuration of coregistration and
-inversion parameters through distinct keyword argument dictionaries.</p>
+and cross-validation error metrics.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -550,7 +542,7 @@ inversion parameters through distinct keyword argument dictionaries.</p>
 <li><p><strong>rpa</strong> (<em>list</em>) – Right PreAuricular fiducial coordinates.</p></li>
 <li><p><strong>mri_fname</strong> (<em>str</em>) – Filename of the MRI data.</p></li>
 <li><p><strong>mesh_fnames</strong> (<em>list</em>) – List of filenames for different meshes.</p></li>
-<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG/EEG data.</p></li>
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG data.</p></li>
 <li><p><strong>method</strong> (<em>str</em><em>, </em><em>optional</em>) – Source reconstruction method, either ‘EBB’ or ‘MSP’. Default is ‘EBB’.</p></li>
 <li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to display SPM visualizations. Default is True.</p></li>
 <li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Instance of standalone SPM software. Default is None.</p></li>
@@ -601,8 +593,8 @@ same time. Default is None.</p></li>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><strong>laminar_t_statistic</strong> (<em>TODO</em>) – The t-statistic for laminar power comparison.</p></li>
-<li><p><strong>laminar_p_value</strong> (<em>TODO</em>) – The p-value associated with the laminar power comparison.</p></li>
+<li><p><strong>laminar_t_statistic</strong> (<em>float</em>) – The t-statistic for laminar power comparison.</p></li>
+<li><p><strong>laminar_p_value</strong> (<em>float</em>) – The p-value associated with the laminar power comparison.</p></li>
 <li><p><strong>deg_of_freedom</strong> (<em>int</em>) – Degrees of freedom for the statistical test.</p></li>
 <li><p><strong>roi_idx</strong> (<em>list of int</em>) – Indices of vertices considered as ROIs.</p></li>
 </ul>
@@ -627,7 +619,7 @@ the free energy in each window.</p>
 <li><p><strong>rpa</strong> (<em>list</em>) – Right PreAuricular fiducial coordinates.</p></li>
 <li><p><strong>mri_fname</strong> (<em>str</em>) – Filename of the MRI data.</p></li>
 <li><p><strong>mesh_fnames</strong> (<em>list</em>) – List of filenames for different meshes.</p></li>
-<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG/EEG data.</p></li>
+<li><p><strong>data_fname</strong> (<em>str</em>) – Filename of the MEG data.</p></li>
 <li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether or not to show SPM visualization. Default is True.</p></li>
 <li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Instance of standalone SPM. Default is None.</p></li>
 <li><p><strong>coregister_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Keyword arguments specifically for the <cite>coregister</cite> function.</p></li>

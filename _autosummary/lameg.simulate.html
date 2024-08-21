@@ -464,9 +464,9 @@ document.write(`
                   
   <section id="module-lameg.simulate">
 <span id="lameg-simulate"></span><h1>lameg.simulate<a class="headerlink" href="#module-lameg.simulate" title="Permalink to this heading">#</a></h1>
-<p>This module facilitates the simulation of MEG/EEG data using MATLAB’s computing environment and
+<p>This module facilitates the simulation of MEG data using MATLAB’s computing environment and
 the Statistical Parametric Mapping (SPM) toolbox. It provides functionalities to simulate both
-current density and dipole-based MEG/EEG data under varying conditions and configurations.</p>
+current density and dipole-based MEG data under varying conditions and configurations.</p>
 <p>Key Features:</p>
 <ul class="simple">
 <li><p>Current Density Simulation: Allows for the simulation of current density data based on
@@ -475,17 +475,7 @@ ability to specify the signal-to-noise ratio and window of interest for the simu
 <li><p>Dipole Simulation: Facilitates the simulation of dipole-based data, providing options to
 configure dipole orientations, moments, and noise levels. It supports the simulation of unique
 signals per trial and can average data across trials if needed.</p></li>
-<li><p>Integration with MATLAB and SPM: Utilizes MATLAB functions and SPM routines to perform the
-simulations.</p></li>
 </ul>
-<p>The module’s functions accept various inputs to define the simulation conditions and output
-simulated MEG/EEG datasets that can be used for further analysis or testing. Both types of
-simulations are designed to be flexible, supporting multiple vertices, signal configurations, and
-analysis scenarios.</p>
-<p>Each function within the module is capable of starting an instance of standalone SPM, provided via
-the spm_instance parameter, to handle computations directly within the SPM environment. If no
-instance is provided, the functions will initiate a new one and close it upon completion unless
-managed externally.</p>
 <p>Examples of use:</p>
 <ul class="simple">
 <li><p>Simulating data with specific noise levels and analyzing the impact of noise on signal processing
@@ -500,7 +490,7 @@ source localization methods.</p></li>
 <td><p>Simulate current density data based on specified parameters.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.simulate.run_dipole_simulation" title="lameg.simulate.run_dipole_simulation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_dipole_simulation</span></code></a>(data_file, prefix, ...)</p></td>
-<td><p>Simulate dipole-based MEG/EEG data based on specified parameters.</p></td>
+<td><p>Simulate dipole-based MEG data based on specified parameters.</p></td>
 </tr>
 </tbody>
 </table>
@@ -508,13 +498,13 @@ source localization methods.</p></li>
 <dt class="sig sig-object py" id="lameg.simulate.run_current_density_simulation">
 <span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">run_current_density_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_signals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipole_moments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_patch_sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.run_current_density_simulation" title="Permalink to this definition">#</a></dt>
 <dd><p>Simulate current density data based on specified parameters.</p>
-<p>This function interfaces with MATLAB to generate simulated MEG/EEG data. It creates simulations
-based on specified vertices, signals, dipole moments, and patch sizes, incorporating a defined
-signal-to-noise ratio (SNR). White noise is added at the sensor level to yield the given SNR.</p>
+<p>This function generates simulated MEG data based on specified vertices, signals, dipole
+moments, and patch sizes, incorporating a defined signal-to-noise ratio (SNR). White noise is
+added at the sensor level to yield the given SNR.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_file</strong> (<em>str</em>) – Filename or path of the MEG/EEG data file used as a template for simulation.</p></li>
+<li><p><strong>data_file</strong> (<em>str</em>) – Filename or path of the MEG data file used as a template for simulation.</p></li>
 <li><p><strong>prefix</strong> (<em>str</em>) – Prefix for the output simulated data filename.</p></li>
 <li><p><strong>sim_vertices</strong> (<em>list</em><em> or </em><em>int</em>) – Indices of vertices where simulations are centered. Can be a single integer or a list.</p></li>
 <li><p><strong>sim_signals</strong> (<em>ndarray</em>) – Array of simulated signals.</p></li>
@@ -543,15 +533,15 @@ within the function.</p></li>
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.simulate.run_dipole_simulation">
 <span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">run_dipole_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_signals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipole_orientations</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipole_moments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_patch_sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">average_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.run_dipole_simulation" title="Permalink to this definition">#</a></dt>
-<dd><p>Simulate dipole-based MEG/EEG data based on specified parameters.</p>
-<p>This function interfaces with MATLAB to generate simulated MEG/EEG data with specific dipole
-configurations. It creates simulations based on specified vertices, signals, dipole
-orientations, moments, and patch sizes, incorporating a defined signal-to-noise ratio (SNR).
-White noise is added at the sensor level to yield the given SNR.</p>
+<dd><p>Simulate dipole-based MEG data based on specified parameters.</p>
+<p>This function generates simulated MEG data with specific dipole configurations. It creates
+simulations based on specified vertices, signals, dipole orientations, moments, and patch
+sizes, incorporating a defined signal-to-noise ratio (SNR). White noise is added at the sensor
+level to yield the given SNR.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>data_file</strong> (<em>str</em>) – Filename or path of the MEG/EEG data file used as a template for simulation.</p></li>
+<li><p><strong>data_file</strong> (<em>str</em>) – Filename or path of the MEG data file used as a template for simulation.</p></li>
 <li><p><strong>prefix</strong> (<em>str</em>) – Prefix for the output simulated data filename.</p></li>
 <li><p><strong>sim_vertices</strong> (<em>list</em><em> or </em><em>int</em>) – Indices of vertices where simulations are centered. Can be a single integer or a list.</p></li>
 <li><p><strong>sim_signals</strong> (<em>ndarray</em>) – Array of simulated signals. Either dipoles x time (signal will be used for each trial), or
