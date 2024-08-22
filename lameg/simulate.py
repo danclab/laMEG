@@ -1,7 +1,7 @@
 """
-This module facilitates the simulation of MEG data using MATLAB's computing environment and
-the Statistical Parametric Mapping (SPM) toolbox. It provides functionalities to simulate both
-current density and dipole-based MEG data under varying conditions and configurations.
+This module facilitates the simulation of MEG data using the Statistical Parametric Mapping (SPM)
+toolbox. It provides functionalities to simulate both current density and dipole-based MEG data
+under varying conditions and configurations.
 
 Key Features:
 
