@@ -6,11 +6,10 @@ import shutil
 import os
 import subprocess
 import sys
+import logging
 
 from setuptools import setup, find_packages
 from setuptools.command.install import install
-
-import logging
 
 # Set up logging to both the console and a log file in the user's home directory
 home_dir = os.path.expanduser("~")  # Get the user's home directory
@@ -64,7 +63,7 @@ class CustomInstall(install):
         clone_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'DANC_spm_python')
 
         if not os.path.exists(clone_dir):
-            logging.info(f"Cloning SPM repository from {repo_url}...")
+            logging.info("Cloning SPM repository from %s...", repo_url)
             print(f"Cloning SPM repository from {repo_url}...")
             subprocess.check_call(['git', 'clone', repo_url, clone_dir])
         else:
@@ -76,7 +75,8 @@ class CustomInstall(install):
         try:
             # Capture output from the pip install command
             result = subprocess.run([sys.executable, '-m', 'pip', 'install', '-v', clone_dir],
-                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                                    check=True)
 
             # Log the detailed output from pip install
             logging.info(result.stdout)
@@ -89,10 +89,10 @@ class CustomInstall(install):
             if result.returncode == 0:
                 logging.info("SPM package installed successfully.")
             else:
-                logging.error(f"SPM installation failed with return code {result.returncode}")
+                logging.error("SPM installation failed with return code %d", result.returncode)
                 raise subprocess.CalledProcessError(result.returncode, result.args)
         except subprocess.CalledProcessError as err:
-            logging.error(f"Failed to install SPM package. Error: {err}")
+            logging.error("Failed to install SPM package. Error: %s", err)
             print(f"Failed to install SPM package. Error: {err}")
             raise
         shutil.rmtree(clone_dir)
