@@ -30,6 +30,25 @@ from scipy.io import savemat
 from lameg.util import spm_context
 import matlab # pylint: disable=wrong-import-order,import-error
 
+
+def check_inversion_exists(file):
+    """Check if inversion data exists in the loaded .mat file."""
+    try:
+        inv_data = file['D']['other']['inv']
+        if inv_data is None or len(inv_data) == 0:
+            raise ValueError("Inversion data not found in the file.")
+    except KeyError:
+        raise ValueError("Inversion data structure not found in the file.")
+    return True
+
+def load_vertices(file):
+    """Load vertices based on the file version."""
+    try:
+        verts = file[file['D']['other']['inv'][0][0]]['mesh']['tess_mni']['vert'][()].T
+    except TypeError:
+        raise TypeError("This function requires the .mat file to be saved with MATLAB v7.3 or later.")
+    return verts
+
 def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_moments,
                                    sim_patch_sizes, snr, sim_woi=None, spm_instance=None):
     """
@@ -83,7 +102,8 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
         sim_patch_sizes=[sim_patch_sizes]
 
     with h5py.File(data_file, 'r') as file:
-        verts = file[file['D']['other']['inv'][0][0]]['mesh']['tess_mni']['vert'][()].T
+        check_inversion_exists(file)
+        verts = load_vertices(file)
 
     sim_coords = np.zeros((len(sim_vertices),3))
     for c_idx,i in enumerate(sim_vertices):
