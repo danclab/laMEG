@@ -13,6 +13,8 @@
 
    .. autosummary::
    
+      check_inversion_exists
+      load_vertices
       run_current_density_simulation
       run_dipole_simulation
    

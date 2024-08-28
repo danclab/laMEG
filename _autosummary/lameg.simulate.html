@@ -486,6 +486,12 @@ source localization methods.</p></li>
 <p class="rubric">Functions</p>
 <table class="autosummary longtable table autosummary">
 <tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.simulate.check_inversion_exists" title="lameg.simulate.check_inversion_exists"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_inversion_exists</span></code></a>(file)</p></td>
+<td><p>Check if inversion data exists in the loaded .mat file.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.simulate.load_vertices" title="lameg.simulate.load_vertices"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_vertices</span></code></a>(file)</p></td>
+<td><p>Load vertices based on the file version.</p></td>
+</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="../_source/lameg.html#lameg.simulate.run_current_density_simulation" title="lameg.simulate.run_current_density_simulation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">run_current_density_simulation</span></code></a>(data_file, ...)</p></td>
 <td><p>Simulate current density data based on specified parameters.</p></td>
 </tr>
@@ -494,6 +500,18 @@ source localization methods.</p></li>
 </tr>
 </tbody>
 </table>
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.simulate.check_inversion_exists">
+<span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">check_inversion_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.check_inversion_exists" title="Permalink to this definition">#</a></dt>
+<dd><p>Check if inversion data exists in the loaded .mat file.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.simulate.load_vertices">
+<span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">load_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.load_vertices" title="Permalink to this definition">#</a></dt>
+<dd><p>Load vertices based on the file version.</p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.simulate.run_current_density_simulation">
 <span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">run_current_density_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_signals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipole_moments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_patch_sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.run_current_density_simulation" title="Permalink to this definition">#</a></dt>
@@ -619,6 +637,8 @@ within the function.</p></li>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.simulate.check_inversion_exists"><code class="docutils literal notranslate"><span class="pre">check_inversion_exists()</span></code></a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.simulate.load_vertices"><code class="docutils literal notranslate"><span class="pre">load_vertices()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.simulate.run_current_density_simulation"><code class="docutils literal notranslate"><span class="pre">run_current_density_simulation()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.simulate.run_dipole_simulation"><code class="docutils literal notranslate"><span class="pre">run_dipole_simulation()</span></code></a></li>
 </ul>
