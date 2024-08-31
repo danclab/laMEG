@@ -49,3 +49,50 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./coverage.xml
+
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      max-parallel: 5
+      matrix:
+        python-version: ["3.7"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Miniconda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        activate-environment: lameg
+        auto-activate-base: false
+
+    - name: Install dependencies and build package
+      run: |
+        conda activate lameg
+        pip install -v .
+      shell: bash -l {0}
+
+    - name: Lint with pylint
+      run: |
+        conda activate lameg
+        pip install -r dev_requirements.txt
+        pylint --rcfile=${{ github.workspace }}/.pylintrc $(git ls-files '*.py')
+      shell: bash -l {0}
+
+    - name: Test with pytest
+      env:
+        SUBJECTS_DIR: ${{ github.workspace }}/test_data/fs
+      run: |
+        conda activate lameg
+        curl -o ${{ github.workspace }}/test_data.tar.gz -L https://osf.io/mgz9q/download
+        tar -xzf ${{ github.workspace }}/test_data.tar.gz -C ${{ github.workspace }}
+        rm ${{ github.workspace }}/test_data.tar.gz
+        python -m pytest --cov=lameg --cov-report=xml
+      shell: bash -l {0}
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: ./coverage.xml

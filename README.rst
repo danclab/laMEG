@@ -6,9 +6,9 @@ Toolbox for laminar inference with MEG, powered by `FreeSurfer <https://surfer.n
 
 Operating system
 ================
-* Windows: not supported by FreeSurfer
-* Mac: may work, but not tested
-* Linux: yes
+* Windows: Not supported
+* Mac: Tested on Intel 64-bit
+* Linux: Tested on Ubuntu and Debian
 
 Requirements
 ============
@@ -33,6 +33,8 @@ Installation
 3. To install ``laMEG``, run::
 
        pip install lameg
+
+   This also installs SPM standalone and Matlab runtime, which can take some time depending on your connection speed.
 
 4. Before using, deactivate and reactivate the environment for changes to environment variables to take effect::
 
