@@ -155,7 +155,7 @@ setup(
         "nibabel==3.2.2",
         "vtk==9.3.0",
         "numpy==1.23.0",
-        "scipy==1.9.0",
+        "scipy==1.7.3",
         "matplotlib==3.3.4",
         "joblib==1.1.1",
         "setuptools==59.6.0",
