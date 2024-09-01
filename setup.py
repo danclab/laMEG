@@ -154,8 +154,8 @@ setup(
     install_requires=[
         "nibabel==3.2.2",
         "vtk==9.3.0",
-        "numpy==1.21.6",
-        "scipy==1.7.3",
+        "numpy==1.19.5",
+        "scipy==1.5.4",
         "matplotlib==3.3.4",
         "joblib==1.1.1",
         "setuptools==59.6.0",
