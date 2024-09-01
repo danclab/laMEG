@@ -1129,7 +1129,7 @@ def interpolate_data(original_mesh, downsampled_mesh, downsampled_data, adjacenc
     downsampled_vertices = downsampled_mesh.darrays[0].data
 
     # Build a KD-tree for the downsampled vertices
-    tree = cKDTree(downsampled_vertices)
+    tree = cKDTree(downsampled_vertices) # pylint: disable=not-callable
 
     # Preallocate the vertex data array
     vertex_data = np.full(len(original_vertices), np.nan)
