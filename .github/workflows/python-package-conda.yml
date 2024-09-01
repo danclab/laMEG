@@ -38,7 +38,7 @@ jobs:
         SUBJECTS_DIR: ${{ github.workspace }}/test_data/fs
       run: |
         conda activate lameg
-        wget -c https://osf.io/mgz9q/download -O ${{ github.workspace }}/test_data.tar.gz
+        curl -o ${{ github.workspace }}/test_data.tar.gz -L https://osf.io/mgz9q/download
         tar -xzf ${{ github.workspace }}/test_data.tar.gz -C ${{ github.workspace }}
         rm ${{ github.workspace }}/test_data.tar.gz
         python -m pytest --cov=lameg --cov-report=xml
@@ -91,7 +91,7 @@ jobs:
           curl -o ${{ github.workspace }}/test_data.tar.gz -L https://osf.io/mgz9q/download
           tar -xzf ${{ github.workspace }}/test_data.tar.gz -C ${{ github.workspace }}
           rm ${{ github.workspace }}/test_data.tar.gz
-          python -m pytest --cov=lameg --cov-report=xml
+          python -m pytest -vv
         shell: bash -l {0}
 
       - name: Upload coverage to Codecov
