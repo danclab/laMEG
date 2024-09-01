@@ -70,14 +70,6 @@ jobs:
           auto-update-conda: true  # Optional: to ensure conda is updated
           architecture: x64
 
-      - name: Install spm
-        run: |
-          conda activate lameg
-          git clone https://github.com/danclab/DANC_spm_python.git
-          cd DANC_spm_python
-          pip install -v .
-        shell: bash -l {0}
-
       - name: Install dependencies and build package
         run: |
           conda activate lameg
