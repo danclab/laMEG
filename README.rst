@@ -7,7 +7,7 @@ Toolbox for laminar inference with MEG, powered by `FreeSurfer <https://surfer.n
 Operating system
 ================
 * Windows: Not supported
-* Mac: Tested on Intel 64-bit
+* Mac: May work, not tested
 * Linux: Tested on Ubuntu and Debian
 
 Requirements
