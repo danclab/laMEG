@@ -786,7 +786,8 @@ def get_bigbrain_layer_boundaries(subj_id, subj_surf_dir, subj_coord):
     return vert_bb_prop
 
 
-def get_fiducial_coords(subj_id, fname):
+def get_fiducial_coords(subj_id, fname, col_delimiter='\t', subject_column='subj_id',
+                        nas_column='nas', lpa_column='lpa', rpa_column='rpa', val_delimiter=','):
     """
     Fetch fiducial coordinates from a tab-separated values (TSV) file for a given subject ID.
 
@@ -796,6 +797,18 @@ def get_fiducial_coords(subj_id, fname):
         The subject ID to search for in the TSV file.
     fname : str
         Path to the TSV file.
+    col_delimiter : str, optional
+        Column delimiter when reading file. Default is \t.
+    subject_column : str, optional
+        Column name for subject. Default is subj_id.
+    nas_column : str, optional
+        Column name for nas coordinate. Default is nas.
+    lpa_column : str, optional
+        Column name for lpa coordinate. Default is lpa.
+    rpa_column : str, optional
+        Column name for rpa coordinate. Default is rpa.
+    val_delimiter : str, optional
+        Value delimiter when reading file. Default is ,.
 
     Returns
     -------
@@ -808,12 +821,12 @@ def get_fiducial_coords(subj_id, fname):
     """
 
     with open(fname, 'r', encoding="utf-8") as file:
-        reader = csv.DictReader(file, delimiter='\t')
+        reader = csv.DictReader(file, delimiter=col_delimiter)
         for row in reader:
-            if row['subj_id'] == subj_id:
-                nas = [float(i) for i in row['nas'].split(',')]
-                lpa = [float(i) for i in row['lpa'].split(',')]
-                rpa = [float(i) for i in row['rpa'].split(',')]
+            if row[subject_column] == subj_id:
+                nas = [float(i) for i in row[nas_column].split(val_delimiter)]
+                lpa = [float(i) for i in row[lpa_column].split(val_delimiter)]
+                rpa = [float(i) for i in row[rpa_column].split(val_delimiter)]
                 return nas, lpa, rpa
 
     return None, None, None  # Return None for each if no matching subj_id is found
