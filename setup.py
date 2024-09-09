@@ -6,9 +6,30 @@ import shutil
 import os
 import subprocess
 import sys
+import logging
 
 from setuptools import setup, find_packages
 from setuptools.command.install import install
+
+# Set up logging to both the console and a log file in the user's home directory
+home_dir = os.path.expanduser("~")  # Get the user's home directory
+log_file = os.path.join(home_dir, 'laMEG_installation.log')
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+
+# Create a file handler for logging to a file
+file_handler = logging.FileHandler(log_file)
+file_handler.setLevel(logging.INFO)
+file_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
+
+# Create a console handler for logging to the console
+console_handler = logging.StreamHandler()
+console_handler.setLevel(logging.INFO)
+console_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
+
+# Add both handlers to the root logger
+logging.getLogger().addHandler(file_handler)
+logging.getLogger().addHandler(console_handler)
+
 
 class CustomInstall(install):
     """
@@ -37,23 +58,41 @@ class CustomInstall(install):
     def clone_and_install_spm(self):
         """
         Clones the SPM repository and installs it.
-
-        This method clones the DANC_spm_python repository from GitHub, then installs it using pip.
         """
         repo_url = "https://github.com/danclab/DANC_spm_python.git"
         clone_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'DANC_spm_python')
 
         if not os.path.exists(clone_dir):
+            logging.info("Cloning SPM repository from %s...", repo_url)
             print(f"Cloning SPM repository from {repo_url}...")
             subprocess.check_call(['git', 'clone', repo_url, clone_dir])
         else:
+            logging.info("SPM repository already exists, skipping cloning.")
             print("SPM repository already exists, skipping cloning.")
 
+        logging.info("Installing SPM package...")
         print("Installing SPM package...")
         try:
-            # Use the pip associated with the current Python interpreter
-            subprocess.check_call([sys.executable, '-m', 'pip', 'install', '-v', clone_dir])
+            # Capture output from the pip install command
+            result = subprocess.run([sys.executable, '-m', 'pip', 'install', '-v', clone_dir],
+                                    stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                                    check=True)
+
+            # Log the detailed output from pip install
+            logging.info(result.stdout)
+            logging.error(result.stderr)  # Errors go to the error log
+
+            # Also print to console
+            print(result.stdout)
+            print(result.stderr)
+
+            if result.returncode == 0:
+                logging.info("SPM package installed successfully.")
+            else:
+                logging.error("SPM installation failed with return code %d", result.returncode)
+                raise subprocess.CalledProcessError(result.returncode, result.args)
         except subprocess.CalledProcessError as err:
+            logging.error("Failed to install SPM package. Error: %s", err)
             print(f"Failed to install SPM package. Error: {err}")
             raise
         shutil.rmtree(clone_dir)
@@ -94,6 +133,7 @@ class CustomInstall(install):
 
         # Make the script executable
         os.chmod(activate_script_path, 0o755)
+        logging.info("Jupyter setup script created and made executable.")
 
 
 # Read the long description from the README.rst
@@ -102,7 +142,7 @@ with open('README.rst', 'r', encoding="utf-8") as f:
 
 setup(
     name='lameg',
-    version='0.0.3',
+    version='0.0.4',
     description='A toolbox for laminar inference with MEG',
     long_description=long_description,
     long_description_content_type='text/x-rst',

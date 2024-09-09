@@ -1,18 +1,11 @@
 """
 This module provides tools for performing laminar analysis of MEG signals.
-It integrates functionalities for coregistering head models, performing source reconstruction
-using different methods (Empirical Bayesian Beamformer and Multiple Sparse Priors),
-and assessing model fit via free energy calculations. It also includes capabilities
-for analyzing laminar current source density and comparing regional brain activity
-across different conditions or layers.
-
-The module leverages external libraries such as NumPy, SciPy, neo, quantities,
-and proprietary tools like MATLAB alongside the SPM toolkit.
-Functions provided allow for complex workflows such as sliding window analysis
-for dynamic source reconstruction and laminar analysis for studying laminar cortical activity.
+It integrates functionalities for performing source reconstruction using different methods
+(Empirical Bayesian Beamformer and Multiple Sparse Priors), and assessing model fit via free
+energy and cross validation error. It also includes capabilities for analyzing laminar current
+source density and comparing regional brain activity across different conditions or layers.
 
 Key functionalities include:
-- Coregistration of MEG/EEG data with MRI and mesh models.
 - Source reconstruction with options to choose between different methods and evaluate model fits.
 - Calculation of current source density from laminar neural signals.
 - Comparison of power changes across different regions and layers to identify areas of interest.
@@ -36,8 +29,7 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
 
     This function runs source reconstruction algorithms (either Empirical Bayesian Beamformer or
     Multiple Sparse Priors) on a set of meshes and compares their model fits using the free energy
-    and cross-validation error metrics. It allows for separate configuration of coregistration and
-    inversion parameters through distinct keyword argument dictionaries.
+    and cross-validation error metrics.
 
     Parameters
     ----------
@@ -52,7 +44,7 @@ def model_comparison(nas, lpa, rpa, mri_fname, mesh_fnames, data_fname, method='
     mesh_fnames : list
         List of filenames for different meshes.
     data_fname : str
-        Filename of the MEG/EEG data.
+        Filename of the MEG data.
     method : str, optional
         Source reconstruction method, either 'EBB' or 'MSP'. Default is 'EBB'.
     viz : bool, optional
@@ -153,7 +145,7 @@ def sliding_window_model_comparison(prior, nas, lpa, rpa, mri_fname, mesh_fnames
     mesh_fnames : list
         List of filenames for different meshes.
     data_fname : str
-        Filename of the MEG/EEG data.
+        Filename of the MEG data.
     viz : bool, optional
         Whether or not to show SPM visualization. Default is True.
     spm_instance : spm_standalone, optional
@@ -220,8 +212,7 @@ def compute_csd(signal, thickness, sfreq, smoothing=None):
     Compute the laminar Current Source Density (CSD) from a given signal.
 
     This function calculates CSD using the Standard CSD method. It takes a multi-layered neural
-    signal, typically from laminar probes, and computes the CSD. An optional smoothing step can
-    be applied to the CSD output.
+    signal, and computes the CSD. An optional smoothing step can be applied to the CSD output.
 
     Parameters
     ----------
@@ -316,9 +307,9 @@ def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thr
 
     Returns
     -------
-    laminar_t_statistic : TODO
+    laminar_t_statistic : float
         The t-statistic for laminar power comparison.
-    laminar_p_value : TODO
+    laminar_p_value : float
         The p-value associated with the laminar power comparison.
     deg_of_freedom : int
         Degrees of freedom for the statistical test.

@@ -1,11 +1,12 @@
 """
-This module provides tools for the coregistration, and source reconstruction of MEG/EEG data
-utilizing MATLAB and SPM (Statistical Parametric Mapping) functionalities.
+This module provides tools for the coregistration, and source reconstruction of MEG data
+using SPM (Statistical Parametric Mapping).
 Key operations include:
 
-- Coregistration of head models with MRI and mesh data.
+- Coregistration of MRI and surface meshes with MEG data.
 - Empirical Bayesian Beamformer (EBB) and Multiple Sparse Priors (MSP) source reconstruction
   algorithms.
+- Sliding time window source reconstruction using MSP
 - Utility function for loading source data after source reconstruction.
 """
 
@@ -24,8 +25,8 @@ def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, fid_labels=('na
     """
     Run head coregistration.
 
-    This function interfaces with MATLAB to perform head coregistration on MEG/EEG data using an
-    MRI and mesh.
+    This function performs head coregistration on MEG data using an MRI and mesh, and computes
+    a forward model using the Nolte single shell model.
 
     Parameters
     ----------
@@ -40,7 +41,7 @@ def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, fid_labels=('na
     mesh_fname : str
         Filename of the mesh data.
     data_fname : str
-        Filename of the MEG/EEG data.
+        Filename of the MEG data.
     fid_labels : list, optional
         Fiducial coordinate labels. Default is ['nas', 'lpa', 'rpa'].
     viz : bool, optional
@@ -124,16 +125,15 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
     """
     Run the Empirical Bayesian Beamformer (EBB) source reconstruction algorithm.
 
-    This function interfaces with MATLAB to perform EBB source reconstruction on MEG/EEG data.
-    It involves mesh smoothing and running the EBB algorithm in MATLAB. The MEG/EEG data must
-    already be coregistered with the given mesh.
+    This function performs EBB source reconstruction on MEG data. It involves mesh smoothing
+    and running the EBB algorithm. The MEG data must already be coregistered with the given mesh.
 
     Parameters
     ----------
     mesh_fname : str
         Filename of the mesh data.
     data_fname : str
-        Filename of the MEG/EEG data.
+        Filename of the MEG data.
     n_layers : int
         Number of layers in the mesh.
     patch_size : int, optional
@@ -270,16 +270,15 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
     """
     Run the Multiple Sparse Priors (MSP) source reconstruction algorithm.
 
-    This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data.
-    It involves mesh smoothing and running the MSP algorithm in MATLAB. The MEG/EEG data must
-    already be coregistered with the given mesh.
+    This function performs MSP source reconstruction on MEG data. It involves mesh smoothing and
+    running the MSP algorithm. The MEG data must already be coregistered with the given mesh.
 
     Parameters
     ----------
     mesh_fname : str
         Filename of the mesh data.
     data_fname : str
-        Filename of the MEG/EEG data.
+        Filename of the MEG data.
     n_layers : int
         Number of layers in the mesh.
     priors : list, optional
@@ -437,10 +436,9 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     """
     Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time window.
 
-    This function interfaces with MATLAB to perform MSP source reconstruction on MEG/EEG data
-    within sliding time windows. It involves mesh smoothing and running the MSP algorithm in
-    MATLAB for each time window. The MEG/EEG data must already be coregistered with the given
-    mesh.
+    This function performs MSP source reconstruction on MEG data within sliding time windows. It
+    involves mesh smoothing and running the MSP algorithm. The MEG data must already be
+    coregistered with the given mesh.
 
     Parameters
     ----------
@@ -449,7 +447,7 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     mesh_fname : str
         Filename of the mesh data.
     data_fname : str
-        Filename of the MEG/EEG data.
+        Filename of the MEG data.
     n_layers : int
         Number of layers in the mesh.
     patch_size : int, optional
@@ -591,14 +589,13 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
     Load source time series data from specified vertices using precomputed inverse solutions or a
     lead field matrix.
 
-    This function interfaces with MATLAB to extract time series data from specific vertices, based
-    on precomputed inverse solutions, or computes the source time series using a provided lead
-    field matrix.
+    This function extracts time series data from specific vertices, based on precomputed inverse
+    solutions, or computes the source time series using a provided lead field matrix.
 
     Parameters
     ----------
     data_fname : str
-        Filename or path of the MEG/EEG data file.
+        Filename or path of the MEG data file.
     mu_matrix : ndarray, optional
         Lead field matrix (source x sensor). Default is None.
     inv_fname : str, optional
@@ -619,7 +616,7 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
     Notes
     -----
     - If `inv_fname` is not provided, and `mu_matrix` is None, the inverse solution from the
-      MEG/EEG data file specified by `data_fname` will be used.
+      MEG data file specified by `data_fname` will be used.
     - If `mu_matrix` is provided, the function will compute the source time series directly using
       the lead field matrix, without the need for precomputed inverse solutions.
     """
