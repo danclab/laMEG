@@ -1758,13 +1758,19 @@ Brain atlas.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.get_fiducial_coords">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_fiducial_coords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.get_fiducial_coords" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_fiducial_coords</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">col_delimiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'\t'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subject_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'subj_id'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nas_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'nas'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lpa_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lpa'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rpa_column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'rpa'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">val_delimiter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">','</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.get_fiducial_coords" title="Permalink to this definition">#</a></dt>
 <dd><p>Fetch fiducial coordinates from a tab-separated values (TSV) file for a given subject ID.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>subj_id</strong> (<em>str</em>) – The subject ID to search for in the TSV file.</p></li>
 <li><p><strong>fname</strong> (<em>str</em>) – Path to the TSV file.</p></li>
+<li><p><strong>col_delimiter</strong> (<em>str</em><em>, </em><em>optional</em>) – Column delimiter when reading file. Default is  .</p></li>
+<li><p><strong>subject_column</strong> (<em>str</em><em>, </em><em>optional</em>) – Column name for subject. Default is subj_id.</p></li>
+<li><p><strong>nas_column</strong> (<em>str</em><em>, </em><em>optional</em>) – Column name for nas coordinate. Default is nas.</p></li>
+<li><p><strong>lpa_column</strong> (<em>str</em><em>, </em><em>optional</em>) – Column name for lpa coordinate. Default is lpa.</p></li>
+<li><p><strong>rpa_column</strong> (<em>str</em><em>, </em><em>optional</em>) – Column name for rpa coordinate. Default is rpa.</p></li>
+<li><p><strong>val_delimiter</strong> (<em>str</em><em>, </em><em>optional</em>) – Value delimiter when reading file. Default is ,.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
