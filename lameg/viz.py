@@ -1,7 +1,8 @@
-"""This module provides tools for converting and visualizing numerical data into color-coded
-formats. It includes functions for mapping data to RGB and hexadecimal color values, performing
-color normalization, and rendering 3D surface visualizations using K3D. Additional utilities are
-included for plotting Current Source Density (CSD) data and handling color transformations.
+"""
+This module provides tools for converting and visualizing data. It includes functions for mapping
+data to RGB and hexadecimal color values, performing color normalization, and rendering 3D surface
+visualizations using K3D. Additional utilities are included for plotting Current Source Density
+(CSD) data and handling color transformations.
 
 Functions:
 ----------

@@ -40,37 +40,37 @@ for l_idx,layer_fname in enumerate(layer_fnames):
     plot = show_surface(mesh, camera_view=cam_view, color=col_r[l_idx,:3]*255, height=256)
 
 # %%
-#.. image:: ../_static/pial.png
+#.. image:: ../_static/tutorial_01_pial.png
 #   :width: 800
 #   :alt:
-#.. image:: ../_static/0.9.png
+#.. image:: ../_static/tutorial_01_0.9.png
 #   :width: 800
 #   :alt:
-#.. image:: ../_static/0.8.png
+#.. image:: ../_static/tutorial_01_0.8.png
 #   :width: 800
 #   :alt:
-#.. image:: ../_static/0.7.png
+#.. image:: ../_static/tutorial_01_0.7.png
 #   :width: 800
 #   :alt:
-#.. image:: ../_static/0.6.png
+#.. image:: ../_static/tutorial_01_0.6.png
 #   :width: 800
 #   :alt:
-#.. image:: ../_static/0.5.png
+#.. image:: ../_static/tutorial_01_0.5.png
 #   :width: 800
 #   :alt:
-#.. image:: ../_static/0.4.png
+#.. image:: ../_static/tutorial_01_0.4.png
 #   :width: 800
 #   :alt:
-#.. image:: ../_static/0.3.png
+#.. image:: ../_static/tutorial_01_0.3.png
 #   :width: 800
 #   :alt:
-#.. image:: ../_static/0.2.png
+#.. image:: ../_static/tutorial_01_0.2.png
 #   :width: 800
 #   :alt:
-#.. image:: ../_static/0.1.png
+#.. image:: ../_static/tutorial_01_0.1.png
 #   :width: 800
 #   :alt:
-#.. image:: ../_static/white.png
+#.. image:: ../_static/tutorial_01_white.png
 #   :width: 800
 #   :alt:
 
@@ -92,7 +92,7 @@ mesh = nib.load(surf_fname)
 plot = show_surface(mesh, camera_view=cam_view, color=col_r[0,:3]*255)
 
 # %%
-#.. image:: ../_static/rm_deep_before.png
+#.. image:: ../_static/tutorial_01_rm_deep_before.png
 #   :width: 800
 #   :alt:
 
@@ -104,7 +104,7 @@ mesh = nib.load(surf_fname)
 plot = show_surface(mesh, camera_view=cam_view, color=col_r[0,:3]*255)
 
 # %%
-#.. image:: ../_static/rm_deep_after.png
+#.. image:: ../_static/tutorial_01_rm_deep_after.png
 #   :width: 800
 #   :alt:
 
@@ -123,7 +123,7 @@ mesh = nib.load(surf_fname)
 plot = show_surface(mesh, camera_view=cam_view, color=col_r[0,:3]*255)
 
 # %%
-#.. image:: ../_static/combine_hemi.png
+#.. image:: ../_static/tutorial_01_combine_hemi.png
 #   :width: 800
 #   :alt:
 
@@ -142,7 +142,7 @@ mesh = nib.load(surf_fname)
 plot = show_surface(mesh, camera_view=cam_view, color=col_r[0,:3]*255)
 
 # %%
-#.. image:: ../_static/downsample.png
+#.. image:: ../_static/tutorial_01_downsample.png
 #   :width: 800
 #   :alt:
 
@@ -185,7 +185,7 @@ plot.camera=cam_view
 plot.display()
 
 # %%
-#.. image:: ../_static/link_vectors.png
+#.. image:: ../_static/tutorial_01_link_vectors.png
 #   :width: 800
 #   :alt:
 
@@ -221,7 +221,7 @@ plot.camera=cam_view
 plot.display()
 
 # %%
-#.. image:: ../_static/combine_layers.png
+#.. image:: ../_static/tutorial_01_combine_layers.png
 #   :width: 800
 #   :alt:
 

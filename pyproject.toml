@@ -9,9 +9,9 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "lameg"
-version = "0.0.3"
+version = "0.0.4"
 description = "A toolbox for laminar inference with MEG"
-readme = "README.md"
+readme = "README.rst"
 requires-python = "~=3.7"
 dependencies = [
     "nibabel==3.2.2",

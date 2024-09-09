@@ -38,6 +38,12 @@ apidoc:
 
 html-noplot:
 	$(SPHINXBUILD) -D plot_gallery=0 -b html $(ALLSPHINXOPTS) $(SOURCEDIR) $(BUILDDIR)/html
+	cp _static/tutorial_01_0.5_thumb.png ${BUILDDIR}/html/_images/sphx_glr_tutorial_01_surface_processing_thumb.png
+	cp _static/tutorial_02_results_thumb.png ${BUILDDIR}/html/_images/sphx_glr_tutorial_02_model_comparison_free_energy_thumb.png
+	cp _static/tutorial_03_results_matrix_thumb.png ${BUILDDIR}/html/_images/sphx_glr_tutorial_03_model_comparison_cv_error_thumb.png
+	cp _static/tutorial_04_pial_sim_results_thumb.png ${BUILDDIR}/html/_images/sphx_glr_tutorial_04_sliding_win_model_comparison_thumb.png
+	cp _static/tutorial_05_results_thumb.png ${BUILDDIR}/html/_images/sphx_glr_tutorial_05_roi_power_analysis_thumb.png
+	cp _static/tutorial_06_3_sim_results_thumb.png ${BUILDDIR}/html/_images/sphx_glr_tutorial_06_csd_thumb.png
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 

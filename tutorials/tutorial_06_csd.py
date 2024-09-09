@@ -4,18 +4,17 @@ Laminar CSD analysis
 This tutorial demonstrates how to perform laminar inference using a CSD analysis of event-related source signals. A temporal Gaussian function is simulated at a particular cortical location in various layers. Source reconstruction is performed on the whole time window using the Empirical Bayesian Beamformer on the simulated sensor data using a forward model based on the multilayer mesh, thus providing an estimate of source activity on each layer. A laminar CSD is run on the laminar signals at the location with the peak variance.
 """
 # %%
-# ## Setting up the simulations
+# Setting up the simulations
+# --------------------------
 # 
 # Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.
 
-# %%
+
 import os
 import shutil
 import numpy as np
 import nibabel as nib
 import k3d
-from scipy import stats
-from matplotlib import colors
 import matplotlib.pyplot as plt
 import tempfile
 
@@ -49,7 +48,6 @@ spm = spm_standalone.initialize()
 # %% [markdown]
 # For source reconstructions, we need an MRI and a surface mesh. The simulations and source reconstructions will be based on a forward model using the multilayer mesh
 
-# %%
 # Native space MRI to use for coregistration
 mri_fname = os.path.join('../test_data', subj_id, 'mri/s2023-02-28_13-33-133958-00001-00224-1.nii' )
 
@@ -68,7 +66,6 @@ orig_inflated = nib.load(os.path.join('../test_data', subj_id, 'surf', 'inflated
 # %% [markdown]
 # We're going to copy the data file to a temporary directory and direct all output there.
 
-# %%
 # Extract base name and path of data file
 data_path, data_file_name = os.path.split(data_file)
 data_base = os.path.splitext(data_file_name)[0]
@@ -92,7 +89,6 @@ base_fname = os.path.join(tmp_dir, f'{data_base}.mat')
 # %% [markdown]
 # Invert the subject's data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations
 
-# %%
 # Patch size to use for inversion (in this case it matches the simulated patch size)
 patch_size = 5
 # Number of temporal modes to use for EBB inversion
@@ -120,10 +116,10 @@ coregister(
 )
 
 # %% [markdown]
-# ## Simulating a signal on a superficial surface
+# Simulating a signal on a superficial surface
+# --------------------------------------------
 # We're going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a width of 25ms
 
-# %%
 # Strength of simulated activity (nAm)
 dipole_moment = 5
 # Temporal width of the simulated Gaussian
@@ -139,10 +135,14 @@ plt.plot(time,dipole_moment*sim_signal[0,:])
 plt.xlabel('Time (s)')
 plt.ylabel('Amplitude (nAm)')
 
+# %%
+#.. image:: ../_static/tutorial_06_sim_signal.png
+#   :width: 800
+#   :alt:
+
 # %% [markdown]
 # We need to pick a location (mesh vertex) to simulate at
 
-# %%
 # Vertex to simulate activity at
 sim_vertex=24585
 
@@ -163,21 +163,13 @@ plot = show_surface(
 )
 
 # %%
-sim_vertex=24585
-
-pial_ds_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'pial.ds.link_vector.fixed.gii')
-pial_ds_mesh = nib.load(pial_ds_mesh_fname)
-pial_coord = pial_ds_mesh.darrays[0].data[sim_vertex,:]
-pial_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'pial.gii')
-pial_mesh = nib.load(pial_mesh_fname)
-cam_view = [152, 28, 15,
-            3.5, 26, 38.5,
-            0, 0, 1]
+#.. image:: ../_static/tutorial_06_sim_location.png
+#   :width: 800
+#   :alt:
 
 # %% [markdown]
 # We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-# %%
 # Simulate at a vertex on the pial surface
 pial_vertex = sim_vertex
 # Orientation of the simulated dipole
@@ -203,10 +195,10 @@ pial_sim_fname = run_dipole_simulation(
 ) 
 
 # %% [markdown]
-# ## Inversion
+# Inversion
+# ---------
 # Now we'll run a source reconstruction using the multilayer mesh, select the vertex to examine, extract the source signals at each layer in that location, and compute a laminar CSD
 
-# %%
 [_,_,MU] = invert_ebb(
     multilayer_mesh_fname, 
     pial_sim_fname, 
@@ -240,7 +232,6 @@ print(peak_coord)
 # %% [markdown]
 # We can see that the peak is the same as the location we simulated at
 
-# %%
 # Interpolate for display on the original inflated surface
 interpolated_data = interpolate_data(orig_inflated, ds_inflated, m_layer_max)
           
@@ -269,10 +260,15 @@ plot = show_surface(
     coord_color=[0,0,255]
 )
 
+# %%
+#.. image:: ../_static/tutorial_06_localizer.png
+#   :width: 800
+#   :alt:
+
+
 # %% [markdown]
 # We need the indices of the vertex at each layer for this location, and the distances between them
 
-# %%
 layer_verts = [l*int(verts_per_surf)+peak for l in range(n_layers)]
 layer_coords = mesh.darrays[0].data[layer_verts,:]
 layer_dists = np.sqrt(np.sum(np.diff(layer_coords,axis=0)**2,axis=1))
@@ -281,7 +277,6 @@ print(layer_dists)
 # %% [markdown]
 # Now we can compute and plot the laminar CSD
 
-# %%
 # Get source time series for each layer
 layer_ts, time, _ = load_source_time_series(pial_sim_fname, vertices=layer_verts)
     
@@ -311,11 +306,17 @@ plt.xlabel('Time (ms)')
 plt.ylabel('Layer')
 plt.tight_layout()
 
+# %%
+#.. image:: ../_static/tutorial_06_pial_sim_results.png
+#   :width: 800
+#   :alt:
+
+
 # %% [markdown]
-# ## White matter surface simulation with laminar CSD
+# White matter surface simulation with laminar CSD
+# ------------------------------------------------
 # Let's simulate the same pattern of activity, in the same location, but on the white matter surface.
 
-# %%
 # Simulate at the corresponding vertex on the white matter surface
 white_vertex = (n_layers-1)*int(verts_per_surf)+sim_vertex
 prefix = f'sim_{sim_vertex}_white_'
@@ -396,11 +397,17 @@ plt.xlabel('Time (ms)')
 plt.ylabel('Layer')
 plt.tight_layout()
 
+# %%
+#.. image:: ../_static/tutorial_06_white_sim_results.png
+#   :width: 800
+#   :alt:
+
+
 # %% [markdown]
-# ## Simulation in each layer
+# Simulation in each layer
+# ------------------------
 # Let's now simulate on each layer, and for each simulation, run the laminar CSD. We'll turn off SPM visualization here.
 
-# %%
 # Now simulate at the corresponding vertex on each layer, and for each simulation compute CSD
 layer_csds = []
 for l in range(n_layers):
@@ -485,6 +492,81 @@ for l in range(n_layers):
 
     layer_csds.append(smooth_csd)        
 
+# %%
+#.. image:: ../_static/tutorial_06_pial_sim_results.png
+#   :width: 800
+#   :alt:
+
+# %%
+#.. image:: ../_static/tutorial_06_1_sim_results.png
+#   :width: 800
+#   :alt:
+
+# %%
+#.. image:: ../_static/tutorial_06_2_sim_results.png
+#   :width: 800
+#   :alt:
+
+# %%
+#.. image:: ../_static/tutorial_06_3_sim_results.png
+#   :width: 800
+#   :alt:
+
+# %%
+#.. image:: ../_static/tutorial_06_4_sim_results.png
+#   :width: 800
+#   :alt:
+
+# %%
+#.. image:: ../_static/tutorial_06_5_sim_results.png
+#   :width: 800
+#   :alt:
+
+# %%
+#.. image:: ../_static/tutorial_06_6_sim_results.png
+#   :width: 800
+#   :alt:
+
+# %%
+#.. image:: ../_static/tutorial_06_7_sim_results.png
+#   :width: 800
+#   :alt:
+
+# %%
+#.. image:: ../_static/tutorial_06_8_sim_results.png
+#   :width: 800
+#   :alt:
+
+# %%
+#.. image:: ../_static/tutorial_06_9_sim_results.png
+#   :width: 800
+#   :alt:
+
+# %%
+#.. image:: ../_static/tutorial_06_10_sim_results.png
+#   :width: 800
+#   :alt:
+
+# %%
+#.. image:: ../_static/tutorial_06_11_sim_results.png
+#   :width: 800
+#   :alt:
+
+# %%
+#.. image:: ../_static/tutorial_06_12_sim_results.png
+#   :width: 800
+#   :alt:
+
+# %%
+#.. image:: ../_static/tutorial_06_13_sim_results.png
+#   :width: 800
+#   :alt:
+
+# %%
+#.. image:: ../_static/tutorial_06_white_sim_results.png
+#   :width: 800
+#   :alt:
+
 # %% [markdown]
 # For each simulation, we can plot a slice of the CSD through layers around a central time window. The layer model where the CSD signal crosses from negative to positive should correspond to the layer that the activity was simulated in.
 
@@ -496,8 +578,7 @@ for layer_csd in layer_csds:
     t_idx = np.where((time>=-0.05) & (time<=0.05))[0]
     csd_pattern = np.mean(layer_csd[:,t_idx],axis=1)
     peak = np.argmax(np.abs(csd_pattern))
-    #cross_before = np.argmax(0-csd_pattern[:peak]))
-    peaks.append(np.argmax(np.abs(csd_pattern))/scale_factor)    
+    peaks.append(np.argmax(np.abs(csd_pattern))/scale_factor)
     csd_patterns.append(csd_pattern)
 
 col_r = plt.cm.cool(np.linspace(0,1, num=n_layers))
@@ -523,6 +604,12 @@ plt.ylabel('Peak CSD')
 plt.tight_layout()
 
 # %%
+#.. image:: ../_static/tutorial_06_results.png
+#   :width: 800
+#   :alt:
+
+
+# %%
 csd_patterns=np.array(csd_patterns)
 # Transpose for visualization
 im=plt.imshow(csd_patterns.T,aspect='auto', cmap='Spectral_r',extent=[0, n_layers, n_layers, 0])
@@ -539,11 +626,16 @@ plt.ylabel('Evaluated layer', fontsize=14)
 cb=plt.colorbar(im)
 cb.set_label('CSD', fontsize=14)
 
+# %%
+#.. image:: ../_static/tutorial_06_results_matrix.png
+#   :width: 800
+#   :alt:
+
 # %% [markdown]
-# ## Beta burst CSD
+# Beta burst CSD
+# --------------
 # That was a simulation of a source in a single layer. Let's try a beta burst simulation, with simultaneous sources in deep and superficial layers (see [Bonaiuto et al., 2021, Laminar dynamics of high amplitude beta bursts in human motor cortex](https://doi.org/10.1016/j.neuroimage.2021.118479))
 
-# %%
 # Strength of each simulated source (nAm)
 dipole_moment = [8, 6]
 # Temporal width of the simulated superficial signal
@@ -566,10 +658,14 @@ plt.legend()
 plt.xlabel('Time (s)')
 plt.ylabel('Amplitude (nAm)')
 
+# %%
+#.. image:: ../_static/tutorial_06_burst_sim_signal.png
+#   :width: 800
+#   :alt:
+
 # %% [markdown]
 # We need to pick a location (mesh vertex) to simulate at. The superficial signal will be simulated as a dipole at the corresponding vertex on the pial surface, and the deep signal on the white matter surface. The dipole orientations will be in opposite directions (with the superficial one pointing toward the deep one, and vice versa). This will yield a cumulative dipole moment with a beta burst-like shape
 
-# %%
 # Location to simulate activity at
 sim_vertex = 24585
 # Corresponding pial and white matter vertices
@@ -627,10 +723,14 @@ plot.camera=cam_view
 
 plot.display()
 
+# %%
+#.. image:: ../_static/tutorial_06_burst_orientation.png
+#   :width: 800
+#   :alt:
+
 # %% [markdown]
 # We'll simulate a 5mm patch of activity with -10 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-# %%
 # Simulate a beta burst as two sources: one deep and one superficial
 prefix=f'sim_{sim_vertex}_burst_'
 
@@ -653,10 +753,8 @@ burst_sim_fname=run_dipole_simulation(
 )
 
 # %% [markdown]
-# ## Inversion and CSD
 # Now we'll run a source reconstruction using the multilayer mesh, select the vertex to examine, extract the source signals at each layer in that location, and compute a laminar CSD
 
-# %%
 [_,_,MU] = invert_ebb(
     multilayer_mesh_fname, 
     burst_sim_fname, 
@@ -720,6 +818,11 @@ plot_csd(smooth_csd, time, ax)
 plt.xlabel('Time (ms)')
 plt.ylabel('Layer')
 plt.tight_layout()
+
+# %%
+#.. image:: ../_static/tutorial_06_burst_results.png
+#   :width: 800
+#   :alt:
 
 # %%
 spm.terminate()
