@@ -431,7 +431,7 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
 
 
 def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=1,
-                          win_size=16, win_overlap=True, foi=None, hann_windowing=True, viz=True,
+                          win_size=50, win_overlap=True, foi=None, hann_windowing=True, viz=True,
                           spm_instance=None):
     """
     Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time window.
@@ -455,7 +455,7 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     n_temp_modes : int, optional
         Number of temporal modes for the beamformer. Default is 1.
     win_size : float, optional
-        Size of the sliding window in ms. Default is 16. If you increase `win_size`, you may need
+        Size of the sliding window in ms. Default is 50. If you increase `win_size`, you may need
         to increase `n_temp_modes`.
     win_overlap : bool, optional
         Whether the windows should overlap. Default is True.
