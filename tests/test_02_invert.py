@@ -352,6 +352,7 @@ def test_invert_sliding_window(spm):
         mesh_fname,
         base_fname,
         1,
+        win_size=16,
         spm_instance=spm
     )
 
@@ -369,6 +370,7 @@ def test_invert_sliding_window(spm):
         mesh_fname,
         base_fname,
         1,
+        win_size=16,
         win_overlap=False,
         spm_instance=spm
     )
