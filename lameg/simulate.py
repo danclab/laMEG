@@ -92,7 +92,8 @@ def load_vertices(file):
 
 
 def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_moments,
-                                   sim_patch_sizes, snr, sim_woi=None, spm_instance=None):
+                                   sim_patch_sizes, snr, sim_woi=None, average_trials=False,
+                                   spm_instance=None):
     """
     Simulate current density data based on specified parameters.
 
@@ -118,6 +119,8 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
         Signal-to-noise ratio for the simulation.
     sim_woi : list, optional
         Window of interest for the simulation as [start, end]. Default is [-np.inf, np.inf].
+    average_trials : bool, optional
+        Whether to average the simulated data over trials. Default is False.
     spm_instance : spm_standalone, optional
         Instance of standalone SPM. Default is None.
 
@@ -171,6 +174,40 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
     data_dir = os.path.dirname(data_file)
     data_fname = os.path.split(os.path.splitext(data_file)[0])[1]
     sim_fname= os.path.join(data_dir, f'{prefix}{data_fname}.mat')
+
+    if average_trials:
+        cfg = {
+            "spm": {
+                "meeg": {
+                    "averaging": {
+                        "average": {
+                            "D": np.asarray([sim_fname], dtype="object"),
+                            "userobust": {
+                                "standard": 0
+                            },
+                            "plv": 0,
+                            "prefix": 'm'
+                        }
+                    }
+                }
+            }
+        }
+
+        cfg = {"matlabbatch": [cfg]}
+        file, name = tempfile.mkstemp(suffix=".mat")
+        savemat(file, cfg)
+        spm.spm_standalone(
+            "eval",
+            f"""
+            load('{name}'); 
+            spm('defaults', 'EEG'); 
+            spm_get_defaults('cmdline',1); 
+            spm_jobman('run', matlabbatch);
+            """,
+            nargout=0
+        )
+        os.remove(name)
+        sim_fname = os.path.join(data_dir, f'm{prefix}{data_fname}.mat')
 
     return sim_fname
 
