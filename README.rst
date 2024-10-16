@@ -6,7 +6,7 @@ Toolbox for laminar inference with MEG, powered by `FreeSurfer <https://surfer.n
 
 Operating system
 ================
-* Windows: Follow instructions [here](https://github.com/danclab/laMEG/windows_instructions.md)
+* Windows: Follow instructions `here <https://github.com/danclab/laMEG/windows_instructions.md>`_
 * Mac: May work, not tested
 * Linux: Tested on Ubuntu and Debian
 
