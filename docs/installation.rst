@@ -6,7 +6,7 @@ Freesurfer can be ran on Windows using Microsoft Windows Subsystem for Linux (WS
 WSL
 ---
 
-At the command prompt type::
+Open ``cmd`` and input the following command to install WSL::
 
     wsl --install
 
@@ -44,8 +44,8 @@ Download and copy your ``license.txt``
 
 Go to https://surfer.nmr.mgh.harvard.edu/registration.html and copy it in ``/usr/local/freesurfer``.
 
-Enlarge your WSL memory allocation
-----------------------------------
+Enlarge your Partition, Expand Necessary Internal Space
+-------------------------------------------------------
 
 By default WSL can only use up to 50% of your PC memory, which might not be enough for ``laMEG``. For example, to execute the tutorials you would require approximately 22Gb of memory.
 To increase the memory allocation for WSL (in this case, to 24GB), create a ``.wslconfig`` file in ``C:/Users/<your user name>``::
