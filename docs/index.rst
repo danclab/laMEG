@@ -12,19 +12,6 @@ https://github.com/danclab/laMEG
 
 To get started, follow the installation instructions `in the README <https://github.com/danclab/laMEG?tab=readme-ov-file#installation>`_.
 
-Operating system
-----------------
-* Windows: not supported by FreeSurfer
-* Mac: may work, but not tested
-* Linux: yes
-
-Windows installation instructions
-------------
-.. toctree::
-   :maxdepth: 1
-
-   installation
-
 Available modules
 -----------------
 
@@ -37,13 +24,12 @@ Here is a list of the modules available in ``laMEG``:
 
 .. autosummary::
    :caption: laMEG
-   :toctree: _autosummary
 
-   lameg.invert
-   lameg.laminar
-   lameg.surf
-   lameg.viz
-   lameg.simulate
+   ~lameg.invert
+   ~lameg.laminar
+   ~lameg.surf
+   ~lameg.viz
+   ~lameg.simulate
 
 Tutorials
 ----------------
@@ -54,6 +40,19 @@ A collection of tutorials is available:
    :maxdepth: 2
 
    auto_tutorials/index
+
+Operating system
+----------------
+* Windows: Need WSL, follow instructions `here <https://danclab.github.io/laMEG/installation.html>`_
+* Mac: May work, not tested
+* Linux: Tested on Ubuntu and Debian
+
+Windows installation instructions
+------------
+.. toctree::
+   :maxdepth: 1
+
+   installation
 
 Indices and tables
 ------------------
