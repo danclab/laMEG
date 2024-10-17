@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://danclab.github.io/laMEG/sitemap.xml

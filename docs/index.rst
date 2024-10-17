@@ -18,6 +18,13 @@ Operating system
 * Mac: may work, but not tested
 * Linux: yes
 
+Windows installation instructions
+------------
+.. toctree::
+   :maxdepth: 1
+
+   installation
+
 Available modules
 -----------------
 
