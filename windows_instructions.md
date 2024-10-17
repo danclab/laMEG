@@ -53,4 +53,4 @@ memory=24GB
 
 ```
 
-You can now proceed with the standard `laMEG installation instructions <https://github.com/danclab/laMEG/blob/main/README.rst>`_
+You can now proceed with the standard [laMEG installation instructions](https://github.com/danclab/laMEG/blob/main/README.rst)
