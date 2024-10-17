@@ -1,7 +1,7 @@
 Windows installation
 ====================
 
-Freesurfer can be ran on Windows using Microsoft Windows Subsystem for Linux (WSL)
+Freesurfer can be ran on Windows using Microsoft Windows Subsystem for Linux (WSL).
 
 WSL
 ---
@@ -10,7 +10,7 @@ At the command prompt type::
 
     wsl --install
 
-Then launch wsl to install freesurfer
+Then launch ``wsl`` to install ``Freesurfer``.
 
 Freesurfer
 ----------
@@ -42,15 +42,15 @@ Add ``FREESURFER_HOME`` and ``SUBJECT_DIR`` to your ``.bashrc``::
 Download and copy your ``license.txt``
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Go to https://surfer.nmr.mgh.harvard.edu/registration.html and copy it in ``/usr/local/freesurfer``
+Go to https://surfer.nmr.mgh.harvard.edu/registration.html and copy it in ``/usr/local/freesurfer``.
 
-Enlarge WSL memory allocation
------------------------------
+Enlarge your WSL memory allocation
+----------------------------------
 
-By default WSL can only use up to 50% of your PC memory, which might not be enough to run LaMEG tutorials.
-To allow WSL to use more memory, create a ``.wslconfig`` file in ``C:/Users/<your user name>``::
+By default WSL can only use up to 50% of your PC memory, which might not be enough for ``laMEG``. For example, to execute the tutorials you would require approximately 22Gb of memory.
+To increase the memory allocation for WSL (in this case, to 24GB), create a ``.wslconfig`` file in ``C:/Users/<your user name>``::
 
     [wsl2]
     memory=24GB
 
-You can now proceed with the standard `laMEG installation instructions <https://github.com/danclab/laMEG/blob/main/README.rst#installation>`_
+You can now proceed with the standard `laMEG installation instructions <https://github.com/danclab/laMEG/blob/main/README.rst#installation>`_.
