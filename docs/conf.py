@@ -46,6 +46,7 @@ extensions = [
     "jupyter_sphinx",
     "sphinx_gallery.gen_gallery",
     "sphinxemoji.sphinxemoji",
+    'sphinx_sitemap'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -80,6 +81,9 @@ master_doc = "index"
 
 # The theme to use for HTML and HTML Help pages
 html_theme = "pydata_sphinx_theme"
+
+# SEO stuff
+html_baseurl = 'https://danclab.github.io/laMEG/'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
@@ -119,7 +123,14 @@ html_context = {
     "github_repo": "laMEG",
     "github_version": "master",
     "doc_path": "docs",
+    "metatags": """
+       <meta name="description" content="laMEG: A Python package for laminar analysis of MEG data">
+       <meta name="keywords" content="MEG, laminar analysis, neuroscience, Python">
+       """
 }
+
+# SEO stuff
+html_extra_path = ['robots.txt', 'google0bc7cbc5c0e0b225.html']
 
 # -- Options for Sphinx-gallery HTML ------------------------------------------
 from sphinx_gallery.sorting import FileNameSortKey
