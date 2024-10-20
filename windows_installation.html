@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Windows installation &#8212; laMEG 0.0.4 documentation</title>
+    <title>How to install laMEG with Windows &#8212; laMEG 0.0.4 documentation</title>
   
   
   
@@ -50,11 +50,10 @@
     <script src="_static/thebelab-helper.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'installation';</script>
-    <link rel="canonical" href="https://danclab.github.io/laMEG/installation.html" />
+    <script>DOCUMENTATION_OPTIONS.pagename = 'windows_installation';</script>
+    <link rel="canonical" href="https://danclab.github.io/laMEG/windows_installation.html" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Laminar CSD analysis" href="auto_tutorials/tutorial_06_csd.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -147,13 +146,6 @@
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="auto_tutorials/index.html">
                         Tutorials gallery
-                      </a>
-                    </li>
-                
-
-                    <li class="nav-item current active">
-                      <a class="nav-link nav-internal" href="#">
-                        Windows installation
                       </a>
                     </li>
                 
@@ -276,13 +268,6 @@ document.write(`
                     </li>
                 
 
-                    <li class="nav-item current active">
-                      <a class="nav-link nav-internal" href="#">
-                        Windows installation
-                      </a>
-                    </li>
-                
-
                 <li class="nav-item">
                   <a class="nav-link nav-external" href="https://github.com/danclab/laMEG">
                     GitHub
@@ -373,7 +358,7 @@ document.write(`
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page">Windows installation</li>
+    <li class="breadcrumb-item active" aria-current="page">How to install laMEG with Windows</li>
   </ul>
 </nav>
 </div>
@@ -390,55 +375,25 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section id="windows-installation">
-<h1>Windows installation<a class="headerlink" href="#windows-installation" title="Permalink to this heading">#</a></h1>
-<p>Freesurfer can be ran on Windows using Microsoft Windows Subsystem for Linux (WSL).</p>
+  <section id="how-to-install-lameg-with-windows">
+<h1>How to install laMEG with Windows<a class="headerlink" href="#how-to-install-lameg-with-windows" title="Permalink to this heading">#</a></h1>
+<p>laMEG can be run on Windows using Microsoft Windows Subsystem for Linux (WSL).</p>
 <section id="wsl">
 <h2>WSL<a class="headerlink" href="#wsl" title="Permalink to this heading">#</a></h2>
 <p>Open <code class="docutils literal notranslate"><span class="pre">cmd</span></code> and input the following command to install WSL:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">wsl</span> <span class="o">--</span><span class="n">install</span>
-</pre></div>
-</div>
-<p>Then launch <code class="docutils literal notranslate"><span class="pre">wsl</span></code> to install <code class="docutils literal notranslate"><span class="pre">Freesurfer</span></code>.</p>
-</section>
-<section id="freesurfer">
-<h2>Freesurfer<a class="headerlink" href="#freesurfer" title="Permalink to this heading">#</a></h2>
-<section id="package-requirements">
-<h3>Package Requirements<a class="headerlink" href="#package-requirements" title="Permalink to this heading">#</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>add-apt-repository<span class="w"> </span>universe
-sudo<span class="w"> </span>apt<span class="w"> </span>update
-
-sudo<span class="w"> </span>apt<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>bc<span class="w"> </span>binutils<span class="w"> </span>libgomp1<span class="w"> </span>perl<span class="w"> </span>psmisc<span class="w"> </span>sudo<span class="w"> </span>tar<span class="w"> </span>tcsh<span class="w"> </span>unzip<span class="w"> </span>uuid-dev<span class="w"> </span>vim-common<span class="w"> </span>libjpeg62-dev<span class="w"> </span>libxt6<span class="w"> </span>libxt6-dev
-</pre></div>
-</div>
-</section>
-<section id="download-freesurfer-6-0-0">
-<h3>Download Freesurfer 6.0.0<a class="headerlink" href="#download-freesurfer-6-0-0" title="Permalink to this heading">#</a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz
-sudo<span class="w"> </span>tar<span class="w"> </span>-C<span class="w"> </span>/usr/local<span class="w"> </span>-xzvf<span class="w"> </span>freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz
-</pre></div>
-</div>
-<p>Add <code class="docutils literal notranslate"><span class="pre">FREESURFER_HOME</span></code> and <code class="docutils literal notranslate"><span class="pre">SUBJECT_DIR</span></code> to your <code class="docutils literal notranslate"><span class="pre">.bashrc</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>export FREESURFER_HOME=/usr/local/freesurfer
-source $FREESURFER_HOME/SetUpFreeSurfer.sh
-export SUBJECTS_DIR=&lt;path to subject data&gt;
-</pre></div>
-</div>
-</section>
-<section id="download-and-copy-your-license-txt">
-<h3>Download and copy your <code class="docutils literal notranslate"><span class="pre">license.txt</span></code><a class="headerlink" href="#download-and-copy-your-license-txt" title="Permalink to this heading">#</a></h3>
-<p>Go to <a class="reference external" href="https://surfer.nmr.mgh.harvard.edu/registration.html">https://surfer.nmr.mgh.harvard.edu/registration.html</a> and copy it in <code class="docutils literal notranslate"><span class="pre">/usr/local/freesurfer</span></code>.</p>
-</section>
+<p><code class="docutils literal notranslate"><span class="pre">wsl</span> <span class="pre">--install</span></code></p>
 </section>
 <section id="enlarge-your-partition-expand-necessary-internal-space">
 <h2>Enlarge your Partition, Expand Necessary Internal Space<a class="headerlink" href="#enlarge-your-partition-expand-necessary-internal-space" title="Permalink to this heading">#</a></h2>
-<p>By default WSL can only use up to 50% of your PC memory, which might not be enough for <code class="docutils literal notranslate"><span class="pre">laMEG</span></code>. For example, to execute the tutorials you would require approximately 22Gb of memory.
-To increase the memory allocation for WSL (in this case, to 24GB), create a <code class="docutils literal notranslate"><span class="pre">.wslconfig</span></code> file in <code class="docutils literal notranslate"><span class="pre">C:/Users/&lt;your</span> <span class="pre">user</span> <span class="pre">name&gt;</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">wsl2</span><span class="p">]</span>
-<span class="n">memory</span><span class="o">=</span><span class="mi">24</span><span class="n">GB</span>
+<p>By default, WSL can only use up to 50% of your PC’s memory, which might not be enough for <code class="docutils literal notranslate"><span class="pre">laMEG</span></code>.
+For example, you would need approx. 22GB of memory to run the tutorials.
+To allow WSL to use more memory (e.g. 24GB), create a <cite>.wslconfig</cite> file in C:/Users/<code class="docutils literal notranslate"><span class="pre">&lt;your</span> <span class="pre">user</span> <span class="pre">name&gt;</span></code>.</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>[wsl2]
+memory=24GB
 </pre></div>
 </div>
-<p>You can now proceed with the standard <a class="reference external" href="https://github.com/danclab/laMEG/blob/main/README.rst#installation">laMEG installation instructions</a>.</p>
+<p>Then launch <code class="docutils literal notranslate"><span class="pre">wsl</span></code>.</p>
+<p>You can now proceed with the standard <a class="reference external" href="https://danclab.github.io/laMEG/#installation">laMEG installation instructions</a>.</p>
 </section>
 </section>
 
@@ -453,15 +408,6 @@ To increase the memory allocation for WSL (in this case, to 24GB), create a <cod
   
     <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
-    <a class="left-prev"
-       href="auto_tutorials/tutorial_06_csd.html"
-       title="previous page">
-      <i class="fa-solid fa-angle-left"></i>
-      <div class="prev-next-info">
-        <p class="prev-next-subtitle">previous</p>
-        <p class="prev-next-title">Laminar CSD analysis</p>
-      </div>
-    </a>
 </div></div>
   
 </div>
@@ -481,12 +427,6 @@ To increase the memory allocation for WSL (in this case, to 24GB), create a <cod
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#wsl">WSL</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#freesurfer">Freesurfer</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#package-requirements">Package Requirements</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#download-freesurfer-6-0-0">Download Freesurfer 6.0.0</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#download-and-copy-your-license-txt">Download and copy your <code class="docutils literal notranslate"><span class="pre">license.txt</span></code></a></li>
-</ul>
-</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#enlarge-your-partition-expand-necessary-internal-space">Enlarge your Partition, Expand Necessary Internal Space</a></li>
 </ul>
   </nav></div>
@@ -494,7 +434,7 @@ To increase the memory allocation for WSL (in this case, to 24GB), create a <cod
   <div class="sidebar-secondary-item">
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/danclab/laMEG/edit/master/docs/installation.rst">
+    <a href="https://github.com/danclab/laMEG/edit/master/docs/windows_installation.rst">
       <i class="fa-solid fa-pencil"></i>
       
       
@@ -508,7 +448,7 @@ To increase the memory allocation for WSL (in this case, to 24GB), create a <cod
 
   <div class="sidebar-secondary-item">
   <div class="tocsection sourcelink">
-    <a href="_sources/installation.rst.txt">
+    <a href="_sources/windows_installation.rst.txt">
       <i class="fa-solid fa-file-lines"></i> Show Source
     </a>
   </div>

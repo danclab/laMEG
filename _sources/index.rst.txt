@@ -42,17 +42,45 @@ A collection of tutorials is available:
    auto_tutorials/index
 
 Operating system
-----------------
-* Windows: Need WSL, follow instructions `here <https://danclab.github.io/laMEG/installation.html>`_
+================
+* Windows: Follow instructions `here <https://danclab.github.io/laMEG/windows_installation.html>`_
 * Mac: May work, not tested
 * Linux: Tested on Ubuntu and Debian
 
-Windows installation instructions
-------------
-.. toctree::
-   :maxdepth: 1
+Requirements
+============
+* `FreeSurfer v6.0 <https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads>`_
+* Python version 3.7
+* Anaconda (or miniconda)
 
-   installation
+Installation
+============
+1. Create a conda environment::
+
+       conda create -n <env name> python=3.7
+
+   replacing ``<env name>`` with the name of the environment you would like to create (i.e. 'lameg', or the name of your project)
+
+2. Activate the environment::
+
+       conda activate <env name>
+
+   replacing ``<env name>`` with name of the environment you created.
+
+3. Install FreeSurfer, following the instructions `here <https://danclab.github.io/laMEG/freesurfer_installation.html>`_
+
+4. To install ``laMEG``, run::
+
+       pip install lameg
+
+   This also installs SPM standalone and Matlab runtime, which can take some time depending on your connection speed.
+
+5. Before using, deactivate and reactivate the environment for changes to environment variables to take effect::
+
+       conda deactivate
+       conda activate <env name>
+
+6. If you want to run the tutorials, download and extract the `test data <https://osf.io/mgz9q/download>`_
 
 Indices and tables
 ------------------

@@ -151,13 +151,6 @@
                     </li>
                 
 
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="installation.html">
-                        Windows installation
-                      </a>
-                    </li>
-                
-
                 <li class="nav-item">
                   <a class="nav-link nav-external" href="https://github.com/danclab/laMEG">
                     GitHub
@@ -272,13 +265,6 @@ document.write(`
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="auto_tutorials/index.html">
                         Tutorials gallery
-                      </a>
-                    </li>
-                
-
-                    <li class="nav-item">
-                      <a class="nav-link nav-internal" href="installation.html">
-                        Windows installation
                       </a>
                     </li>
                 
@@ -408,22 +394,53 @@ document.write(`
 </ul>
 </div>
 </section>
+</section>
 <section id="operating-system">
-<h2>Operating system<a class="headerlink" href="#operating-system" title="Permalink to this heading">#</a></h2>
+<h1>Operating system<a class="headerlink" href="#operating-system" title="Permalink to this heading">#</a></h1>
 <ul class="simple">
-<li><p>Windows: Need WSL, follow instructions <a class="reference external" href="https://danclab.github.io/laMEG/installation.html">here</a></p></li>
+<li><p>Windows: Follow instructions <a class="reference external" href="https://danclab.github.io/laMEG/windows_installation.html">here</a></p></li>
 <li><p>Mac: May work, not tested</p></li>
 <li><p>Linux: Tested on Ubuntu and Debian</p></li>
 </ul>
 </section>
-<section id="windows-installation-instructions">
-<h2>Windows installation instructions<a class="headerlink" href="#windows-installation-instructions" title="Permalink to this heading">#</a></h2>
-<div class="toctree-wrapper compound">
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="installation.html">Windows installation</a></li>
+<section id="requirements">
+<h1>Requirements<a class="headerlink" href="#requirements" title="Permalink to this heading">#</a></h1>
+<ul class="simple">
+<li><p><a class="reference external" href="https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads">FreeSurfer v6.0</a></p></li>
+<li><p>Python version 3.7</p></li>
+<li><p>Anaconda (or miniconda)</p></li>
 </ul>
-</div>
 </section>
+<section id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Permalink to this heading">#</a></h1>
+<ol class="arabic">
+<li><p>Create a conda environment:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">create</span> <span class="o">-</span><span class="n">n</span> <span class="o">&lt;</span><span class="n">env</span> <span class="n">name</span><span class="o">&gt;</span> <span class="n">python</span><span class="o">=</span><span class="mf">3.7</span>
+</pre></div>
+</div>
+<p>replacing <code class="docutils literal notranslate"><span class="pre">&lt;env</span> <span class="pre">name&gt;</span></code> with the name of the environment you would like to create (i.e. ‘lameg’, or the name of your project)</p>
+</li>
+<li><p>Activate the environment:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">activate</span> <span class="o">&lt;</span><span class="n">env</span> <span class="n">name</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>replacing <code class="docutils literal notranslate"><span class="pre">&lt;env</span> <span class="pre">name&gt;</span></code> with name of the environment you created.</p>
+</li>
+<li><p>Install FreeSurfer, following the instructions <a class="reference external" href="https://danclab.github.io/laMEG/freesurfer_installation.html">here</a></p></li>
+<li><p>To install <code class="docutils literal notranslate"><span class="pre">laMEG</span></code>, run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip</span> <span class="n">install</span> <span class="n">lameg</span>
+</pre></div>
+</div>
+<p>This also installs SPM standalone and Matlab runtime, which can take some time depending on your connection speed.</p>
+</li>
+<li><p>Before using, deactivate and reactivate the environment for changes to environment variables to take effect:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">deactivate</span>
+<span class="n">conda</span> <span class="n">activate</span> <span class="o">&lt;</span><span class="n">env</span> <span class="n">name</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+</li>
+<li><p>If you want to run the tutorials, download and extract the <a class="reference external" href="https://osf.io/mgz9q/download">test data</a></p></li>
+</ol>
 <section id="indices-and-tables">
 <h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this heading">#</a></h2>
 <ul class="simple">
@@ -477,14 +494,21 @@ document.write(`
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#"> <code class="docutils literal notranslate"><span class="pre">laMEG</span></code>: laminar inference with MEG</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#introduction">Introduction</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#available-modules">Available modules</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tutorials">Tutorials</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#operating-system">Operating system</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#windows-installation-instructions">Windows installation instructions</a></li>
+</ul>
+</li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#operating-system">Operating system</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#requirements">Requirements</a></li>
+<li class="toc-h1 nav-item toc-entry"><a class="reference internal nav-link" href="#installation">Installation</a><ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#indices-and-tables">Indices and tables</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#funding">Funding</a></li>
 </ul>
+</li>
+</ul>
+
   </nav></div>
 
   <div class="sidebar-secondary-item">

@@ -7,11 +7,9 @@
 
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-       <meta name="description" content="laMEG: A Python package for laminar analysis of MEG data">
-       <meta name="keywords" content="MEG, laminar analysis, neuroscience, Python">
-       
-    <title>Python Module Index &#8212; laMEG 0.0.4 documentation</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>How to install FreeSurfer &#8212; laMEG 0.0.4 documentation</title>
   
   
   
@@ -52,15 +50,12 @@
     <script src="_static/thebelab-helper.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
     <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'py-modindex';</script>
-    <link rel="canonical" href="https://danclab.github.io/laMEG/py-modindex.html" />
+    <script>DOCUMENTATION_OPTIONS.pagename = 'freesurfer_installation';</script>
+    <link rel="canonical" href="https://danclab.github.io/laMEG/freesurfer_installation.html" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
-
-
   </head>
   
   
@@ -237,6 +232,10 @@ document.write(`
   
 
   
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
 </div>
 
     </nav>
@@ -342,7 +341,33 @@ document.write(`
           <div class="bd-content">
             <div class="bd-article-container">
               
-              <div class="bd-header-article"></div>
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumbs">
+  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">How to install FreeSurfer</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
               
               
               
@@ -350,54 +375,41 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
+  <section id="how-to-install-freesurfer">
+<h1>How to install FreeSurfer<a class="headerlink" href="#how-to-install-freesurfer" title="Permalink to this heading">#</a></h1>
+<p>laMEG requires FreeSurfer to process cortical surfaces.</p>
+<section id="install-package-requirements">
+<h2>Install Package Requirements<a class="headerlink" href="#install-package-requirements" title="Permalink to this heading">#</a></h2>
+<p>From the bash prompt, run the following commands to install FreeSurfer’s package requirements:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sudo<span class="w"> </span>add-apt-repository<span class="w"> </span>universe
 
-   <h1>Python Module Index</h1>
+sudo<span class="w"> </span>apt<span class="w"> </span>update
 
-   <div class="modindex-jumpbox">
-   <a href="#cap-l"><strong>l</strong></a>
-   </div>
+sudo<span class="w"> </span>apt<span class="w"> </span>-y<span class="w"> </span>install<span class="w"> </span>bc<span class="w"> </span>binutils<span class="w"> </span>libgomp1<span class="w"> </span>perl<span class="w"> </span>psmisc<span class="w"> </span>sudo<span class="w"> </span>tar<span class="w"> </span>tcsh<span class="w"> </span>unzip<span class="w"> </span>uuid-dev<span class="w"> </span>vim-common<span class="w"> </span>libjpeg62-dev<span class="w"> </span>libxt6<span class="w"> </span>libxt6-dev
+</pre></div>
+</div>
+</section>
+<section id="download-freesurfer-6-0-0">
+<h2>Download Freesurfer 6.0.0<a class="headerlink" href="#download-freesurfer-6-0-0" title="Permalink to this heading">#</a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>https://surfer.nmr.mgh.harvard.edu/pub/dist/freesurfer/6.0.0/freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz
 
-   <table class="indextable modindextable">
-     <tr class="pcap"><td></td><td>&#160;</td><td></td></tr>
-     <tr class="cap" id="cap-l"><td></td><td>
-       <strong>l</strong></td><td></td></tr>
-     <tr>
-       <td><img src="_static/minus.png" class="toggler"
-              id="toggle-1" style="display: none" alt="-" /></td>
-       <td>
-       <a href="_source/lameg.html#module-lameg"><code class="xref">lameg</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="_source/lameg.html#module-lameg.invert"><code class="xref">lameg.invert</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="_source/lameg.html#module-lameg.laminar"><code class="xref">lameg.laminar</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="_source/lameg.html#module-lameg.simulate"><code class="xref">lameg.simulate</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="_source/lameg.html#module-lameg.surf"><code class="xref">lameg.surf</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="_source/lameg.html#module-lameg.util"><code class="xref">lameg.util</code></a></td><td>
-       <em></em></td></tr>
-     <tr class="cg-1">
-       <td></td>
-       <td>&#160;&#160;&#160;
-       <a href="_source/lameg.html#module-lameg.viz"><code class="xref">lameg.viz</code></a></td><td>
-       <em></em></td></tr>
-   </table>
+sudo<span class="w"> </span>tar<span class="w"> </span>-C<span class="w"> </span>/usr/local<span class="w"> </span>-xzvf<span class="w"> </span>freesurfer-Linux-centos6_x86_64-stable-pub-v6.0.0.tar.gz
+</pre></div>
+</div>
+<p>Add <code class="docutils literal notranslate"><span class="pre">FREESURFER_HOME</span></code> and <code class="docutils literal notranslate"><span class="pre">SUBJECT_DIR</span></code> to /home/<code class="docutils literal notranslate"><span class="pre">&lt;your</span> <span class="pre">username&gt;</span></code>/.bashrc:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">FREESURFER_HOME</span><span class="o">=</span>/usr/local/freesurfer
+
+<span class="nb">source</span><span class="w"> </span><span class="nv">$FREESURFER_HOME</span>/SetUpFreeSurfer.sh
+
+<span class="nb">export</span><span class="w"> </span><span class="nv">SUBJECTS_DIR</span><span class="o">=</span>&lt;path<span class="w"> </span>to<span class="w"> </span>subject<span class="w"> </span>data&gt;
+</pre></div>
+</div>
+</section>
+<section id="add-a-license-txt-file">
+<h2>Add a <cite>license.txt</cite> File<a class="headerlink" href="#add-a-license-txt-file" title="Permalink to this heading">#</a></h2>
+<p>Go to <a class="reference external" href="https://surfer.nmr.mgh.harvard.edu/registration.html">https://surfer.nmr.mgh.harvard.edu/registration.html</a> and copy it into <cite>/usr/local/freesurfer</cite>.</p>
+</section>
+</section>
 
 
                 </article>
@@ -419,6 +431,45 @@ document.write(`
             </div>
             
             
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#install-package-requirements">Install Package Requirements</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#download-freesurfer-6-0-0">Download Freesurfer 6.0.0</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#add-a-license-txt-file">Add a <cite>license.txt</cite> File</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/danclab/laMEG/edit/master/docs/freesurfer_installation.rst">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div class="tocsection sourcelink">
+    <a href="_sources/freesurfer_installation.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
               
             
           </div>
