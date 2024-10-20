@@ -12,7 +12,7 @@ Operating system
 
 Requirements
 ============
-* `FreeSurfer v6.0 <https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads>`_, setup and configured (``FREESURFER_HOME`` set, ``SetUpFreeSurfer.sh`` sourced, and ``SUBJECTS_DIR`` set)
+* `FreeSurfer v6.0 <https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads>`_
 * Python version 3.7
 * Anaconda (or miniconda)
 
@@ -30,18 +30,20 @@ Installation
 
    replacing ``<env name>`` with name of the environment you created.
 
-3. To install ``laMEG``, run::
+3. Install FreeSurfer, following the instructions `here <https://github.com/danclab/laMEG/blob/main/freesurfer_instructions.md>`_
+
+4. To install ``laMEG``, run::
 
        pip install lameg
 
    This also installs SPM standalone and Matlab runtime, which can take some time depending on your connection speed.
 
-4. Before using, deactivate and reactivate the environment for changes to environment variables to take effect::
+5. Before using, deactivate and reactivate the environment for changes to environment variables to take effect::
 
        conda deactivate
        conda activate <env name>
 
-5. If you want to run the tutorials, download and extract the `test data <https://osf.io/mgz9q/download>`_
+6. If you want to run the tutorials, download and extract the `test data <https://osf.io/mgz9q/download>`_
 
 Documentation and Tutorials
 ===========================
