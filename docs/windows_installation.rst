@@ -35,6 +35,6 @@ From the bash prompt, run the following commands to install the package requirem
 
     sudo apt update
 
-    sudo apt -y install bc binutils libgomp1 perl psmisc sudo tar tcsh unzip uuid-dev vim-common libjpeg62-dev libxt6 libxt6-dev
+    sudo apt -y install bc binutils libgomp1 perl psmisc sudo tar tcsh unzip uuid-dev vim-common libjpeg62-dev libxt6
 
 You can now proceed with the standard `laMEG installation instructions <https://danclab.github.io/laMEG/#installation>`_.
