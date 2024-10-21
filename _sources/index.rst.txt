@@ -42,19 +42,19 @@ A collection of tutorials is available:
    auto_tutorials/index
 
 Operating system
-================
+----------------
 * Windows: Follow instructions `here <https://danclab.github.io/laMEG/windows_installation.html>`_
 * Mac: May work, not tested
 * Linux: Tested on Ubuntu and Debian
 
 Requirements
-============
+----------------
 * `FreeSurfer v6.0 <https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads>`_
 * Python version 3.7
 * Anaconda (or miniconda)
 
 Installation
-============
+----------------
 1. Create a conda environment::
 
        conda create -n <env name> python=3.7
