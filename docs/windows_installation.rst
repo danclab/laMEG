@@ -24,4 +24,17 @@ To allow WSL to use more memory (e.g. 24GB), create a `.wslconfig` file in C:/Us
 
 Then launch ``wsl``.
 
+
+Install Package Requirements
+-----------------------------
+From the bash prompt, run the following commands to install the package requirements:
+
+.. code-block:: bash
+
+    sudo add-apt-repository universe
+
+    sudo apt update
+
+    sudo apt -y install bc binutils libgomp1 perl psmisc sudo tar tcsh unzip uuid-dev vim-common libjpeg62-dev libxt6 libxt6-dev
+
 You can now proceed with the standard `laMEG installation instructions <https://danclab.github.io/laMEG/#installation>`_.
