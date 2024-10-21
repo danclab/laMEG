@@ -3,18 +3,6 @@ How to install FreeSurfer
 
 laMEG requires FreeSurfer to process cortical surfaces.
 
-Install Package Requirements
------------------------------
-From the bash prompt, run the following commands to install FreeSurfer's package requirements:
-
-.. code-block:: bash
-
-    sudo add-apt-repository universe
-
-    sudo apt update
-
-    sudo apt -y install bc binutils libgomp1 perl psmisc sudo tar tcsh unzip uuid-dev vim-common libjpeg62-dev libxt6 libxt6-dev
-
 Download Freesurfer 6.0.0
 -------------------------
 .. code-block:: bash
