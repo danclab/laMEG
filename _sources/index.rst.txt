@@ -10,7 +10,7 @@ Toolbox for laminar inference with MEG, powered by FreeSurfer (https://surfer.nm
 The source code of the project is hosted on Github at the following address:
 https://github.com/danclab/laMEG
 
-To get started, follow the installation instructions `in the README <https://github.com/danclab/laMEG?tab=readme-ov-file#installation>`_.
+To get started, follow the `installation instructions <https://danclab.github.io/laMEG/#installation>`_.
 
 Available modules
 -----------------
