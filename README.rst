@@ -30,7 +30,7 @@ Installation
 
    replacing ``<env name>`` with name of the environment you created.
 
-3. Install FreeSurfer, following the instructions `here <https://github.com/danclab/laMEG/blob/main/freesurfer_instructions.md>`_
+3. Install FreeSurfer, following the instructions `on this page <https://github.com/danclab/laMEG/blob/main/freesurfer_instructions.md>`_
 
 4. To install ``laMEG``, run::
 
