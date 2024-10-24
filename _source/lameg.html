@@ -1795,11 +1795,14 @@ places. Each filename also includes an orientation method specifier.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.spm_context">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">spm_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.spm_context" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">spm_context</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">spm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.spm_context" title="Permalink to this definition">#</a></dt>
 <dd><p>Context manager for handling standalone SPM instances.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>spm</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – An existing standalone instance. Default is None.</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spm</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – An existing standalone instance. Default is None.</p></li>
+<li><p><strong>n_jobs</strong> (<em>int</em>) – A number of workers in a MATLAB parpool. Default is 4.</p></li>
+</ul>
 </dd>
 <dt class="field-even">Yields<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>spm</strong> (<em>spm_standalone</em>) – A standalone SPM instance for use within the context.</p>
@@ -1812,6 +1815,8 @@ places. Each filename also includes an orientation method specifier.</p>
 <li><p>If <cite>spm</cite> is provided, it will be used as is and not closed automatically.</p></li>
 <li><p>This function is intended for use in a <cite>with</cite> statement to ensure proper management of
 standalone SPM resources.</p></li>
+<li><p>Default <cite>n_jobs=4</cite> is suitable for a workstation. Increasing the amount of available workers
+is a good choice for deploying with HPC.</p></li>
 </ul>
 </dd></dl>
 
