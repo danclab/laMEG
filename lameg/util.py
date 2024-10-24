@@ -58,10 +58,6 @@ def spm_context(spm=None, n_jobs=4):
     """
 
     # Start standalone SPM
-    settings_fname = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'settings.json')
-    with open(settings_fname, 'r', encoding="utf-8") as settings_file:
-        parameters = json.load(settings_file)
-
     close_spm = False
     if spm is None:
         spm = spm_standalone.initialize()
