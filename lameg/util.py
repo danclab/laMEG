@@ -30,7 +30,7 @@ import spm_standalone
 
 
 @contextmanager
-def spm_context(spm=None):
+def spm_context(spm=None, n_jobs=4):
     """
     Context manager for handling standalone SPM instances.
 
@@ -38,6 +38,8 @@ def spm_context(spm=None):
     ----------
     spm : spm_standalone, optional
         An existing standalone instance. Default is None.
+    n_jobs : int
+        A number of workers in a MATLAB parpool. Default is 4.
 
     Yields
     ------
@@ -51,6 +53,8 @@ def spm_context(spm=None):
     - If `spm` is provided, it will be used as is and not closed automatically.
     - This function is intended for use in a `with` statement to ensure proper management of
       standalone SPM resources.
+    - Default `n_jobs=4` is suitable for a workstation. Increasing the amount of available workers
+      is a good choice for deploying with HPC.
     """
 
     # Start standalone SPM
@@ -65,7 +69,7 @@ def spm_context(spm=None):
             "eval",
             f"""
             try
-                parpool({parameters['num_workers']});
+                parpool({n_jobs});
             catch ME
             end
             """,
