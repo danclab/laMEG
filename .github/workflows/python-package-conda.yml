@@ -60,6 +60,20 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Enable WSL Feature
+      run: |
+        powershell.exe -Command "Start-Process dism.exe -ArgumentList '/online', '/enable-feature', '/featurename:Microsoft-Windows-Subsystem-Linux', '/all', '/norestart' -NoNewWindow -Wait"
+
+    - name: Download and Install Ubuntu
+      run: |
+        curl -L -o ubuntu.appx https://aka.ms/wsl-ubuntu-2004
+        Add-AppxPackage -Path ubuntu.appx
+
+    - name: Initialize Ubuntu
+      run: |
+        wsl --set-default-version 1
+        wsl ubuntu config --default-user root
+
     - name: Set up WSL Memory Allocation
       run: |
         echo "[wsl2]" > C:/.wslconfig
