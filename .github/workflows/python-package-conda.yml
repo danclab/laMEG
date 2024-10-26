@@ -62,7 +62,7 @@ jobs:
 
     - name: Enable WSL Feature
       run: |
-        powershell.exe wsl --install -d Ubuntu
+        wsl --install -d Ubuntu-24.04
 
     - name: Set up WSL Memory Allocation
       run: |
