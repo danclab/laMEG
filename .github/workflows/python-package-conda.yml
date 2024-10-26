@@ -49,3 +49,48 @@ jobs:
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         files: ./coverage.xml
+
+  build-windows:
+    runs-on: windows-latest
+    strategy:
+      max-parallel: 5
+      matrix:
+        python-version: ["3.7"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up WSL Memory Allocation
+      run: |
+        echo "[wsl2]" > C:/.wslconfig
+        echo "memory=24GB" >> C:/.wslconfig
+        wsl --shutdown   # Restart WSL to apply the memory setting
+
+    - name: Set up Miniconda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        python-version: ${{ matrix.python-version }}
+        activate-environment: lameg
+        auto-activate-base: false
+
+    - name: Install dependencies and build package
+      run: |
+        wsl sudo apt-get update
+        wsl sudo apt-get install -y python3-pip
+        wsl sudo add-apt-repository universe
+        wsl sudo apt update
+        wsl sudo apt -y install bc binutils libgomp1 perl psmisc sudo tar tcsh unzip uuid-dev vim-common libjpeg62-dev libxt6
+        wsl conda activate lameg
+        wsl pip install -v .
+      shell: bash -l {0}
+
+    - name: Test with pytest
+      env:
+        SUBJECTS_DIR: /mnt/c/${{ github.workspace }}/test_data/fs
+      run: |
+        wsl conda activate lameg
+        wsl wget -c https://osf.io/mgz9q/download -O /mnt/c/test_data.tar.gz
+        wsl tar -xzf /mnt/c/test_data.tar.gz -C /mnt/c/${{ github.workspace }}
+        wsl rm /mnt/c/test_data.tar.gz
+        wsl python3 -m pytest
+      shell: bash -l {0}
