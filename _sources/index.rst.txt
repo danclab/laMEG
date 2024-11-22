@@ -43,7 +43,7 @@ A collection of tutorials is available:
 
 Operating system
 ----------------
-* Windows: Tested on WSL (using Ubuntu 24.04.1), follow instructions `here <https://github.com/danclab/laMEG/blob/main/windows_instructions.md>`_
+* Windows: Follow instructions `here <https://danclab.github.io/laMEG/windows_installation.html>`_
 * Mac: May work, not tested
 * Linux: Tested on Ubuntu and Debian
 
