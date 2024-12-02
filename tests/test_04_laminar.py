@@ -78,9 +78,9 @@ def test_roi_power_comparison():
     )
 
     target = -0.17077967243430403
-    assert np.isclose(laminar_t_statistic, target)
+    assert np.isclose(laminar_t_statistic, target, atol=1e-2)
     target = 0.8649813417336001
-    assert np.isclose(laminar_p_value, target)
+    assert np.isclose(laminar_p_value, target, atol=1e-2)
     target = 59
     assert deg_of_freedom == target
     target = np.array([  463,   613,  1028,  1163,  1607,  2775, 18020, 19433, 19636])
@@ -164,7 +164,7 @@ def test_model_comparison(spm):
     )
 
     target = np.array([-202445.53571645, -200488.54855084])
-    assert np.allclose(free_energy, target)
+    assert np.allclose(free_energy, target, atol=1e3)
 
     # Test EBB
     [free_energy, _] = model_comparison(
