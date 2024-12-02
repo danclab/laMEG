@@ -1021,7 +1021,7 @@ def postprocess_freesurfer_surfaces(subj_id,
         fixed=fix_orientation
     )
 
-    base_fname = f'ds.{orientation}'
+    base_fname = f'ds.{orientation}.not_fixed'
     if fix_orientation:
         base_fname = f'{base_fname}.fixed'
     for l_idx, layer_name in enumerate(layer_names):
