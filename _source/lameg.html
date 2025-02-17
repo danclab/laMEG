@@ -1192,35 +1192,28 @@ manifoldness of the mesh.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.surf.interpolate_data">
-<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">interpolate_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsampled_mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsampled_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjacency_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">10</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.interpolate_data" title="Permalink to this definition">#</a></dt>
-<dd><p>Interpolate vertex data from a downsampled mesh back to the original mesh using nearest
-neighbor matching and optional smoothing based on an adjacency matrix. Both meshes are
-expected to be nibabel Gifti objects.</p>
+<span class="sig-prename descclassname"><span class="pre">lameg.surf.</span></span><span class="sig-name descname"><span class="pre">interpolate_data</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">original_mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsampled_mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">downsampled_data</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">adjacency_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">k_neighbors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.interpolate_data" title="Permalink to this definition">#</a></dt>
+<dd><p>Interpolate vertex data from a downsampled mesh back to the original mesh using weighted
+averaging of the k-nearest downsampled vertices. After initial interpolation, vertices that
+are in the downsampled mesh are refined using a weighted sum of their neighbors.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>original_mesh</strong> (<em>nibabel.gifti.GiftiImage</em>) – The original high-resolution mesh as a nibabel Gifti object from which ‘downsampled_mesh’
-is derived.</p></li>
-<li><p><strong>downsampled_mesh</strong> (<em>nibabel.gifti.GiftiImage</em>) – The downsampled version of the original mesh as a nibabel Gifti object.</p></li>
-<li><p><strong>downsampled_data</strong> (<em>array</em>) – Data associated with the vertices of ‘downsampled_mesh’.</p></li>
-<li><p><strong>adjacency_matrix</strong> (<em>sparse matrix</em><em>, </em><em>optional</em>) – A vertex-by-vertex adjacency matrix of the original mesh. If None, it will be computed from
-the ‘original_mesh’.</p></li>
-<li><p><strong>max_iterations</strong> (<em>int</em><em>, </em><em>optional</em>) – The maximum number of iterations to perform for smoothing the interpolated data.</p></li>
+<li><p><strong>original_mesh</strong> (<em>nibabel.gifti.GiftiImage</em>) – The original high-resolution mesh as a nibabel Gifti object.</p></li>
+<li><p><strong>downsampled_mesh</strong> (<em>nibabel.gifti.GiftiImage</em>) – The downsampled version of the original mesh.</p></li>
+<li><p><strong>downsampled_data</strong> (<em>np.ndarray</em>) – Data values at each vertex in ‘downsampled_mesh’.</p></li>
+<li><p><strong>adjacency_matrix</strong> (<em>scipy.sparse matrix</em><em>, </em><em>optional</em>) – The adjacency matrix of the original mesh.
+If None, it will be computed.</p></li>
+<li><p><strong>k_neighbors</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of nearest downsampled neighbors to use for interpolation.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>vertex_data</strong> – An array of interpolated data for each vertex in the ‘original_mesh’. The data is initially
-interpolated using nearest neighbors and can be further refined through iterative smoothing.</p>
+<dd class="field-even"><p><strong>vertex_data</strong> – An array of interpolated data for each vertex in ‘original_mesh’.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>np.ndarray</p>
 </dd>
 </dl>
-<p class="rubric">Notes</p>
-<p>The function first finds the nearest vertex in the ‘downsampled_mesh’ for each vertex in the
-‘original_mesh’ using a KD-tree. It directly assigns corresponding data values where a close
-match is found. The function iteratively adjusts data values at vertices without direct matches
-by averaging over neighbors.</p>
 </dd></dl>
 
 <dl class="py function">
