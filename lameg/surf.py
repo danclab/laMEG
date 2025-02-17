@@ -26,8 +26,7 @@ from joblib import Parallel, delayed
 import nibabel as nib
 import numpy as np
 from scipy.spatial import KDTree, cKDTree # pylint: disable=E0611
-from scipy.spatial.distance import cdist
-from scipy.sparse import find, csr_matrix
+from scipy.sparse import csr_matrix
 
 # pylint: disable=E0611
 from vtkmodules.vtkCommonCore import vtkPoints
@@ -1023,7 +1022,7 @@ def postprocess_freesurfer_surfaces(subj_id,
 
     base_fname = f'ds.{orientation}.not_fixed'
     if fix_orientation:
-        base_fname = f'{base_fname}.fixed'
+        base_fname = f'ds.{orientation}.fixed'
     for l_idx, layer_name in enumerate(layer_names):
         in_surf_path = os.path.join(out_dir, f'{layer_name}.ds.gii')
         surf = nib.load(in_surf_path)
@@ -1087,73 +1086,71 @@ def mesh_adjacency(faces):
 
 
 def interpolate_data(original_mesh, downsampled_mesh, downsampled_data, adjacency_matrix=None,
-                     max_iterations=10):
+                     k_neighbors=5):
     """
-    Interpolate vertex data from a downsampled mesh back to the original mesh using nearest
-    neighbor matching and optional smoothing based on an adjacency matrix. Both meshes are
-    expected to be nibabel Gifti objects.
+    Interpolate vertex data from a downsampled mesh back to the original mesh using weighted
+    averaging of the k-nearest downsampled vertices. After initial interpolation, vertices that
+    are in the downsampled mesh are refined using a weighted sum of their neighbors.
 
     Parameters
     ----------
     original_mesh : nibabel.gifti.GiftiImage
-        The original high-resolution mesh as a nibabel Gifti object from which 'downsampled_mesh'
-        is derived.
+        The original high-resolution mesh as a nibabel Gifti object.
     downsampled_mesh : nibabel.gifti.GiftiImage
-        The downsampled version of the original mesh as a nibabel Gifti object.
-    downsampled_data : array
-        Data associated with the vertices of 'downsampled_mesh'.
-    adjacency_matrix : sparse matrix, optional
-        A vertex-by-vertex adjacency matrix of the original mesh. If None, it will be computed from
-        the 'original_mesh'.
-    max_iterations : int, optional
-        The maximum number of iterations to perform for smoothing the interpolated data.
+        The downsampled version of the original mesh.
+    downsampled_data : np.ndarray
+        Data values at each vertex in 'downsampled_mesh'.
+    adjacency_matrix : scipy.sparse matrix, optional
+        The adjacency matrix of the original mesh.
+        If None, it will be computed.
+    k_neighbors : int, optional
+        Number of nearest downsampled neighbors to use for interpolation.
 
     Returns
     -------
     vertex_data : np.ndarray
-        An array of interpolated data for each vertex in the 'original_mesh'. The data is initially
-        interpolated using nearest neighbors and can be further refined through iterative smoothing.
-
-    Notes
-    -----
-    The function first finds the nearest vertex in the 'downsampled_mesh' for each vertex in the
-    'original_mesh' using a KD-tree. It directly assigns corresponding data values where a close
-    match is found. The function iteratively adjusts data values at vertices without direct matches
-    by averaging over neighbors.
+        An array of interpolated data for each vertex in 'original_mesh'.
     """
-
-    if adjacency_matrix is None:
-        adjacency_matrix = mesh_adjacency(original_mesh.darrays[1].data)
-
     original_vertices = original_mesh.darrays[0].data
     downsampled_vertices = downsampled_mesh.darrays[0].data
 
-    # Build a KD-tree for the downsampled vertices
-    tree = cKDTree(downsampled_vertices) # pylint: disable=not-callable
+    # Build a KD-tree for the downsampled mesh
+    tree = cKDTree(downsampled_vertices)
 
-    # Preallocate the vertex data array
+    # Find the k nearest downsampled vertices for each original vertex
+    distances, indices = tree.query(original_vertices, k=k_neighbors)
+
+    # Initialize interpolated data array
     vertex_data = np.full(len(original_vertices), np.nan)
 
-    # Find the nearest neighbor in the downsampled mesh for each vertex in the original mesh
-    distances, indices = tree.query(original_vertices, distance_upper_bound=1e-5)
+    # Compute weighted interpolation from k-nearest downsampled vertices
+    valid_mask = indices[:, 0] < len(downsampled_data)  # Ensure indices are within bounds
+    for i in np.where(valid_mask)[0]:
+        valid_indices = indices[i, :]
+        valid_distances = distances[i, :]
 
-    # Set the vertex data for vertices that match (distance is zero or very close)
-    for i, (distance, index) in enumerate(zip(distances, indices)):
-        if distance < 1e-6:  # Adjust this threshold as needed
-            vertex_data[i] = downsampled_data[index]
+        # Avoid division by zero (replace zero distances with a small number)
+        valid_distances[valid_distances == 0] = 1e-6
+        weights = 1 / valid_distances
+        weights /= weights.sum()  # Normalize weights
 
-    iteration = 0
-    while np.isnan(vertex_data).any() and iteration < max_iterations:
-        for i in np.where(np.isnan(vertex_data))[0]:
-            _, neighbors, _ = find(adjacency_matrix[i, :])
-            valid_neighbors = neighbors[~np.isnan(vertex_data[neighbors])]
+        vertex_data[i] = np.dot(weights, downsampled_data[valid_indices])
 
-            if valid_neighbors.size > 0:
-                distances = cdist([original_vertices[i]], original_vertices[valid_neighbors])[0]
-                weights = 1 / distances
-                normalized_weights = weights / weights.sum()
-                vertex_data[i] = np.dot(normalized_weights, vertex_data[valid_neighbors])
-        iteration += 1
+    # Second pass: Refine values for vertices that were in the downsampled mesh
+    if adjacency_matrix is None:
+        adjacency_matrix = mesh_adjacency(original_mesh.darrays[1].data)
+
+    downsampled_vertex_mask = np.isin(np.arange(len(original_vertices)), indices[:, 0])
+
+    for i in np.where(downsampled_vertex_mask)[0]:
+        neighbors = adjacency_matrix[i].nonzero()[1]
+        if len(neighbors) > 0:
+            distances = np.linalg.norm(original_vertices[neighbors] - original_vertices[i], axis=1)
+            distances[distances == 0] = 1e-6  # Avoid division by zero
+            weights = 1 / distances
+            weights /= weights.sum()  # Normalize weights
+
+            vertex_data[i] = np.dot(weights, vertex_data[neighbors])
 
     return vertex_data
 

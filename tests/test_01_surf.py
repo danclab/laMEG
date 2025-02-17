@@ -923,9 +923,8 @@ def test_interpolate_data(large_gifti):
     n_verts = smaller_gifti.darrays[0].data.shape[0]
     ds_data = np.linspace(0,100, n_verts)
     interp_data = interpolate_data(large_gifti, smaller_gifti, ds_data)
-    target = np.array([3.03420237e+01, 5.32733478e+01, 5.32733478e+01, 6.74284478e+01,
-                       7.44034286e+01, 3.72172278e+01, 3.10269935e-02, 3.10269935e-02,
-                       4.65404902e-02, 6.20539870e-02])
+    target = np.array([[15.25175214, 27.25540839, 49.9735954,  56.24878169, 49.07015577,
+                        33.66244014, 31.40144587, 28.00277272, 20.85717175, 27.23136023]])
     assert np.allclose(interp_data[:10], target)
 
 
