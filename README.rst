@@ -20,7 +20,7 @@ Requirements
 
 Installation
 ============
-1. Install git and curl if needed:
+1. Install git and curl if needed::
        
        sudo apt-get install git curl
 
