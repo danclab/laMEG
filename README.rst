@@ -21,6 +21,7 @@ Requirements
 Installation
 ============
 1. Install git and curl if needed:
+       
        sudo apt-get install git curl
 
 2. Create a conda environment::
