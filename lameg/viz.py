@@ -46,6 +46,8 @@ def data_to_rgb(data, n_bins, cmap, vmin, vmax, vcenter=0.0, ret_map=False, norm
         1D numerical data.
     n_bins : int
         Number of bins in the histogram.
+    cmap: string
+        Colormap to use
     vmin : float
         Lowest value on the histogram range.
     vmax : float
