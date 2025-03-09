@@ -27,9 +27,10 @@ Here is a list of the modules available in ``laMEG``:
 
    ~lameg.invert
    ~lameg.laminar
-   ~lameg.surf
-   ~lameg.viz
    ~lameg.simulate
+   ~lameg.surf
+   ~lameg.util
+   ~lameg.viz
 
 Tutorials
 ----------------
