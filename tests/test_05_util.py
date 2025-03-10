@@ -493,6 +493,19 @@ def test_convert_fsaverage_to_native():
         error_raise = True
     assert error_raise
 
+    error_raise = False
+    try:
+        convert_fsaverage_to_native('sub-104',hemi=None,vert_idx=1000)
+    except ValueError:
+        error_raise = True
+    assert error_raise
+
+    native_vtx = convert_fsaverage_to_native('sub-104')
+    assert native_vtx.shape[0] == 327684
+    target = np.array([[133523, 33481, 148848, 243801, 178049,
+                        69718, 13034, 54269, 201858, 220983]])
+    assert np.allclose(native_vtx[:10], target)
+
 
 def test_convert_native_to_fsaverage():
     """
@@ -564,6 +577,16 @@ def test_convert_native_to_fsaverage():
     except FileNotFoundError:
         error_raise = True
     assert error_raise
+
+    hemis, verts = convert_native_to_fsaverage(
+        'sub-104',
+        surf_path
+    )
+    assert len(hemis) == len(verts) == 49733
+    target = ['lh', 'lh', 'lh', 'lh', 'lh', 'lh', 'lh', 'lh', 'lh', 'lh']
+    assert np.all(hemis[:10] == target)
+    target = [87729, 112541, 112542, 52282, 87824, 158647, 39230, 135879, 6903, 126602]
+    assert np.all(verts[:10] == target)
 
 
 def test_ttest_rel_corrected():
@@ -767,6 +790,16 @@ def test_get_bigbrain_layer_boundaries():
     except FileNotFoundError:
         error_raise = True
     assert error_raise
+
+    vert_bb_prop = get_bigbrain_layer_boundaries(
+        'sub-104',
+        surf_path
+    )
+    assert vert_bb_prop.shape[0] == 6
+    assert vert_bb_prop.shape[1] == 49733
+    expected = np.array([0.18065107, 0.17599325, 0.11645006, 0.16804233, 0.12389062, 0.15487793,
+                         0.15541628, 0.11214042, 0.18332304, 0.16658252])
+    assert np.allclose(vert_bb_prop[0,:10], expected)
 
 
 def test_get_fiducial_coords():

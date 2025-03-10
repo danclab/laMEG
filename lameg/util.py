@@ -474,74 +474,103 @@ def make_directory(root_path, extended_dir):
     return root_path
 
 
-def convert_fsaverage_to_native(subj_id, hemi, vert_idx):
+def convert_fsaverage_to_native(subj_id, hemi=None, vert_idx=None):
     """
-    Convert a vertex index from fsaverage to a subject's native surface space.
+    Convert vertex indices from fsaverage to a subject's native surface space.
 
-    This function takes a vertex index from the fsaverage template surface and finds the
-    corresponding vertex index in a subject's native surface space. It loads the fsaverage
-    spherical surface, identifies the coordinates of the given vertex index, and then finds the
-    nearest corresponding vertex on the subject's registered spherical surface. If the hemisphere
-    is right, it adjusts the index by adding the number of vertices in the left hemisphere pial
-    surface so that it matches the combined hemisphere mesh. It returns the adjusted vertex index in
-    the subject's native space.
+    If both `hemi` and `vert_idx` are None, all vertices from both hemispheres are converted.
+    If `hemi` is a string ('lh' or 'rh') and `vert_idx` is None, all vertices from that hemisphere
+    are converted. If `hemi` is a string and `vert_idx` is an integer, the function converts that
+    single vertex index. If `hemi` is None but `vert_idx` is not None, a ValueError is raised,
+    because we cannot infer which hemisphere the vertex belongs to.
 
     Parameters
     ----------
     subj_id : str
         The subject identifier for which the conversion is being performed.
-    hemi : str
-        Hemisphere specifier ('lh' for left hemisphere, 'rh' for right hemisphere).
-    vert_idx : int
-        Index of the vertex in the fsaverage surface to be converted.
+    hemi : str or None, optional
+        Hemisphere specifier ('lh' or 'rh'). If None and vert_idx is None, both hemispheres
+        are converted. Defaults to None.
+    vert_idx : int or None, optional
+        Index of the vertex in the fsaverage surface to be converted. If None, all vertices
+        in the chosen hemisphere (or both hemispheres) are converted. Defaults to None.
 
     Returns
     -------
-    subj_v_idx : int
-        Index of the vertex on the subject's native surface that corresponds to the input vertex
-        index.
+    subj_v_idx : int or np.ndarray
+        - If converting a single vertex in one hemisphere, returns an integer.
+        - If converting multiple vertices in one hemisphere, returns an array of vertex indices.
+        - If converting all vertices in both hemispheres, returns an array of length
+          (N_lh_vertices + N_rh_vertices), indexed according to the subject's combined hemisphere.
     """
 
     fs_subjects_dir = os.getenv('SUBJECTS_DIR')
     fs_subject_dir = os.path.join(fs_subjects_dir, subj_id)
 
-    # Load fsaverage sphere
-    fsaverage_sphere_vertices, _ = nib.freesurfer.read_geometry(
-        os.path.join(fs_subjects_dir, 'fsaverage', 'surf', f'{hemi}.sphere.reg')
-    )
-
-    # Get the coordinate of the corresponding vertex on the fsaverage sphere
-    fsave_sphere_coord = fsaverage_sphere_vertices[vert_idx, :]
-
-    # Load subject registered sphere
-    subj_sphere_vertices, _ = nib.freesurfer.read_geometry(
-        os.path.join(fs_subject_dir, 'surf', f'{hemi}.sphere.reg')
-    )
-
-    # Get the index of the nearest vertex on the subject sphere
-    kdtree = KDTree(subj_sphere_vertices)
-    _, subj_v_idx = kdtree.query(fsave_sphere_coord, k=1)
-
-    # Adjust vertex index for right hemishphere
-    if hemi=='rh':
-        lh_vertices, _ = nib.freesurfer.read_geometry(
-            os.path.join(fs_subject_dir, 'surf', 'lh.pial')
+    # Helper function to map fsaverage vertices (all or single) to subject space for one hemisphere
+    def map_hemi_vertices(hemi_str, v_idx=None):
+        """
+        Return subject-space vertex indices for one hemisphere, given an optional
+        fsaverage vertex index or None for all vertices in that hemisphere.
+        """
+        # Load fsaverage sphere for the specified hemisphere
+        fsaverage_sphere_vertices, _ = nib.freesurfer.read_geometry(
+            os.path.join(fs_subjects_dir, 'fsaverage', 'surf', f'{hemi_str}.sphere.reg')
         )
-        subj_v_idx += lh_vertices.shape[0]
+        # Load subject sphere for the specified hemisphere
+        subj_sphere_vertices, _ = nib.freesurfer.read_geometry(
+            os.path.join(fs_subject_dir, 'surf', f'{hemi_str}.sphere.reg')
+        )
+        # Build KDTree for subject sphere
+        kdtree = KDTree(subj_sphere_vertices)
+
+        if v_idx is not None:
+            # Single vertex
+            fsave_sphere_coord = fsaverage_sphere_vertices[v_idx]
+            _, subj_v_idx_local = kdtree.query(fsave_sphere_coord, k=1)
+        else:
+            # All vertices for this hemisphere
+            _, subj_v_idx_local = kdtree.query(fsaverage_sphere_vertices, k=1)
+
+        # If right hemisphere, offset by number of left-hemisphere vertices
+        if hemi_str == 'rh':
+            lh_vertices, _ = nib.freesurfer.read_geometry(
+                os.path.join(fs_subject_dir, 'surf', 'lh.pial')
+            )
+            subj_v_idx_local += lh_vertices.shape[0]
+
+        return subj_v_idx_local
+
+    # Logic branching based on hemi and vert_idx
+    if hemi is None and vert_idx is None:
+        # Convert all vertices in both hemispheres
+        lh_subj_v_idx = map_hemi_vertices('lh', v_idx=None)
+        rh_subj_v_idx = map_hemi_vertices('rh', v_idx=None)
+        # Concatenate results: left hemisphere first, right hemisphere second
+        subj_v_idx = np.concatenate([lh_subj_v_idx, rh_subj_v_idx])
+
+    elif hemi is None and vert_idx is not None:
+        # We cannot guess which hemisphere this single vertex belongs to
+        raise ValueError(
+            "Cannot convert a single fsaverage vertex if 'hemi' is None. Please specify 'lh' or "
+            "'rh'."
+        )
+
+    else:
+        # hemi is 'lh' or 'rh'
+        subj_v_idx = map_hemi_vertices(hemi, vert_idx)
 
     return subj_v_idx
 
 
-def convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord):
+
+def convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord=None):
     """
     Convert coordinates from a subject's native surface space to the fsaverage surface space.
 
-    This function maps a vertex coordinate from a subject's native combined pial surface to the
-    corresponding vertex index in the fsaverage template space. It determines which hemisphere the
-    vertex belongs to based on the closest match in the left and right hemispheres' pial surfaces.
-    It then finds the nearest vertex in the subject's registered spherical surface, maps this to
-    the nearest vertex in the fsaverage spherical surface, and returns the index of this fsaverage
-    vertex.
+    This function maps a vertex coordinate from a subject's native combined pial surface
+    to the corresponding vertex index in the fsaverage template space. If no coordinate
+    is provided, it maps all vertices in the subject's downsampled pial surface to fsaverage.
 
     Parameters
     ----------
@@ -549,58 +578,83 @@ def convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord):
         The subject identifier for which the conversion is being performed.
     subj_surf_dir : str
         The path containing the laMEG-processed subject surfaces.
-    subj_coord : array-like
+    subj_coord : array-like, optional
         The x, y, z coordinates on the subject's combined hemisphere pial surface to be converted.
+        If None, all downsampled pial vertices are mapped to fsaverage.
 
     Returns
     -------
-    hemi : str
-        The hemisphere the vertex is found in ('lh' for left hemisphere, 'rh' for right
-        hemisphere).
-    fsave_v_idx : int
-        Index of the vertex on the fsaverage spherical surface that corresponds to the input
-        coordinates.
+    hemi : str or list of str
+        The hemisphere(s) the vertex is found in ('lh' for left hemisphere, 'rh' for right
+        hemisphere').
+    fsave_v_idx : int or list of int
+        Index or indices of the vertex on the fsaverage spherical surface that corresponds to the
+        input coordinates.
     """
-
     fs_subjects_dir = os.getenv('SUBJECTS_DIR')
     fs_subject_dir = os.path.join(fs_subjects_dir, subj_id)
 
-    # Figure out hemisphere
+    # Load full-resolution and downsampled surfaces
+    if subj_coord is None:
+        # Load downsampled surface
+        subj_ds = nib.load(os.path.join(subj_surf_dir, 'pial.ds.gii'))
+        ds_vertices = subj_ds.darrays[0].data
+    else:
+        ds_vertices = np.array([subj_coord])
+
+    # Load full-resolution pial surfaces
     subj_lh = nib.load(os.path.join(subj_surf_dir, 'lh.pial.gii'))
     lh_vertices = subj_lh.darrays[0].data
     subj_rh = nib.load(os.path.join(subj_surf_dir, 'rh.pial.gii'))
     rh_vertices = subj_rh.darrays[0].data
 
-    kdtree = KDTree(lh_vertices)
-    lh_dist, lh_vert_idx = kdtree.query(subj_coord, k=1)
+    # KDTree for finding the closest full-resolution vertex
+    lh_kdtree = KDTree(lh_vertices)
+    rh_kdtree = KDTree(rh_vertices)
 
-    kdtree = KDTree(rh_vertices)
-    rh_dist, rh_vert_idx = kdtree.query(subj_coord, k=1)
+    lh_dists, lh_pial_idx = lh_kdtree.query(ds_vertices, k=1)
+    rh_dists, rh_pial_idx = rh_kdtree.query(ds_vertices, k=1)
 
-    if lh_dist < rh_dist:
-        hemi = 'lh'
-        vert_idx = lh_vert_idx
-    else:
-        hemi = 'rh'
-        vert_idx = rh_vert_idx
+    # Assign each vertex to the closest full-resolution vertex
+    hemis = np.where(lh_dists < rh_dists, 'lh', 'rh')
+    pial_vert_indices = np.where(lh_dists < rh_dists, lh_pial_idx, rh_pial_idx)
 
-    subj_sphere_vertices, _ = nib.freesurfer.read_geometry(
-        os.path.join(fs_subject_dir, 'surf', f'{hemi}.sphere.reg')
+    # Load fsaverage spheres
+    fsaverage_lh_sphere_vertices, _ = nib.freesurfer.read_geometry(
+        os.path.join(fs_subjects_dir, 'fsaverage', 'surf', 'lh.sphere.reg')
+    )
+    fsaverage_rh_sphere_vertices, _ = nib.freesurfer.read_geometry(
+        os.path.join(fs_subjects_dir, 'fsaverage', 'surf', 'rh.sphere.reg')
     )
 
-    # Get the coordinate of the corresponding vertex on the registered subject sphere
-    subj_sphere_coord = subj_sphere_vertices[vert_idx, :]
-
-    # Load FS-average sphere
-    fsaverage_sphere_vertices, _ = nib.freesurfer.read_geometry(
-        os.path.join(fs_subjects_dir, 'fsaverage', 'surf', f'{hemi}.sphere.reg')
+    # Load subject registered sphere surfaces
+    subj_lh_sphere_vertices, _ = nib.freesurfer.read_geometry(
+        os.path.join(fs_subject_dir, 'surf', 'lh.sphere.reg')
+    )
+    subj_rh_sphere_vertices, _ = nib.freesurfer.read_geometry(
+        os.path.join(fs_subject_dir, 'surf', 'rh.sphere.reg')
     )
 
-    # Get the index of the nearest vertex on the fsaverage sphere
-    kdtree = KDTree(fsaverage_sphere_vertices)
-    _, fsave_v_idx = kdtree.query(subj_sphere_coord, k=1)
+    # Precompute KDTree for fsaverage surfaces
+    fs_lh_kdtree = KDTree(fsaverage_lh_sphere_vertices)
+    fs_rh_kdtree = KDTree(fsaverage_rh_sphere_vertices)
 
-    return hemi, fsave_v_idx
+    # Select appropriate subject sphere vertices
+    subj_sphere_coords = np.array([
+        subj_lh_sphere_vertices[idx] if hemi == 'lh' else subj_rh_sphere_vertices[idx]
+        for hemi, idx in zip(hemis, pial_vert_indices)
+    ])
+
+    # Map to fsaverage **in batch** (much faster than looping)
+    fsave_v_idx = np.array([
+        fs_lh_kdtree.query(coord, k=1)[1] if hemi == 'lh' else fs_rh_kdtree.query(coord, k=1)[1]
+        for hemi, coord in zip(hemis, subj_sphere_coords)
+    ])
+
+    # Return results
+    if subj_coord is not None:
+        return hemis[0], fsave_v_idx[0]
+    return hemis.tolist(), fsave_v_idx.tolist()
 
 
 def ttest_rel_corrected(data, correction=0, tail=0, axis=0):
@@ -746,16 +800,11 @@ def big_brain_proportional_layer_boundaries(overwrite=False):
     return bb_data
 
 
-def get_bigbrain_layer_boundaries(subj_id, subj_surf_dir, subj_coord):
+def get_bigbrain_layer_boundaries(subj_id, subj_surf_dir, subj_coord=None):
     """
-    Get the cortical layer boundaries based on Big Brain atlas for a specified coordinate in the
-    subject's downsampled combined space.
-
-    This function maps a vertex coordinate from a subject's native combined pial surface to the
-    corresponding vertex index in the fsaverage template space for a specific hemisphere. Then,
-    the proportional layer boundaries (6 values between 0 and 1) from the fsaverage-converted Big
-    Brain atlas are returned (from layer 1 to layer 6). To get the subject's proportional values,
-    these values must be multiplied by the observed cortical thickness.
+    Get the cortical layer boundaries based on the Big Brain atlas for a specified coordinate
+    in the subject's downsampled combined space. If subj_coord is None, this function returns
+    the 6 proportional layer boundaries for every vertex in the downsampled mesh.
 
     Parameters
     ----------
@@ -763,26 +812,38 @@ def get_bigbrain_layer_boundaries(subj_id, subj_surf_dir, subj_coord):
         The subject identifier for which the conversion is being performed.
     subj_surf_dir : str
         The path containing the laMEG-processed subject surfaces.
-    subj_coord : array-like
-        The x, y, z coordinates on the subject's combined hemisphere pial surface to be converted.
+    subj_coord : array-like or None, optional
+        The x, y, z coordinates on the subject's combined hemisphere pial surface to be
+        converted. If None, all downsampled pial vertices are mapped. Defaults to None.
 
     Returns
     -------
-    vert_bb_prop : array-like
-        Proportional layer boundaries (6 values between 0 and 1) from the fsaverage-converted Big
-        Brain atlas.
+    vert_bb_prop : np.ndarray
+        A 6 x M array of proportional layer boundaries (rows = 6 layer boundaries,
+        columns = vertices), where M is the number of vertices in subj_coord (if provided)
+        or in the downsampled mesh (if subj_coord is None). Values range between 0 and 1,
+        which must be scaled by the cortical thickness to get layer depths in millimeters.
     """
-
-    # convert subj_coord to native + hemisphere
+    # Convert subject coordinate(s) to fsaverage vertex index
     hemi, fsave_v_idx = convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord)
 
-    # compute or read (if the precomputed atlas is present)
+    # Retrieve or compute the Big Brain proportional layer boundaries
+    # big_brain_proportional_layer_boundaries() is assumed to return a dict:
+    #    {'lh': <6 x N_lh array>, 'rh': <6 x N_rh array>}
     bb_prop = big_brain_proportional_layer_boundaries()
 
-    # get the layer boundaries from the fsaverage vertex
-    vert_bb_prop = bb_prop[hemi][:,fsave_v_idx]
+    # If we only have a single coordinate, hemi will be a string; otherwise, it is a list of hemis
+    if isinstance(hemi, str):
+        # Single coordinate: just index directly
+        vert_bb_prop = bb_prop[hemi][:, fsave_v_idx]
+    else:
+        # Multiple coordinates: build a 6 x M array
+        vert_bb_prop = np.zeros((6, len(hemi)))
+        for i, (v_h, idx) in enumerate(zip(hemi, fsave_v_idx)):
+            vert_bb_prop[:, i] = bb_prop[v_h][:, idx]
 
     return vert_bb_prop
+
 
 
 def get_fiducial_coords(subj_id, fname, col_delimiter='\t', subject_column='subj_id',
