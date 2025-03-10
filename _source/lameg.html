@@ -1536,57 +1536,61 @@ any string is present.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.convert_fsaverage_to_native">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">convert_fsaverage_to_native</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hemi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vert_idx</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.convert_fsaverage_to_native" title="Permalink to this definition">#</a></dt>
-<dd><p>Convert a vertex index from fsaverage to a subject’s native surface space.</p>
-<p>This function takes a vertex index from the fsaverage template surface and finds the
-corresponding vertex index in a subject’s native surface space. It loads the fsaverage
-spherical surface, identifies the coordinates of the given vertex index, and then finds the
-nearest corresponding vertex on the subject’s registered spherical surface. If the hemisphere
-is right, it adjusts the index by adding the number of vertices in the left hemisphere pial
-surface so that it matches the combined hemisphere mesh. It returns the adjusted vertex index in
-the subject’s native space.</p>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">convert_fsaverage_to_native</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hemi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vert_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.convert_fsaverage_to_native" title="Permalink to this definition">#</a></dt>
+<dd><p>Convert vertex indices from fsaverage to a subject’s native surface space.</p>
+<p>If both <cite>hemi</cite> and <cite>vert_idx</cite> are None, all vertices from both hemispheres are converted.
+If <cite>hemi</cite> is a string (‘lh’ or ‘rh’) and <cite>vert_idx</cite> is None, all vertices from that hemisphere
+are converted. If <cite>hemi</cite> is a string and <cite>vert_idx</cite> is an integer, the function converts that
+single vertex index. If <cite>hemi</cite> is None but <cite>vert_idx</cite> is not None, a ValueError is raised,
+because we cannot infer which hemisphere the vertex belongs to.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>subj_id</strong> (<em>str</em>) – The subject identifier for which the conversion is being performed.</p></li>
-<li><p><strong>hemi</strong> (<em>str</em>) – Hemisphere specifier (‘lh’ for left hemisphere, ‘rh’ for right hemisphere).</p></li>
-<li><p><strong>vert_idx</strong> (<em>int</em>) – Index of the vertex in the fsaverage surface to be converted.</p></li>
+<li><p><strong>hemi</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Hemisphere specifier (‘lh’ or ‘rh’). If None and vert_idx is None, both hemispheres
+are converted. Defaults to None.</p></li>
+<li><p><strong>vert_idx</strong> (<em>int</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Index of the vertex in the fsaverage surface to be converted. If None, all vertices
+in the chosen hemisphere (or both hemispheres) are converted. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>subj_v_idx</strong> – Index of the vertex on the subject’s native surface that corresponds to the input vertex
-index.</p>
+<dd class="field-even"><p><p><strong>subj_v_idx</strong> –</p>
+<ul class="simple">
+<li><p>If converting a single vertex in one hemisphere, returns an integer.</p></li>
+<li><p>If converting multiple vertices in one hemisphere, returns an array of vertex indices.</p></li>
+<li><p>If converting all vertices in both hemispheres, returns an array of length
+(N_lh_vertices + N_rh_vertices), indexed according to the subject’s combined hemisphere.</p></li>
+</ul>
+</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>int</p>
+<dd class="field-odd"><p>int or np.ndarray</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.convert_native_to_fsaverage">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">convert_native_to_fsaverage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_surf_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_coord</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.convert_native_to_fsaverage" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">convert_native_to_fsaverage</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_surf_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_coord</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.convert_native_to_fsaverage" title="Permalink to this definition">#</a></dt>
 <dd><p>Convert coordinates from a subject’s native surface space to the fsaverage surface space.</p>
-<p>This function maps a vertex coordinate from a subject’s native combined pial surface to the
-corresponding vertex index in the fsaverage template space. It determines which hemisphere the
-vertex belongs to based on the closest match in the left and right hemispheres’ pial surfaces.
-It then finds the nearest vertex in the subject’s registered spherical surface, maps this to
-the nearest vertex in the fsaverage spherical surface, and returns the index of this fsaverage
-vertex.</p>
+<p>This function maps a vertex coordinate from a subject’s native combined pial surface
+to the corresponding vertex index in the fsaverage template space. If no coordinate
+is provided, it maps all vertices in the subject’s downsampled pial surface to fsaverage.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>subj_id</strong> (<em>str</em>) – The subject identifier for which the conversion is being performed.</p></li>
 <li><p><strong>subj_surf_dir</strong> (<em>str</em>) – The path containing the laMEG-processed subject surfaces.</p></li>
-<li><p><strong>subj_coord</strong> (<em>array-like</em>) – The x, y, z coordinates on the subject’s combined hemisphere pial surface to be converted.</p></li>
+<li><p><strong>subj_coord</strong> (<em>array-like</em><em>, </em><em>optional</em>) – The x, y, z coordinates on the subject’s combined hemisphere pial surface to be converted.
+If None, all downsampled pial vertices are mapped to fsaverage.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
-<li><p><strong>hemi</strong> (<em>str</em>) – The hemisphere the vertex is found in (‘lh’ for left hemisphere, ‘rh’ for right
-hemisphere).</p></li>
-<li><p><strong>fsave_v_idx</strong> (<em>int</em>) – Index of the vertex on the fsaverage spherical surface that corresponds to the input
-coordinates.</p></li>
+<li><p><strong>hemi</strong> (<em>str or list of str</em>) – The hemisphere(s) the vertex is found in (‘lh’ for left hemisphere, ‘rh’ for right
+hemisphere’).</p></li>
+<li><p><strong>fsave_v_idx</strong> (<em>int or list of int</em>) – Index or indices of the vertex on the fsaverage spherical surface that corresponds to the
+input coordinates.</p></li>
 </ul>
 </p>
 </dd>
@@ -1619,28 +1623,27 @@ within the function.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.get_bigbrain_layer_boundaries">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_bigbrain_layer_boundaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_surf_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_coord</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.get_bigbrain_layer_boundaries" title="Permalink to this definition">#</a></dt>
-<dd><p>Get the cortical layer boundaries based on Big Brain atlas for a specified coordinate in the
-subject’s downsampled combined space.</p>
-<p>This function maps a vertex coordinate from a subject’s native combined pial surface to the
-corresponding vertex index in the fsaverage template space for a specific hemisphere. Then,
-the proportional layer boundaries (6 values between 0 and 1) from the fsaverage-converted Big
-Brain atlas are returned (from layer 1 to layer 6). To get the subject’s proportional values,
-these values must be multiplied by the observed cortical thickness.</p>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">get_bigbrain_layer_boundaries</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_surf_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_coord</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.get_bigbrain_layer_boundaries" title="Permalink to this definition">#</a></dt>
+<dd><p>Get the cortical layer boundaries based on the Big Brain atlas for a specified coordinate
+in the subject’s downsampled combined space. If subj_coord is None, this function returns
+the 6 proportional layer boundaries for every vertex in the downsampled mesh.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>subj_id</strong> (<em>str</em>) – The subject identifier for which the conversion is being performed.</p></li>
 <li><p><strong>subj_surf_dir</strong> (<em>str</em>) – The path containing the laMEG-processed subject surfaces.</p></li>
-<li><p><strong>subj_coord</strong> (<em>array-like</em>) – The x, y, z coordinates on the subject’s combined hemisphere pial surface to be converted.</p></li>
+<li><p><strong>subj_coord</strong> (<em>array-like</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – The x, y, z coordinates on the subject’s combined hemisphere pial surface to be
+converted. If None, all downsampled pial vertices are mapped. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>vert_bb_prop</strong> – Proportional layer boundaries (6 values between 0 and 1) from the fsaverage-converted Big
-Brain atlas.</p>
+<dd class="field-even"><p><strong>vert_bb_prop</strong> – A 6 x M array of proportional layer boundaries (rows = 6 layer boundaries,
+columns = vertices), where M is the number of vertices in subj_coord (if provided)
+or in the downsampled mesh (if subj_coord is None). Values range between 0 and 1,
+which must be scaled by the cortical thickness to get layer depths in millimeters.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>array-like</p>
+<dd class="field-odd"><p>np.ndarray</p>
 </dd>
 </dl>
 </dd></dl>
