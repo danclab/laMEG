@@ -455,8 +455,8 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     n_temp_modes : int, optional
         Number of temporal modes for the beamformer. Default is 1.
     win_size : float, optional
-        Size of the sliding window in ms. Default is 50. If you increase `win_size`, you may need
-        to increase `n_temp_modes`.
+        Size of the sliding window in ms. Default is 50. If you increase or decrease `win_size`,
+        you may need to adjust `n_temp_modes`.
     win_overlap : bool, optional
         Whether the windows should overlap. Default is True.
     foi : list, optional
