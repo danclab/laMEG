@@ -13,7 +13,7 @@ Key operations include:
 import os
 import h5py
 import numpy as np
-from scipy.io import savemat
+from scipy.io import savemat, loadmat
 from scipy.sparse import csc_matrix
 
 from lameg.util import load_meg_sensor_data, spm_context, batch
@@ -472,7 +472,7 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     -------
     list
         A list containing the free energy time series (free_energy), and the windows of interest
-        (wois).
+        (wois; ms).
 
     Notes
     -----
@@ -489,7 +489,6 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
 
     _, time, _ = load_meg_sensor_data(data_fname)
 
-    time = time * 1000  # Convert time to milliseconds
     time_step = time[1] - time[0]  # Compute the difference in time between steps
     win_steps = int(round(win_size / time_step))  # Calculate the number of steps in each window
 
@@ -609,7 +608,7 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
     source_ts : np.array
         An array containing the extracted source time series data (sources x time x trial).
     time : np.array
-        An array containing the timestamps.
+        An array containing the timestamps (ms).
     mu_matrix : np.array
         The matrix needed to reconstruct source activity from sensor signals.
 
@@ -627,21 +626,29 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
         if inv_fname is None:
             inv_fname = data_fname
 
-        with h5py.File(inv_fname, 'r') as file:
-            if 'inv' not in file['D']['other']:
-                print('Error: source inversion has not been run on this dataset')
-                return None, None, None
+        try:
+            with h5py.File(inv_fname, 'r') as file:
+                if 'inv' not in file['D']['other']:
+                    raise KeyError('Error: source inversion has not been run on this dataset')
 
-            inverse_struct=file[file['D']['other']['inv'][0][0]]['inverse']
-            m_data = inverse_struct['M']['data'][()]
-            m_ir = inverse_struct['M']['ir'][()]
-            m_jc = inverse_struct['M']['jc'][()]
-            data_reduction_mat = file[inverse_struct['U'][0][0]][()]
+                inverse_struct=file[file['D']['other']['inv'][0][0]]['inverse']
+                m_data = inverse_struct['M']['data'][()]
+                m_ir = inverse_struct['M']['ir'][()]
+                m_jc = inverse_struct['M']['jc'][()]
+                num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
+                num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
+                weighting_mat = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
+                data_reduction_mat = file[inverse_struct['U'][0][0]][()]
+        except OSError:
+            mat_contents = loadmat(inv_fname)
+            if 'inv' not in [x[0] for x in mat_contents['D'][0][0]['other'][0][0].dtype.descr]:
+                raise KeyError('Error: source inversion has not been run on this dataset') # pylint: disable=raise-missing-from
+
+            inverse_struct=mat_contents['D'][0][0]['other'][0][0]['inv'][0][0]['inverse'][0][0]
+            weighting_mat = inverse_struct['M'][0][0]
+            data_reduction_mat = inverse_struct['U'][0][0][0][0]
 
         # Reconstruct the sparse matrix
-        num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
-        num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
-        weighting_mat = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
         if vertices is not None:
             weighting_mat = weighting_mat[vertices, :]
         mu_matrix = weighting_mat @ data_reduction_mat
@@ -659,3 +666,70 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
         source_ts = mu_matrix @ sensor_data
 
     return source_ts, time, mu_matrix
+
+
+def check_inversion_exists(data_file):
+    """
+    Check if inversion data exists in the SPM datafile, handling both v7.3+ (HDF5) and older
+    formats.
+
+    Parameters
+    ----------
+    data_file : str
+        Path to the MATLAB (.mat) file.
+
+    Returns
+    -------
+    bool
+        Returns True if inversion data exists in the file.
+
+    Raises
+    ------
+    KeyError
+        If the inversion structure is missing.
+    """
+    try:
+        with h5py.File(data_file, 'r') as file:
+            if 'inv' not in file['D']['other']:
+                raise KeyError('Error: source inversion has not been run on this dataset')
+    except OSError:
+        mat_contents = loadmat(data_file)
+        if 'inv' not in [x[0] for x in mat_contents['D'][0][0]['other'][0][0].dtype.descr]:
+            raise KeyError('Error: source inversion has not been run on this dataset') # pylint: disable=raise-missing-from
+    return True
+
+
+def load_forward_model_vertices(data_file):
+    """
+    Load forward model vertices from the SPM datafile, handling both v7.3+ (HDF5) and older
+    formats.
+
+    Parameters
+    ----------
+    data_file : str
+        Path to the MATLAB (.mat) file.
+
+    Returns
+    -------
+    numpy.ndarray
+        A NumPy array containing the vertices.
+
+    Raises
+    ------
+    TypeError
+        If the file is not a valid MATLAB file.
+    KeyError
+        If the required vertex data is missing.
+    """
+    try:
+        with h5py.File(data_file, 'r') as file:
+            mesh_path = file[file['D']['other']['inv'][0][0]]
+            verts = mesh_path['mesh']['tess_mni']['vert'][()].T
+    except (OSError, KeyError, TypeError):
+        try:
+            mat_contents = loadmat(data_file, struct_as_record=False, squeeze_me=True)
+            verts = mat_contents['D'].other.inv.mesh.tess_mni.vert
+            verts = np.asarray(verts)
+        except Exception as exc:
+            raise KeyError("Could not load vertex data from the file.") from exc
+    return verts
