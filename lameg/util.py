@@ -202,7 +202,6 @@ def load_meg_sensor_data(data_fname):
             data_filename = ''.join(chr(code) for code in data_fname_data)
     except OSError:
         mat_contents = loadmat(data_fname)
-        # Assuming these fields exist; update these as per actual .mat file structure
         time_onset = mat_contents['D'][0][0]['timeOnset'][0,0]
         fsample = mat_contents['D'][0][0]['Fsample'][0,0]
         n_samples = mat_contents['D'][0][0]['Nsamples'][0,0]
