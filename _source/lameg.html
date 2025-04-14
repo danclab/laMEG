@@ -393,6 +393,27 @@ algorithms.</p></li>
 <li><p>Utility function for loading source data after source reconstruction.</p></li>
 </ul>
 <dl class="py function">
+<dt class="sig sig-object py" id="lameg.invert.check_inversion_exists">
+<span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">check_inversion_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.invert.check_inversion_exists" title="Permalink to this definition">#</a></dt>
+<dd><p>Check if inversion data exists in the SPM datafile, handling both v7.3+ (HDF5) and older
+formats.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data_file</strong> (<em>str</em>) – Path to the MATLAB (.mat) file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Returns True if inversion data exists in the file.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>bool</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>KeyError</strong> – If the inversion structure is missing.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="lameg.invert.coregister">
 <span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">coregister</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fid_labels</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">('nas',</span> <span class="pre">'lpa',</span> <span class="pre">'rpa')</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#lameg.invert.coregister" title="Permalink to this definition">#</a></dt>
 <dd><p>Run head coregistration.</p>
@@ -528,7 +549,7 @@ to increase <cite>n_temp_modes</cite>.</p></li>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>A list containing the free energy time series (free_energy), and the windows of interest
-(wois).</p>
+(wois; ms).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>list</p>
@@ -541,6 +562,30 @@ to increase <cite>n_temp_modes</cite>.</p></li>
 within the function.</p></li>
 <li><p>The prior index is adjusted by adding 1 to align with MATLAB’s 1-based indexing.</p></li>
 </ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.invert.load_forward_model_vertices">
+<span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">load_forward_model_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.invert.load_forward_model_vertices" title="Permalink to this definition">#</a></dt>
+<dd><p>Load forward model vertices from the SPM datafile, handling both v7.3+ (HDF5) and older
+formats.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>data_file</strong> (<em>str</em>) – Path to the MATLAB (.mat) file.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A NumPy array containing the vertices.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>TypeError</strong> – If the file is not a valid MATLAB file.</p></li>
+<li><p><strong>KeyError</strong> – If the required vertex data is missing.</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py function">
@@ -563,7 +608,7 @@ implies all vertices will be used.</p></li>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><strong>source_ts</strong> (<em>np.array</em>) – An array containing the extracted source time series data (sources x time x trial).</p></li>
-<li><p><strong>time</strong> (<em>np.array</em>) – An array containing the timestamps.</p></li>
+<li><p><strong>time</strong> (<em>np.array</em>) – An array containing the timestamps (ms).</p></li>
 <li><p><strong>mu_matrix</strong> (<em>np.array</em>) – The matrix needed to reconstruct source activity from sensor signals.</p></li>
 </ul>
 </p>
@@ -766,50 +811,6 @@ algorithms.</p></li>
 <li><p>Generating datasets with known properties to test the efficacy of dipole fitting routines or
 source localization methods.</p></li>
 </ul>
-<dl class="py function">
-<dt class="sig sig-object py" id="lameg.simulate.check_inversion_exists">
-<span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">check_inversion_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.check_inversion_exists" title="Permalink to this definition">#</a></dt>
-<dd><p>Check if inversion data exists in the SPM datafile, handling both v7.3+ (HDF5) and older
-formats.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data_file</strong> (<em>str</em>) – Path to the MATLAB (.mat) file.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>Returns True if inversion data exists in the file.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>bool</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>KeyError</strong> – If the inversion structure is missing.</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="lameg.simulate.load_vertices">
-<span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">load_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.load_vertices" title="Permalink to this definition">#</a></dt>
-<dd><p>Load vertices from the SPM datafile, handling both v7.3+ (HDF5) and older formats.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>data_file</strong> (<em>str</em>) – Path to the MATLAB (.mat) file.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A NumPy array containing the vertices.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>numpy.ndarray</p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>TypeError</strong> – If the file is not a valid MATLAB file.</p></li>
-<li><p><strong>KeyError</strong> – If the required vertex data is missing.</p></li>
-</ul>
-</dd>
-</dl>
-</dd></dl>
-
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.simulate.run_current_density_simulation">
 <span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">run_current_density_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_signals</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dipole_moments</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_patch_sizes</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">snr</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sim_woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">average_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.run_current_density_simulation" title="Permalink to this definition">#</a></dt>
@@ -1758,7 +1759,7 @@ places. Each filename also includes an orientation method specifier.</p>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><ul class="simple">
 <li><p><strong>sensor_data</strong> (<em>ndarray</em>) – An array containing the MEG sensor data (channels x time x trial).</p></li>
-<li><p><strong>time</strong> (<em>ndarray</em>) – An array containing the MEG data timestamps.</p></li>
+<li><p><strong>time</strong> (<em>ndarray</em>) – An array containing the MEG data timestamps (in ms).</p></li>
 <li><p><strong>ch_names</strong> (<em>list</em>) – A list of channel names.</p></li>
 </ul>
 </p>
@@ -2080,10 +2081,12 @@ parameter allows for vertex-level color customization.</p>
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#submodules">Submodules</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-lameg.invert">lameg.invert module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.check_inversion_exists"><code class="docutils literal notranslate"><span class="pre">check_inversion_exists()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.coregister"><code class="docutils literal notranslate"><span class="pre">coregister()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.invert_ebb"><code class="docutils literal notranslate"><span class="pre">invert_ebb()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.invert_msp"><code class="docutils literal notranslate"><span class="pre">invert_msp()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.invert_sliding_window"><code class="docutils literal notranslate"><span class="pre">invert_sliding_window()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.load_forward_model_vertices"><code class="docutils literal notranslate"><span class="pre">load_forward_model_vertices()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.load_source_time_series"><code class="docutils literal notranslate"><span class="pre">load_source_time_series()</span></code></a></li>
 </ul>
 </li>
@@ -2095,8 +2098,6 @@ parameter allows for vertex-level color customization.</p>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-lameg.simulate">lameg.simulate module</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.simulate.check_inversion_exists"><code class="docutils literal notranslate"><span class="pre">check_inversion_exists()</span></code></a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.simulate.load_vertices"><code class="docutils literal notranslate"><span class="pre">load_vertices()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.simulate.run_current_density_simulation"><code class="docutils literal notranslate"><span class="pre">run_current_density_simulation()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.simulate.run_dipole_simulation"><code class="docutils literal notranslate"><span class="pre">run_dipole_simulation()</span></code></a></li>
 </ul>
