@@ -768,11 +768,12 @@ source localization methods.</p></li>
 </ul>
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.simulate.check_inversion_exists">
-<span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">check_inversion_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.check_inversion_exists" title="Permalink to this definition">#</a></dt>
-<dd><p>Check if inversion data exists in the loaded HDF5 file.</p>
+<span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">check_inversion_exists</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.check_inversion_exists" title="Permalink to this definition">#</a></dt>
+<dd><p>Check if inversion data exists in the SPM datafile, handling both v7.3+ (HDF5) and older
+formats.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>file</strong> (<em>h5py.File</em>) – The loaded HDF5 file object. The expected structure is file[‘D’][‘other’][‘inv’].</p>
+<dd class="field-odd"><p><strong>data_file</strong> (<em>str</em>) – Path to the MATLAB (.mat) file.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p>Returns True if inversion data exists in the file.</p>
@@ -781,33 +782,29 @@ source localization methods.</p></li>
 <dd class="field-odd"><p>bool</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><ul class="simple">
-<li><p><strong>ValueError</strong> – If the inversion data is missing or not found in the expected structure.</p></li>
-<li><p><strong>KeyError</strong> – If the required keys are missing from the file structure.</p></li>
-</ul>
+<dd class="field-even"><p><strong>KeyError</strong> – If the inversion structure is missing.</p>
 </dd>
 </dl>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.simulate.load_vertices">
-<span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">load_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.load_vertices" title="Permalink to this definition">#</a></dt>
-<dd><p>Load vertices from the HDF5 file based on the file version.</p>
+<span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">load_vertices</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.load_vertices" title="Permalink to this definition">#</a></dt>
+<dd><p>Load vertices from the SPM datafile, handling both v7.3+ (HDF5) and older formats.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>file</strong> (<em>h5py.File</em>) – The loaded HDF5 file object. The function expects the structure
-file[‘D’][‘other’][‘inv’][0][0][‘mesh’][‘tess_mni’][‘vert’].</p>
+<dd class="field-odd"><p><strong>data_file</strong> (<em>str</em>) – Path to the MATLAB (.mat) file.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>A NumPy array containing the vertices loaded from the file.</p>
+<dd class="field-even"><p>A NumPy array containing the vertices.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
 <dd class="field-odd"><p>numpy.ndarray</p>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
-<li><p><strong>TypeError</strong> – If the file is not saved in a format compatible with MATLAB v7.3 or later.</p></li>
-<li><p><strong>KeyError</strong> – If the required keys are missing from the file structure.</p></li>
+<li><p><strong>TypeError</strong> – If the file is not a valid MATLAB file.</p></li>
+<li><p><strong>KeyError</strong> – If the required vertex data is missing.</p></li>
 </ul>
 </dd>
 </dl>
