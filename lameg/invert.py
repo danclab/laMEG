@@ -13,7 +13,7 @@ Key operations include:
 import os
 import h5py
 import numpy as np
-from scipy.io import savemat
+from scipy.io import savemat, loadmat
 from scipy.sparse import csc_matrix
 
 from lameg.util import load_meg_sensor_data, spm_context, batch
@@ -627,21 +627,31 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
         if inv_fname is None:
             inv_fname = data_fname
 
-        with h5py.File(inv_fname, 'r') as file:
-            if 'inv' not in file['D']['other']:
+        try:
+            with h5py.File(inv_fname, 'r') as file:
+                if 'inv' not in file['D']['other']:
+                    print('Error: source inversion has not been run on this dataset')
+                    return None, None, None
+
+                inverse_struct=file[file['D']['other']['inv'][0][0]]['inverse']
+                m_data = inverse_struct['M']['data'][()]
+                m_ir = inverse_struct['M']['ir'][()]
+                m_jc = inverse_struct['M']['jc'][()]
+                num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
+                num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
+                weighting_mat = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
+                data_reduction_mat = file[inverse_struct['U'][0][0]][()]
+        except OSError:
+            mat_contents = loadmat(inv_fname)
+            if 'inv' not in [x[0] for x in mat_contents['D'][0][0]['other'][0][0].dtype.descr]:
                 print('Error: source inversion has not been run on this dataset')
                 return None, None, None
 
-            inverse_struct=file[file['D']['other']['inv'][0][0]]['inverse']
-            m_data = inverse_struct['M']['data'][()]
-            m_ir = inverse_struct['M']['ir'][()]
-            m_jc = inverse_struct['M']['jc'][()]
-            data_reduction_mat = file[inverse_struct['U'][0][0]][()]
+            inverse_struct=mat_contents['D'][0][0]['other'][0][0]['inv'][0][0]['inverse'][0][0]
+            weighting_mat = inverse_struct['M'][0][0]
+            data_reduction_mat = inverse_struct['U'][0][0][0][0]
 
         # Reconstruct the sparse matrix
-        num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
-        num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
-        weighting_mat = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
         if vertices is not None:
             weighting_mat = weighting_mat[vertices, :]
         mu_matrix = weighting_mat @ data_reduction_mat
