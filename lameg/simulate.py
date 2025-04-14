@@ -25,20 +25,21 @@ import tempfile
 
 import numpy as np
 import h5py
-from scipy.io import savemat
+from scipy.io import savemat, loadmat
 
 from lameg.util import spm_context
 import matlab # pylint: disable=wrong-import-order,import-error
 
 
-def check_inversion_exists(file):
+def check_inversion_exists(data_file):
     """
-    Check if inversion data exists in the loaded HDF5 file.
+    Check if inversion data exists in the SPM datafile, handling both v7.3+ (HDF5) and older
+    formats.
 
     Parameters
     ----------
-    file : h5py.File
-        The loaded HDF5 file object. The expected structure is file['D']['other']['inv'].
+    data_file : str
+        Path to the MATLAB (.mat) file.
 
     Returns
     -------
@@ -47,47 +48,53 @@ def check_inversion_exists(file):
 
     Raises
     ------
-    ValueError
-        If the inversion data is missing or not found in the expected structure.
     KeyError
-        If the required keys are missing from the file structure.
+        If the inversion structure is missing.
     """
     try:
-        inv_data = file['D']['other']['inv']
-        if inv_data is None or len(inv_data) == 0:
-            raise ValueError("Inversion data not found in the file.")
-    except KeyError as exc:
-        raise KeyError("Inversion data structure not found in the file.") from exc
+        with h5py.File(data_file, 'r') as file:
+            if 'inv' not in file['D']['other']:
+                raise KeyError('Error: source inversion has not been run on this dataset')
+    except OSError:
+        mat_contents = loadmat(data_file)
+        if 'inv' not in [x[0] for x in mat_contents['D'][0][0]['other'][0][0].dtype.descr]:
+            raise KeyError('Error: source inversion has not been run on this dataset')
     return True
 
 
-def load_vertices(file):
+def load_vertices(data_file):
     """
-    Load vertices from the HDF5 file based on the file version.
+    Load vertices from the SPM datafile, handling both v7.3+ (HDF5) and older formats.
 
     Parameters
     ----------
-    file : h5py.File
-        The loaded HDF5 file object. The function expects the structure
-        file['D']['other']['inv'][0][0]['mesh']['tess_mni']['vert'].
+    data_file : str
+        Path to the MATLAB (.mat) file.
 
     Returns
     -------
     numpy.ndarray
-        A NumPy array containing the vertices loaded from the file.
+        A NumPy array containing the vertices.
 
     Raises
     ------
     TypeError
-        If the file is not saved in a format compatible with MATLAB v7.3 or later.
+        If the file is not a valid MATLAB file.
     KeyError
-        If the required keys are missing from the file structure.
+        If the required vertex data is missing.
     """
     try:
-        verts = file[file['D']['other']['inv'][0][0]]['mesh']['tess_mni']['vert'][()].T
-    except TypeError as exc:
-        raise TypeError("This function requires the .mat file to be saved with MATLAB "
-                        "v7.3 or later.") from exc
+        with h5py.File(data_file, 'r') as file:
+            mesh_path = file[file['D']['other']['inv'][0][0]]
+            verts = mesh_path['mesh']['tess_mni']['vert'][()].T
+    except (OSError, KeyError, TypeError):
+        try:
+            mat_contents = loadmat(data_file, struct_as_record=False, squeeze_me=True)
+            D = mat_contents['D']
+            verts = D.other.inv.mesh.tess_mni.vert
+            verts = np.asarray(verts)
+        except Exception as exc:
+            raise KeyError("Could not load vertex data from the file.") from exc
     return verts
 
 
@@ -146,9 +153,8 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
     if np.isscalar(sim_patch_sizes):
         sim_patch_sizes=[sim_patch_sizes]
 
-    with h5py.File(data_file, 'r') as file:
-        check_inversion_exists(file)
-        verts = load_vertices(file)
+    check_inversion_exists(data_file)
+    verts = load_vertices(data_file)
 
     sim_coords = np.zeros((len(sim_vertices),3))
     for c_idx,i in enumerate(sim_vertices):
@@ -273,9 +279,8 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
     if np.isscalar(sim_patch_sizes):
         sim_patch_sizes=[sim_patch_sizes]
 
-    with h5py.File(data_file, 'r') as file:
-        check_inversion_exists(file)
-        verts = load_vertices(file)
+    check_inversion_exists(data_file)
+    verts = load_vertices(data_file)
 
     sim_coords = np.zeros((len(sim_vertices), 3))
     for c_idx, i in enumerate(sim_vertices):
