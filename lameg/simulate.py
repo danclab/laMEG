@@ -55,11 +55,10 @@ def check_inversion_exists(data_file):
         with h5py.File(data_file, 'r') as file:
             if 'inv' not in file['D']['other']:
                 raise KeyError('Error: source inversion has not been run on this dataset')
-    except OSError: # pylint: disable=raise-missing-from
+    except OSError:
         mat_contents = loadmat(data_file)
         if 'inv' not in [x[0] for x in mat_contents['D'][0][0]['other'][0][0].dtype.descr]:
-            raise KeyError('Error: source inversion has not been run on this '
-                           'dataset') # pylint: disable=raise-missing-from
+            raise KeyError('Error: source inversion has not been run on this dataset') # pylint: disable=raise-missing-from
     return True
 
 
