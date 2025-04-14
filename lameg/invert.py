@@ -472,7 +472,7 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     -------
     list
         A list containing the free energy time series (free_energy), and the windows of interest
-        (wois).
+        (wois; ms).
 
     Notes
     -----
@@ -489,7 +489,6 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
 
     _, time, _ = load_meg_sensor_data(data_fname)
 
-    time = time * 1000  # Convert time to milliseconds
     time_step = time[1] - time[0]  # Compute the difference in time between steps
     win_steps = int(round(win_size / time_step))  # Calculate the number of steps in each window
 
@@ -609,7 +608,7 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
     source_ts : np.array
         An array containing the extracted source time series data (sources x time x trial).
     time : np.array
-        An array containing the timestamps.
+        An array containing the timestamps (ms).
     mu_matrix : np.array
         The matrix needed to reconstruct source activity from sensor signals.
 

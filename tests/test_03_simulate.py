@@ -103,7 +103,7 @@ def test_run_dipole_simulation(spm):
     assert np.allclose(sim_sensor_data[0,:10], target)
 
     target=np.array([-0.1, -0.09833333, -0.09666667, -0.095, -0.09333333,
-                     -0.09166667, -0.09, -0.08833333, -0.08666667, -0.085])
+                     -0.09166667, -0.09, -0.08833333, -0.08666667, -0.085])*1000
     assert np.allclose(time[:10], target)
 
     assert ch_names[0] == 'MLC11'
@@ -193,7 +193,7 @@ def test_run_current_density_simulation(spm):
     assert np.allclose(sim_sensor_data[0,:10,0], target)
 
     target=np.array([[-0.5, -0.49833333, -0.49666667, -0.495, -0.49333333,
-                      -0.49166667, -0.49, -0.48833333, -0.48666667, -0.485]])
+                      -0.49166667, -0.49, -0.48833333, -0.48666667, -0.485]])*1000
     assert np.allclose(time[:10], target)
 
     assert ch_names[0] == 'MLC11'
