@@ -138,6 +138,7 @@ def test_load_meg_sensor_data():
     )
     data, time, ch_names = load_meg_sensor_data(filename)
     assert data.shape[0] == 274 and data.shape[1] == 601 and data.shape[2] == 60
+    time=time/1000
     assert (np.min(time) == -0.5 and np.max(time) == 0.5 and
             np.isclose(np.diff(time)[0], 0.001666666667))
     assert ch_names[0] == 'MLC11'
@@ -151,6 +152,7 @@ def test_load_meg_sensor_data():
                             'pspm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat')
     data, time, ch_names = load_meg_sensor_data(filename)
     assert data.shape[0] == 274 and data.shape[1] == 121 and data.shape[2] == 60
+    time=time/1000
     assert (np.abs(np.min(time)- -0.09999999999999) < 1e-6 and np.abs(np.max(time)-0.1) < 1e-6 and
             np.isclose(np.diff(time)[0], 0.001666666667))
     assert ch_names[0] == 'MLC11'
@@ -266,7 +268,7 @@ def test_fif_spm_conversion():
     spm_idx = ch_names.index(ch_name)
     assert np.allclose(epo_data[:, 100, :]*1e15, spm_data[spm_idx,:,:].T)
 
-    assert np.allclose(epochs.times, time)
+    assert np.allclose(epochs.times, time/1000)
 
     # Raw data
     ctf_fif_spm_conversion(
@@ -283,7 +285,7 @@ def test_fif_spm_conversion():
     spm_idx = ch_names.index(ch_name)
     assert np.allclose(raw_data[100,:]*1e15, spm_data[spm_idx,:])
 
-    assert np.allclose(raw.times, time)
+    assert np.allclose(raw.times, time/1000)
 
 
 def test_check_many():

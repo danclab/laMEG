@@ -164,7 +164,7 @@ def load_meg_sensor_data(data_fname):
     sensor_data : ndarray
         An array containing the MEG sensor data (channels x time x trial).
     time : ndarray
-        An array containing the MEG data timestamps.
+        An array containing the MEG data timestamps (in ms).
     ch_names : list
         A list of channel names.
     """
@@ -202,7 +202,6 @@ def load_meg_sensor_data(data_fname):
             data_filename = ''.join(chr(code) for code in data_fname_data)
     except OSError:
         mat_contents = loadmat(data_fname)
-        # Assuming these fields exist; update these as per actual .mat file structure
         time_onset = mat_contents['D'][0][0]['timeOnset'][0,0]
         fsample = mat_contents['D'][0][0]['Fsample'][0,0]
         n_samples = mat_contents['D'][0][0]['Nsamples'][0,0]
@@ -246,7 +245,7 @@ def load_meg_sensor_data(data_fname):
         # Reshape data according to extracted dimensions
         sensor_data = data_array.reshape(data_dims, order='F')[good_meg_channels, :]
 
-    time = np.arange(n_samples) / fsample + time_onset
+    time = (np.arange(n_samples) / fsample + time_onset)*1000 # Convert time to milliseconds
 
     return sensor_data, time, ch_names
 

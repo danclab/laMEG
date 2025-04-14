@@ -244,7 +244,7 @@ def test_load_source_time_series():
     assert np.allclose(time_series[0,:10,0], target, atol=1e-5)
 
     target = np.array([[-0.5,        -0.49833333, -0.49666667, -0.495,      -0.49333333,
-                        -0.49166667, -0.49,       -0.48833333, -0.48666667, -0.485     ]])
+                        -0.49166667, -0.49,       -0.48833333, -0.48666667, -0.485     ]])*1000
     assert np.allclose(time[:10], target)
 
     target = np.array([ 1.01755888e-04, -1.31537562e-05, -1.46884080e-04, -4.21048807e-04,
