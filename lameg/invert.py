@@ -667,3 +667,70 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
         source_ts = mu_matrix @ sensor_data
 
     return source_ts, time, mu_matrix
+
+
+def check_inversion_exists(data_file):
+    """
+    Check if inversion data exists in the SPM datafile, handling both v7.3+ (HDF5) and older
+    formats.
+
+    Parameters
+    ----------
+    data_file : str
+        Path to the MATLAB (.mat) file.
+
+    Returns
+    -------
+    bool
+        Returns True if inversion data exists in the file.
+
+    Raises
+    ------
+    KeyError
+        If the inversion structure is missing.
+    """
+    try:
+        with h5py.File(data_file, 'r') as file:
+            if 'inv' not in file['D']['other']:
+                raise KeyError('Error: source inversion has not been run on this dataset')
+    except OSError:
+        mat_contents = loadmat(data_file)
+        if 'inv' not in [x[0] for x in mat_contents['D'][0][0]['other'][0][0].dtype.descr]:
+            raise KeyError('Error: source inversion has not been run on this dataset') # pylint: disable=raise-missing-from
+    return True
+
+
+def load_forward_model_vertices(data_file):
+    """
+    Load forward model vertices from the SPM datafile, handling both v7.3+ (HDF5) and older
+    formats.
+
+    Parameters
+    ----------
+    data_file : str
+        Path to the MATLAB (.mat) file.
+
+    Returns
+    -------
+    numpy.ndarray
+        A NumPy array containing the vertices.
+
+    Raises
+    ------
+    TypeError
+        If the file is not a valid MATLAB file.
+    KeyError
+        If the required vertex data is missing.
+    """
+    try:
+        with h5py.File(data_file, 'r') as file:
+            mesh_path = file[file['D']['other']['inv'][0][0]]
+            verts = mesh_path['mesh']['tess_mni']['vert'][()].T
+    except (OSError, KeyError, TypeError):
+        try:
+            mat_contents = loadmat(data_file, struct_as_record=False, squeeze_me=True)
+            verts = mat_contents['D'].other.inv.mesh.tess_mni.vert
+            verts = np.asarray(verts)
+        except Exception as exc:
+            raise KeyError("Could not load vertex data from the file.") from exc
+    return verts
