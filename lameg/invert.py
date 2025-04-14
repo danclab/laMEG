@@ -643,7 +643,8 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
         except OSError: # pylint: disable=raise-missing-from
             mat_contents = loadmat(inv_fname)
             if 'inv' not in [x[0] for x in mat_contents['D'][0][0]['other'][0][0].dtype.descr]:
-                raise KeyError('Error: source inversion has not been run on this dataset')
+                raise KeyError('Error: source inversion has not been run on this '
+                               'dataset') # pylint: disable=raise-missing-from
 
             inverse_struct=mat_contents['D'][0][0]['other'][0][0]['inv'][0][0]['inverse'][0][0]
             weighting_mat = inverse_struct['M'][0][0]
