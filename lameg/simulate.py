@@ -90,8 +90,7 @@ def load_vertices(data_file):
     except (OSError, KeyError, TypeError):
         try:
             mat_contents = loadmat(data_file, struct_as_record=False, squeeze_me=True)
-            D = mat_contents['D']
-            verts = D.other.inv.mesh.tess_mni.vert
+            verts = mat_contents['D'].other.inv.mesh.tess_mni.vert
             verts = np.asarray(verts)
         except Exception as exc:
             raise KeyError("Could not load vertex data from the file.") from exc
