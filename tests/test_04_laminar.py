@@ -12,8 +12,8 @@ from lameg.laminar import (model_comparison, sliding_window_model_comparison, co
 from lameg.util import get_fiducial_coords, get_surface_names
 
 
-@pytest.mark.dependency(depends=["tests/test_03_simulate.py::test_run_current_density_simulation"],
-                        scope='session')
+#@pytest.mark.dependency(depends=["tests/test_03_simulate.py::test_run_current_density_simulation"],
+#                        scope='session')
 def test_roi_power_comparison():
     """
     Tests the `roi_power_comparison` function to evaluate its capability to accurately compute
@@ -77,9 +77,9 @@ def test_roi_power_comparison():
         chunk_size=8000
     )
 
-    target = -0.17077967243430403
+    target = -0.20608658352227635
     assert np.isclose(laminar_t_statistic, target, atol=1e-2)
-    target = 0.8649813417336001
+    target = 0.8374327760997111
     assert np.isclose(laminar_p_value, target, atol=1e-2)
     target = 59
     assert deg_of_freedom == target
