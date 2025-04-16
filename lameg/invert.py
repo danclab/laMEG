@@ -626,11 +626,10 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
         if inv_fname is None:
             inv_fname = data_fname
 
+        check_inversion_exists(inv_fname)
+
         try:
             with h5py.File(inv_fname, 'r') as file:
-                if 'inv' not in file['D']['other']:
-                    raise KeyError('Error: source inversion has not been run on this dataset')
-
                 inverse_struct=file[file['D']['other']['inv'][0][0]]['inverse']
                 m_data = inverse_struct['M']['data'][()]
                 m_ir = inverse_struct['M']['ir'][()]
@@ -641,9 +640,6 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
                 data_reduction_mat = file[inverse_struct['U'][0][0]][()]
         except OSError:
             mat_contents = loadmat(inv_fname)
-            if 'inv' not in [x[0] for x in mat_contents['D'][0][0]['other'][0][0].dtype.descr]:
-                raise KeyError('Error: source inversion has not been run on this dataset') # pylint: disable=raise-missing-from
-
             inverse_struct=mat_contents['D'][0][0]['other'][0][0]['inv'][0][0]['inverse'][0][0]
             weighting_mat = inverse_struct['M'][0][0]
             data_reduction_mat = inverse_struct['U'][0][0][0][0]
