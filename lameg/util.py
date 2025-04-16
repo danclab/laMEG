@@ -13,15 +13,23 @@ Key functionalities:
 - Utility functions for anatomical and spatial data transformations.
 """
 
+# pylint: disable=C0302
 import csv
 import os
+import subprocess
 import tempfile
 from pathlib import Path
 from contextlib import contextmanager
 
+import mne
 import numpy as np
 import h5py
 import nibabel as nib
+import matplotlib.pyplot as plt
+import vtk
+from mne.coreg import Coregistration
+from mne.io import _empty_info
+from mne.transforms import apply_trans, invert_transform
 from scipy.io import savemat, loadmat
 from scipy.spatial import KDTree
 from scipy.stats import t
@@ -889,3 +897,166 @@ def get_fiducial_coords(subj_id, fname, col_delimiter='\t', subject_column='subj
                 return nas, lpa, rpa
 
     return None, None, None  # Return None for each if no matching subj_id is found
+
+
+# pylint: disable=R0915
+def coregister_3d_scan_mri(subject_id, lpa, rpa, nas, dig_face_fname, dig_units='mm',
+                           out_dir=None):
+    """
+    Coregister a 3D facial scan to a FreeSurfer MRI for a given subject.
+
+    This function performs an initial fiducial-based alignment followed by
+    iterative closest point (ICP) alignment using dense head surface points
+    extracted from a 3D scan of the face. It returns the fiducial coordinates
+    (LPA, RPA, NAS) transformed into FreeSurfer MRI voxel coordinates.
+
+    Assumes FreeSurfer is installed and configured, and that the SUBJECTS_DIR
+    environment variable is set to the location of FreeSurfer subjects.
+
+    Parameters
+    ----------
+    subject_id : str
+        Name of the FreeSurfer subject.
+    lpa : array-like, shape (3,)
+        Left preauricular point in mm, in the 3D scan coordinate frame.
+    rpa : array-like, shape (3,)
+        Right preauricular point in mm, in the 3D scan coordinate frame.
+    nas : array-like, shape (3,)
+        Nasion point in mm, in the 3D scan coordinate frame.
+    dig_face_fname : str
+        Path to a 3D mesh file of the subject's face (e.g., .stl) containing
+        dense surface points including fiducials.
+    dig_units : str
+        Units of coordinates in the 3D facial scan (m or mm). Default is mm
+    out_dir : str or None, optional
+        Directory where coregistration visualizations will be saved. If None,
+        no figures will be written.
+
+    Returns
+    -------
+    lpa_t : ndarray, shape (3,)
+        LPA coordinate in FreeSurfer MRI voxel space (mm), with CRAS offset applied.
+    rpa_t : ndarray, shape (3,)
+        RPA coordinate in FreeSurfer MRI voxel space (mm), with CRAS offset applied.
+    nas_t : ndarray, shape (3,)
+        NAS coordinate in FreeSurfer MRI voxel space (mm), with CRAS offset applied.
+
+    Notes
+    -----
+    The returned fiducial coordinates are in FreeSurfer MRI voxel space (scanner RAS + CRAS
+    offset), not in FreeSurfer surface RAS space. This distinction matters when using the
+    coordinates for surface-based analyses or visualizations.
+    """
+    fs_subjects_dir = os.getenv('SUBJECTS_DIR')
+
+    # Convert fiducials to meters
+    lpa = lpa * 1e-3
+    rpa = rpa * 1e-3
+    nas = nas * 1e-3
+
+    # Get the 3d surface of the face
+    reader = vtk.vtkSTLReader() # pylint: disable=E1101
+    reader.SetFileName(dig_face_fname)
+    reader.Update()
+    polydata = reader.GetOutput()
+    points = polydata.GetPoints()
+    n_points = points.GetNumberOfPoints()
+    vertices = np.array([points.GetPoint(i) for i in range(n_points)])
+    # Get all vertices as points - round
+    points = np.unique(np.round(vertices, 2), axis=0)
+    # Convert mm to m
+    if dig_units=='mm':
+        points = points * 1e-3
+    dig = mne.channels.make_dig_montage(
+        hsp=points,
+        lpa=lpa,
+        rpa=rpa,
+        nasion=nas,
+        coord_frame='head'
+    )
+
+    # Create a fake info object for the digital montage
+    info = _empty_info(1)
+    info["dig"] = dig
+    info._unlocked = False # pylint:disable=W0212
+
+    # Plotting options
+    plot_kwargs = {
+        'subject': subject_id,
+        'subjects_dir': fs_subjects_dir,
+        'surfaces': "head-dense",
+        'dig': True,
+        'eeg': [],
+        'meg': [],
+        'show_axes': True,
+        'coord_frame': "mri"
+    }
+
+    # Create a coregistration
+    coreg = Coregistration(
+        info,
+        subject_id,
+        fs_subjects_dir,
+        fiducials='auto',
+        on_defects="ignore"
+    )
+    coreg._setup_digs() # pylint:disable=W0212
+
+    # Visualize initial alignment
+    align_fig = mne.viz.plot_alignment(info, trans=coreg.trans, **plot_kwargs)
+    if out_dir is not None:
+        screenshot = align_fig.plotter.screenshot()
+        fig, axis = plt.subplots(figsize=(10, 10))
+        axis.imshow(screenshot, origin='upper')
+        axis.set_axis_off()  # Disable axis labels and ticks
+        fig.tight_layout()
+        fig.savefig(os.path.join(out_dir, 'coreg-initial.png'))
+
+    # Rough fit of fiducials to get rough alignment
+    coreg.set_scale_mode('uniform')
+    coreg.fit_fiducials(verbose=True)
+
+    # Visualize rough alignment
+    align_fig = mne.viz.plot_alignment(info, trans=coreg.trans, **plot_kwargs)
+    if out_dir is not None:
+        screenshot = align_fig.plotter.screenshot()
+        fig, axis = plt.subplots(figsize=(10, 10))
+        axis.imshow(screenshot, origin='upper')
+        axis.set_axis_off()  # Disable axis labels and ticks
+        fig.tight_layout()
+        fig.savefig(os.path.join(out_dir, 'coreg-fit_fiducials.png'))
+
+    # ICP fit - not fitting fiducial locations, just digitised points
+    coreg.fit_icp(n_iterations=50, nasion_weight=0.0,  lpa_weight=0.0, rpa_weight=0.0, verbose=True)
+
+    # Visualize final alignment
+    align_fig = mne.viz.plot_alignment(info, trans=coreg.trans, **plot_kwargs)
+    if out_dir is not None:
+        screenshot = align_fig.plotter.screenshot()
+        fig, axis = plt.subplots(figsize=(10, 10))
+        axis.imshow(screenshot, origin='upper')
+        axis.set_axis_off()  # Disable axis labels and ticks
+        fig.tight_layout()
+        fig.savefig(os.path.join(out_dir, 'coreg-fit_icp.png'))
+
+
+    # Apply inverse transformation to fiducial coordinates to get coordinates in FreeSurfer space,
+    # convert to mm
+    lpa_t = apply_trans(invert_transform(coreg.trans), lpa) * 1e3
+    rpa_t = apply_trans(invert_transform(coreg.trans), rpa) * 1e3
+    nas_t = apply_trans(invert_transform(coreg.trans), nas) * 1e3
+
+    # Read RAS offset from freesurfer volume
+    out=subprocess.check_output([
+        'mri_info',
+        '--cras',
+        os.path.join(fs_subjects_dir,subject_id, 'mri/orig.mgz')
+    ])
+    ras_offset = np.array([float(x) for x in out.decode().split(' ')])
+
+    # Convert Freesurfer fiducial coordinates to MRI
+    lpa_t=lpa_t+ras_offset
+    rpa_t=rpa_t+ras_offset
+    nas_t=nas_t+ras_offset
+
+    return lpa_t, rpa_t, nas_t
