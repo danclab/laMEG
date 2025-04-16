@@ -1596,6 +1596,45 @@ input coordinates.</p></li>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="lameg.util.coregister_3d_scan_mri">
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">coregister_3d_scan_mri</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subject_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">rpa</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">nas</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dig_face_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dig_units</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'mm'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.coregister_3d_scan_mri" title="Permalink to this definition">#</a></dt>
+<dd><p>Coregister a 3D facial scan to a FreeSurfer MRI for a given subject.</p>
+<p>This function performs an initial fiducial-based alignment followed by
+iterative closest point (ICP) alignment using dense head surface points
+extracted from a 3D scan of the face. It returns the fiducial coordinates
+(LPA, RPA, NAS) transformed into FreeSurfer MRI voxel coordinates.</p>
+<p>Assumes FreeSurfer is installed and configured, and that the SUBJECTS_DIR
+environment variable is set to the location of FreeSurfer subjects.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subject_id</strong> (<em>str</em>) – Name of the FreeSurfer subject.</p></li>
+<li><p><strong>lpa</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>3</em><em>,</em><em>)</em>) – Left preauricular point in mm, in the 3D scan coordinate frame.</p></li>
+<li><p><strong>rpa</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>3</em><em>,</em><em>)</em>) – Right preauricular point in mm, in the 3D scan coordinate frame.</p></li>
+<li><p><strong>nas</strong> (<em>array-like</em><em>, </em><em>shape</em><em> (</em><em>3</em><em>,</em><em>)</em>) – Nasion point in mm, in the 3D scan coordinate frame.</p></li>
+<li><p><strong>dig_face_fname</strong> (<em>str</em>) – Path to a 3D mesh file of the subject’s face (e.g., .stl) containing
+dense surface points including fiducials.</p></li>
+<li><p><strong>dig_units</strong> (<em>str</em>) – Units of coordinates in the 3D facial scan (m or mm). Default is mm</p></li>
+<li><p><strong>out_dir</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Directory where coregistration visualizations will be saved. If None,
+no figures will be written.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><strong>lpa_t</strong> (<em>ndarray, shape (3,)</em>) – LPA coordinate in FreeSurfer MRI voxel space (mm), with CRAS offset applied.</p></li>
+<li><p><strong>rpa_t</strong> (<em>ndarray, shape (3,)</em>) – RPA coordinate in FreeSurfer MRI voxel space (mm), with CRAS offset applied.</p></li>
+<li><p><strong>nas_t</strong> (<em>ndarray, shape (3,)</em>) – NAS coordinate in FreeSurfer MRI voxel space (mm), with CRAS offset applied.</p></li>
+</ul>
+</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The returned fiducial coordinates are in FreeSurfer MRI voxel space (scanner RAS + CRAS
+offset), not in FreeSurfer surface RAS space. This distinction matters when using the
+coordinates for surface-based analyses or visualizations.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.ctf_fif_spm_conversion">
 <span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">ctf_fif_spm_conversion</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mne_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">res4_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoched</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'spm_'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.ctf_fif_spm_conversion" title="Permalink to this definition">#</a></dt>
 <dd><p>Convert a *.fif file containing data from a CTF scanner to SPM data format.</p>
@@ -2128,6 +2167,7 @@ parameter allows for vertex-level color customization.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.util.check_many"><code class="docutils literal notranslate"><span class="pre">check_many()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.util.convert_fsaverage_to_native"><code class="docutils literal notranslate"><span class="pre">convert_fsaverage_to_native()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.util.convert_native_to_fsaverage"><code class="docutils literal notranslate"><span class="pre">convert_native_to_fsaverage()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.util.coregister_3d_scan_mri"><code class="docutils literal notranslate"><span class="pre">coregister_3d_scan_mri()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.util.ctf_fif_spm_conversion"><code class="docutils literal notranslate"><span class="pre">ctf_fif_spm_conversion()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.util.get_bigbrain_layer_boundaries"><code class="docutils literal notranslate"><span class="pre">get_bigbrain_layer_boundaries()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.util.get_directories"><code class="docutils literal notranslate"><span class="pre">get_directories()</span></code></a></li>
