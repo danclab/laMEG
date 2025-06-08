@@ -57,6 +57,7 @@ Once you have installed ``laMEG``, check out the
 `example notebooks <https://github.com/danclab/laMEG/tree/main/examples>`_,
 `tutorials <https://github.com/danclab/laMEG/tree/main/tutorials>`_, and
 `documentation <https://danclab.github.io/laMEG/>`_.
+For guidelines on MRI sequences, head-cast construction, and co-registration, see the `wiki <https://github.com/danclab/laMEG/wiki>`_
 
 Funding
 =======
