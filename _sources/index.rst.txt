@@ -12,6 +12,8 @@ https://github.com/danclab/laMEG
 
 To get started, follow the `installation instructions <https://danclab.github.io/laMEG/#installation>`_.
 
+For guidelines on MRI sequences, head-cast construction, and co-registration, see the `wiki <https://github.com/danclab/laMEG/wiki>`_
+
 Available modules
 -----------------
 
