@@ -348,26 +348,30 @@ def ctf_fif_spm_conversion(mne_file, res4_file, output_path, epoched, prefix="sp
 
 
 def check_many(multiple, target, func=None):
-    """
-    Check for the presence of strings in a target string.
+    """Check for the presence of strings in a target string.
 
     Parameters
     ----------
     multiple : list
-        List of strings to be found in the target string.
+        List of strings to be found in the target string. If ``multiple`` is ``None`` or
+        empty, the function returns ``True`` regardless of ``func``.
     target : str
         The target string in which to search for the specified strings.
     func : str
-        Specifies the search mode: "all" to check if all strings are present, or "any" to check if
-        any string is present.
+        Specifies the search mode: "all" to check if all strings are present, or "any" to check
+        if any string is present.
 
     Notes
     -----
-    - This function works well with `if` statements in list comprehensions.
+    - This function works well with ``if`` statements in list comprehensions.
     """
 
+    if not multiple:
+        return True
+
     func_dict = {
-        "all": all, "any": any
+        "all": all,
+        "any": any,
     }
     if func in func_dict:
         use_func = func_dict[func]
@@ -379,7 +383,7 @@ def check_many(multiple, target, func=None):
     return use_func(check_)
 
 
-def get_files(target_path, suffix, strings=(""), prefix=None, check="all", depth="all"):
+def get_files(target_path, suffix, strings=None, prefix=None, check="all", depth="all"):
     """
     Return a list of files with a specific extension, prefix, and name containing specific strings.
 
@@ -391,8 +395,9 @@ def get_files(target_path, suffix, strings=(""), prefix=None, check="all", depth
         The most shallow searched directory.
     suffix : str
         File extension in "\*.ext" format.
-    strings : list of str
-        List of strings to search for in the file name.
+    strings : list of str, optional
+        List of strings to search for in the file name. If ``None`` no string filtering is
+        applied.
     prefix : str
         Limits the output list to file names starting with this prefix.
     check : str
@@ -409,6 +414,8 @@ def get_files(target_path, suffix, strings=(""), prefix=None, check="all", depth
 
     path = Path(target_path)
     files = []
+    if strings is None:
+        strings = []
     if depth == "all":
         files = [file for file in path.rglob(suffix)
                  if file.is_file() and file.suffix == suffix[1:] and
@@ -424,7 +431,7 @@ def get_files(target_path, suffix, strings=(""), prefix=None, check="all", depth
     return files
 
 
-def get_directories(target_path, strings=(""), check="all", depth="all"):
+def get_directories(target_path, strings=None, check="all", depth="all"):
     """
     Return a list of directories in the path (or all subdirectories) containing specified strings.
 
@@ -443,6 +450,8 @@ def get_directories(target_path, strings=(""), check="all", depth="all"):
 
     path = Path(target_path)
     subdirs = []
+    if strings is None:
+        strings = []
     if depth == "all":
         subdirs = [subdir for subdir in path.glob("**/")
                    if subdir.is_dir() and check_many(strings, str(subdir), check)]
