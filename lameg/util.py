@@ -1042,21 +1042,27 @@ def coregister_3d_scan_mri(subject_id, lpa, rpa, nas, dig_face_fname, dig_units=
 
     # Apply inverse transformation to fiducial coordinates to get coordinates in FreeSurfer space,
     # convert to mm
-    lpa_t = apply_trans(invert_transform(coreg.trans), lpa) * 1e3
-    rpa_t = apply_trans(invert_transform(coreg.trans), rpa) * 1e3
-    nas_t = apply_trans(invert_transform(coreg.trans), nas) * 1e3
+    lpa_tkras = apply_trans(coreg.trans, lpa) * 1e3
+    rpa_tkras = apply_trans(coreg.trans, rpa) * 1e3
+    nas_tkras = apply_trans(coreg.trans, nas) * 1e3
 
-    # Read RAS offset from freesurfer volume
-    out=subprocess.check_output([
-        'mri_info',
-        '--cras',
-        os.path.join(fs_subjects_dir,subject_id, 'mri/orig.mgz')
-    ])
-    ras_offset = np.array([float(x) for x in out.decode().split(' ')])
+    # Read FreeSurfer matrices from the SAME volume SPM will use (ideally orig.mgz from recon-all)
+    orig_mgz = os.path.join(fs_subjects_dir, subject_id, 'mri', 'orig.mgz')
 
-    # Convert Freesurfer fiducial coordinates to MRI
-    lpa_t=lpa_t+ras_offset
-    rpa_t=rpa_t+ras_offset
-    nas_t=nas_t+ras_offset
+    def _mat(flag):  # returns 4x4
+        out = subprocess.check_output(['mri_info', flag, orig_mgz]).decode().strip().split()
+        return np.array([float(x) for x in out]).reshape(4, 4)
 
-    return lpa_t, rpa_t, nas_t
+    Torig = _mat('--vox2ras-tkr')  # vox - tkRAS (mm)
+    Norig = _mat('--vox2ras')  # vox - scanner RAS (mm)
+    iTorig = np.linalg.inv(Torig)
+
+    def tkras_to_scanner_ras(xyz_mm):
+        xyz1 = np.r_[xyz_mm, 1.0]
+        return (Norig @ (iTorig @ xyz1))[:3]
+
+    lpa_spm = tkras_to_scanner_ras(lpa_tkras)
+    rpa_spm = tkras_to_scanner_ras(rpa_tkras)
+    nas_spm = tkras_to_scanner_ras(nas_tkras)
+
+    return lpa_spm, rpa_spm, nas_spm
