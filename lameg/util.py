@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 import vtk
 from mne.coreg import Coregistration
 from mne.io import _empty_info
-from mne.transforms import apply_trans, invert_transform
+from mne.transforms import apply_trans
 from scipy.io import savemat, loadmat
 from scipy.spatial import KDTree
 from scipy.stats import t
@@ -1053,13 +1053,13 @@ def coregister_3d_scan_mri(subject_id, lpa, rpa, nas, dig_face_fname, dig_units=
         out = subprocess.check_output(['mri_info', flag, orig_mgz]).decode().strip().split()
         return np.array([float(x) for x in out]).reshape(4, 4)
 
-    Torig = _mat('--vox2ras-tkr')  # vox - tkRAS (mm)
-    Norig = _mat('--vox2ras')  # vox - scanner RAS (mm)
-    iTorig = np.linalg.inv(Torig)
+    t_orig = _mat('--vox2ras-tkr')  # vox - tkRAS (mm)
+    n_orig = _mat('--vox2ras')  # vox - scanner RAS (mm)
+    it_orig = np.linalg.inv(t_orig)
 
     def tkras_to_scanner_ras(xyz_mm):
         xyz1 = np.r_[xyz_mm, 1.0]
-        return (Norig @ (iTorig @ xyz1))[:3]
+        return (n_orig @ (it_orig @ xyz1))[:3]
 
     lpa_spm = tkras_to_scanner_ras(lpa_tkras)
     rpa_spm = tkras_to_scanner_ras(rpa_tkras)
