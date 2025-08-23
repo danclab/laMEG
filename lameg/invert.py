@@ -119,9 +119,9 @@ def coregister(nas, lpa, rpa, mri_fname, mesh_fname, data_fname, fid_labels=('na
     batch(cfg, viz=viz, spm_instance=spm_instance)
 
 
-def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, foi=None, woi=None,
-               hann_windowing=False, n_folds=1, ideal_pc_test=0, viz=True, return_mu_matrix=False,
-               spm_instance=None):
+def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4,
+               n_spatial_modes=None, foi=None, woi=None, hann_windowing=False, n_folds=1,
+               ideal_pc_test=0, viz=True, return_mu_matrix=False, spm_instance=None):
     """
     Run the Empirical Bayesian Beamformer (EBB) source reconstruction algorithm.
 
@@ -140,6 +140,8 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
         Patch size for mesh smoothing. Default is 5.
     n_temp_modes : int, optional
         Number of temporal modes for the beamformer. Default is 4.
+    n_spatial_modes: int, optional
+        Number of spatial modes for the beamformer. Default is the number of channels
     foi : list, optional
         Frequency of interest range as [low, high]. Default is [0, 256].
     woi : list, optional
@@ -173,6 +175,8 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
         woi = [-np.inf, np.inf]
     if foi is None:
         foi = [0, 256]
+    if n_spatial_modes is None:
+        n_spatial_modes = []
 
     # Extract directory name and file name without extension
     data_dir, fname_with_ext = os.path.split(data_fname)
@@ -191,7 +195,7 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
         spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
         spatialmodename, nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(
             data_fname,
-            matlab.double([]),
+            matlab.double(n_spatial_modes),
             spatialmodesname,
             float(n_folds),
             float(ideal_pc_test),
@@ -265,8 +269,8 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4, f
 
 
 def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_temp_modes=4,
-               foi=None, woi=None, hann_windowing=False, n_folds=1, ideal_pc_test=0, viz=True,
-               return_mu_matrix=False, spm_instance=None):
+               n_spatial_modes=None, foi=None, woi=None, hann_windowing=False, n_folds=1,
+               ideal_pc_test=0, viz=True, return_mu_matrix=False, spm_instance=None):
     """
     Run the Multiple Sparse Priors (MSP) source reconstruction algorithm.
 
@@ -287,6 +291,8 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
         Patch size for mesh smoothing. Default is 5.
     n_temp_modes : int, optional
         Number of temporal modes for the beamformer. Default is 4.
+    n_spatial_modes: int, optional
+        Number of spatial modes for the beamformer. Default is the number of channels
     foi : list, optional
         Frequency of interest range as [low, high]. Default is [0, 256].
     woi : list, optional
@@ -323,6 +329,8 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
         priors = []
     if woi is None:
         woi = [-np.inf, np.inf]
+    if n_spatial_modes is None:
+        n_spatial_modes = []
 
     priors = [x + 1 for x in priors]
     if isinstance(woi, np.ndarray):
@@ -345,7 +353,7 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
         spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
         spatialmodename, nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(
             data_fname,
-            matlab.double([]),
+            matlab.double(n_spatial_modes),
             spatialmodesname,
             float(n_folds),
             float(ideal_pc_test),
@@ -431,8 +439,8 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
 
 
 def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=1,
-                          win_size=50, win_overlap=True, foi=None, hann_windowing=True, viz=True,
-                          spm_instance=None):
+                          n_spatial_modes=None, win_size=50, win_overlap=True, foi=None,
+                          hann_windowing=True, viz=True, spm_instance=None):
     """
     Run the Multiple Sparse Priors (MSP) source reconstruction algorithm in a sliding time window.
 
@@ -454,6 +462,8 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
         Patch size for mesh smoothing. Default is 5.
     n_temp_modes : int, optional
         Number of temporal modes for the beamformer. Default is 1.
+    n_spatial_modes: int, optional
+        Number of spatial modes for the beamformer. Default is the number of channels
     win_size : float, optional
         Size of the sliding window in ms. Default is 50. If you increase or decrease `win_size`,
         you may need to adjust `n_temp_modes`.
@@ -484,6 +494,8 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
 
     if foi is None:
         foi = [0, 256]
+    if n_spatial_modes is None:
+        n_spatial_modes = []
 
     prior = prior + 1.0
 
@@ -522,7 +534,7 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
         spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
         spatialmodename, nmodes, _ = spm.spm_eeg_inv_prep_modes_xval(
             data_fname,
-            [],
+            n_spatial_modes,
             spatialmodesname,
             1,
             0,
