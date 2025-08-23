@@ -918,14 +918,14 @@ def postprocess_freesurfer_surfaces(subj_id,
         out = subprocess.check_output(['mri_info', flag, orig_mgz]).decode().split()
         return np.array([float(x) for x in out]).reshape(4, 4)
 
-    Torig = _mat('--vox2ras-tkr')  # vox -> tkRAS (mm)
-    Norig = _mat('--vox2ras')  # vox -> scanner RAS (mm)
-    iTorig = np.linalg.inv(Torig)
+    t_orig = _mat('--vox2ras-tkr')  # vox -> tkRAS (mm)
+    n_orig = _mat('--vox2ras')  # vox -> scanner RAS (mm)
+    inv_t_orig = np.linalg.inv(t_orig)
 
     def tkras_to_scanner_ras(coords_mm):
         # coords_mm: (N,3) tkRAS
         xyz1 = np.c_[coords_mm, np.ones((coords_mm.shape[0], 1))]
-        out = (Norig @ (iTorig @ xyz1.T)).T[:, :3]
+        out = (n_orig @ (inv_t_orig @ xyz1.T)).T[:, :3]
         return out
 
     ## Convert to gifti, adjust for RAS offset, and remove deep vertices
