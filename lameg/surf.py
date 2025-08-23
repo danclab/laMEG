@@ -912,26 +912,21 @@ def postprocess_freesurfer_surfaces(subj_id,
         delayed(create_layer_mesh)(layer, hemispheres, fs_subject_dir) for layer in layers
     )
 
-    ## Compute RAS offset
-    # Define the path to the MRI file
-    ras_off_file = os.path.join(fs_subject_dir, 'mri', 'orig.mgz')
+    orig_mgz = os.path.join(fs_subject_dir, 'mri', 'orig.mgz')
 
-    # Execute the shell command to get RAS offset
-    command = f"mri_info --cras {ras_off_file}"
-    with subprocess.Popen(
-            command,
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-    ) as process:
-        out, _ = process.communicate()
+    def _mat(flag):
+        out = subprocess.check_output(['mri_info', flag, orig_mgz]).decode().split()
+        return np.array([float(x) for x in out]).reshape(4, 4)
 
-    # Parse the output
-    cols = out.decode().split()
-    ras_offset = np.array([float(cols[0]), float(cols[1]), float(cols[2])])
+    Torig = _mat('--vox2ras-tkr')  # vox -> tkRAS (mm)
+    Norig = _mat('--vox2ras')  # vox -> scanner RAS (mm)
+    iTorig = np.linalg.inv(Torig)
 
-    # Print the result
-    print(ras_offset)
+    def tkras_to_scanner_ras(coords_mm):
+        # coords_mm: (N,3) tkRAS
+        xyz1 = np.c_[coords_mm, np.ones((coords_mm.shape[0], 1))]
+        out = (Norig @ (iTorig @ xyz1.T)).T[:, :3]
+        return out
 
     ## Convert to gifti, adjust for RAS offset, and remove deep vertices
     surfaces_to_process = copy.copy(layer_names)
@@ -958,7 +953,7 @@ def postprocess_freesurfer_surfaces(subj_id,
             n_vertices = 0
             for data_array in surf_g.darrays:
                 if data_array.intent == nib.nifti1.intent_codes['NIFTI_INTENT_POINTSET']:
-                    data_array.data += ras_offset
+                    data_array.data = tkras_to_scanner_ras(data_array.data)
                     n_vertices = data_array.data.shape[0]
             nib.save(surf_g, new_name)
 
@@ -969,11 +964,10 @@ def postprocess_freesurfer_surfaces(subj_id,
             if remove_deep:
                 vertices_to_remove = []
                 for vtx in range(n_vertices):
-                    if label[vtx] > 0:
-                        region = names[label[vtx]]
-                        if region == 'unknown':
-                            vertices_to_remove.append(vtx)
-                    else:
+                    region_name = names[label[vtx]]
+                    if isinstance(region_name, bytes):
+                        region_name = region_name.decode('utf-8', errors='ignore')
+                    if label[vtx] <= 0 or region_name.lower() == 'unknown':
                         vertices_to_remove.append(vtx)
                 surf_g = remove_vertices(surf_g, np.array(vertices_to_remove))
 
