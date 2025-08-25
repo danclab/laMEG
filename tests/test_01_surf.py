@@ -4,7 +4,6 @@ This module contains the unit tests for the `surf` module from the `lameg` packa
 import copy
 import os
 import shutil
-import subprocess
 from unittest.mock import patch, MagicMock
 
 import numpy as np
@@ -817,8 +816,8 @@ def test_postprocess_freesurfer_surfaces():
         flag = args[1]
         if flag in ('--vox2ras-tkr', '--vox2ras'):
             # Identity 4x4 (keep surfaces unchanged)
-            M = np.eye(4, dtype=float).reshape(-1)
-            return (' '.join(str(x) for x in M)).encode('utf-8')
+            mat = np.eye(4, dtype=float).reshape(-1)
+            return (' '.join(str(x) for x in mat)).encode('utf-8')
         raise RuntimeError(f'unexpected mri_info flag: {flag}')
 
     # Mock for subprocess.run()
