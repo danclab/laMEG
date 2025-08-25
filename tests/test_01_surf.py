@@ -811,14 +811,15 @@ def test_postprocess_freesurfer_surfaces():
     shutil.copy('./test_data/sub-104/surf/rh.white.gii', './output/rh.inflated.gii')
     out_fname = 'processed_surface.gii'
 
-    # Setup the Popen mock
-    mock_process = MagicMock()
-    mock_process.communicate.return_value = (b'0.1 0.2 0.3', b'')
-
-    # Mock the Popen context manager
-    mock_popen = MagicMock()
-    mock_popen.return_value.__enter__.return_value = mock_process
-    mock_popen.return_value.__exit__.return_value = None
+    # Helper to mock mri_info matrices
+    def _mri_info_side_effect(args, *_, **__):
+        # args is like ['mri_info', '--vox2ras-tkr', '<.../orig.mgz>']
+        flag = args[1]
+        if flag in ('--vox2ras-tkr', '--vox2ras'):
+            # Identity 4x4 (keep surfaces unchanged)
+            M = np.eye(4, dtype=float).reshape(-1)
+            return (' '.join(str(x) for x in M)).encode('utf-8')
+        raise RuntimeError(f'unexpected mri_info flag: {flag}')
 
     # Mock for subprocess.run()
     mock_run = MagicMock()
@@ -826,7 +827,7 @@ def test_postprocess_freesurfer_surfaces():
 
     # Define side_effect function
     # pylint: disable=W0613
-    def create_layer_mesh_side_effect(layer, hemispheres, fs_subject_dir):
+    def _create_layer_mesh_side_effect(layer, hemispheres, fs_subject_dir):
         if layer == 1:
             return 'pial'
         if 0 < layer < 1:
@@ -837,33 +838,33 @@ def test_postprocess_freesurfer_surfaces():
 
     # Mock environment and external functions
     with patch('os.getenv', return_value='./test_data/fs'), \
-            patch('subprocess.Popen', mock_popen), \
+            patch('subprocess.check_output', side_effect=_mri_info_side_effect) as mock_chk, \
             patch('subprocess.run', mock_run), \
-            patch('lameg.surf.create_layer_mesh', side_effect=create_layer_mesh_side_effect):
+            patch('lameg.surf.create_layer_mesh', side_effect=_create_layer_mesh_side_effect):
 
-        # Call function
         postprocess_freesurfer_surfaces(subj_id, out_dir, out_fname, n_surfaces=2)
 
-        # Ensure `create_layer_mesh` is called correctly
-        assert mock_popen.call_count == 1, \
-            "Expected subprocess.Popen to be called once for mris_info"
-        mock_popen.assert_called_with(
-            f"mri_info --cras {os.path.join('./test_data/fs', subj_id, 'mri', 'orig.mgz')}",
-            shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        # Assert we asked for the two matrices
+        assert mock_chk.call_count == 2
+        flags = [ca[0][0][1] for ca in mock_chk.call_args_list]
+        paths = [ca[0][0][2] for ca in mock_chk.call_args_list]
+        assert '--vox2ras-tkr' in flags and '--vox2ras' in flags
+        assert all(p == os.path.join('./test_data/fs', subj_id, 'mri', 'orig.mgz') for p in paths)
 
         final_surf = nib.load(os.path.join(out_dir, out_fname))
-        target = np.array([[ -4.945391,  -57.815586,   28.967335 ],
-                           [ -5.680048,  -57.90388,    27.428965 ],
-                           [ -6.0047097, -57.829296,   25.688501 ],
-                           [ -6.5609765, -57.508076,   24.787767 ],
-                           [-11.259755,  -57.880123,   20.450663 ]])
+
+        target = np.array([[ -5.045391,  -58.015587,   28.667336 ],
+                           [ -5.780048,  -58.10388,    27.128965 ],
+                           [ -6.1047096, -58.029297,   25.388502 ],
+                           [ -6.6609764, -57.708076,   24.487768 ],
+                           [-11.3597555, -58.080124,   20.150663 ]])
         assert np.allclose(final_surf.darrays[0].data[:5,:], target)
 
         target = np.array([[    0,    10,    28],
                            [    0,    28,     8],
                            [   11,     0,     8],
-                           [    0,    11, 46271],
-                           [   10,    13, 46894]])
+                           [    0,    11, 46282],
+                           [   10,    13, 46904]])
         assert np.allclose(final_surf.darrays[1].data[:5, :], target)
 
         target = np.array([[ 0.14771064,  0.9553547,  -0.25588843],
