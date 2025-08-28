@@ -200,6 +200,14 @@ def show_surface(surface, color=None, grid=False, menu=False, vertex_colors=None
     opacity : float, optional
         Sets the opacity of the surface, with 1.0 being fully opaque and 0.0 being fully
         transparent. Default is 1.0.
+    coords: array, optional
+        Coordinates to display as spheres (number of coordinates x 3)
+    coord_size: float, optional
+        Coordinate sphere radius.
+        Default is 1.0
+    coord_color: array, optional
+        Color of the coordinate spheres, specified as a decimal RGB array.
+        Default is [255, 0, 0].
 
     Returns
     -------
