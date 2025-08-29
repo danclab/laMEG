@@ -9,7 +9,7 @@ permissions:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    container: python:3.7-bullseye  # guaranteed 3.7
+    container: python:3.7-bullseye
 
     steps:
       - uses: actions/checkout@v4
