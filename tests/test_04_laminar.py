@@ -12,8 +12,8 @@ from lameg.laminar import (model_comparison, sliding_window_model_comparison, co
 from lameg.util import get_fiducial_coords, get_surface_names
 
 
-#@pytest.mark.dependency(depends=["tests/test_03_simulate.py::test_run_current_density_simulation"],
-#                        scope='session')
+@pytest.mark.dependency(depends=["tests/test_03_simulate.py::test_run_current_density_simulation"],
+                        scope='session')
 def test_roi_power_comparison():
     """
     Tests the `roi_power_comparison` function to evaluate its capability to accurately compute
@@ -87,7 +87,8 @@ def test_roi_power_comparison():
     assert np.allclose(roi_idx, target)
 
 
-@pytest.mark.dependency(depends=["test_roi_power_comparison"])
+@pytest.mark.dependency(depends=["tests/test_04_laminar.py::test_roi_power_comparison"],
+                        scope='session')
 def test_model_comparison(spm):
     """
     Tests the `model_comparison` function to ensure it correctly compares different source
@@ -186,8 +187,42 @@ def test_model_comparison(spm):
     target = np.array([-207555.39271896, -207279.30947456])
     assert np.allclose(free_energy, target)
 
+    # Test default invert kwargs
+    [free_energy, _] = model_comparison(
+        nas,
+        lpa,
+        rpa,
+        mri_fname,
+        [layer_fnames[0], layer_fnames[-1]],
+        sim_fname,
+        method='EBB',
+        viz=False,
+        spm_instance=spm
+    )
 
-@pytest.mark.dependency(depends=["test_model_comparison"])
+    target = np.array([-207555.39271896, -207279.30947456])
+    assert np.allclose(free_energy, target)
+
+    # Test coreg kwargs
+    [free_energy, _] = model_comparison(
+        nas,
+        lpa,
+        rpa,
+        mri_fname,
+        [layer_fnames[0], layer_fnames[-1]],
+        sim_fname,
+        method='EBB',
+        viz=False,
+        coregister_kwargs={},
+        spm_instance=spm
+    )
+
+    target = np.array([-207555.39271896, -207279.30947456])
+    assert np.allclose(free_energy, target)
+
+
+@pytest.mark.dependency(depends=["tests/test_04_laminar.py::test_model_comparison"],
+                        scope='session')
 def test_sliding_window_model_comparison(spm):
     """
     Tests the `sliding_window_model_comparison` function to ensure it correctly performs
