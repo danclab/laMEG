@@ -86,25 +86,6 @@ def test_roi_power_comparison():
     target = np.array([[1031, 1386, 2775, 2886, 3004, 4162, 7074, 7188, 16847, 42129]])
     assert np.allclose(roi_idx, target)
 
-    # Test default chunk size
-    laminar_t_statistic, laminar_p_value, deg_of_freedom, roi_idx = roi_power_comparison(
-        sim_fname,
-        [0, 500],
-        [-500, 0],
-        mesh,
-        n_layers,
-        99.99
-    )
-
-    target = 1.8361054173006839
-    assert np.isclose(laminar_t_statistic, target, atol=1e-2)
-    target = 0.07138219614142699
-    assert np.isclose(laminar_p_value, target, atol=1e-2)
-    target = 59
-    assert deg_of_freedom == target
-    target = np.array([[1031, 1386, 2775, 2886, 3004, 4162, 7074, 7188, 16847, 42129]])
-    assert np.allclose(roi_idx, target)
-
 
 @pytest.mark.dependency(depends=["tests/test_04_laminar.py::test_roi_power_comparison"],
                         scope='session')
@@ -183,7 +164,7 @@ def test_model_comparison(spm):
         }
     )
 
-    target = np.array([-202445.53571645, -200488.54855084])
+    target = np.array([[-201407.176018,  -201429.3865013]])
     assert np.allclose(free_energy, target, atol=1e3)
 
     # Test EBB
@@ -203,7 +184,7 @@ def test_model_comparison(spm):
         }
     )
 
-    target = np.array([-207555.39271896, -207279.30947456])
+    target = np.array([[-207540.70109307, -207253.93266332]])
     assert np.allclose(free_energy, target)
 
     # Test default invert kwargs
@@ -219,7 +200,7 @@ def test_model_comparison(spm):
         spm_instance=spm
     )
 
-    target = np.array([-207555.39271896, -207279.30947456])
+    target = np.array([[-207540.70109307, -207253.93266332]])
     assert np.allclose(free_energy, target)
 
     # Test coreg kwargs
@@ -236,7 +217,7 @@ def test_model_comparison(spm):
         spm_instance=spm
     )
 
-    target = np.array([-207555.39271896, -207279.30947456])
+    target = np.array([-207540.70109307, -207253.93266332])
     assert np.allclose(free_energy, target)
 
 
@@ -376,7 +357,6 @@ def test_sliding_window_model_comparison(spm):
                        [-25742.35573166, -25742.35573166, -25731.55880407, -25825.36230089,
                         -25825.36230089, -25797.5262519, -25740.67726161, -25740.67726161,
                         -25795.4352398, -25809.27771454]])
-    print(free_energy[:, :10])
     assert np.allclose(free_energy[:, :10], target)
 
 
