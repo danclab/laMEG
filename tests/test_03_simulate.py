@@ -197,3 +197,28 @@ def test_run_current_density_simulation(spm):
     assert np.allclose(time[:10], target)
 
     assert ch_names[0] == 'MLC11'
+
+    # Test average
+    sim_fname = run_current_density_simulation(
+        base_fname,
+        prefix,
+        sim_vertex,
+        sim_signal,
+        dipole_moment,
+        sim_patch_size,
+        snr,
+        average_trials=True,
+        spm_instance=spm
+    )
+
+    sim_sensor_data, time, ch_names = load_meg_sensor_data(sim_fname)
+
+    target = np.array([[-0.0358916,  -1.2394599,   0.2520079,   0.6010563,   1.1191453,
+                        0.38868174,   0.5941798,   0.08137737, -0.24114218, -0.0526498 ]])
+    assert np.allclose(sim_sensor_data[:10, 0], target)
+
+    target = np.array([[-0.5, -0.49833333, -0.49666667, -0.495, -0.49333333,
+                        -0.49166667, -0.49, -0.48833333, -0.48666667, -0.485]]) * 1000
+    assert np.allclose(time[:10], target)
+
+    assert ch_names[0] == 'MLC11'
