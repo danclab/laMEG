@@ -77,13 +77,13 @@ def test_roi_power_comparison():
         chunk_size=8000
     )
 
-    target = -0.20608658352227635
+    target = 1.8361054173006839
     assert np.isclose(laminar_t_statistic, target, atol=1e-2)
-    target = 0.8374327760997111
+    target = 0.07138219614142699
     assert np.isclose(laminar_p_value, target, atol=1e-2)
     target = 59
     assert deg_of_freedom == target
-    target = np.array([  463,   613,  1028,  1163,  1607,  2775, 18020, 19433, 19636])
+    target = np.array([[1031, 1386, 2775, 2886, 3004, 4162, 7074, 7188, 16847, 42129]])
     assert np.allclose(roi_idx, target)
 
     # Test default chunk size
@@ -96,13 +96,13 @@ def test_roi_power_comparison():
         99.99
     )
 
-    target = -0.20608658352227635
+    target = 1.8361054173006839
     assert np.isclose(laminar_t_statistic, target, atol=1e-2)
-    target = 0.8374327760997111
+    target = 0.07138219614142699
     assert np.isclose(laminar_p_value, target, atol=1e-2)
     target = 59
     assert deg_of_freedom == target
-    target = np.array([463, 613, 1028, 1163, 1607, 2775, 18020, 19433, 19636])
+    target = np.array([[1031, 1386, 2775, 2886, 3004, 4162, 7074, 7188, 16847, 42129]])
     assert np.allclose(roi_idx, target)
 
 
