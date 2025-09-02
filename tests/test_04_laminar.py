@@ -86,6 +86,25 @@ def test_roi_power_comparison():
     target = np.array([  463,   613,  1028,  1163,  1607,  2775, 18020, 19433, 19636])
     assert np.allclose(roi_idx, target)
 
+    # Test default chunk size
+    laminar_t_statistic, laminar_p_value, deg_of_freedom, roi_idx = roi_power_comparison(
+        sim_fname,
+        [0, 500],
+        [-500, 0],
+        mesh,
+        n_layers,
+        99.99
+    )
+
+    target = -0.20608658352227635
+    assert np.isclose(laminar_t_statistic, target, atol=1e-2)
+    target = 0.8374327760997111
+    assert np.isclose(laminar_p_value, target, atol=1e-2)
+    target = 59
+    assert deg_of_freedom == target
+    target = np.array([463, 613, 1028, 1163, 1607, 2775, 18020, 19433, 19636])
+    assert np.allclose(roi_idx, target)
+
 
 @pytest.mark.dependency(depends=["tests/test_04_laminar.py::test_roi_power_comparison"],
                         scope='session')
@@ -337,6 +356,28 @@ def test_sliding_window_model_comparison(spm):
                        [-100., -61.66666667],
                        [-100., -60.]])
     assert np.allclose(wois[:10, :], target)
+
+    # Test default invert args
+    [free_energy, wois] = sliding_window_model_comparison(
+        24588,
+        nas,
+        lpa,
+        rpa,
+        mri_fname,
+        [layer_fnames[0], layer_fnames[-1]],
+        sim_fname,
+        viz=False,
+        spm_instance=spm
+    )
+
+    target = np.array([[-25742.35576421, -25742.35576421, -25731.55977826, -25825.36418008,
+                        -25825.36418008, -25797.52834586, -25740.6772461, -25740.6772461,
+                        -25795.43416278, -25809.27791724],
+                       [-25742.35573166, -25742.35573166, -25731.55880407, -25825.36230089,
+                        -25825.36230089, -25797.5262519, -25740.67726161, -25740.67726161,
+                        -25795.4352398, -25809.27771454]])
+    print(free_energy[:, :10])
+    assert np.allclose(free_energy[:, :10], target)
 
 
 def test_compute_csd():
