@@ -714,6 +714,29 @@ def test_compute_dipole_orientations(large_gifti):
     assert np.allclose(normals[0,:5,:], target)
     assert np.allclose(normals[1,:5,:], target)
 
+    # Create intentionally mismatched downsampled surfaces:
+    # pial.ds.gii with ratio 0.1, white.ds.gii with ratio 0.2 -> different vertex counts
+
+    mismatch_dir = './output/output_mismatch'
+    os.makedirs(mismatch_dir, exist_ok=True)
+
+    # Save originals again
+    nib.save(large_gifti2, os.path.join(mismatch_dir, 'pial.gii'))
+    nib.save(large_gifti, os.path.join(mismatch_dir, 'white.gii'))
+
+    pial_ds_mismatch = downsample_multiple_surfaces([large_gifti2], 0.1)[0]
+    white_ds_mismatch = downsample_multiple_surfaces([large_gifti], 0.2)[0]
+    nib.save(pial_ds_mismatch, os.path.join(mismatch_dir, 'pial.ds.gii'))
+    nib.save(white_ds_mismatch, os.path.join(mismatch_dir, 'white.ds.gii'))
+
+    with pytest.raises(ValueError, match="must have the same number of vertices"):
+        _ = compute_dipole_orientations(
+            'link_vector',
+            ['pial', 'white'],
+            str(mismatch_dir),
+            fixed=True
+        )
+
 
 def test_create_layer_mesh():
     """
