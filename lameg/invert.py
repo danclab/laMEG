@@ -176,7 +176,9 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4,
     if foi is None:
         foi = [0, 256]
     if n_spatial_modes is None:
-        n_spatial_modes = []
+        n_spatial_modes = matlab.double([])
+    else:
+        n_spatial_modes = float(n_spatial_modes)
 
     # Extract directory name and file name without extension
     data_dir, fname_with_ext = os.path.split(data_fname)
@@ -195,7 +197,7 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4,
         spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
         spatialmodename, nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(
             data_fname,
-            matlab.double(n_spatial_modes),
+            n_spatial_modes,
             spatialmodesname,
             float(n_folds),
             float(ideal_pc_test),
@@ -255,7 +257,18 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4,
         m_data = inverse_struct['M']['data'][()]
         m_ir = inverse_struct['M']['ir'][()]
         m_jc = inverse_struct['M']['jc'][()]
-        data_reduction_mat = file[inverse_struct['U'][0][0]][()]
+        try:
+            data_reduction_mat = file[inverse_struct['U'][0][0]][()]
+        except AttributeError:
+            dr_data = file[inverse_struct['U'][0][0]]['data'][()]
+            dr_ir = file[inverse_struct['U'][0][0]]['ir'][()]
+            dr_jc = file[inverse_struct['U'][0][0]]['jc'][()]
+            num_rows = int(max(dr_ir)) + 1
+            num_cols = len(dr_jc) - 1
+            data_reduction_mat = csc_matrix(
+                (dr_data, dr_ir, dr_jc),
+                shape=(num_rows, num_cols)
+            )
 
     if not return_mu_matrix:
         return [free_energy, cv_err]
@@ -330,7 +343,9 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
     if woi is None:
         woi = [-np.inf, np.inf]
     if n_spatial_modes is None:
-        n_spatial_modes = []
+        n_spatial_modes = matlab.double([])
+    else:
+        n_spatial_modes = float(n_spatial_modes)
 
     priors = [x + 1 for x in priors]
     if isinstance(woi, np.ndarray):
@@ -353,7 +368,7 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
         spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
         spatialmodename, nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(
             data_fname,
-            matlab.double(n_spatial_modes),
+            n_spatial_modes,
             spatialmodesname,
             float(n_folds),
             float(ideal_pc_test),
@@ -425,7 +440,18 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
         m_data = inverse_struct['M']['data'][()]
         m_ir = inverse_struct['M']['ir'][()]
         m_jc = inverse_struct['M']['jc'][()]
-        data_reduction_mat = file[inverse_struct['U'][0][0]][()]
+        try:
+            data_reduction_mat = file[inverse_struct['U'][0][0]][()]
+        except AttributeError:
+            dr_data = file[inverse_struct['U'][0][0]]['data'][()]
+            dr_ir = file[inverse_struct['U'][0][0]]['ir'][()]
+            dr_jc = file[inverse_struct['U'][0][0]]['jc'][()]
+            num_rows = int(max(dr_ir)) + 1
+            num_cols = len(dr_jc) - 1
+            data_reduction_mat = csc_matrix(
+                (dr_data, dr_ir, dr_jc),
+                shape=(num_rows, num_cols)
+            )
 
     if not return_mu_matrix:
         return [free_energy, cv_err]
@@ -495,7 +521,9 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
     if foi is None:
         foi = [0, 256]
     if n_spatial_modes is None:
-        n_spatial_modes = []
+        n_spatial_modes = matlab.double([])
+    else:
+        n_spatial_modes = float(n_spatial_modes)
 
     prior = prior + 1.0
 
@@ -646,10 +674,21 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
                 m_data = inverse_struct['M']['data'][()]
                 m_ir = inverse_struct['M']['ir'][()]
                 m_jc = inverse_struct['M']['jc'][()]
-                num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
-                num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
+                num_rows = int(max(m_ir)) + 1
+                num_cols = len(m_jc) - 1
                 weighting_mat = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
-                data_reduction_mat = file[inverse_struct['U'][0][0]][()]
+                try:
+                    data_reduction_mat = file[inverse_struct['U'][0][0]][()]
+                except AttributeError:
+                    dr_data = file[inverse_struct['U'][0][0]]['data'][()]
+                    dr_ir = file[inverse_struct['U'][0][0]]['ir'][()]
+                    dr_jc = file[inverse_struct['U'][0][0]]['jc'][()]
+                    num_rows = int(max(dr_ir)) + 1
+                    num_cols = len(dr_jc) - 1
+                    data_reduction_mat = csc_matrix(
+                        (dr_data, dr_ir, dr_jc),
+                        shape=(num_rows, num_cols)
+                    )
         except OSError:
             mat_contents = loadmat(inv_fname)
             inverse_struct=mat_contents['D'][0][0]['other'][0][0]['inv'][0][0]['inverse'][0][0]
