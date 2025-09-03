@@ -171,10 +171,14 @@ def invert_ebb(mesh_fname, data_fname, n_layers, patch_size=5, n_temp_modes=4,
     - The function will automatically close the standalone SPM instance if it was started
       within the function.
     """
-    if woi is None:
-        woi = [-np.inf, np.inf]
     if foi is None:
         foi = [0, 256]
+
+    if woi is None:
+        woi = [-np.inf, np.inf]
+    elif isinstance(woi, np.ndarray):
+        woi = woi.tolist()
+
     if n_spatial_modes is None:
         n_spatial_modes = matlab.double([])
     else:
@@ -338,18 +342,21 @@ def invert_msp(mesh_fname, data_fname, n_layers, priors=None, patch_size=5, n_te
     """
     if foi is None:
         foi = [0, 256]
+
     if priors is None:
         priors = []
+
     if woi is None:
         woi = [-np.inf, np.inf]
+    elif isinstance(woi, np.ndarray):
+        woi = woi.tolist()
+
     if n_spatial_modes is None:
         n_spatial_modes = matlab.double([])
     else:
         n_spatial_modes = float(n_spatial_modes)
 
     priors = [x + 1 for x in priors]
-    if isinstance(woi, np.ndarray):
-        woi = woi.tolist()
 
     # Extract directory name and file name without extension
     data_dir, fname_with_ext = os.path.split(data_fname)
@@ -520,6 +527,7 @@ def invert_sliding_window(prior, mesh_fname, data_fname, n_layers, patch_size=5,
 
     if foi is None:
         foi = [0, 256]
+
     if n_spatial_modes is None:
         n_spatial_modes = matlab.double([])
     else:
