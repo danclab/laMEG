@@ -167,6 +167,25 @@ def test_invert_msp(spm):
     patch_size = 5
     n_temp_modes = 4
     n_layers = 2
+
+    # Test n spatial modes and array woi
+    [free_energy, cv_err] = invert_msp(
+        mesh_fname,
+        base_fname,
+        n_layers,
+        woi=np.array([100,200]),
+        patch_size=patch_size,
+        n_temp_modes=n_temp_modes,
+        n_spatial_modes=60,
+        viz=False,
+        spm_instance=spm
+    )
+
+    target = -103656.02108431
+    assert np.abs(target - free_energy[()]) < 1000
+    assert np.allclose(cv_err, [1, 0])
+
+
     [free_energy, cv_err] = invert_msp(
         mesh_fname,
         base_fname,
@@ -347,6 +366,27 @@ def test_invert_sliding_window(spm):
         spm_instance=spm
     )
 
+    # test n spatial modes
+    [free_energy, wois] = invert_sliding_window(
+        47507,
+        mesh_fname,
+        base_fname,
+        1,
+        n_spatial_modes=60,
+        win_size=16,
+        spm_instance=spm
+    )
+
+    target = np.array([[-27672.32213882, -28107.78864603, -28107.78864603, -28267.4014036,
+                        -28528.13675284, -28528.13675284, -28598.19588175, -28555.6707891,
+                        -28394.99592206, -28495.15584332]])
+    assert np.allclose(free_energy[:10], target)
+
+    target = np.array([-100., -100., -100., -100., -100.,
+                       -100., -98.33333333, -96.66666667, -95., -93.33333333])
+    assert np.allclose(wois[:10, 0], target)
+
+
     [free_energy, wois] = invert_sliding_window(
         47507,
         mesh_fname,
@@ -431,6 +471,31 @@ def test_invert_ebb(spm):
     patch_size = 5
     n_temp_modes = 4
     n_layers = 2
+
+    # Test n spatial modes
+    # pylint: disable=unbalanced-tuple-unpacking
+    [free_energy, cv_err, mu_matrix] = invert_ebb(
+        mesh_fname,
+        base_fname,
+        n_layers,
+        patch_size=patch_size,
+        n_temp_modes=n_temp_modes,
+        n_spatial_modes=60,
+        return_mu_matrix=True,
+        viz=False,
+        spm_instance=spm
+    )
+
+    target = np.array([-3.7071333146478633e-06, -1.1329176230732538e-06, 2.159507142614108e-06,
+                       3.299446582269608e-06, 1.1055475564578645e-06, -1.062692844058013e-06,
+                       -1.0793588514594155e-06, 1.382972989621772e-06, 2.43323315936265e-06,
+                       1.1154992668068167e-06])
+    np.allclose(mu_matrix[0, :10].todense(), target)
+    target = -112881.5375626395
+    assert np.isclose(free_energy[()], target)
+    assert np.allclose(cv_err, [1, 0])
+
+
     # pylint: disable=unbalanced-tuple-unpacking
     [free_energy, cv_err, mu_matrix] = invert_ebb(
         mesh_fname,
