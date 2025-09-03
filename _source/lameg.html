@@ -717,7 +717,7 @@ within the function.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.laminar.roi_power_comparison">
-<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">roi_power_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">woi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_woi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perc_thresh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.laminar.roi_power_comparison" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">roi_power_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">woi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_woi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_layers</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perc_thresh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.laminar.roi_power_comparison" title="Permalink to this definition">#</a></dt>
 <dd><p>Computes and compares power changes in pial and white matter layers to define
 regions of interest (ROI) based on significant power shifts.</p>
 <p>This function calculates power changes in the pial and white matter layers during a specified
@@ -735,8 +735,7 @@ milliseconds).</p></li>
 <li><p><strong>n_layers</strong> (<em>int</em>) – Number of layers in the cortical model.</p></li>
 <li><p><strong>perc_thresh</strong> (<em>float</em>) – Percentile threshold for determining significant changes in power.</p></li>
 <li><p><strong>mu_matrix</strong> (<em>ndarray</em><em>, </em><em>optional</em>) – Lead field matrix (source x sensor). Default is None.</p></li>
-<li><p><strong>chunk_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of vertices to load source time series from at once. If None, will load all at the
-same time. Default is None.</p></li>
+<li><p><strong>chunk_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of vertices to load source time series from at once. Default is 1000.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
