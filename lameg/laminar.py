@@ -274,7 +274,7 @@ def compute_csd(signal, thickness, sfreq, smoothing=None):
 
 
 def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thresh,
-                         mu_matrix=None, chunk_size=None):
+                         mu_matrix=None, chunk_size=1000):
     """
     Computes and compares power changes in pial and white matter layers to define
     regions of interest (ROI) based on significant power shifts.
@@ -302,8 +302,7 @@ def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thr
     mu_matrix : ndarray, optional
         Lead field matrix (source x sensor). Default is None.
     chunk_size : int, optional
-        Number of vertices to load source time series from at once. If None, will load all at the
-        same time. Default is None.
+        Number of vertices to load source time series from at once. Default is 1000.
 
     Returns
     -------
@@ -325,7 +324,7 @@ def roi_power_comparison(data_fname, woi, baseline_woi, mesh, n_layers, perc_thr
     # Load data incrementally
     def load_and_compute_power(vertices, time_indices, chunk_size, n_trials):
         incremental_power = np.zeros((len(vertices), n_trials))
-        if chunk_size is None:
+        if chunk_size>len(vertices):
             chunk_size = len(vertices)
         for start in range(0, len(vertices), chunk_size):
             end = min(start + chunk_size, len(vertices))
