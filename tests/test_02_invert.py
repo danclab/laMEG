@@ -472,12 +472,13 @@ def test_invert_ebb(spm):
     n_temp_modes = 4
     n_layers = 2
 
-    # Test n spatial modes
+    # Test n spatial modes and woi as array
     # pylint: disable=unbalanced-tuple-unpacking
     [free_energy, cv_err, mu_matrix] = invert_ebb(
         mesh_fname,
         base_fname,
         n_layers,
+        woi=np.array([100,200]),
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
         n_spatial_modes=60,
@@ -486,12 +487,11 @@ def test_invert_ebb(spm):
         spm_instance=spm
     )
 
-    target = np.array([-3.7071333146478633e-06, -1.1329176230732538e-06, 2.159507142614108e-06,
-                       3.299446582269608e-06, 1.1055475564578645e-06, -1.062692844058013e-06,
-                       -1.0793588514594155e-06, 1.382972989621772e-06, 2.43323315936265e-06,
-                       1.1154992668068167e-06])
-    np.allclose(mu_matrix[0, :10].todense(), target)
-    target = -112881.5375626395
+    target = np.array([-4.02754329e-06, -1.14844754e-06,  2.46000161e-06,  3.66448693e-06,
+                         1.20843955e-06, -1.17824736e-06, -1.13189532e-06,  1.61043099e-06,
+                         2.73391449e-06,  1.24032392e-06])
+    assert np.allclose(mu_matrix[0, :10].todense(), target)
+    target = -104592.47791070268
     assert np.isclose(free_energy[()], target)
     assert np.allclose(cv_err, [1, 0])
 
