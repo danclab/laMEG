@@ -276,7 +276,8 @@ def show_surface(surface, color=None, grid=False, menu=False, vertex_colors=None
     return plot
 
 
-def plot_csd(csd, times, axis, colorbar=True, cmap="RdBu_r", vmin_vmax=None, n_layers=11):
+def plot_csd(csd, times, axis, colorbar=True, cmap="RdBu_r", vmin_vmax=None, n_layers=11,
+             layer_boundaries=None):
     """
     Plot the computed Current Source Density (CSD) data.
 
@@ -302,6 +303,9 @@ def plot_csd(csd, times, axis, colorbar=True, cmap="RdBu_r", vmin_vmax=None, n_l
         matrix. Default is None.
     n_layers : int
         Number of layers in the CSD.
+    layer_boundaries: array, optional
+        A list of layer boundaries (as a fraction of cortical thickness) to be plotted as
+        horizontal dashed lines. Default is None
 
     Returns
     -------
@@ -330,6 +334,9 @@ def plot_csd(csd, times, axis, colorbar=True, cmap="RdBu_r", vmin_vmax=None, n_l
         aspect="auto", extent=extent,
         cmap=cmap, interpolation="none"
     )
+    for i in range(len(layer_boundaries)):
+        axis.axhline(y=layer_boundaries[i], color='k', linestyle='--')
+
     axis.set_ylim(1, 0)
     axis.set_yticks(np.linspace(0, 1, n_layers))
     axis.set_yticklabels(np.arange(1, n_layers+1))
