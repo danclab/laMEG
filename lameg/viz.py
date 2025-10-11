@@ -335,7 +335,7 @@ def plot_csd(csd, times, axis, colorbar=True, cmap="RdBu_r", vmin_vmax=None, n_l
         cmap=cmap, interpolation="none"
     )
     for boundary in layer_boundaries:
-        axis.axhline(y=boundary[i], color='k', linestyle='--')
+        axis.axhline(y=boundary, color='k', linestyle='--')
 
     axis.set_ylim(1, 0)
     axis.set_yticks(np.linspace(0, 1, n_layers))
