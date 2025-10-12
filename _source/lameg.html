@@ -1536,30 +1536,39 @@ any string is present.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.convert_fsaverage_to_native">
-<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">convert_fsaverage_to_native</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hemi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vert_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.convert_fsaverage_to_native" title="Permalink to this definition">#</a></dt>
-<dd><p>Convert vertex indices from fsaverage to a subject’s native surface space.</p>
-<p>If both <cite>hemi</cite> and <cite>vert_idx</cite> are None, all vertices from both hemispheres are converted.
-If <cite>hemi</cite> is a string (‘lh’ or ‘rh’) and <cite>vert_idx</cite> is None, all vertices from that hemisphere
-are converted. If <cite>hemi</cite> is a string and <cite>vert_idx</cite> is an integer, the function converts that
-single vertex index. If <cite>hemi</cite> is None but <cite>vert_idx</cite> is not None, a ValueError is raised,
-because we cannot infer which hemisphere the vertex belongs to.</p>
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">convert_fsaverage_to_native</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">subj_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">subj_surf_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hemi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vert_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.convert_fsaverage_to_native" title="Permalink to this definition">#</a></dt>
+<dd><p>Map vertex indices from fsaverage spherical registration space to a subject’s native,
+downsampled pial surface space.</p>
+<dl class="simple">
+<dt>This function performs two mappings:</dt><dd><ol class="arabic simple">
+<li><p>It finds, via nearest-neighbor search on the spherical registration surface
+(<cite>?h.sphere.reg</cite>), the subject’s full-resolution vertex that corresponds to each
+fsaverage vertex.</p></li>
+<li><p>It then finds the corresponding vertex (if any) in the subject’s downsampled pial
+surface (<cite>pial.ds.gii</cite>), returning only those vertices that have an exact match
+(distance == 0).</p></li>
+</ol>
+</dd>
+</dl>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>subj_id</strong> (<em>str</em>) – The subject identifier for which the conversion is being performed.</p></li>
-<li><p><strong>hemi</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Hemisphere specifier (‘lh’ or ‘rh’). If None and vert_idx is None, both hemispheres
-are converted. Defaults to None.</p></li>
-<li><p><strong>vert_idx</strong> (<em>int</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Index of the vertex in the fsaverage surface to be converted. If None, all vertices
-in the chosen hemisphere (or both hemispheres) are converted. Defaults to None.</p></li>
+<li><p><strong>subj_id</strong> (<em>str</em>) – The subject identifier in the FreeSurfer directory (i.e., folder name under $SUBJECTS_DIR).</p></li>
+<li><p><strong>subj_surf_dir</strong> (<em>str</em>) – Path to the directory containing the subject’s laMEG or custom surface files
+(must include <cite>pial.ds.gii</cite> and <cite>{lh,rh}.pial.gii</cite>).</p></li>
+<li><p><strong>hemi</strong> (<em>{'lh'</em><em>, </em><em>'rh'}</em>) – Hemisphere to convert.</p></li>
+<li><p><strong>vert_idx</strong> (<em>int</em><em> or </em><em>array-like</em><em> of </em><em>int</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Vertex index/indices on the fsaverage surface to be converted. If None, all vertices in
+the specified hemisphere are mapped. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><p><strong>subj_v_idx</strong> –</p>
 <ul class="simple">
-<li><p>If converting a single vertex in one hemisphere, returns an integer.</p></li>
-<li><p>If converting multiple vertices in one hemisphere, returns an array of vertex indices.</p></li>
-<li><p>If converting all vertices in both hemispheres, returns an array of length
-(N_lh_vertices + N_rh_vertices), indexed according to the subject’s combined hemisphere.</p></li>
+<li><p>If a single fsaverage vertex index is given, returns an integer index of the
+corresponding vertex in the subject’s downsampled pial surface.</p></li>
+<li><p>If multiple vertex indices are given or <cite>vert_idx</cite> is None, returns an array of indices
+on the subject’s downsampled pial surface corresponding to the input fsaverage vertices.
+Only vertices with exact matches (distance == 0) are included.</p></li>
 </ul>
 </p>
 </dd>
@@ -1567,6 +1576,11 @@ in the chosen hemisphere (or both hemispheres) are converted. Defaults to None.<
 <dd class="field-odd"><p>int or np.ndarray</p>
 </dd>
 </dl>
+<p class="rubric">Notes</p>
+<p>This method uses nearest-neighbor mapping on the spherical registration surfaces
+(<cite>fsaverage/?h.sphere.reg</cite> -&gt; <cite>subject/?h.sphere.reg</cite>) to approximate the FreeSurfer morph
+mapping, and then constrains results to the subject’s downsampled pial mesh. It assumes that
+the downsampled surface is a vertex subset of the full-resolution pial surface.</p>
 </dd></dl>
 
 <dl class="py function">
