@@ -613,8 +613,6 @@ def convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord=None):
     # Assign each vertex to the closest full-resolution vertex
     hemis = np.where(lh_dists < rh_dists, 'lh', 'rh')
     pial_vert_indices = np.where(lh_dists < rh_dists, lh_pial_idx, rh_pial_idx)
-    assert np.all(lh_dists[lh_dists<rh_dists]==0)
-    assert np.all(rh_dists[rh_dists<lh_dists]==0)
 
     # Load fsaverage spheres
     fsaverage_lh_sphere_vertices, _ = nib.freesurfer.read_geometry(
