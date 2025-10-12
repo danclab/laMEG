@@ -38,7 +38,7 @@ jobs:
         SUBJECTS_DIR: ${{ github.workspace }}/test_data/fs
       run: |
         conda activate lameg
-        wget -c https://osf.io/mgz9q/download -O ${{ github.workspace }}/test_data.tar.gz
+        wget -c https://storage.googleapis.com/cos-osf-prod-files-de-1/38082529e90f7a6a47207b60001a65592dfe260610a999b9016207116aaae13a?response-content-disposition=attachment%3B%20filename%3D%22test_data.tar.gz%22%3B%20filename%2A%3DUTF-8%27%27test_data.tar.gz&GoogleAccessId=files-de-1%40cos-osf-prod.iam.gserviceaccount.com&Expires=1760258885&Signature=T%2BQgG3v3xI1gKf0bIHggxLIFmRQTtP3W41xJuBuqz5difI1omSr2enq%2Bszk1hNRnNKQ4pSFB3AYufEcdRRcsg7tEB8ipO81MVw8Cuum6dJTm%2FBCl3t7fgI%2FofHvNrd%2FmVEYC%2BK3oP%2Bd42MCs%2BtP8C6NPaMexmuzpZuXyAgiBeXH1tD8GJZyd4FN1V6CkzkBiZE9YUJJwvRjsI619D%2BbIgnPzOy9JQU5X26geuhyiZxl9Sy3YTS3jrrDlRL8xzZCLjdPg0FZYKTYj1ouoerD4QRkWvTjmYVk%2F58zLN2ZfYWw%2BICfYIz6pidaUZGRepMJM0%2BqGfnB5b43Gl14TRUgMjg%3D%3D -O ${{ github.workspace }}/test_data.tar.gz
         tar -xzf ${{ github.workspace }}/test_data.tar.gz -C ${{ github.workspace }}
         rm ${{ github.workspace }}/test_data.tar.gz
         python -m pytest --cov=lameg --cov-report=xml
