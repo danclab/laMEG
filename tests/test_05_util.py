@@ -475,37 +475,33 @@ def test_convert_fsaverage_to_native():
         AssertionError: If any of the conditions checked by the assertions are not met, indicating
         an issue with the function's accuracy or error handling capabilities.
     """
-    native_vtx = convert_fsaverage_to_native('sub-104', 'lh', 1000)
-    assert native_vtx == 166759
+    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
+    surf_path = os.path.join(test_data_path, 'sub-104/surf')
 
-    native_vtx = convert_fsaverage_to_native('sub-104', 'rh', 1000)
-    assert native_vtx == 471282
+    native_vtx = convert_fsaverage_to_native('sub-104', surf_path, 'lh', 1000)
+    assert native_vtx == 11331
+
+    native_vtx = convert_fsaverage_to_native('sub-104', surf_path, 'rh', 1000)
+    assert native_vtx == 33367
 
     error_raise = False
     try:
-        convert_fsaverage_to_native('sub-104', 'lh', 100000000)
+        convert_fsaverage_to_native('sub-104', surf_path, 'lh', 100000000)
     except IndexError:
         error_raise = True
     assert error_raise
 
     error_raise = False
     try:
-        convert_fsaverage_to_native('xxx', 'lh', 1000)
+        convert_fsaverage_to_native('xxx', surf_path, 'lh', 1000)
     except FileNotFoundError:
         error_raise = True
     assert error_raise
 
-    error_raise = False
-    try:
-        convert_fsaverage_to_native('sub-104',hemi=None,vert_idx=1000)
-    except ValueError:
-        error_raise = True
-    assert error_raise
-
-    native_vtx = convert_fsaverage_to_native('sub-104')
-    assert native_vtx.shape[0] == 327684
-    target = np.array([[133523, 33481, 148848, 243801, 178049,
-                        69718, 13034, 54269, 201858, 220983]])
+    native_vtx = convert_fsaverage_to_native('sub-104', surf_path, 'lh')
+    assert native_vtx.shape[0] == 163842
+    target = np.array([[9347,  2603, 10313, 17130, 12143,
+                        5358 , 1161, 39280, 45726, 15326]])
     assert np.allclose(native_vtx[:10], target)
 
 

@@ -553,9 +553,8 @@ def convert_fsaverage_to_native(subj_id, subj_surf_dir, hemi, vert_idx=None):
 
     ds_kdtree = KDTree(ds_vertices)
     dists, v_idx = ds_kdtree.query(fr_vertices[subj_v_idx_local, :])
-    subj_v_idx = v_idx[dists == 0]
 
-    return subj_v_idx
+    return v_idx
 
 
 
