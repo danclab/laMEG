@@ -31,7 +31,7 @@ from mne.coreg import Coregistration
 from mne.io import _empty_info
 from mne.transforms import apply_trans
 from scipy.io import savemat, loadmat
-from scipy.spatial import KDTree
+from scipy.spatial import cKDTree
 from scipy.stats import t
 import spm_standalone
 
@@ -536,7 +536,7 @@ def convert_fsaverage_to_native(subj_id, subj_surf_dir, hemi, vert_idx=None):
         os.path.join(fs_subject_dir, 'surf', f'{hemi}.sphere.reg')
     )
     # Build KDTree for subject sphere
-    kdtree = KDTree(subj_sphere_vertices)
+    kdtree = cKDTree(subj_sphere_vertices)
 
     if vert_idx is None:
         vert_idx = np.arange(fsaverage_sphere_vertices.shape[0])
@@ -551,7 +551,7 @@ def convert_fsaverage_to_native(subj_id, subj_surf_dir, hemi, vert_idx=None):
     subj_fr = nib.load(os.path.join(subj_surf_dir, f'{hemi}.pial.gii'))
     fr_vertices = subj_fr.darrays[0].data
 
-    ds_kdtree = KDTree(ds_vertices)
+    ds_kdtree = cKDTree(ds_vertices)
     _, v_idx = ds_kdtree.query(fr_vertices[subj_v_idx_local, :])
 
     return v_idx
@@ -603,8 +603,8 @@ def convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord=None):
     rh_vertices = subj_rh.darrays[0].data
 
     # KDTree for finding the closest full-resolution vertex
-    lh_kdtree = KDTree(lh_vertices)
-    rh_kdtree = KDTree(rh_vertices)
+    lh_kdtree = cKDTree(lh_vertices)
+    rh_kdtree = cKDTree(rh_vertices)
 
     # Get indices of vertices in full-resolution surface
     lh_dists, lh_pial_idx = lh_kdtree.query(ds_vertices, k=1)
@@ -631,8 +631,8 @@ def convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord=None):
     )
 
     # Precompute KDTree for fsaverage surfaces
-    fs_lh_kdtree = KDTree(fsaverage_lh_sphere_vertices)
-    fs_rh_kdtree = KDTree(fsaverage_rh_sphere_vertices)
+    fs_lh_kdtree = cKDTree(fsaverage_lh_sphere_vertices)
+    fs_rh_kdtree = cKDTree(fsaverage_rh_sphere_vertices)
 
     # Select appropriate subject sphere vertices
     subj_sphere_coords = np.array([

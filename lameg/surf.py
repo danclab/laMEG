@@ -25,7 +25,7 @@ from joblib import Parallel, delayed
 
 import nibabel as nib
 import numpy as np
-from scipy.spatial import KDTree, cKDTree # pylint: disable=E0611
+from scipy.spatial import cKDTree # pylint: disable=E0611
 from scipy.sparse import csr_matrix
 
 # pylint: disable=E0611
@@ -436,7 +436,7 @@ def downsample_single_surface(gifti_surf, ds_factor=0.1):
     reduced_faces = face_data.reshape(-1, 4)[:, 1:4]
 
     # Find the original vertices closest to the downsampled vertices
-    kdtree = KDTree(gifti_surf.darrays[0].data)
+    kdtree = cKDTree(gifti_surf.darrays[0].data)
     _, orig_vert_idx = kdtree.query(reduced_vertices, k=1)
 
     reduced_normals = None
@@ -563,7 +563,7 @@ def downsample_multiple_surfaces(in_surfs, ds_factor):
     reduced_faces = ds_primary_surf.darrays[1].data
 
     # Find the original vertices closest to the downsampled vertices
-    kdtree = KDTree(primary_surf.darrays[0].data)
+    kdtree = cKDTree(primary_surf.darrays[0].data)
     # Calculate the percentage of vertices retained
     decim_orig_dist, orig_vert_idx = kdtree.query(reduced_vertices, k=1)
     print(
@@ -757,7 +757,7 @@ def compute_dipole_orientations(method, layer_names, surf_dir, fixed=True):
                 orig_surf = nib.load(in_surf_path)
                 ds_surf_path = os.path.join(surf_dir, f'{layer_name}.ds.gii')
                 ds_surf = nib.load(ds_surf_path)
-                kdtree = KDTree(orig_surf.darrays[0].data)
+                kdtree = cKDTree(orig_surf.darrays[0].data)
                 _, orig_vert_idx = kdtree.query(ds_surf.darrays[0].data, k=1)
                 vtx_norms, _ = mesh_normals(
                     orig_surf.darrays[0].data,
@@ -776,7 +776,7 @@ def compute_dipole_orientations(method, layer_names, surf_dir, fixed=True):
                 orig_surf = nib.load(in_surf_path)
                 ds_surf_path = os.path.join(surf_dir, f'{layer_name}.ds.gii')
                 ds_surf = nib.load(ds_surf_path)
-                kdtree = KDTree(ds_surf.darrays[0].data)
+                kdtree = cKDTree(ds_surf.darrays[0].data)
                 _, ds_vert_idx = kdtree.query(orig_surf.darrays[0].data, k=1)
                 orig_vtx_norms, _ = mesh_normals(
                     orig_surf.darrays[0].data,
