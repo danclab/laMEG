@@ -31,7 +31,7 @@ from mne.coreg import Coregistration
 from mne.io import _empty_info
 from mne.transforms import apply_trans
 from scipy.io import savemat, loadmat
-from scipy.spatial import cKDTree
+from scipy.spatial import cKDTree # pylint: disable=E0611
 from scipy.stats import t
 import spm_standalone
 
