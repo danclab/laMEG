@@ -31,7 +31,7 @@ from mne.coreg import Coregistration
 from mne.io import _empty_info
 from mne.transforms import apply_trans
 from scipy.io import savemat, loadmat
-from scipy.spatial import cKDTree # pylint: disable=E0611
+from scipy.spatial import cKDTree, KDTree  # pylint: disable=E0611
 from scipy.stats import t
 import spm_standalone
 
@@ -542,6 +542,7 @@ def convert_fsaverage_to_native(subj_id, subj_surf_dir, hemi, vert_idx=None):
         vert_idx = np.arange(fsaverage_sphere_vertices.shape[0])
 
     _, subj_v_idx_local = kdtree.query(fsaverage_sphere_vertices[vert_idx, :], k=1)
+    subj_v_idx_local = np.squeeze(subj_v_idx_local)
 
     # Load downsampled surface
     subj_ds = nib.load(os.path.join(subj_surf_dir, 'pial.ds.gii'))
@@ -553,6 +554,7 @@ def convert_fsaverage_to_native(subj_id, subj_surf_dir, hemi, vert_idx=None):
 
     ds_kdtree = cKDTree(ds_vertices)
     _, v_idx = ds_kdtree.query(fr_vertices[subj_v_idx_local, :])
+    v_idx = np.squeeze(v_idx)
 
     return v_idx
 
@@ -608,7 +610,9 @@ def convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord=None):
 
     # Get indices of vertices in full-resolution surface
     lh_dists, lh_pial_idx = lh_kdtree.query(ds_vertices, k=1)
+    lh_pial_idx = np.squeeze(lh_pial_idx)
     rh_dists, rh_pial_idx = rh_kdtree.query(ds_vertices, k=1)
+    rh_pial_idx = np.squeeze(rh_pial_idx)
 
     # Assign each vertex to the closest full-resolution vertex
     hemis = np.where(lh_dists < rh_dists, 'lh', 'rh')
@@ -642,7 +646,7 @@ def convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord=None):
 
     # Map to fsaverage
     fsave_v_idx = np.array([
-        fs_lh_kdtree.query(coord, k=1)[1] if hemi == 'lh' else fs_rh_kdtree.query(coord, k=1)[1]
+        np.squeeze(fs_lh_kdtree.query(coord, k=1)[1] if hemi == 'lh' else fs_rh_kdtree.query(coord, k=1)[1])
         for hemi, coord in zip(hemis, subj_sphere_coords)
     ])
 

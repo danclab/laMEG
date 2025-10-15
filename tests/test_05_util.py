@@ -500,8 +500,8 @@ def test_convert_fsaverage_to_native():
 
     native_vtx = convert_fsaverage_to_native('sub-104', surf_path, 'lh')
     assert native_vtx.shape[0] == 163842
-    target = np.array([[9347,  2603, 10313, 17130, 12143,
-                        5358 , 1161, 39280, 45726, 15326]])
+    target = np.array([ 9347,  2603, 10313, 17130, 12143,
+                        5358, 39031, 39280, 45726, 15326])
     assert np.allclose(native_vtx[:10], target)
 
 

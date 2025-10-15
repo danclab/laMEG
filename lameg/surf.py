@@ -438,6 +438,7 @@ def downsample_single_surface(gifti_surf, ds_factor=0.1):
     # Find the original vertices closest to the downsampled vertices
     kdtree = cKDTree(gifti_surf.darrays[0].data)
     _, orig_vert_idx = kdtree.query(reduced_vertices, k=1)
+    orig_vert_idx = np.squeeze(orig_vert_idx)
 
     reduced_normals = None
     if len(gifti_surf.darrays) > 2 and \
@@ -566,6 +567,8 @@ def downsample_multiple_surfaces(in_surfs, ds_factor):
     kdtree = cKDTree(primary_surf.darrays[0].data)
     # Calculate the percentage of vertices retained
     decim_orig_dist, orig_vert_idx = kdtree.query(reduced_vertices, k=1)
+    orig_vert_idx = np.squeeze(orig_vert_idx)
+
     print(
         f"{(1 - np.mean(decim_orig_dist > 0)) * 100}% of the vertices in the decimated surface "
         f"belong to the original surface."
@@ -759,6 +762,8 @@ def compute_dipole_orientations(method, layer_names, surf_dir, fixed=True):
                 ds_surf = nib.load(ds_surf_path)
                 kdtree = cKDTree(orig_surf.darrays[0].data)
                 _, orig_vert_idx = kdtree.query(ds_surf.darrays[0].data, k=1)
+                orig_vert_idx = np.squeeze(orig_vert_idx)
+
                 vtx_norms, _ = mesh_normals(
                     orig_surf.darrays[0].data,
                     orig_surf.darrays[1].data,
@@ -778,6 +783,8 @@ def compute_dipole_orientations(method, layer_names, surf_dir, fixed=True):
                 ds_surf = nib.load(ds_surf_path)
                 kdtree = cKDTree(ds_surf.darrays[0].data)
                 _, ds_vert_idx = kdtree.query(orig_surf.darrays[0].data, k=1)
+                ds_vert_idx = np.squeeze(ds_vert_idx)
+
                 orig_vtx_norms, _ = mesh_normals(
                     orig_surf.darrays[0].data,
                     orig_surf.darrays[1].data,
@@ -1113,6 +1120,7 @@ def interpolate_data(original_mesh, downsampled_mesh, downsampled_data, adjacenc
 
     # Find the k nearest downsampled vertices for each original vertex
     distances, indices = tree.query(original_vertices, k=k_neighbors)
+    indices = np.squeeze(indices)
 
     # Initialize interpolated data array
     vertex_data = np.full(len(original_vertices), np.nan)
