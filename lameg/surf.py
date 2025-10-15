@@ -678,7 +678,7 @@ def combine_surfaces(surfaces):
     return combined_surf
 
 
-# pylint: disable=R0912
+# pylint: disable=R0912,R0915
 def compute_dipole_orientations(method, layer_names, surf_dir, fixed=True):
     """
     Compute dipole orientations for cortical layers using different methods.

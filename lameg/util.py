@@ -31,7 +31,7 @@ from mne.coreg import Coregistration
 from mne.io import _empty_info
 from mne.transforms import apply_trans
 from scipy.io import savemat, loadmat
-from scipy.spatial import cKDTree, KDTree  # pylint: disable=E0611
+from scipy.spatial import cKDTree  # pylint: disable=E0611
 from scipy.stats import t
 import spm_standalone
 
@@ -646,7 +646,8 @@ def convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord=None):
 
     # Map to fsaverage
     fsave_v_idx = np.array([
-        np.squeeze(fs_lh_kdtree.query(coord, k=1)[1] if hemi == 'lh' else fs_rh_kdtree.query(coord, k=1)[1])
+        np.squeeze(fs_lh_kdtree.query(coord, k=1)[1] if hemi == 'lh'
+                   else fs_rh_kdtree.query(coord, k=1)[1])
         for hemi, coord in zip(hemis, subj_sphere_coords)
     ])
 
