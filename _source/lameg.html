@@ -2247,6 +2247,31 @@ returns the original vector unchanged.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="lameg.util.check_freesurfer_setup">
+<span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">check_freesurfer_setup</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.check_freesurfer_setup" title="Permalink to this definition">#</a></dt>
+<dd><p>Verify that essential FreeSurfer command-line tools are available in the environment.</p>
+<p>This function checks whether the required FreeSurfer binaries (<cite>mris_convert</cite> and <cite>mri_info</cite>)
+can be found in the system’s PATH. If one or more binaries are missing, it raises an
+<cite>EnvironmentError</cite> with detailed setup instructions for sourcing the FreeSurfer environment.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>EnvironmentError</strong> – If one or more required FreeSurfer binaries are not found in the system PATH.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>This check ensures that FreeSurfer has been properly installed and initialized via:</dt><dd><p>export FREESURFER_HOME=/path/to/freesurfer
+source $FREESURFER_HOME/SetUpFreeSurfer.sh</p>
+</dd>
+</dl>
+</li>
+<li><p>Typically called before surface conversion or reconstruction routines that depend on
+FreeSurfer utilities.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="lameg.util.check_many">
 <span class="sig-prename descclassname"><span class="pre">lameg.util.</span></span><span class="sig-name descname"><span class="pre">check_many</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">multiple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">target</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">func</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.util.check_many" title="Permalink to this definition">#</a></dt>
 <dd><p>Evaluate whether multiple substrings occur within a target string.</p>
@@ -2979,6 +3004,7 @@ is True.</p></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.util.batch"><code class="docutils literal notranslate"><span class="pre">batch()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.util.big_brain_proportional_layer_boundaries"><code class="docutils literal notranslate"><span class="pre">big_brain_proportional_layer_boundaries()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.util.calc_prop"><code class="docutils literal notranslate"><span class="pre">calc_prop()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.util.check_freesurfer_setup"><code class="docutils literal notranslate"><span class="pre">check_freesurfer_setup()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.util.check_many"><code class="docutils literal notranslate"><span class="pre">check_many()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.util.coregister_3d_scan_mri"><code class="docutils literal notranslate"><span class="pre">coregister_3d_scan_mri()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.util.ctf_fif_spm_conversion"><code class="docutils literal notranslate"><span class="pre">ctf_fif_spm_conversion()</span></code></a></li>
