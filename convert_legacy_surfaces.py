@@ -75,6 +75,9 @@ from lameg.surf import LayerSurfaceSet
 
 
 # pylint: disable=R0912,R0915
+from lameg.util import check_freesurfer_setup
+
+
 def run(subj_id, old_lameg_surf_path, multilayer_n_layers=(2,11,15), fs_subjects_dir=None):
     """
     Convert and modernize laminar surface files from older laMEG directory structures.
@@ -146,18 +149,7 @@ def run(subj_id, old_lameg_surf_path, multilayer_n_layers=(2,11,15), fs_subjects
     ... )
     """
     # --- Check that required FreeSurfer binaries are available ---
-    required_bins = ['mris_convert', 'mri_info']
-    missing_bins = [b for b in required_bins if shutil.which(b) is None]
-
-    if missing_bins:
-        msg = (
-                "Missing required FreeSurfer binaries: "
-                + ", ".join(missing_bins)
-                + "\nPlease ensure FreeSurfer is installed and sourced, e.g.:\n"
-                  "    export FREESURFER_HOME=/path/to/freesurfer\n"
-                  "    source $FREESURFER_HOME/SetUpFreeSurfer.sh"
-        )
-        raise EnvironmentError(msg)
+    check_freesurfer_setup()
 
     fs_subjects_dir = fs_subjects_dir or os.getenv('SUBJECTS_DIR')
     if fs_subjects_dir is None:

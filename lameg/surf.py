@@ -46,7 +46,7 @@ from vtkmodules.vtkCommonCore import vtkPoints
 from vtkmodules.vtkCommonDataModel import vtkPolyData, vtkCellArray
 from vtkmodules.vtkFiltersCore import vtkDecimatePro
 
-from lameg.util import big_brain_proportional_layer_boundaries
+from lameg.util import big_brain_proportional_layer_boundaries, check_freesurfer_setup
 
 
 # pylint: disable=R0902
@@ -1308,18 +1308,7 @@ class LayerSurfaceSet:
         """
 
         # --- Check that required FreeSurfer binaries are available ---
-        required_bins = ['mris_convert', 'mris_inflate', 'mri_info']
-        missing_bins = [b for b in required_bins if shutil.which(b) is None]
-
-        if missing_bins:
-            msg = (
-                    "Missing required FreeSurfer binaries: "
-                    + ", ".join(missing_bins)
-                    + "\nPlease ensure FreeSurfer is installed and sourced, e.g.:\n"
-                      "    export FREESURFER_HOME=/path/to/freesurfer\n"
-                      "    source $FREESURFER_HOME/SetUpFreeSurfer.sh"
-            )
-            raise EnvironmentError(msg)
+        check_freesurfer_setup()
 
         # Convert MRI to nii
         orig_mgz = os.path.join(self.subj_dir, 'mri', 'orig.mgz')

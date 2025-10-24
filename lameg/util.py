@@ -47,6 +47,7 @@ Notes
 # pylint: disable=C0302
 import csv
 import os
+import shutil
 import subprocess
 import tempfile
 from pathlib import Path
@@ -942,3 +943,37 @@ def coregister_3d_scan_mri(subject_id, lpa, rpa, nas, dig_face_fname, dig_units=
     nas_spm = tkras_to_scanner_ras(nas_tkras)
 
     return lpa_spm, rpa_spm, nas_spm
+
+
+def check_freesurfer_setup():
+    """
+    Verify that essential FreeSurfer command-line tools are available in the environment.
+
+    This function checks whether the required FreeSurfer binaries (`mris_convert` and `mri_info`)
+    can be found in the system's PATH. If one or more binaries are missing, it raises an
+    `EnvironmentError` with detailed setup instructions for sourcing the FreeSurfer environment.
+
+    Raises
+    ------
+    EnvironmentError
+        If one or more required FreeSurfer binaries are not found in the system PATH.
+
+    Notes
+    -----
+    - This check ensures that FreeSurfer has been properly installed and initialized via:
+          export FREESURFER_HOME=/path/to/freesurfer
+          source $FREESURFER_HOME/SetUpFreeSurfer.sh
+    - Typically called before surface conversion or reconstruction routines that depend on
+      FreeSurfer utilities.
+    """
+    required_bins = ['mris_convert', 'mri_info']
+    missing_bins = [b for b in required_bins if shutil.which(b) is None]
+    if missing_bins:
+        msg = (
+                "Missing required FreeSurfer binaries: "
+                + ", ".join(missing_bins)
+                + "\nPlease ensure FreeSurfer is installed and sourced, e.g.:\n"
+                  "    export FREESURFER_HOME=/path/to/freesurfer\n"
+                  "    source $FREESURFER_HOME/SetUpFreeSurfer.sh"
+        )
+        raise EnvironmentError(msg)
