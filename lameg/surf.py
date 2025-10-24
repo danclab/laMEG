@@ -30,7 +30,6 @@ FreeSurfer compatibility.
 import copy
 import json
 import os
-import shutil
 import subprocess
 from collections import defaultdict
 from datetime import datetime
