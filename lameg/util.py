@@ -1,17 +1,48 @@
 """
-This module provides tools for interfacing with SPM (Statistical Parametric Mapping) software,
-managing MEG sensor data, and working with neuroimaging data in various formats such as NIfTI,
-GIFTI, and MATLAB files. It includes functions for batch processing in SPM, converting data
-formats, loading and processing sensor data, and working with anatomical structures through
-cortical mesh analysis.
+Utility functions for SPM, MEG sensor data management, and neuroanatomical processing.
 
-Key functionalities:
+This module provides a suite of high-level tools to interface with SPM (Statistical Parametric
+Mapping), MNE-Python, and FreeSurfer environments. It facilitates batch execution, data format
+conversion, sensor-level data handling, and laminar or anatomical computations relevant to
+MEG/EEG analysis pipelines. Many functions integrate seamlessly with standalone SPM sessions and
+FreeSurfer-derived cortical surfaces.
 
-- Context management for SPM operations.
-- Batch processing for neuroimaging tasks.
-- Loading MEG sensor data and managing related file operations.
-- Utility functions for anatomical and spatial data transformations.
+Core functionalities
+--------------------
+- **SPM interfacing and batch execution**
+  - Context-managed lifecycle for standalone SPM instances (`spm_context`).
+  - Automated batch execution of MATLAB-based neuroimaging workflows (`batch`).
+  - Conversion of CTF MEG data from MNE `.fif` to SPM `.mat` format (`ctf_fif_spm_conversion`).
+
+- **File and directory utilities**
+  - Structured recursive file and directory retrieval (`get_files`, `get_directories`).
+  - Directory creation with automatic parent handling (`make_directory`).
+  - Flexible substring matching (`check_many`).
+
+- **Statistical and numerical utilities**
+  - Corrected paired-sample t-tests with NaN handling (`ttest_rel_corrected`).
+  - Conversion of absolute layer thicknesses to proportional coordinates (`calc_prop`).
+
+- **Anatomical and laminar processing**
+  - Derivation of normalized laminar boundaries from the fsaverage BigBrain atlas
+    (`big_brain_proportional_layer_boundaries`).
+
+- **Coregistration and fiducial handling**
+  - Extraction of subject-specific fiducial coordinates from TSV metadata files
+    (`get_fiducial_coords`).
+  - Coregistration of 3D facial scans to FreeSurfer MRI via fiducial and ICP alignment
+    (`coregister_3d_scan_mri`).
+
+Notes
+-----
+- The module assumes correctly configured environments for SPM standalone, MNE-Python, and
+  FreeSurfer.
+- Designed for reproducible neuroimaging workflows combining MATLAB-based and Python-based tools.
+- File operations are implemented with explicit error handling for compatibility across platforms.
+- The laminar utilities rely on fsaverage-space anatomical templates distributed with laMEG.
+
 """
+
 
 # pylint: disable=C0302
 import csv
@@ -31,7 +62,6 @@ from mne.coreg import Coregistration
 from mne.io import _empty_info
 from mne.transforms import apply_trans
 from scipy.io import savemat, loadmat
-from scipy.spatial import cKDTree  # pylint: disable=E0611
 from scipy.stats import t
 import spm_standalone
 
@@ -39,29 +69,36 @@ import spm_standalone
 @contextmanager
 def spm_context(spm=None, n_jobs=4):
     """
-    Context manager for handling standalone SPM instances.
+    Context manager for safe initialization and termination of standalone SPM sessions.
+
+    This utility ensures proper lifecycle management of SPM standalone instances when executing
+    MATLAB-based analyses (e.g., source reconstruction or simulation). It supports both
+    user-supplied SPM sessions and automatic instantiation of temporary ones with optional
+    parallelization.
 
     Parameters
     ----------
     spm : spm_standalone, optional
-        An existing standalone instance. Default is None.
-    n_jobs : int
-        A number of workers in a MATLAB parpool. Default is 4.
+        Existing SPM standalone instance. If None, a new instance is launched and automatically
+        terminated upon context exit (default: None).
+    n_jobs : int, optional
+        Number of MATLAB parallel workers to initialize via `parpool`. Default is 4.
 
     Yields
     ------
     spm : spm_standalone
-        A standalone SPM instance for use within the context.
+        Active standalone SPM instance usable within the context.
 
     Notes
     -----
-    - If `spm` is None, the function starts a new standalone SPM instance.
-    - The new standalone SPM instance will be closed automatically upon exiting the context.
-    - If `spm` is provided, it will be used as is and not closed automatically.
-    - This function is intended for use in a `with` statement to ensure proper management of
-      standalone SPM resources.
-    - Default `n_jobs=4` is suitable for a workstation. Increasing the amount of available workers
-      is a good choice for deploying with HPC.
+    - Designed for use within a `with` block to ensure safe cleanup of MATLAB processes.
+    - If `spm` is None, a new standalone SPM session is created with a parallel pool of size
+      `n_jobs`, and both are terminated automatically upon exit.
+    - If an existing `spm` instance is provided, it is reused and not terminated at the end of the
+      context.
+    - The default setting (`n_jobs=4`) is suitable for standard workstations; higher values may
+      be beneficial on high-performance computing (HPC) systems.
+    - Ensures robustness against MATLAB errors when initializing or closing `parpool`.
     """
 
     # Start standalone SPM
@@ -95,49 +132,35 @@ def spm_context(spm=None, n_jobs=4):
 
 def batch(cfg, viz=True, spm_instance=None) -> None:
     """
-    Execute a batch processing job in SPM (Statistical Parametric Mapping) using MATLAB.
+    Execute an SPM batch job within a managed standalone MATLAB session.
 
-    This function prepares a configuration for an SPM batch job, saves it to a temporary MATLAB
-    file, and executes it within an SPM instance. The function is capable of running any batch
-    configuration passed to it, as long as it adheres to SPM's batch configuration structure.
-    After processing, it cleans up by deleting the temporary file used for the job.
+    This function runs an arbitrary SPM batch configuration (`matlabbatch`) by writing it to a
+    temporary MATLAB file and executing it within an SPM standalone environment. It supports both
+    interactive (visual) and non-interactive (headless) execution, automatically handling session
+    setup and cleanup.
 
     Parameters
     ----------
     cfg : dict
-        A dictionary containing the configuration settings for the SPM job. The dictionary should
-        follow the structure required by SPM's `matlabbatch` system.
+        Dictionary defining the SPM batch configuration, following the standard `matlabbatch`
+        format (e.g., as used in `spm_jobman`).
     viz : bool, optional
-        If True, the SPM GUI will display progress and results, allowing user interaction. If
-        False, the process runs entirely in the background. Defaults to True.
-    spm_instance : optional
-        An instance of an SPM session. If None, a new SPM session is created and used for the job.
-        Defaults to None.
-
-    Examples
-    --------
-    To run an SPM job with a given configuration, you might call the function as follows:
-
-    >>> cfg = {
-    >>>     'spm.stats.fmri_spec.dir': ['/path/to/output'],
-    >>>     'spm.stats.fmri_spec.timing.units': 'secs',
-    >>>     'spm.stats.fmri_spec.sess': {
-    >>>         'scans': ['scan1.nii', 'scan2.nii'],
-    >>>         'cond': {
-    >>>             'name': 'ExampleCondition',
-    >>>             'onset': [10, 30],
-    >>>             'duration': [1, 1],
-    >>>         },
-    >>>         'multi': {'regress': {'name': 'movement', 'val': [1, 0, 1, 0]}}
-    >>>     }
-    >>> }
-    >>> batch(cfg, viz=False)
+        Whether to display the SPM GUI during execution (`True`) or run in command-line mode
+        (`False`). Default is True.
+    spm_instance : spm_standalone, optional
+        Active standalone SPM instance. If None, a temporary instance is created and closed after
+        execution.
 
     Notes
     -----
-    - The temporary MATLAB file is created in the system's default temp directory.
-    - This function assumes that an SPM and MATLAB environment is properly set up and accessible
-      through the provided `spm_instance` or through a default SPM environment.
+    - The function automatically wraps `cfg` into a valid `matlabbatch` structure and saves it to
+      a temporary `.mat` file before execution.
+    - Temporary files are created using the system's default temp directory and deleted after
+      the job completes.
+    - Runs all standard SPM batch modules, including EEG/MEG preprocessing, coregistration,
+      inversion, and statistical analyses.
+    - When `viz=False`, `spm_get_defaults('cmdline', 1)` is used to suppress GUI output, making
+      the function suitable for automated pipelines and HPC execution.
     """
 
     cfg = {"matlabbatch": [cfg]}
@@ -160,21 +183,45 @@ def batch(cfg, viz=True, spm_instance=None) -> None:
 
 def load_meg_sensor_data(data_fname):
     """
-    Load sensor data from a MEG dataset.
+    Load MEG sensor-level data and metadata from an SPM M/EEG dataset.
+
+    This function extracts MEG channel data, timestamps, and channel labels from an SPM-format
+    dataset, supporting both HDF5-based (v7.3+) and older MATLAB `.mat` file structures. It filters
+    out non-MEG and bad channels, reconstructs the binary data matrix, and returns it in
+    sensor × time × trial format (if applicable).
 
     Parameters
     ----------
     data_fname : str
-        Filename or path of the MEG data file.
+        Path to the SPM M/EEG `.mat` file containing metadata and reference to the binary data file.
 
     Returns
     -------
-    sensor_data : ndarray
-        An array containing the MEG sensor data (channels x time x trial).
-    time : ndarray
-        An array containing the MEG data timestamps (in ms).
-    ch_names : list
-        A list of channel names.
+    sensor_data : np.ndarray
+        MEG sensor data (channels × time [× trials]) extracted from the referenced binary file.
+    time : np.ndarray
+        Time vector in milliseconds.
+    ch_names : list of str
+        Names of the valid MEG channels included in the output.
+
+    Raises
+    ------
+    FileNotFoundError
+        If the binary data file specified in the `.mat` structure cannot be found.
+    OSError
+        If the `.mat` file cannot be opened as an HDF5 dataset.
+    KeyError
+        If required fields are missing from the file.
+
+    Notes
+    -----
+    - Supports both MATLAB v7.3 (HDF5) and earlier formats.
+    - Only MEG channels marked as 'good' (not bad) are retained.
+    - Binary data are read directly from the file specified in `D.data.fname` using
+      Fortran-order reshaping to match SPM's internal data layout.
+    - The returned time vector is derived from `timeOnset`, `Fsample`, and `Nsamples`
+      fields within the dataset.
+    - Non-MEG modalities (e.g., EEG, EOG, EMG) are excluded automatically.
     """
 
     good_meg_channels = []  # List to store the indices of good MEG channels
@@ -258,79 +305,40 @@ def load_meg_sensor_data(data_fname):
     return sensor_data, time, ch_names
 
 
-def get_surface_names(n_layers, surf_path, orientation_method):
-    """
-    Generate a list of filenames for each mesh layer in a multi-layer mesh setup.
-
-    Parameters
-    ----------
-    n_layers : int
-        The number of layers in the mesh.
-    surf_path : str
-        The file path where the mesh files are located.
-    orientation_method : str
-        The method used for orientation in the naming of mesh files.
-
-    Returns
-    -------
-    layer_fnames : list
-        A list of strings, where each string is the full file path to a mesh layer file. The list
-        order corresponds to the layers' order, starting from the outermost layer (pial surface)
-        to the innermost layer (white matter surface).
-
-    Notes
-    -----
-    This function assumes a specific naming convention for the mesh files. The outermost layer is
-    named as 'pial', the innermost as 'white', and the intermediate layers are named based on their
-    relative position between 1 (pial) and 0 (white), with the position formatted to three decimal
-    places. Each filename also includes an orientation method specifier.
-    """
-
-    # Get name of each mesh that makes up the layers of the multilayer mesh
-    layers = np.linspace(1, 0, n_layers)
-    layer_fnames = []
-    for layer in layers:
-
-        if layer == 1:
-            fname = os.path.join(surf_path, f'pial.ds.{orientation_method}.gii')
-        elif layer == 0:
-            fname = os.path.join(surf_path, f'white.ds.{orientation_method}.gii')
-        else:
-            fname = os.path.join(surf_path, f'{layer:.3f}.ds.{orientation_method}.gii')
-
-        if fname is not None and os.path.exists(fname):
-            layer_fnames.append(fname)
-        else:
-            raise FileNotFoundError(f"Unable to locate {fname}. Check surf_path")
-
-    return layer_fnames
-
-
 def ctf_fif_spm_conversion(mne_file, res4_file, output_path, epoched, prefix="spm_",
                            spm_instance=None):
     """
-    Convert a \*.fif file containing data from a CTF scanner to SPM data format.
+    Convert MEG data from CTF `.fif` format to SPM-compatible `.mat` format.
+
+    This function converts raw or epoched MEG data acquired from a CTF scanner (in `.fif` format)
+    into SPM's M/EEG format using the standalone SPM interface. It requires the corresponding
+    CTF `.res4` file for sensor geometry and saves the converted dataset to the specified output
+    directory with a customizable prefix.
 
     Parameters
     ----------
-    mne_file : str or pathlib.Path or os.Path
-        Path to the "\*-raw.fif" or "\*-epo.fif" file.
-    res4_file : str or pathlib.Path or os.Path
-        Location of the sensor position data (\*.res4 for CTF).
-    output_path : str or pathlib.Path or os.Path
-        Location of the converted file.
+    mne_file : str or pathlib.Path
+        Path to the MNE `.fif` file containing MEG data (either `*-raw.fif` or `*-epo.fif`).
+    res4_file : str or pathlib.Path
+        Path to the CTF `.res4` file containing sensor position and geometry information.
+    output_path : str or pathlib.Path
+        Destination directory for the converted SPM dataset.
     epoched : bool
-        Specify if the data is epoched (True) or not (False).
-    prefix : str
-        A string appended to the output file name after conversion. Default: ``"spm_"``.
+        Whether the input data are epoched (`True`) or continuous (`False`).
+    prefix : str, optional
+        Prefix to prepend to the converted dataset filename (default: `"spm_"`).
     spm_instance : spm_standalone, optional
-        Instance of standalone SPM. Default is None.
+        Active standalone SPM instance. If None, a temporary instance is created and closed after
+        execution.
 
     Notes
     -----
-    - If ``spm_instance`` is not provided, the function will start a new standalone SPM instance.
-    - The function will automatically close the standalone SPM instance if it was started
-      within the function.
+    - If `spm_instance` is not provided, a new standalone SPM session is automatically launched and
+      terminated after completion.
+    - The resulting `.mat` file is compatible with all SPM EEG/MEG preprocessing, inversion, and
+      model comparison pipelines.
+    - Both paths (`mne_file` and `res4_file`) must be valid and refer to files from the same
+      acquisition session.
     """
 
     epoched = int(epoched)
@@ -349,21 +357,36 @@ def ctf_fif_spm_conversion(mne_file, res4_file, output_path, epoched, prefix="sp
 
 def check_many(multiple, target, func=None):
     """
-    Check for the presence of strings in a target string.
+    Evaluate whether multiple substrings occur within a target string.
+
+    This utility checks whether all or any of a list of substrings are present in a given target
+    string. It is designed for use in conditional logic (e.g., list comprehensions or filtering
+    routines) where flexible substring matching is required.
 
     Parameters
     ----------
-    multiple : list
-        List of strings to be found in the target string.
+    multiple : list of str
+        Substrings to search for within the target string.
     target : str
-        The target string in which to search for the specified strings.
-    func : str
-        Specifies the search mode: "all" to check if all strings are present, or "any" to check if
-        any string is present.
+        String in which to search for the specified substrings.
+    func : {'all', 'any'}
+        Search mode: `'all'` returns True only if all substrings are found, `'any'` returns True
+        if at least one substring is found.
+
+    Returns
+    -------
+    bool
+        True if the condition specified by `func` is satisfied; False otherwise.
+
+    Raises
+    ------
+    ValueError
+        If `func` is not `'all'` or `'any'`.
 
     Notes
     -----
-    - This function works well with `if` statements in list comprehensions.
+    - Useful for concise logical checks in comprehensions or filters.
+    - Matching is case-sensitive and does not support regular expressions.
     """
 
     func_dict = {
@@ -381,30 +404,41 @@ def check_many(multiple, target, func=None):
 
 def get_files(target_path, suffix, strings=(""), prefix=None, check="all", depth="all"):
     """
-    Return a list of files with a specific extension, prefix, and name containing specific strings.
+    Retrieve files from a directory matching specified criteria (suffix, prefix, and substrings).
 
-    Searches either all files in the target directory or within a specified directory.
+    This function searches a target directory (optionally recursively) for files with a given
+    extension and filters them by filename content and prefix. It supports flexible substring
+    matching via "all" or "any" logic, making it suitable for controlled file selection in large
+    datasets.
 
     Parameters
     ----------
-    target_path : str or pathlib.Path or os.Path
-        The most shallow searched directory.
+    target_path : str or pathlib.Path
+        Root directory in which to search for files.
     suffix : str
-        File extension in "\*.ext" format.
-    strings : list of str
-        List of strings to search for in the file name.
-    prefix : str
-        Limits the output list to file names starting with this prefix.
-    check : str
-        Specifies the search mode: "all" to check if all strings are present, or "any" to check if
-        any string is present.
-    depth : str
-        Specifies the depth of the search: "all" for recursive search, "one" for shallow search.
+        File extension to match, in the form '*.ext' (e.g., '*.mat' or '*.fif').
+    strings : list of str, optional
+        Substrings to be matched within each filename. Default is an empty string.
+    prefix : str, optional
+        Restrict results to filenames beginning with this prefix. Default is None.
+    check : {'all', 'any'}, optional
+        Search mode: `'all'` requires all substrings in `strings` to be present; `'any'`
+        requires at least one. Default is `'all'`.
+    depth : {'all', 'one'}, optional
+        Search depth: `'all'` performs a recursive search through subdirectories, `'one'`
+        limits the search to the top-level directory. Default is `'all'`.
 
     Returns
     -------
-    subdirs : list
-        List of pathlib.Path objects representing the found files.
+    files : list of pathlib.Path
+        Sorted list of paths to files matching the specified criteria.
+
+    Notes
+    -----
+    - Matching is case-sensitive and exact (no regular expressions).
+    - The function internally uses `check_many()` for substring evaluation.
+    - Useful for structured data pipelines where file inclusion depends on both naming and
+      hierarchical constraints.
     """
 
     path = Path(target_path)
@@ -426,19 +460,35 @@ def get_files(target_path, suffix, strings=(""), prefix=None, check="all", depth
 
 def get_directories(target_path, strings=(""), check="all", depth="all"):
     """
-    Return a list of directories in the path (or all subdirectories) containing specified strings.
+    Retrieve directories within a path that contain specified substrings in their names.
+
+    This function searches a target directory (optionally recursively) for subdirectories whose
+    names match one or more specified substrings. It supports both shallow and recursive search
+    modes and flexible matching logic ("all" or "any") for substring inclusion.
 
     Parameters
     ----------
-    target_path : str or pathlib.Path or os.Path
-        The most shallow searched directory.
-    depth : str
-        Specifies the depth of the search: "all" for recursive search, "one" for shallow search.
+    target_path : str or pathlib.Path
+        Root directory in which to search for subdirectories.
+    strings : list of str, optional
+        Substrings to be matched within each directory path or name. Default is an empty string.
+    check : {'all', 'any'}, optional
+        Search mode: `'all'` requires all substrings in `strings` to be present; `'any'` requires
+        at least one. Default is `'all'`.
+    depth : {'all', 'one'}, optional
+        Search depth: `'all'` performs a recursive search through subdirectories, `'one'`
+        limits the search to the top-level directory. Default is `'all'`.
 
     Returns
     -------
-    subdirs : list
-        List of pathlib.Path objects representing the found directories.
+    subdirs : list of pathlib.Path
+        Sorted list of paths to directories matching the specified criteria.
+
+    Notes
+    -----
+    - Matching is case-sensitive and performed using `check_many()`.
+    - The returned list is sorted lexicographically by directory path.
+    - Useful for structured directory traversal and dataset organization tasks.
     """
 
     path = Path(target_path)
@@ -456,19 +506,28 @@ def get_directories(target_path, strings=(""), check="all", depth="all"):
 
 def make_directory(root_path, extended_dir):
     """
-    Create a directory along with intermediate directories.
+    Create a directory (and all necessary parent directories) within a specified root path.
+
+    This function ensures that the full directory path exists, creating intermediate directories
+    as needed. It supports both single directory names and nested paths provided as lists.
 
     Parameters
     ----------
-    root_path : str or pathlib.Path or os.Path
-        The root directory.
-    extended_dir : str or list
-        Directory or directories to create within `root_path`.
+    root_path : str or pathlib.Path
+        The root directory in which to create the new directory or directories.
+    extended_dir : str or list of str
+        Subdirectory (or sequence of nested subdirectories) to be created within `root_path`.
 
     Returns
     -------
-    root_path : str or pathlib.Path or os.Path
-        The updated root directory.
+    root_path : pathlib.Path
+        Path object representing the created directory.
+
+    Notes
+    -----
+    - Existing directories are preserved (`exist_ok=True`).
+    - Intermediate directories are automatically created (`parents=True`).
+    - Useful for ensuring consistent directory structure in data processing pipelines.
     """
 
     root_path = Path(root_path)
@@ -481,221 +540,48 @@ def make_directory(root_path, extended_dir):
     return root_path
 
 
-def convert_fsaverage_to_native(subj_id, subj_surf_dir, hemi, vert_idx=None):
-    """
-    Map vertex indices from fsaverage spherical registration space to a subject's native,
-    downsampled pial surface space.
-
-    This function performs two mappings:
-     1. It finds, via nearest-neighbor search on the spherical registration surface
-        (`?h.sphere.reg`), the subject's full-resolution vertex that corresponds to each
-        fsaverage vertex.
-     2. It then finds the corresponding vertex (if any) in the subject's downsampled pial
-        surface (`pial.ds.gii`), returning only those vertices that have an exact match
-        (distance == 0).
-
-    Parameters
-    ----------
-    subj_id : str
-       The subject identifier in the FreeSurfer directory (i.e., folder name under $SUBJECTS_DIR).
-    subj_surf_dir : str
-       Path to the directory containing the subject's laMEG or custom surface files
-       (must include `pial.ds.gii` and `{lh,rh}.pial.gii`).
-    hemi : {'lh', 'rh'}
-       Hemisphere to convert.
-    vert_idx : int or array-like of int or None, optional
-       Vertex index/indices on the fsaverage surface to be converted. If None, all vertices in
-       the specified hemisphere are mapped. Defaults to None.
-
-    Returns
-    -------
-    subj_v_idx : int or np.ndarray
-       - If a single fsaverage vertex index is given, returns an integer index of the
-         corresponding vertex in the subject's downsampled pial surface.
-       - If multiple vertex indices are given or `vert_idx` is None, returns an array of indices
-         on the subject's downsampled pial surface corresponding to the input fsaverage vertices.
-         Only vertices with exact matches (distance == 0) are included.
-
-    Notes
-    -----
-    This method uses nearest-neighbor mapping on the spherical registration surfaces
-    (`fsaverage/?h.sphere.reg` -> `subject/?h.sphere.reg`) to approximate the FreeSurfer morph
-    mapping, and then constrains results to the subject's downsampled pial mesh. It assumes that
-    the downsampled surface is a vertex subset of the full-resolution pial surface.
-    """
-
-    fs_subjects_dir = os.getenv('SUBJECTS_DIR')
-    fs_subject_dir = os.path.join(fs_subjects_dir, subj_id)
-
-    # Load fsaverage sphere for the specified hemisphere
-    fsaverage_sphere_vertices, _ = nib.freesurfer.read_geometry(
-        os.path.join(fs_subjects_dir, 'fsaverage', 'surf', f'{hemi}.sphere.reg')
-    )
-    # Load subject sphere for the specified hemisphere
-    subj_sphere_vertices, _ = nib.freesurfer.read_geometry(
-        os.path.join(fs_subject_dir, 'surf', f'{hemi}.sphere.reg')
-    )
-    # Build KDTree for subject sphere
-    kdtree = cKDTree(subj_sphere_vertices)
-
-    if vert_idx is None:
-        vert_idx = np.arange(fsaverage_sphere_vertices.shape[0])
-
-    _, subj_v_idx_local = kdtree.query(fsaverage_sphere_vertices[vert_idx, :], k=1)
-    subj_v_idx_local = np.squeeze(subj_v_idx_local)
-
-    # Load downsampled surface
-    subj_ds = nib.load(os.path.join(subj_surf_dir, 'pial.ds.gii'))
-    ds_vertices = subj_ds.darrays[0].data
-
-    # Load full-resolution pial surfaces
-    subj_fr = nib.load(os.path.join(subj_surf_dir, f'{hemi}.pial.gii'))
-    fr_vertices = subj_fr.darrays[0].data
-
-    ds_kdtree = cKDTree(ds_vertices)
-    _, v_idx = ds_kdtree.query(fr_vertices[subj_v_idx_local, :])
-    v_idx = np.squeeze(v_idx)
-
-    return v_idx
-
-
-
-def convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord=None):
-    """
-    Convert coordinates from a subject's native surface space to the fsaverage surface space.
-
-    This function maps a vertex coordinate from a subject's native combined pial surface
-    to the corresponding vertex index in the fsaverage template space. If no coordinate
-    is provided, it maps all vertices in the subject's downsampled pial surface to fsaverage.
-
-    Parameters
-    ----------
-    subj_id : str
-        The subject identifier for which the conversion is being performed.
-    subj_surf_dir : str
-        The path containing the laMEG-processed subject surfaces.
-    subj_coord : array-like, optional
-        The x, y, z coordinates on the subject's combined hemisphere pial surface to be converted.
-        If None, all downsampled pial vertices are mapped to fsaverage.
-
-    Returns
-    -------
-    hemi : str or list of str
-        The hemisphere(s) the vertex is found in ('lh' for left hemisphere, 'rh' for right
-        hemisphere').
-    fsave_v_idx : int or list of int
-        Index or indices of the vertex on the fsaverage spherical surface that corresponds to the
-        input coordinates.
-    """
-    fs_subjects_dir = os.getenv('SUBJECTS_DIR')
-    fs_subject_dir = os.path.join(fs_subjects_dir, subj_id)
-
-    # Prepare downsampled vertex coordinates
-    if subj_coord is None:
-        # Load downsampled surface
-        subj_ds = nib.load(os.path.join(subj_surf_dir, 'pial.ds.gii'))
-        ds_vertices = subj_ds.darrays[0].data
-    else:
-        ds_vertices = np.array([subj_coord])
-
-    # Load full-resolution pial surfaces
-    subj_lh = nib.load(os.path.join(subj_surf_dir, 'lh.pial.gii'))
-    lh_vertices = subj_lh.darrays[0].data
-    subj_rh = nib.load(os.path.join(subj_surf_dir, 'rh.pial.gii'))
-    rh_vertices = subj_rh.darrays[0].data
-
-    # KDTree for finding the closest full-resolution vertex
-    lh_kdtree = cKDTree(lh_vertices)
-    rh_kdtree = cKDTree(rh_vertices)
-
-    # Get indices of vertices in full-resolution surface
-    lh_dists, lh_pial_idx = lh_kdtree.query(ds_vertices, k=1)
-    lh_pial_idx = np.squeeze(lh_pial_idx)
-    rh_dists, rh_pial_idx = rh_kdtree.query(ds_vertices, k=1)
-    rh_pial_idx = np.squeeze(rh_pial_idx)
-
-    # Assign each vertex to the closest full-resolution vertex
-    hemis = np.where(lh_dists < rh_dists, 'lh', 'rh')
-    pial_vert_indices = np.where(lh_dists < rh_dists, lh_pial_idx, rh_pial_idx)
-
-    # Load fsaverage spheres
-    fsaverage_lh_sphere_vertices, _ = nib.freesurfer.read_geometry(
-        os.path.join(fs_subjects_dir, 'fsaverage', 'surf', 'lh.sphere.reg')
-    )
-    fsaverage_rh_sphere_vertices, _ = nib.freesurfer.read_geometry(
-        os.path.join(fs_subjects_dir, 'fsaverage', 'surf', 'rh.sphere.reg')
-    )
-
-    # Load subject registered sphere surfaces
-    subj_lh_sphere_vertices, _ = nib.freesurfer.read_geometry(
-        os.path.join(fs_subject_dir, 'surf', 'lh.sphere.reg')
-    )
-    subj_rh_sphere_vertices, _ = nib.freesurfer.read_geometry(
-        os.path.join(fs_subject_dir, 'surf', 'rh.sphere.reg')
-    )
-
-    # Precompute KDTree for fsaverage surfaces
-    fs_lh_kdtree = cKDTree(fsaverage_lh_sphere_vertices)
-    fs_rh_kdtree = cKDTree(fsaverage_rh_sphere_vertices)
-
-    # Select appropriate subject sphere vertices
-    subj_sphere_coords = np.array([
-        subj_lh_sphere_vertices[idx] if hemi == 'lh' else subj_rh_sphere_vertices[idx]
-        for hemi, idx in zip(hemis, pial_vert_indices)
-    ])
-
-    # Map to fsaverage
-    fsave_v_idx = np.array([
-        np.squeeze(fs_lh_kdtree.query(coord, k=1)[1] if hemi == 'lh'
-                   else fs_rh_kdtree.query(coord, k=1)[1])
-        for hemi, coord in zip(hemis, subj_sphere_coords)
-    ])
-
-    # Return results
-    if subj_coord is not None:
-        return hemis[0], fsave_v_idx[0]
-    return hemis.tolist(), fsave_v_idx.tolist()
-
-
 def ttest_rel_corrected(data, correction=0, tail=0, axis=0):
     """
-    Perform a corrected paired t-test on a sample of data.
+    Perform a corrected paired-sample t-test with NaN handling and variance stabilization.
 
-    This function handles missing data (NaNs) and applies a variance correction to the t-test
-    calculation. It computes the t-statistic and corresponding p-value for the hypothesis test.
+    This function computes a t-statistic, degrees of freedom, and p-value for paired data while
+    accounting for potential missing values (NaNs) and small-sample variance instabilities.
+    A correction term is applied to the variance to prevent division by zero or underflow
+    when the variance is near zero.
 
     Parameters
     ----------
     data : array_like
-        A 2-D array containing the sample data. NaN values are allowed and are handled
-        appropriately.
+        Input data array (typically representing paired differences), where the t-test is
+        computed along the specified axis. NaN values are ignored in statistical computations.
     correction : float, optional
-        The correction value to be added to the variance to avoid division by zero issues. If set
-        to 0 (default), an automatic correction of 0.01 \* max(variance) is applied.
-    tail : int, optional
-        Specifies the type of t-test to be performed:
-        - 0 for a two-tailed test (default),
-        - 1 for a right one-tailed test,
-        - -1 for a left one-tailed test.
+        Variance correction term. If 0 (default), an adaptive correction of
+        `0.01 * max(variance)` is applied automatically.
+    tail : {0, 1, -1}, optional
+        Specifies the type of test:
+        - `0`: two-tailed test (default)
+        - `1`: right-tailed test
+        - `-1`: left-tailed test
     axis : int, optional
-        Axis along which to perform the t-test. Default is 0.
+        Axis along which the t-test is performed. Default is 0.
 
     Returns
     -------
-    t-statistic : float
-        The computed t-statistic for the test.
-    degrees_of_freedom : int
-        The degrees of freedom for the t-test.
-    p-value : float
-        The p-value for the test.
+    tval : float or ndarray
+        Computed t-statistic(s).
+    deg_of_freedom : int or ndarray
+        Degrees of freedom associated with each test.
+    p_val : float or ndarray
+        Corresponding p-value(s).
 
     Notes
     -----
-    - The function handles NaNs by computing the sample size, mean, and variance while ignoring
-      NaNs.
-    - The degrees of freedom for the t-test are computed as `max(sample size - 1, 0)`.
-    - The standard error of the mean is adjusted with the variance correction.
-    - The p-value is computed based on the specified tail type of the t-test.
+    - Missing values (NaNs) are excluded from mean and variance computations.
+    - The standard error includes the correction term to ensure numerical stability.
+    - For two-tailed tests, `p = 2 * t.sf(|tval|, df)`; for one-tailed, `p = t.sf(-tval, df)` or
+      `p = t.cdf(tval, df)` depending on direction.
+    - This test is useful for robust paired-sample comparisons when small variance or missing
+      data may otherwise bias standard t-test results.
     """
 
     # Handle NaNs
@@ -731,21 +617,27 @@ def ttest_rel_corrected(data, correction=0, tail=0, axis=0):
 
 def calc_prop(vec):
     """
-    Convert independent thickness values to cumulative proportions, while respecting zeros.
+    Compute cumulative proportional values from a vector while preserving zero-sum cases.
 
-    This function calculates the cumulative sum of the input vector and normalizes it by the total
-    sum of the vector. If the total sum is zero, the original vector is returned.
+    This function converts an array of independent thickness or weight values into cumulative
+    proportions that sum to one. If the total sum of the input is zero, the function returns the
+    original vector unchanged to avoid division by zero.
 
     Parameters
     ----------
-    vec : array-like
-        Input array of thickness values.
+    vec : array_like
+        Input array of non-negative values (e.g., layer thicknesses or weights).
 
     Returns
     -------
-    vec : array-like
-        The cumulative proportion of the input values, normalized by the total sum. If the sum of
-        the input values is zero, the original vector is returned.
+    vec : np.ndarray
+        Cumulative proportion vector, normalized by the total sum. If the input sum is zero,
+        returns the original vector unchanged.
+
+    Notes
+    -----
+    - The result ranges from 0 to 1, representing the normalized cumulative distribution.
+    - Useful for converting laminar thickness values into depth proportion coordinates.
     """
 
     sum_ = np.sum(vec)
@@ -757,23 +649,36 @@ def calc_prop(vec):
 
 def big_brain_proportional_layer_boundaries(overwrite=False):
     """
-    Get the proportional layer boundaries (6 values between 0 and 1) from the fsaverage-converted
-    Big Brain atlas included in laMEG.
+    Retrieve proportional cortical layer boundary coordinates from the fsaverage-converted
+    BigBrain atlas included in laMEG.
 
-    This function uses the fsaverage-converted Big Brain cortical thickness atlas to calculate
-    normalized distances between cortical layer boundaries (from layer 1 to layer 6) with values
-    between 0 and 1. To speed up computation, the results are stored in a NumPy dictionary.
+    This function computes normalized laminar depth coordinates (ranging from 0 to 1) for each
+    cortical vertex using the fsaverage-mapped BigBrain histological atlas. The proportional
+    layer boundaries (layers 1-6) are derived from absolute thickness values and cached as a
+    NumPy dictionary to improve subsequent loading speed.
 
     Parameters
     ----------
-    overwrite : bool
-        Whether to overwrite the existing file.
+    overwrite : bool, optional
+        If True, recomputes proportional boundaries and overwrites the existing cached file.
+        Default is False.
 
     Returns
     -------
     bb_data : dict
-        Dictionary with keys "lh" (left hemisphere) and "rh" (right hemisphere) containing arrays
-        with layer boundaries for each vertex in the hemisphere.
+        Dictionary containing normalized layer boundaries for each hemisphere:
+        - `"lh"`: left hemisphere vertex-wise boundary array (shape: 6 × n_vertices)
+        - `"rh"`: right hemisphere vertex-wise boundary array (shape: 6 × n_vertices)
+
+    Notes
+    -----
+    - The proportional boundaries represent cumulative thickness proportions from layer 1 (pial)
+      to layer 6 (white matter).
+    - Cached results are stored as `proportional_layer_boundaries.npy` in the module's `assets`
+      directory.
+    - Uses `calc_prop()` internally to normalize absolute thickness values per vertex.
+    - This dataset provides a standard laminar coordinate reference compatible with fsaverage-
+      registered MEG/EEG source models.
     """
 
     asset_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), './assets')
@@ -800,146 +705,124 @@ def big_brain_proportional_layer_boundaries(overwrite=False):
     return bb_data
 
 
-def get_bigbrain_layer_boundaries(subj_id, subj_surf_dir, subj_coord=None):
-    """
-    Get the cortical layer boundaries based on the Big Brain atlas for a specified coordinate
-    in the subject's downsampled combined space. If subj_coord is None, this function returns
-    the 6 proportional layer boundaries for every vertex in the downsampled mesh.
-
-    Parameters
-    ----------
-    subj_id : str
-        The subject identifier for which the conversion is being performed.
-    subj_surf_dir : str
-        The path containing the laMEG-processed subject surfaces.
-    subj_coord : array-like or None, optional
-        The x, y, z coordinates on the subject's combined hemisphere pial surface to be
-        converted. If None, all downsampled pial vertices are mapped. Defaults to None.
-
-    Returns
-    -------
-    vert_bb_prop : np.ndarray
-        A 6 x M array of proportional layer boundaries (rows = 6 layer boundaries,
-        columns = vertices), where M is the number of vertices in subj_coord (if provided)
-        or in the downsampled mesh (if subj_coord is None). Values range between 0 and 1,
-        which must be scaled by the cortical thickness to get layer depths in millimeters.
-    """
-    # Convert subject coordinate(s) to fsaverage vertex index
-    hemi, fsave_v_idx = convert_native_to_fsaverage(subj_id, subj_surf_dir, subj_coord)
-
-    # Retrieve or compute the Big Brain proportional layer boundaries
-    # big_brain_proportional_layer_boundaries() is assumed to return a dict:
-    #    {'lh': <6 x N_lh array>, 'rh': <6 x N_rh array>}
-    bb_prop = big_brain_proportional_layer_boundaries()
-
-    # If we only have a single coordinate, hemi will be a string; otherwise, it is a list of hemis
-    if isinstance(hemi, str):
-        # Single coordinate: just index directly
-        vert_bb_prop = bb_prop[hemi][:, fsave_v_idx]
-    else:
-        # Multiple coordinates: build a 6 x M array
-        vert_bb_prop = np.zeros((6, len(hemi)))
-        for i, (v_h, idx) in enumerate(zip(hemi, fsave_v_idx)):
-            vert_bb_prop[:, i] = bb_prop[v_h][:, idx]
-
-    return vert_bb_prop
-
-
-
 def get_fiducial_coords(subj_id, fname, col_delimiter='\t', subject_column='subj_id',
                         nas_column='nas', lpa_column='lpa', rpa_column='rpa', val_delimiter=','):
     """
-    Fetch fiducial coordinates from a tab-separated values (TSV) file for a given subject ID.
+    Retrieve fiducial landmark coordinates (NAS, LPA, RPA) for a specified subject from a TSV file.
+
+    This function reads a tab- or comma-delimited text file containing subject-specific
+    fiducial landmarks and returns the NASion (NAS), Left Preauricular (LPA), and Right
+    Preauricular (RPA) coordinates for the requested subject. Each coordinate entry
+    should contain three comma-separated values representing the x, y, and z positions
+    (in millimeters, unless otherwise specified).
 
     Parameters
     ----------
     subj_id : str
-        The subject ID to search for in the TSV file.
-    fname : str
-        Path to the TSV file.
+        Subject identifier used to locate the corresponding row in the file.
+    fname : str or pathlib.Path
+        Path to the TSV file containing fiducial coordinates.
     col_delimiter : str, optional
-        Column delimiter when reading file. Default is \t.
+        Character delimiting columns in the file (default: '\\t').
     subject_column : str, optional
-        Column name for subject. Default is subj_id.
+        Column name containing subject identifiers (default: 'subj_id').
     nas_column : str, optional
-        Column name for nas coordinate. Default is nas.
+        Column name for NASion coordinates (default: 'nas').
     lpa_column : str, optional
-        Column name for lpa coordinate. Default is lpa.
+        Column name for Left Preauricular coordinates (default: 'lpa').
     rpa_column : str, optional
-        Column name for rpa coordinate. Default is rpa.
+        Column name for Right Preauricular coordinates (default: 'rpa').
     val_delimiter : str, optional
-        Value delimiter when reading file. Default is ,.
+        Character delimiting coordinate values within each cell (default: ',').
 
     Returns
     -------
-    NAS : list
-        List of floats representing the NASion fiducial coordinates.
-    LPA : list
-        List of floats representing the Left Preauricular fiducial coordinates.
-    RPA : list
-        List of floats representing the Right Preauricular fiducial coordinates.
+    fid_coords : dict or None
+        Dictionary containing fiducial coordinates:
+        ``{'nas': [x, y, z], 'lpa': [x, y, z], 'rpa': [x, y, z]}``.
+        Returns ``None`` if the subject is not found in the file.
+
+    Raises
+    ------
+    ValueError
+        If a matching subject is found but one or more fiducial columns are missing or malformed.
+
+    Notes
+    -----
+    - The file must contain a header row with named columns.
+    - Coordinates are typically in head or MRI space, depending on acquisition convention.
+    - Commonly used to initialize coregistration in MEG/EEG preprocessing pipelines
+      (e.g., for SPM, MNE, or hpMEG analyses).
     """
 
     with open(fname, 'r', encoding="utf-8") as file:
         reader = csv.DictReader(file, delimiter=col_delimiter)
         for row in reader:
             if row[subject_column] == subj_id:
-                nas = [float(i) for i in row[nas_column].split(val_delimiter)]
-                lpa = [float(i) for i in row[lpa_column].split(val_delimiter)]
-                rpa = [float(i) for i in row[rpa_column].split(val_delimiter)]
-                return nas, lpa, rpa
+                fid_coords = {
+                    'nas': [float(i) for i in row[nas_column].split(val_delimiter)],
+                    'lpa': [float(i) for i in row[lpa_column].split(val_delimiter)],
+                    'rpa': [float(i) for i in row[rpa_column].split(val_delimiter)]
+                }
+                return fid_coords
 
-    return None, None, None  # Return None for each if no matching subj_id is found
+    return None  # Return None if no matching subj_id is found
 
 
 # pylint: disable=R0915
 def coregister_3d_scan_mri(subject_id, lpa, rpa, nas, dig_face_fname, dig_units='mm',
                            out_dir=None):
     """
-    Coregister a 3D facial scan to a FreeSurfer MRI for a given subject.
+    Coregister a 3D facial surface scan to a FreeSurfer MRI using fiducial- and ICP-based alignment.
 
-    This function performs an initial fiducial-based alignment followed by
-    iterative closest point (ICP) alignment using dense head surface points
-    extracted from a 3D scan of the face. It returns the fiducial coordinates
-    (LPA, RPA, NAS) transformed into FreeSurfer MRI voxel coordinates.
-
-    Assumes FreeSurfer is installed and configured, and that the SUBJECTS_DIR
-    environment variable is set to the location of FreeSurfer subjects.
+    This function aligns a subject's 3D facial mesh (e.g., STL scan) to their FreeSurfer MRI space.
+    It first performs a fiducial-based rigid alignment using the NAS, LPA, and RPA landmarks, then
+    refines the fit using iterative closest point (ICP) optimization on dense head-surface points.
+    The resulting transformation is applied to the fiducials, returning their coordinates in
+    FreeSurfer MRI voxel space (scanner RAS + CRAS offset).
 
     Parameters
     ----------
     subject_id : str
-        Name of the FreeSurfer subject.
-    lpa : array-like, shape (3,)
-        Left preauricular point in mm, in the 3D scan coordinate frame.
-    rpa : array-like, shape (3,)
-        Right preauricular point in mm, in the 3D scan coordinate frame.
-    nas : array-like, shape (3,)
-        Nasion point in mm, in the 3D scan coordinate frame.
-    dig_face_fname : str
-        Path to a 3D mesh file of the subject's face (e.g., .stl) containing
-        dense surface points including fiducials.
-    dig_units : str
-        Units of coordinates in the 3D facial scan (m or mm). Default is mm
+        Name of the FreeSurfer subject (must exist in `$SUBJECTS_DIR`).
+    lpa : array_like, shape (3,)
+        Left preauricular fiducial in millimeters (3D scan coordinate frame).
+    rpa : array_like, shape (3,)
+        Right preauricular fiducial in millimeters (3D scan coordinate frame).
+    nas : array_like, shape (3,)
+        Nasion fiducial in millimeters (3D scan coordinate frame).
+    dig_face_fname : str or pathlib.Path
+        Path to the subject's 3D facial mesh (e.g., `.stl`) containing head-surface points.
+    dig_units : {'m', 'mm'}, optional
+        Units of the 3D facial scan coordinates. Default is `'mm'`.
     out_dir : str or None, optional
-        Directory where coregistration visualizations will be saved. If None,
-        no figures will be written.
+        Directory where visualization screenshots of the alignment stages will be saved.
+        If None, no figures are written.
 
     Returns
     -------
-    lpa_t : ndarray, shape (3,)
-        LPA coordinate in FreeSurfer MRI voxel space (mm), with CRAS offset applied.
-    rpa_t : ndarray, shape (3,)
-        RPA coordinate in FreeSurfer MRI voxel space (mm), with CRAS offset applied.
-    nas_t : ndarray, shape (3,)
-        NAS coordinate in FreeSurfer MRI voxel space (mm), with CRAS offset applied.
+    lpa_t : np.ndarray, shape (3,)
+        Transformed LPA coordinate in FreeSurfer MRI voxel space (mm).
+    rpa_t : np.ndarray, shape (3,)
+        Transformed RPA coordinate in FreeSurfer MRI voxel space (mm).
+    nas_t : np.ndarray, shape (3,)
+        Transformed NAS coordinate in FreeSurfer MRI voxel space (mm).
 
     Notes
     -----
-    The returned fiducial coordinates are in FreeSurfer MRI voxel space (scanner RAS + CRAS
-    offset), not in FreeSurfer surface RAS space. This distinction matters when using the
-    coordinates for surface-based analyses or visualizations.
+    - Requires FreeSurfer to be installed and `$SUBJECTS_DIR` to be set.
+    - Uses MNE-Python's `Coregistration` and `plot_alignment` utilities for alignment and
+      visualization.
+    - Fiducial alignment is refined using ICP on dense surface points but excludes fiducial
+      weighting during ICP iterations.
+    - The returned coordinates are in **scanner RAS + CRAS** space (voxel-aligned), not FreeSurfer
+      surface RAS.
+    - If `out_dir` is provided, three screenshots are saved:
+      `coreg-initial.png`, `coreg-fit_fiducials.png`, and `coreg-fit_icp.png`.
+    - This workflow is useful for aligning 3D optical scans or digitized head shapes to MRI space
+      prior to MEG/EEG forward modeling.
     """
+
     fs_subjects_dir = os.getenv('SUBJECTS_DIR')
 
     # Convert fiducials to meters

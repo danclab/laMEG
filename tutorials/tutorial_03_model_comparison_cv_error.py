@@ -11,18 +11,17 @@ This tutorial demonstrates how to perform laminar inference using model comparis
 # 
 # Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.
 
-
 import os
 import shutil
 import numpy as np
-import nibabel as nib
 import matplotlib.pyplot as plt
 import tempfile
 
 from lameg.invert import coregister, invert_ebb
 from lameg.simulate import run_current_density_simulation
 from lameg.laminar import model_comparison
-from lameg.util import get_surface_names, get_fiducial_coords
+from lameg.surf import LayerSurfaceSet
+from lameg.util import get_fiducial_coords
 from lameg.viz import show_surface
 import spm_standalone
 
@@ -31,15 +30,15 @@ subj_id = 'sub-104'
 ses_id = 'ses-01'
 
 # Fiducial coil coordinates
-nas, lpa, rpa = get_fiducial_coords(subj_id, '../test_data/participants.tsv')
+fid_coords = get_fiducial_coords(subj_id, '../test_data/participants.tsv')
 
 # Data file to base simulations on
 data_file = os.path.join(
-    '../test_data', 
+    '../test_data',
     subj_id,
     'meg',
-    ses_id, 
-    'spm/spm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
+    ses_id,
+    f'spm/spm-converted_autoreject-{subj_id}-{ses_id}-001-btn_trial-epo.mat'
 )
 
 spm = spm_standalone.initialize()
@@ -47,24 +46,10 @@ spm = spm_standalone.initialize()
 # %% [markdown]
 # For source reconstructions, we need an MRI and a surface mesh. The simulations will be based on a forward model using the multilayer mesh, and the model comparison will use each layer mesh
 
-# Native space MRI to use for coregistration
-mri_fname = os.path.join('../test_data', subj_id, 'mri', 's2023-02-28_13-33-133958-00001-00224-1.nii' )
+surf_set_bilam = LayerSurfaceSet(subj_id, 2)
+surf_set = LayerSurfaceSet(subj_id, 11)
 
-# Mesh to use for forward model in the simulations
-multilayer_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'multilayer.11.ds.link_vector.fixed.gii')
-
-# Load multilayer mesh and compute the number of vertices per layer
-mesh = nib.load(multilayer_mesh_fname)
-n_layers = 11
-verts_per_surf = int(mesh.darrays[0].data.shape[0]/n_layers)
-
-# Get name of each mesh that makes up the layers of the multilayer mesh - these will be used for the source 
-# reconstruction
-layer_fnames = get_surface_names(
-    n_layers, 
-    os.path.join('../test_data', subj_id, 'surf'), 
-    'link_vector.fixed'
-)
+verts_per_surf = surf_set.get_vertices_per_layer()
 
 # %% [markdown]
 # We're going to copy the data file to a temporary directory and direct all output there.
@@ -99,20 +84,16 @@ n_temp_modes = 4
 
 # Coregister data to multilayer mesh
 coregister(
-    nas, 
-    lpa, 
-    rpa, 
-    mri_fname, 
-    multilayer_mesh_fname, 
+    fid_coords,
     base_fname,
+    surf_set,
     spm_instance=spm
 )
 
 # Run inversion
 [_,_] = invert_ebb(
-    multilayer_mesh_fname, 
-    base_fname, 
-    n_layers, 
+    base_fname,
+    surf_set,
     patch_size=patch_size, 
     n_temp_modes=n_temp_modes,
     spm_instance=spm
@@ -147,21 +128,17 @@ plt.ylabel('Amplitude (nAm)')
 # We need to pick a location (mesh vertex) to simulate at
 
 # Vertex to simulate activity at
-sim_vertex=24585
+sim_vertex=24581
 
-pial_ds_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'pial.ds.link_vector.fixed.gii')
-pial_ds_mesh = nib.load(pial_ds_mesh_fname)
-pial_coord = pial_ds_mesh.darrays[0].data[sim_vertex,:]
-pial_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'pial.gii')
-pial_mesh = nib.load(pial_mesh_fname)
-cam_view = [152, 28, 15,
-            3.5, 26, 38.5,
+inflated_ds_mesh = surf_set.load('inflated', stage='ds')
+coord = inflated_ds_mesh.darrays[0].data[sim_vertex,:]
+cam_view = [335, 9.5, 51,
+            60, 37, 17,
             0, 0, 1]
 plot = show_surface(
-    pial_mesh, 
-    opacity=1, 
-    coords=pial_coord,
-    coord_size=2,
+    surf_set,
+    marker_coords=coord,
+    marker_size=5,
     camera_view=cam_view
 )
 
@@ -173,7 +150,6 @@ plot = show_surface(
 # %% [markdown]
 # We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-# %%
 # Simulate at a vertex on the pial surface
 pial_vertex = sim_vertex
 prefix = f'sim_{sim_vertex}_pial_'
@@ -207,12 +183,9 @@ ideal_pc_test = 10 # may not use this number as we need integer number of channe
 
 # Run model comparison between the first layer (pial) and the last layer (white matter)
 [_,cvErr] = model_comparison(
-    nas, 
-    lpa, 
-    rpa, 
-    mri_fname, 
-    [layer_fnames[0], layer_fnames[-1]], 
-    pial_sim_fname, 
+    fid_coords,
+    pial_sim_fname,
+    surf_set_bilam,
     spm_instance=spm,
     invert_kwargs={
         'patch_size': patch_size, 
@@ -222,6 +195,7 @@ ideal_pc_test = 10 # may not use this number as we need integer number of channe
     }
 )
     
+# %% [markdown]
 # The difference in cross validation error after averaging over test channels and folds
 # This value should be negative (less error for the pial layer model)
 np.mean(np.mean(cvErr[0],axis=-1),axis=-1)-np.mean(np.mean(cvErr[1],axis=-1),axis=-1)
@@ -232,29 +206,26 @@ np.mean(np.mean(cvErr[0],axis=-1),axis=-1)-np.mean(np.mean(cvErr[1],axis=-1),axi
 # Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, model comparison should yield lower cross-validation error for the white matter surface.
 
 # Simulate at the corresponding vertex on the white matter surface
-white_vertex = (n_layers-1)*verts_per_surf+sim_vertex
+white_vertex = (surf_set.n_layers-1)*verts_per_surf+sim_vertex
 prefix = f'sim_{sim_vertex}_white_'
 
 # Generate simulated data
 white_sim_fname = run_current_density_simulation(
-    base_fname, 
-    prefix, 
-    white_vertex, 
-    sim_signal, 
-    dipole_moment, 
-    sim_patch_size, 
+    base_fname,
+    prefix,
+    white_vertex,
+    sim_signal,
+    dipole_moment,
+    sim_patch_size,
     SNR,
     spm_instance=spm
-) 
+)
 
 # Run model comparison between the first layer (pial) and the last layer (white matter)
 [_,cvErr] = model_comparison(
-    nas, 
-    lpa, 
-    rpa, 
-    mri_fname, 
-    [layer_fnames[0], layer_fnames[-1]], 
-    white_sim_fname, 
+    fid_coords,
+    white_sim_fname,
+    surf_set_bilam,
     spm_instance=spm,
     invert_kwargs={
         'patch_size': patch_size, 
@@ -264,6 +235,7 @@ white_sim_fname = run_current_density_simulation(
     }
 )
 
+# %% [markdown]
 # The difference in cross validation error after averaging over test channels and folds
 # This value should be positive (less error for the white matter layer model)
 np.mean(np.mean(cvErr[0],axis=-1),axis=-1)-np.mean(np.mean(cvErr[1],axis=-1),axis=-1)
@@ -277,29 +249,26 @@ np.mean(np.mean(cvErr[0],axis=-1),axis=-1)-np.mean(np.mean(cvErr[1],axis=-1),axi
 # all layers
 all_layerCvErr = []
 
-for l in range(n_layers):
+for l in range(surf_set.n_layers):
     print(f'Simulating in layer {l}')
     l_vertex = l*verts_per_surf+sim_vertex
     prefix = f'sim_{sim_vertex}_{l}_'
 
     l_sim_fname = run_current_density_simulation(
-        base_fname, 
-        prefix, 
-        l_vertex, 
-        sim_signal, 
-        dipole_moment, 
-        sim_patch_size, 
+        base_fname,
+        prefix,
+        l_vertex,
+        sim_signal,
+        dipole_moment,
+        sim_patch_size,
         SNR,
         spm_instance=spm
-    ) 
+    )
 
     [_,layerCvErr] = model_comparison(
-        nas, 
-        lpa, 
-        rpa, 
-        mri_fname, 
-        layer_fnames, 
-        l_sim_fname, 
+        fid_coords,
+        l_sim_fname,
+        surf_set,
         viz=False,
         spm_instance=spm,
         invert_kwargs={
@@ -318,13 +287,13 @@ all_layerCvErr = np.mean(np.mean(all_layerCvErr, axis=-1), axis=-1)
 # %% [markdown]
 # For each simulation, we can plot the cross-validation error for all models relative to the worst model. The layer model with the lowest cross-validation error should correspond to the layer that the activity was simulated in.
 
-col_r = plt.cm.cool(np.linspace(0,1, num=n_layers))
+col_r = plt.cm.cool(np.linspace(0,1, num=surf_set.n_layers))
 plt.figure(figsize=(10,4))
 
 # For each simulation, plot the CV error of each layer model relative to that of the worst
 # model for that simulation
 plt.subplot(1,2,1)
-for l in range(n_layers):
+for l in range(surf_set.n_layers):
     layerCvErr=all_layerCvErr[l,:]
     plt.plot(layerCvErr, label=f'{l}', color=col_r[l,:])
 plt.legend()
@@ -334,7 +303,7 @@ plt.ylabel('CVErr')
 # For each simulation, find which layer model had the lowest CV error
 plt.subplot(1,2,2)
 peaks=[]
-for l in range(n_layers):
+for l in range(surf_set.n_layers):
     layerCvErr=all_layerCvErr[l,:]
     pk=np.argmin(layerCvErr)
     peaks.append(pk)

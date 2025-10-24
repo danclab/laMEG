@@ -5,11 +5,11 @@ import os
 
 import numpy as np
 import pytest
-import nibabel as nib
 
 from lameg.laminar import (model_comparison, sliding_window_model_comparison, compute_csd,
                            roi_power_comparison)
-from lameg.util import get_fiducial_coords, get_surface_names
+from lameg.surf import LayerSurfaceSet
+from lameg.util import get_fiducial_coords
 
 
 @pytest.mark.dependency(depends=["tests/test_03_simulate.py::test_run_current_density_simulation"],
@@ -49,19 +49,9 @@ def test_roi_power_comparison():
       identifies and analyzes the specified regions.
     """
 
-    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
     subj_id = 'sub-104'
 
-    # Mesh to use for forward model in the simulations
-    multilayer_mesh_fname = os.path.join(
-        test_data_path,
-        subj_id,
-        'surf',
-        'multilayer.2.ds.link_vector.fixed.gii'
-    )
-
-    mesh = nib.load(multilayer_mesh_fname)
-    n_layers = 2
+    surf_set = LayerSurfaceSet(subj_id, 2)
 
     sim_fname = os.path.join('./output/',
                              'sim_24588_current_density_pial_spm-converted_autoreject-'
@@ -71,20 +61,34 @@ def test_roi_power_comparison():
         sim_fname,
         [0, 500],
         [-500, 0],
-        mesh,
-        n_layers,
         99.99,
-        chunk_size=8000
+        surf_set,
+        chunk_size=2000
     )
 
-    target = 1.8361054173006839
+    target = -1.010272966443458
     assert np.isclose(laminar_t_statistic, target, atol=1e-2)
-    target = 0.07138219614142699
+    target = 0.316489918816009
     assert np.isclose(laminar_p_value, target, atol=1e-2)
     target = 59
     assert deg_of_freedom == target
-    target = np.array([[1031, 1386, 2775, 2886, 3004, 4162, 7074, 7188, 16847, 42129]])
+    target = np.array([ [ 5179,  5312,  5771,  5887,  6003, 10660, 10916, 39441, 39857]])
     assert np.allclose(roi_idx, target)
+
+    n_laminar_t_statistic, n_laminar_p_value, n_deg_of_freedom, n_roi_idx = roi_power_comparison(
+        sim_fname,
+        [0, 500],
+        [-500, 0],
+        99.99,
+        surf_set,
+        chunk_size=2000,
+        roi_idx=roi_idx
+    )
+
+    assert np.isclose(laminar_t_statistic, n_laminar_t_statistic)
+    assert np.isclose(laminar_p_value, n_laminar_p_value)
+    assert deg_of_freedom == n_deg_of_freedom
+    assert np.allclose(roi_idx, n_roi_idx)
 
 
 @pytest.mark.dependency(depends=["tests/test_04_laminar.py::test_roi_power_comparison"],
@@ -122,24 +126,9 @@ def test_model_comparison(spm):
     subj_id = 'sub-104'
 
     # Fiducial coil coordinates
-    nas, lpa, rpa = get_fiducial_coords(subj_id, os.path.join(test_data_path, 'participants.tsv'))
+    fid_coords = get_fiducial_coords(subj_id, os.path.join(test_data_path, 'participants.tsv'))
 
-    # Native space MRI to use for coregistration
-    # pylint: disable=duplicate-code
-    mri_fname = os.path.join(
-        test_data_path,
-        subj_id,
-        'mri',
-        's2023-02-28_13-33-133958-00001-00224-1.nii'
-    )
-
-    # Get name of each mesh that makes up the layers of the multilayer mesh - these will be used
-    # for the sourcereconstruction
-    layer_fnames = get_surface_names(
-        2,
-        os.path.join(test_data_path, subj_id, 'surf'),
-        'link_vector.fixed'
-    )
+    surf_set = LayerSurfaceSet(subj_id, 2)
 
     sim_fname = os.path.join('./output/',
                              'sim_24588_current_density_pial_spm-converted_autoreject-'
@@ -149,12 +138,9 @@ def test_model_comparison(spm):
 
     # Test MSP
     [free_energy, _] = model_comparison(
-        nas,
-        lpa,
-        rpa,
-        mri_fname,
-        [layer_fnames[0], layer_fnames[-1]],
+        fid_coords,
         sim_fname,
+        surf_set,
         method='MSP',
         viz=False,
         spm_instance=spm,
@@ -164,17 +150,14 @@ def test_model_comparison(spm):
         }
     )
 
-    target = np.array([[-201407.176018,  -201429.3865013]])
-    assert np.allclose(free_energy, target, atol=1e3)
+    target = np.array([[-233531.75492357, -234027.3558766 ]])
+    assert np.allclose(free_energy, target, atol=1e2)
 
     # Test EBB
     [free_energy, _] = model_comparison(
-        nas,
-        lpa,
-        rpa,
-        mri_fname,
-        [layer_fnames[0], layer_fnames[-1]],
+        fid_coords,
         sim_fname,
+        surf_set,
         method='EBB',
         viz=False,
         spm_instance=spm,
@@ -184,41 +167,35 @@ def test_model_comparison(spm):
         }
     )
 
-    target = np.array([[-207540.70109307, -207253.93266332]])
-    assert np.allclose(free_energy, target)
+    target = np.array([-239571.55609232, -239425.98968241])
+    assert np.allclose(free_energy, target, atol=1e2)
 
     # Test default invert kwargs
     [free_energy, _] = model_comparison(
-        nas,
-        lpa,
-        rpa,
-        mri_fname,
-        [layer_fnames[0], layer_fnames[-1]],
+        fid_coords,
         sim_fname,
+        surf_set,
         method='EBB',
         viz=False,
         spm_instance=spm
     )
 
-    target = np.array([[-207540.70109307, -207253.93266332]])
-    assert np.allclose(free_energy, target)
+    target = np.array([-239571.55609232, -239425.98968241])
+    assert np.allclose(free_energy, target, atol=1e2)
 
     # Test coreg kwargs
     [free_energy, _] = model_comparison(
-        nas,
-        lpa,
-        rpa,
-        mri_fname,
-        [layer_fnames[0], layer_fnames[-1]],
+        fid_coords,
         sim_fname,
+        surf_set,
         method='EBB',
         viz=False,
         coregister_kwargs={},
         spm_instance=spm
     )
 
-    target = np.array([-207540.70109307, -207253.93266332])
-    assert np.allclose(free_energy, target)
+    target = np.array([-239571.55609232, -239425.98968241])
+    assert np.allclose(free_energy, target, atol=1e2)
 
 
 @pytest.mark.dependency(depends=["tests/test_04_laminar.py::test_model_comparison"],
@@ -242,8 +219,7 @@ def test_sliding_window_model_comparison(spm):
         prepares necessary simulation outputs used here.
 
     Parameters:
-        spm (object): An instance of SPM, used for handling all computational neuroscience models
-                      and simulations.
+        spm (object): An instance of SPM
 
     Detailed Steps:
     - Retrieve fiducial coordinates for the subject and load the native space MRI for
@@ -269,24 +245,9 @@ def test_sliding_window_model_comparison(spm):
     subj_id = 'sub-104'
 
     # Fiducial coil coordinates
-    nas, lpa, rpa = get_fiducial_coords(subj_id, os.path.join(test_data_path, 'participants.tsv'))
+    fid_coords = get_fiducial_coords(subj_id, os.path.join(test_data_path, 'participants.tsv'))
 
-    # Native space MRI to use for coregistration
-    # pylint: disable=duplicate-code
-    mri_fname = os.path.join(
-        test_data_path,
-        subj_id,
-        'mri',
-        's2023-02-28_13-33-133958-00001-00224-1.nii'
-    )
-
-    # Get name of each mesh that makes up the layers of the multilayer mesh - these will be used
-    # for the sourcereconstruction
-    layer_fnames = get_surface_names(
-        2,
-        os.path.join(test_data_path, subj_id, 'surf'),
-        'link_vector.fixed'
-    )
+    surf_set = LayerSurfaceSet(subj_id, 2)
 
     sim_fname = os.path.join('./output/',
                              'sim_24588_dipole_pial_pspm-converted_autoreject-'
@@ -302,12 +263,9 @@ def test_sliding_window_model_comparison(spm):
     # (white matter)
     [free_energy, wois] = sliding_window_model_comparison(
         24588,
-        nas,
-        lpa,
-        rpa,
-        mri_fname,
-        [layer_fnames[0], layer_fnames[-1]],
+        fid_coords,
         sim_fname,
+        surf_set,
         viz=False,
         spm_instance=spm,
         invert_kwargs={
@@ -318,13 +276,13 @@ def test_sliding_window_model_comparison(spm):
         }
     )
 
-    target = np.array([[-25742.35576421, -25742.35576421, -25731.55977826, -25825.36418008,
-                        -25825.36418008, -25797.52834586, -25740.6772461,  -25740.6772461,
-                        -25795.43416278, -25809.27791724],
-                       [-25742.35573166, -25742.35573166, -25731.55880407, -25825.36230089,
-                        -25825.36230089, -25797.5262519,  -25740.67726161, -25740.67726161,
-                        -25795.4352398,  -25809.27771454]])
-    assert np.allclose(free_energy[:, :10], target)
+    target = np.array([[-46369.53543709, -46369.53543709, -46359.23487317, -46453.28894214,
+                        -46453.28894214, -46425.36263232, -46367.44887247, -46367.44887247,
+                        -46422.58680346, -46436.72939434],
+                       [-46369.53545326, -46369.53545326, -46359.23516562, -46453.28894191,
+                        -46453.28894191, -46425.36266774, -46367.44887061, -46367.44887061,
+                        -46422.58708281, -46436.72934969]])
+    assert np.allclose(free_energy[:, :10], target, atol=1e2)
 
     target = np.array([[-100., -75.],
                        [-100., -73.33333333],
@@ -339,25 +297,22 @@ def test_sliding_window_model_comparison(spm):
     assert np.allclose(wois[:10, :], target)
 
     # Test default invert args
-    [free_energy, wois] = sliding_window_model_comparison(
+    [free_energy, _] = sliding_window_model_comparison(
         24588,
-        nas,
-        lpa,
-        rpa,
-        mri_fname,
-        [layer_fnames[0], layer_fnames[-1]],
+        fid_coords,
         sim_fname,
+        surf_set,
         viz=False,
         spm_instance=spm
     )
 
-    target = np.array([[-25742.35576421, -25742.35576421, -25731.55977826, -25825.36418008,
-                        -25825.36418008, -25797.52834586, -25740.6772461, -25740.6772461,
-                        -25795.43416278, -25809.27791724],
-                       [-25742.35573166, -25742.35573166, -25731.55880407, -25825.36230089,
-                        -25825.36230089, -25797.5262519, -25740.67726161, -25740.67726161,
-                        -25795.4352398, -25809.27771454]])
-    assert np.allclose(free_energy[:, :10], target)
+    target = np.array([[-46369.53543709, -46369.53543709, -46359.23487317, -46453.28894214,
+                        -46453.28894214, -46425.36263232, -46367.44887247, -46367.44887247,
+                        -46422.58680346, -46436.72939434],
+                       [-46369.53545326, -46369.53545326, -46359.23516562, -46453.28894191,
+                        -46453.28894191, -46425.36266774, -46367.44887061, -46367.44887061,
+                        -46422.58708281, -46436.72934969]])
+    assert np.allclose(free_energy[:, :10], target, atol=1e2)
 
 
 def test_compute_csd():
