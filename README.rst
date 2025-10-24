@@ -22,6 +22,7 @@ Upgrade Notice (v0.1.0)
 =======================
 
 If you used laMEG versions prior to v0.1.0, the internal format of laminar surface directories has changed.
+They are now stored within ``<SUBJECTS_DIR>/<subject_id>/surf/laminar``, and ``<SUBJECTS_DIR>/<subject_id>/mri/orig.mgz`` is automatically used for co-registration.
 Older surfaces must be converted before they can be loaded with the new LayerSurfaceSet interface.
 
 Run the conversion script::
