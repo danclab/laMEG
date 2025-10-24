@@ -410,14 +410,14 @@ to download the full example code</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">nibabel</span> <span class="k">as</span> <span class="nn">nib</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
 
 <span class="kn">from</span> <span class="nn">lameg.invert</span> <span class="kn">import</span> <span class="n">coregister</span><span class="p">,</span> <span class="n">invert_ebb</span>
 <span class="kn">from</span> <span class="nn">lameg.simulate</span> <span class="kn">import</span> <span class="n">run_current_density_simulation</span>
 <span class="kn">from</span> <span class="nn">lameg.laminar</span> <span class="kn">import</span> <span class="n">model_comparison</span>
-<span class="kn">from</span> <span class="nn">lameg.util</span> <span class="kn">import</span> <span class="n">get_surface_names</span><span class="p">,</span> <span class="n">get_fiducial_coords</span>
+<span class="kn">from</span> <span class="nn">lameg.surf</span> <span class="kn">import</span> <span class="n">LayerSurfaceSet</span>
+<span class="kn">from</span> <span class="nn">lameg.util</span> <span class="kn">import</span> <span class="n">get_fiducial_coords</span>
 <span class="kn">from</span> <span class="nn">lameg.viz</span> <span class="kn">import</span> <span class="n">show_surface</span>
 <span class="kn">import</span> <span class="nn">spm_standalone</span>
 
@@ -426,7 +426,7 @@ to download the full example code</p>
 <span class="n">ses_id</span> <span class="o">=</span> <span class="s1">&#39;ses-01&#39;</span>
 
 <span class="c1"># Fiducial coil coordinates</span>
-<span class="n">nas</span><span class="p">,</span> <span class="n">lpa</span><span class="p">,</span> <span class="n">rpa</span> <span class="o">=</span> <span class="n">get_fiducial_coords</span><span class="p">(</span><span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;../test_data/participants.tsv&#39;</span><span class="p">)</span>
+<span class="n">fid_coords</span> <span class="o">=</span> <span class="n">get_fiducial_coords</span><span class="p">(</span><span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;../test_data/participants.tsv&#39;</span><span class="p">)</span>
 
 <span class="c1"># Data file to base simulations on</span>
 <span class="n">data_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
@@ -434,31 +434,17 @@ to download the full example code</p>
     <span class="n">subj_id</span><span class="p">,</span>
     <span class="s1">&#39;meg&#39;</span><span class="p">,</span>
     <span class="n">ses_id</span><span class="p">,</span>
-    <span class="s1">&#39;spm/spm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat&#39;</span>
+    <span class="sa">f</span><span class="s1">&#39;spm/spm-converted_autoreject-</span><span class="si">{</span><span class="n">subj_id</span><span class="si">}</span><span class="s1">-</span><span class="si">{</span><span class="n">ses_id</span><span class="si">}</span><span class="s1">-001-btn_trial-epo.mat&#39;</span>
 <span class="p">)</span>
 
 <span class="n">spm</span> <span class="o">=</span> <span class="n">spm_standalone</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>For source reconstructions, we need an MRI and a surface mesh. The simulations will be based on a forward model using the multilayer mesh, and the model comparison will use each layer mesh</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Native space MRI to use for coregistration</span>
-<span class="n">mri_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;mri&#39;</span><span class="p">,</span> <span class="s1">&#39;s2023-02-28_13-33-133958-00001-00224-1.nii&#39;</span> <span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">surf_set_bilam</span> <span class="o">=</span> <span class="n">LayerSurfaceSet</span><span class="p">(</span><span class="n">subj_id</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">surf_set</span> <span class="o">=</span> <span class="n">LayerSurfaceSet</span><span class="p">(</span><span class="n">subj_id</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
 
-<span class="c1"># Mesh to use for forward model in the simulations</span>
-<span class="n">multilayer_mesh_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;surf&#39;</span><span class="p">,</span> <span class="s1">&#39;multilayer.11.ds.link_vector.fixed.gii&#39;</span><span class="p">)</span>
-
-<span class="c1"># Load multilayer mesh and compute the number of vertices per layer</span>
-<span class="n">mesh</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">multilayer_mesh_fname</span><span class="p">)</span>
-<span class="n">n_layers</span> <span class="o">=</span> <span class="mi">11</span>
-<span class="n">verts_per_surf</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">mesh</span><span class="o">.</span><span class="n">darrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">n_layers</span><span class="p">)</span>
-
-<span class="c1"># Get name of each mesh that makes up the layers of the multilayer mesh - these will be used for the source</span>
-<span class="c1"># reconstruction</span>
-<span class="n">layer_fnames</span> <span class="o">=</span> <span class="n">get_surface_names</span><span class="p">(</span>
-    <span class="n">n_layers</span><span class="p">,</span>
-    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;surf&#39;</span><span class="p">),</span>
-    <span class="s1">&#39;link_vector.fixed&#39;</span>
-<span class="p">)</span>
+<span class="n">verts_per_surf</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">get_vertices_per_layer</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>We’re going to copy the data file to a temporary directory and direct all output there.</p>
@@ -491,20 +477,16 @@ to download the full example code</p>
 
 <span class="c1"># Coregister data to multilayer mesh</span>
 <span class="n">coregister</span><span class="p">(</span>
-    <span class="n">nas</span><span class="p">,</span>
-    <span class="n">lpa</span><span class="p">,</span>
-    <span class="n">rpa</span><span class="p">,</span>
-    <span class="n">mri_fname</span><span class="p">,</span>
-    <span class="n">multilayer_mesh_fname</span><span class="p">,</span>
+    <span class="n">fid_coords</span><span class="p">,</span>
     <span class="n">base_fname</span><span class="p">,</span>
+    <span class="n">surf_set</span><span class="p">,</span>
     <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm</span>
 <span class="p">)</span>
 
 <span class="c1"># Run inversion</span>
 <span class="p">[</span><span class="n">_</span><span class="p">,</span><span class="n">_</span><span class="p">]</span> <span class="o">=</span> <span class="n">invert_ebb</span><span class="p">(</span>
-    <span class="n">multilayer_mesh_fname</span><span class="p">,</span>
     <span class="n">base_fname</span><span class="p">,</span>
-    <span class="n">n_layers</span><span class="p">,</span>
+    <span class="n">surf_set</span><span class="p">,</span>
     <span class="n">patch_size</span><span class="o">=</span><span class="n">patch_size</span><span class="p">,</span>
     <span class="n">n_temp_modes</span><span class="o">=</span><span class="n">n_temp_modes</span><span class="p">,</span>
     <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm</span>
@@ -534,29 +516,25 @@ to download the full example code</p>
 <a class="reference internal image-reference" href="../_images/tutorial_03_sim_signal.png"><img alt="" src="../_images/tutorial_03_sim_signal.png" style="width: 800px;" /></a>
 <p>We need to pick a location (mesh vertex) to simulate at</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Vertex to simulate activity at</span>
-<span class="n">sim_vertex</span><span class="o">=</span><span class="mi">24585</span>
+<span class="n">sim_vertex</span><span class="o">=</span><span class="mi">24581</span>
 
-<span class="n">pial_ds_mesh_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;surf&#39;</span><span class="p">,</span> <span class="s1">&#39;pial.ds.link_vector.fixed.gii&#39;</span><span class="p">)</span>
-<span class="n">pial_ds_mesh</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">pial_ds_mesh_fname</span><span class="p">)</span>
-<span class="n">pial_coord</span> <span class="o">=</span> <span class="n">pial_ds_mesh</span><span class="o">.</span><span class="n">darrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sim_vertex</span><span class="p">,:]</span>
-<span class="n">pial_mesh_fname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s1">&#39;../test_data&#39;</span><span class="p">,</span> <span class="n">subj_id</span><span class="p">,</span> <span class="s1">&#39;surf&#39;</span><span class="p">,</span> <span class="s1">&#39;pial.gii&#39;</span><span class="p">)</span>
-<span class="n">pial_mesh</span> <span class="o">=</span> <span class="n">nib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">pial_mesh_fname</span><span class="p">)</span>
-<span class="n">cam_view</span> <span class="o">=</span> <span class="p">[</span><span class="mi">152</span><span class="p">,</span> <span class="mi">28</span><span class="p">,</span> <span class="mi">15</span><span class="p">,</span>
-            <span class="mf">3.5</span><span class="p">,</span> <span class="mi">26</span><span class="p">,</span> <span class="mf">38.5</span><span class="p">,</span>
+<span class="n">inflated_ds_mesh</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;inflated&#39;</span><span class="p">,</span> <span class="n">stage</span><span class="o">=</span><span class="s1">&#39;ds&#39;</span><span class="p">)</span>
+<span class="n">coord</span> <span class="o">=</span> <span class="n">inflated_ds_mesh</span><span class="o">.</span><span class="n">darrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sim_vertex</span><span class="p">,:]</span>
+<span class="n">cam_view</span> <span class="o">=</span> <span class="p">[</span><span class="mi">335</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">,</span> <span class="mi">51</span><span class="p">,</span>
+            <span class="mi">60</span><span class="p">,</span> <span class="mi">37</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span>
             <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
 <span class="n">plot</span> <span class="o">=</span> <span class="n">show_surface</span><span class="p">(</span>
-    <span class="n">pial_mesh</span><span class="p">,</span>
-    <span class="n">opacity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-    <span class="n">coords</span><span class="o">=</span><span class="n">pial_coord</span><span class="p">,</span>
-    <span class="n">coord_size</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">surf_set</span><span class="p">,</span>
+    <span class="n">marker_coords</span><span class="o">=</span><span class="n">coord</span><span class="p">,</span>
+    <span class="n">marker_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
     <span class="n">camera_view</span><span class="o">=</span><span class="n">cam_view</span>
 <span class="p">)</span>
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/tutorial_03_sim_location.png"><img alt="" src="../_images/tutorial_03_sim_location.png" style="width: 800px;" /></a>
 <p>We’ll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals</p>
-<p>Simulate at a vertex on the pial surface</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pial_vertex</span> <span class="o">=</span> <span class="n">sim_vertex</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate at a vertex on the pial surface</span>
+<span class="n">pial_vertex</span> <span class="o">=</span> <span class="n">sim_vertex</span>
 <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_pial_&#39;</span>
 
 <span class="c1"># Size of simulated patch of activity (mm)</span>
@@ -588,12 +566,9 @@ to download the full example code</p>
 
 <span class="c1"># Run model comparison between the first layer (pial) and the last layer (white matter)</span>
 <span class="p">[</span><span class="n">_</span><span class="p">,</span><span class="n">cvErr</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_comparison</span><span class="p">(</span>
-    <span class="n">nas</span><span class="p">,</span>
-    <span class="n">lpa</span><span class="p">,</span>
-    <span class="n">rpa</span><span class="p">,</span>
-    <span class="n">mri_fname</span><span class="p">,</span>
-    <span class="p">[</span><span class="n">layer_fnames</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">layer_fnames</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span>
+    <span class="n">fid_coords</span><span class="p">,</span>
     <span class="n">pial_sim_fname</span><span class="p">,</span>
+    <span class="n">surf_set_bilam</span><span class="p">,</span>
     <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm</span><span class="p">,</span>
     <span class="n">invert_kwargs</span><span class="o">=</span><span class="p">{</span>
         <span class="s1">&#39;patch_size&#39;</span><span class="p">:</span> <span class="n">patch_size</span><span class="p">,</span>
@@ -602,10 +577,11 @@ to download the full example code</p>
         <span class="s1">&#39;ideal_pc_test&#39;</span><span class="p">:</span> <span class="n">ideal_pc_test</span>
     <span class="p">}</span>
 <span class="p">)</span>
-
-<span class="c1"># The difference in cross validation error after averaging over test channels and folds</span>
-<span class="c1"># This value should be negative (less error for the pial layer model)</span>
-<span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cvErr</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cvErr</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The difference in cross validation error after averaging over test channels and folds
+This value should be negative (less error for the pial layer model)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cvErr</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cvErr</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -613,7 +589,7 @@ to download the full example code</p>
 <h2>White matter surface simulation with pial - white matter model comparison<a class="headerlink" href="#white-matter-surface-simulation-with-pial-white-matter-model-comparison" title="Permalink to this heading">#</a></h2>
 <p>Let’s simulate the same pattern of activity, in the same location, but on the white matter surface. This time, model comparison should yield lower cross-validation error for the white matter surface.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate at the corresponding vertex on the white matter surface</span>
-<span class="n">white_vertex</span> <span class="o">=</span> <span class="p">(</span><span class="n">n_layers</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">verts_per_surf</span><span class="o">+</span><span class="n">sim_vertex</span>
+<span class="n">white_vertex</span> <span class="o">=</span> <span class="p">(</span><span class="n">surf_set</span><span class="o">.</span><span class="n">n_layers</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">verts_per_surf</span><span class="o">+</span><span class="n">sim_vertex</span>
 <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_white_&#39;</span>
 
 <span class="c1"># Generate simulated data</span>
@@ -630,12 +606,9 @@ to download the full example code</p>
 
 <span class="c1"># Run model comparison between the first layer (pial) and the last layer (white matter)</span>
 <span class="p">[</span><span class="n">_</span><span class="p">,</span><span class="n">cvErr</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_comparison</span><span class="p">(</span>
-    <span class="n">nas</span><span class="p">,</span>
-    <span class="n">lpa</span><span class="p">,</span>
-    <span class="n">rpa</span><span class="p">,</span>
-    <span class="n">mri_fname</span><span class="p">,</span>
-    <span class="p">[</span><span class="n">layer_fnames</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">layer_fnames</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span>
+    <span class="n">fid_coords</span><span class="p">,</span>
     <span class="n">white_sim_fname</span><span class="p">,</span>
+    <span class="n">surf_set_bilam</span><span class="p">,</span>
     <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm</span><span class="p">,</span>
     <span class="n">invert_kwargs</span><span class="o">=</span><span class="p">{</span>
         <span class="s1">&#39;patch_size&#39;</span><span class="p">:</span> <span class="n">patch_size</span><span class="p">,</span>
@@ -644,10 +617,11 @@ to download the full example code</p>
         <span class="s1">&#39;ideal_pc_test&#39;</span><span class="p">:</span> <span class="n">ideal_pc_test</span>
     <span class="p">}</span>
 <span class="p">)</span>
-
-<span class="c1"># The difference in cross validation error after averaging over test channels and folds</span>
-<span class="c1"># This value should be positive (less error for the white matter layer model)</span>
-<span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cvErr</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cvErr</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The difference in cross validation error after averaging over test channels and folds
+This value should be positive (less error for the white matter layer model)</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cvErr</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cvErr</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">),</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -658,7 +632,7 @@ to download the full example code</p>
 <span class="c1"># all layers</span>
 <span class="n">all_layerCvErr</span> <span class="o">=</span> <span class="p">[]</span>
 
-<span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_layers</span><span class="p">):</span>
+<span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">surf_set</span><span class="o">.</span><span class="n">n_layers</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Simulating in layer </span><span class="si">{</span><span class="n">l</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
     <span class="n">l_vertex</span> <span class="o">=</span> <span class="n">l</span><span class="o">*</span><span class="n">verts_per_surf</span><span class="o">+</span><span class="n">sim_vertex</span>
     <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">l</span><span class="si">}</span><span class="s1">_&#39;</span>
@@ -675,12 +649,9 @@ to download the full example code</p>
     <span class="p">)</span>
 
     <span class="p">[</span><span class="n">_</span><span class="p">,</span><span class="n">layerCvErr</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_comparison</span><span class="p">(</span>
-        <span class="n">nas</span><span class="p">,</span>
-        <span class="n">lpa</span><span class="p">,</span>
-        <span class="n">rpa</span><span class="p">,</span>
-        <span class="n">mri_fname</span><span class="p">,</span>
-        <span class="n">layer_fnames</span><span class="p">,</span>
+        <span class="n">fid_coords</span><span class="p">,</span>
         <span class="n">l_sim_fname</span><span class="p">,</span>
+        <span class="n">surf_set</span><span class="p">,</span>
         <span class="n">viz</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
         <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm</span><span class="p">,</span>
         <span class="n">invert_kwargs</span><span class="o">=</span><span class="p">{</span>
@@ -698,13 +669,13 @@ to download the full example code</p>
 </pre></div>
 </div>
 <p>For each simulation, we can plot the cross-validation error for all models relative to the worst model. The layer model with the lowest cross-validation error should correspond to the layer that the activity was simulated in.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">col_r</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">cool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">n_layers</span><span class="p">))</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">col_r</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">cm</span><span class="o">.</span><span class="n">cool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span> <span class="n">num</span><span class="o">=</span><span class="n">surf_set</span><span class="o">.</span><span class="n">n_layers</span><span class="p">))</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span><span class="mi">4</span><span class="p">))</span>
 
 <span class="c1"># For each simulation, plot the CV error of each layer model relative to that of the worst</span>
 <span class="c1"># model for that simulation</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_layers</span><span class="p">):</span>
+<span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">surf_set</span><span class="o">.</span><span class="n">n_layers</span><span class="p">):</span>
     <span class="n">layerCvErr</span><span class="o">=</span><span class="n">all_layerCvErr</span><span class="p">[</span><span class="n">l</span><span class="p">,:]</span>
     <span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">layerCvErr</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">l</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col_r</span><span class="p">[</span><span class="n">l</span><span class="p">,:])</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
@@ -714,7 +685,7 @@ to download the full example code</p>
 <span class="c1"># For each simulation, find which layer model had the lowest CV error</span>
 <span class="n">plt</span><span class="o">.</span><span class="n">subplot</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)</span>
 <span class="n">peaks</span><span class="o">=</span><span class="p">[]</span>
-<span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_layers</span><span class="p">):</span>
+<span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">surf_set</span><span class="o">.</span><span class="n">n_layers</span><span class="p">):</span>
     <span class="n">layerCvErr</span><span class="o">=</span><span class="n">all_layerCvErr</span><span class="p">[</span><span class="n">l</span><span class="p">,:]</span>
     <span class="n">pk</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">layerCvErr</span><span class="p">)</span>
     <span class="n">peaks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pk</span><span class="p">)</span>

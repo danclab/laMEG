@@ -30,7 +30,7 @@ Setting up the simulations
 
 Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.
 
-.. GENERATED FROM PYTHON SOURCE LINES 13-50
+.. GENERATED FROM PYTHON SOURCE LINES 13-47
 
 .. code-block:: default
 
@@ -39,15 +39,14 @@ Simulations are based on an existing dataset, which is used to define the sampli
     import os
     import shutil
     import numpy as np
-    import nibabel as nib
     import matplotlib.pyplot as plt
     import tempfile
 
     from lameg.invert import coregister, invert_ebb, load_source_time_series
     from lameg.laminar import sliding_window_model_comparison
     from lameg.simulate import run_dipole_simulation
-    from lameg.surf import interpolate_data
-    from lameg.util import get_surface_names
+    from lameg.surf import LayerSurfaceSet
+    from lameg.util import get_fiducial_coords
     from lameg.viz import show_surface, color_map
     import spm_standalone
 
@@ -56,60 +55,40 @@ Simulations are based on an existing dataset, which is used to define the sampli
     ses_id = 'ses-01'
 
     # Fiducial coil coordinates
-    nas = [0.9662503311032098, 108.83514306876269, 1.6712361927090313]
-    lpa = [-74.28671169006893, 20.15061014698176, -29.849056272705948]
-    rpa = [76.02110531729883, 18.9467849625573, -25.779407159603114]
+    fid_coords = get_fiducial_coords(subj_id, '../test_data/participants.tsv')
 
     # Data file to base simulations on
     data_file = os.path.join(
-        '../test_data', 
-        subj_id, 
+        '../test_data',
+        subj_id,
         'meg',
-        ses_id, 
-        'spm/pspm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
+        ses_id,
+        f'spm/pspm-converted_autoreject-{subj_id}-{ses_id}-001-btn_trial-epo.mat'
     )
 
     spm = spm_standalone.initialize()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 51-52
+.. GENERATED FROM PYTHON SOURCE LINES 48-49
 
 For source reconstructions, we need an MRI and a surface mesh. The simulations will be based on a forward model using the multilayer mesh, and the model comparison will use each layer mesh
 
-.. GENERATED FROM PYTHON SOURCE LINES 52-76
+.. GENERATED FROM PYTHON SOURCE LINES 49-55
 
 .. code-block:: default
 
 
-    # Native space MRI to use for coregistration
-    mri_fname = os.path.join('../test_data', subj_id, 'mri/s2023-02-28_13-33-133958-00001-00224-1.nii' )
+    surf_set_bilam = LayerSurfaceSet(subj_id, 2)
+    surf_set = LayerSurfaceSet(subj_id, 11)
 
-    # Mesh to use for forward model in the simulations
-    multilayer_mesh_fname = os.path.join('../test_data', subj_id, 'surf/multilayer.11.ds.link_vector.fixed.gii')
-
-    # Load multilayer mesh and compute the number of vertices per layer
-    mesh = nib.load(multilayer_mesh_fname)
-    n_layers = 11
-    verts_per_surf = int(mesh.darrays[0].data.shape[0]/n_layers)
-
-    # Get name of each mesh that makes up the layers of the multilayer mesh - these will be used for the source 
-    # reconstruction
-    layer_fnames = get_surface_names(
-        n_layers, 
-        os.path.join('../test_data', subj_id, 'surf'), 
-        'link_vector.fixed'
-    )
-
-    # Inflated meshes for plotting
-    ds_inflated = nib.load(os.path.join('../test_data', subj_id, 'surf', 'inflated.ds.gii'))
-    orig_inflated = nib.load(os.path.join('../test_data', subj_id, 'surf', 'inflated.gii'))
+    verts_per_surf = surf_set.get_vertices_per_layer()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 77-78
+.. GENERATED FROM PYTHON SOURCE LINES 56-57
 
 We're going to copy the data file to a temporary directory and direct all output there.
 
-.. GENERATED FROM PYTHON SOURCE LINES 78-99
+.. GENERATED FROM PYTHON SOURCE LINES 57-78
 
 .. code-block:: default
 
@@ -135,11 +114,11 @@ We're going to copy the data file to a temporary directory and direct all output
     base_fname = os.path.join(tmp_dir, f'{data_base}.mat')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 100-101
+.. GENERATED FROM PYTHON SOURCE LINES 79-80
 
 Invert the subject's data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations
 
-.. GENERATED FROM PYTHON SOURCE LINES 101-128
+.. GENERATED FROM PYTHON SOURCE LINES 80-103
 
 .. code-block:: default
 
@@ -151,39 +130,35 @@ Invert the subject's data using the multilayer mesh. This step only has to be do
 
     # Coregister data to multilayer mesh
     coregister(
-        nas, 
-        lpa, 
-        rpa, 
-        mri_fname, 
-        multilayer_mesh_fname, 
+        fid_coords,
         base_fname,
+        surf_set,
         spm_instance=spm
     )
 
     # Run inversion
     [_,_] = invert_ebb(
-        multilayer_mesh_fname, 
-        base_fname, 
-        n_layers, 
+        base_fname,
+        surf_set,
         patch_size=patch_size, 
         n_temp_modes=n_temp_modes,
         spm_instance=spm
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 129-132
+.. GENERATED FROM PYTHON SOURCE LINES 104-107
 
 Simulating a signal on the pial surface
 ---------------------------------------
 We're going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a width of 25ms
 
-.. GENERATED FROM PYTHON SOURCE LINES 132-148
+.. GENERATED FROM PYTHON SOURCE LINES 107-123
 
 .. code-block:: default
 
 
     # Strength of simulated activity (nAm)
-    dipole_moment = 8
+    dipole_moment = 10
     # Temporal width of the simulated Gaussian
     signal_width=.025 # 25ms
     # Sampling rate (must match the data file)
@@ -198,52 +173,48 @@ We're going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a w
     plt.ylabel('Amplitude (nAm)')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 149-152
+.. GENERATED FROM PYTHON SOURCE LINES 124-127
 
 .. image:: ../_static/tutorial_04_sim_signal.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 154-155
+.. GENERATED FROM PYTHON SOURCE LINES 129-130
 
 We need to pick a location (mesh vertex) to simulate at
 
-.. GENERATED FROM PYTHON SOURCE LINES 155-175
+.. GENERATED FROM PYTHON SOURCE LINES 130-146
 
 .. code-block:: default
 
 
     # Vertex to simulate activity at
-    sim_vertex=24585
+    sim_vertex=24581
 
-    pial_ds_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'pial.ds.link_vector.fixed.gii')
-    pial_ds_mesh = nib.load(pial_ds_mesh_fname)
-    pial_coord = pial_ds_mesh.darrays[0].data[sim_vertex,:]
-    pial_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'pial.gii')
-    pial_mesh = nib.load(pial_mesh_fname)
-    cam_view = [152, 28, 15,
-                3.5, 26, 38.5,
+    inflated_ds_mesh = surf_set.load('inflated', stage='ds')
+    coord = inflated_ds_mesh.darrays[0].data[sim_vertex,:]
+    cam_view = [335, 9.5, 51,
+                60, 37, 17,
                 0, 0, 1]
     plot = show_surface(
-        pial_mesh, 
-        opacity=1, 
-        coords=pial_coord,
-        coord_size=2,
+        surf_set,
+        marker_coords=coord,
+        marker_size=5,
         camera_view=cam_view
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 176-179
+.. GENERATED FROM PYTHON SOURCE LINES 147-150
 
 .. image:: ../_static/tutorial_04_sim_location.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 181-182
+.. GENERATED FROM PYTHON SOURCE LINES 152-153
 
 We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-.. GENERATED FROM PYTHON SOURCE LINES 182-207
+.. GENERATED FROM PYTHON SOURCE LINES 153-179
 
 .. code-block:: default
 
@@ -251,7 +222,8 @@ We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The d
     # Simulate at a vertex on the pial surface
     pial_vertex = sim_vertex
     # Orientation of the simulated dipole
-    pial_unit_norm = mesh.darrays[2].data[pial_vertex,:]
+    multilayer_mesh = surf_set.load(stage='ds', orientation='link_vector', fixed=True)
+    pial_unit_norm = multilayer_mesh.darrays[2].data[pial_vertex,:]
     prefix = f'sim_{sim_vertex}_pial_'
 
     # Size of simulated patch of activity (mm)
@@ -273,23 +245,21 @@ We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The d
     ) 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 208-211
+.. GENERATED FROM PYTHON SOURCE LINES 180-183
 
 Localizer inversion
 -------------------
 Now we'll run a source reconstruction using the multilayer mesh, extract the signal in the pial layer, and select a prior based on the peak.
 
-.. GENERATED FROM PYTHON SOURCE LINES 211-243
+.. GENERATED FROM PYTHON SOURCE LINES 183-203
 
 .. code-block:: default
 
 
-
     [_,_,MU] = invert_ebb(
-        multilayer_mesh_fname, 
-        pial_sim_fname, 
-        n_layers, 
-        patch_size=patch_size, 
+        pial_sim_fname,
+        surf_set,
+        patch_size=patch_size,
         n_temp_modes=n_temp_modes,
         return_mu_matrix=True,
         spm_instance=spm
@@ -297,76 +267,72 @@ Now we'll run a source reconstruction using the multilayer mesh, extract the sig
 
     layer_vertices = np.arange(verts_per_surf)
     layer_ts, time, ch_names = load_source_time_series(
-        pial_sim_fname, 
-        mu_matrix=MU, 
+        pial_sim_fname,
+        mu_matrix=MU,
         vertices=layer_vertices
     )
 
-    # Layer peak
     m_layer_max = np.max(np.mean(layer_ts,axis=-1),-1)
     prior = np.argmax(m_layer_max)
 
-    sim_coord = ds_inflated.darrays[0].data[sim_vertex,:]
-    prior_coord = ds_inflated.darrays[0].data[prior,:]
 
-    print(f'Simulated vertex={sim_vertex}, Prior vertex={prior}')
-    print('Simulated coordinate')
-    print(sim_coord)
-    print('Prior coordinate')
-    print(prior_coord)
-
-
-.. GENERATED FROM PYTHON SOURCE LINES 244-245
+.. GENERATED FROM PYTHON SOURCE LINES 204-205
 
 We can see that the prior is the same as the location we simulated at
 
-.. GENERATED FROM PYTHON SOURCE LINES 245-274
+.. GENERATED FROM PYTHON SOURCE LINES 205-240
 
 .. code-block:: default
 
 
     # Interpolate for display on the original inflated surface
-    interpolated_data = interpolate_data(orig_inflated, ds_inflated, m_layer_max)
-          
+    interpolated_data = surf_set.interpolate_layer_data('pial', m_layer_max, from_stage='ds', to_stage='combined')
+
+    inflated_ds_mesh = surf_set.load('inflated', stage='ds')
+    coord = inflated_ds_mesh.darrays[0].data[prior, :]
+
     # Plot colors and camera view
-    max_abs = np.max(np.abs(m_layer_max))
+    max_abs = np.max(np.abs(interpolated_data))
     c_range = [-max_abs, max_abs]
-    cam_view=[289, 32, -19,
-              3.5, 29, 26,
-              0, 0, 1]
+    cam_view = [335, 9.5, 51,
+                60, 37, 17,
+                0, 0, 1]
 
     # Plot peak
-    colors,_ = color_map(
-        interpolated_data, 
-        "RdYlBu_r", 
-        c_range[0], 
-        c_range[1]    
+    colors, _ = color_map(
+        interpolated_data,
+        "RdYlBu_r",
+        c_range[0],
+        c_range[1]
     )
+    thresh_colors = np.ones((colors.shape[0], 4)) * 255
+    thresh_colors[:, :3] = colors
+    thresh_colors[interpolated_data < np.percentile(interpolated_data, 99.9), 3] = 0
 
     plot = show_surface(
-        orig_inflated, 
-        vertex_colors=colors, 
-        info=True, 
-        camera_view=cam_view, 
-        coords=prior_coord, 
-        coord_size=2, 
-        coord_color=[0,0,255]
+        surf_set,
+        vertex_colors=thresh_colors,
+        info=True,
+        camera_view=cam_view,
+        marker_coords=coord,
+        marker_size=5,
+        marker_color=[0, 0, 255]
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 275-278
+.. GENERATED FROM PYTHON SOURCE LINES 241-244
 
 .. image:: ../_static/tutorial_04_localizer.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 280-283
+.. GENERATED FROM PYTHON SOURCE LINES 246-249
 
 Sliding time window model comparison (pial - white matter)
 ----------------------------------------------------------
 Now we can run sliding time window model comparison between source models based on the pial and white matter surfaces using free energy. Specifically, we'll look at the difference in free energy between the two models (pial - white matter), in sliding and overlapping windows of 16ms. The free energy difference (pial - white matter) should be positive (more model evidence for the pial surface model) because we simulated activity on the pial surface.
 
-.. GENERATED FROM PYTHON SOURCE LINES 283-314
+.. GENERATED FROM PYTHON SOURCE LINES 249-272
 
 .. code-block:: default
 
@@ -381,12 +347,9 @@ Now we can run sliding time window model comparison between source models based 
     # Run sliding time window model comparison between the first layer (pial) and the last layer (white matter)
     [Fs,wois] = sliding_window_model_comparison(
         prior, 
-        nas, 
-        lpa, 
-        rpa, 
-        mri_fname, 
-        [layer_fnames[0], layer_fnames[-1]], 
-        pial_sim_fname,     
+        fid_coords,
+        pial_sim_fname,
+        surf_set_bilam,
         spm_instance=spm,
         invert_kwargs={
             'patch_size': patch_size, 
@@ -396,53 +359,59 @@ Now we can run sliding time window model comparison between source models based 
         }
     )
 
-    # Plot difference in free energy over time (pial minus white) - this should be positive
+
+.. GENERATED FROM PYTHON SOURCE LINES 273-274
+
+Plot difference in free energy over time (pial minus white) - this should be positive
+
+.. GENERATED FROM PYTHON SOURCE LINES 274-278
+
+.. code-block:: default
+
     plt.plot(np.mean(wois,axis=-1), Fs[0,:]-Fs[1,:])
     plt.xlabel('Time (ms)')
     plt.ylabel(r'$\Delta$F')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 315-318
+.. GENERATED FROM PYTHON SOURCE LINES 279-282
 
 .. image:: ../_static/tutorial_04_pial_sim_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 320-323
+.. GENERATED FROM PYTHON SOURCE LINES 284-287
 
 White matter surface simulation with pial - white matter sliding time window model comparison
 ---------------------------------------------------------------------------------------------
 Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, sliding time window model comparison should yield greater model evidence for the white matter surface, and therefore the difference in free energy (pial - white matter) should be negative.
 
-.. GENERATED FROM PYTHON SOURCE LINES 323-394
+.. GENERATED FROM PYTHON SOURCE LINES 287-341
 
 .. code-block:: default
 
 
-
     # Simulate at the corresponding vertex on the white matter surface
-    white_vertex = (n_layers-1)*verts_per_surf+sim_vertex
+    white_vertex = (surf_set.n_layers-1)*verts_per_surf+sim_vertex
     prefix = f'sim_{sim_vertex}_white_'
 
     # Generate simulated data
     white_sim_fname = run_dipole_simulation(
-        base_fname, 
-        prefix, 
-        white_vertex, 
-        sim_signal, 
-        pial_unit_norm, 
-        dipole_moment, 
-        sim_patch_size, 
+        base_fname,
+        prefix,
+        white_vertex,
+        sim_signal,
+        pial_unit_norm,
+        dipole_moment,
+        sim_patch_size,
         SNR,
         spm_instance=spm
-    ) 
+    )
 
     # Localizer
     [_,_,MU] = invert_ebb(
-        multilayer_mesh_fname, 
-        white_sim_fname, 
-        n_layers, 
-        patch_size=patch_size, 
+        white_sim_fname,
+        surf_set,
+        patch_size=patch_size,
         n_temp_modes=n_temp_modes,
         return_mu_matrix=True,
         spm_instance=spm
@@ -450,31 +419,21 @@ Let's simulate the same pattern of activity, in the same location, but on the wh
 
     layer_vertices = np.arange(verts_per_surf)
     layer_ts, time, _ = load_source_time_series(
-        white_sim_fname, 
-        mu_matrix=MU, 
+        white_sim_fname,
+        mu_matrix=MU,
         vertices=layer_vertices
     )
 
     # Layer peak
     m_layer_max = np.max(np.mean(layer_ts,axis=-1),-1)
     prior = np.argmax(m_layer_max)
-    prior_coord = ds_inflated.darrays[0].data[prior,:]
-
-    print(f'Simulated vertex={sim_vertex}, Prior vertex={prior}')
-    print('Simulated coordinate')
-    print(sim_coord)
-    print('Prior coordinate')
-    print(prior_coord)
 
     # Run sliding time window model comparison between the first layer (pial) and the last layer (white matter)
     [Fs,wois] = sliding_window_model_comparison(
-        prior, 
-        nas, 
-        lpa, 
-        rpa, 
-        mri_fname, 
-        [layer_fnames[0], layer_fnames[-1]], 
-        white_sim_fname, 
+        prior,
+        fid_coords,
+        white_sim_fname,
+        surf_set_bilam,
         spm_instance=spm,
         invert_kwargs={
             'patch_size': patch_size, 
@@ -484,25 +443,33 @@ Let's simulate the same pattern of activity, in the same location, but on the wh
         }
     )
 
-    # Plot difference in free energy over time (pial minus white) - this should be negative
+
+.. GENERATED FROM PYTHON SOURCE LINES 342-343
+
+Plot difference in free energy over time (pial minus white) - this should be negative
+
+.. GENERATED FROM PYTHON SOURCE LINES 343-347
+
+.. code-block:: default
+
     plt.plot(np.mean(wois,axis=-1), Fs[0,:]-Fs[1,:])
     plt.xlabel('Time (ms)')
     plt.ylabel(r'$\Delta$F')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 395-398
+.. GENERATED FROM PYTHON SOURCE LINES 348-351
 
 .. image:: ../_static/tutorial_04_white_sim_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 401-404
+.. GENERATED FROM PYTHON SOURCE LINES 354-357
 
 Simulation in each layer with sliding time window model comparison across layers
 --------------------------------------------------------------------------------
 That was sliding time window model comparison with two candidate models: one based on the white matter surface, and one on the pial. Let's now simulate on each layer, and for each simulation, run sliding time window model comparison across all layers. We'll turn off SPM visualization here.
 
-.. GENERATED FROM PYTHON SOURCE LINES 404-476
+.. GENERATED FROM PYTHON SOURCE LINES 357-418
 
 .. code-block:: default
 
@@ -510,29 +477,28 @@ That was sliding time window model comparison with two candidate models: one bas
     # Now simulate at the corresponding vertex on each layer, and for each simulation, run sliding window model
     # comparison across all layers
     all_layerF = []
-    for l in range(n_layers):
+    for l in range(surf_set.n_layers):
         print(f'Simulating in layer {l}')
-        l_vertex = l*verts_per_surf+sim_vertex
+        l_vertex = l * verts_per_surf + sim_vertex
         prefix = f'sim_{sim_vertex}{l}_'
-    
+
         l_sim_fname = run_dipole_simulation(
-            base_fname, 
-            prefix, 
-            l_vertex, 
-            sim_signal, 
-            pial_unit_norm, 
-            dipole_moment, 
-            sim_patch_size, 
-            SNR, 
+            base_fname,
+            prefix,
+            l_vertex,
+            sim_signal,
+            pial_unit_norm,
+            dipole_moment,
+            sim_patch_size,
+            SNR,
             spm_instance=spm
-        ) 
-    
+        )
+
         # Localizer
-        [_,_,MU] = invert_ebb(
-            multilayer_mesh_fname, 
-            l_sim_fname, 
-            n_layers, 
-            patch_size=patch_size, 
+        [_, _, MU] = invert_ebb(
+            l_sim_fname,
+            surf_set,
+            patch_size=patch_size,
             n_temp_modes=n_temp_modes,
             return_mu_matrix=True,
             viz=False,
@@ -541,49 +507,39 @@ That was sliding time window model comparison with two candidate models: one bas
 
         layer_vertices = np.arange(verts_per_surf)
         layer_ts, time, _ = load_source_time_series(
-            l_sim_fname, 
-            mu_matrix=MU, 
+            l_sim_fname,
+            mu_matrix=MU,
             vertices=layer_vertices
         )
 
         # Layer peak
-        m_layer_max = np.max(np.mean(layer_ts,axis=-1),-1)
-        prior = np.argmax(m_layer_max)    
-        prior_coord = ds_inflated.darrays[0].data[prior,:]
+        m_layer_max = np.max(np.mean(layer_ts, axis=-1), -1)
+        prior = np.argmax(m_layer_max)
 
-        print(f'Simulated vertex={sim_vertex}, Prior vertex={prior}')
-        print('Simulated coordinate')
-        print(sim_coord)
-        print('Prior coordinate')
-        print(prior_coord)
-
-        [Fs,wois] = sliding_window_model_comparison(
-            prior, 
-            nas, 
-            lpa, 
-            rpa, 
-            mri_fname, 
-            layer_fnames, 
-            l_sim_fname, 
+        [Fs, wois] = sliding_window_model_comparison(
+            prior,
+            fid_coords,
+            l_sim_fname,
+            surf_set,
             viz=False,
             spm_instance=spm,
             invert_kwargs={
-                'patch_size': patch_size, 
+                'patch_size': patch_size,
                 'n_temp_modes': sliding_n_temp_modes,
-                'win_size': win_size, 
+                'win_size': win_size,
                 'win_overlap': win_overlap,
             }
         )
-    
+
         all_layerF.append(Fs)
     all_layerF = np.squeeze(np.array(all_layerF))
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 477-478
+.. GENERATED FROM PYTHON SOURCE LINES 419-420
 
 For each simulation, we can plot the free energy for all models relative to the worst model within a central time window. The layer model with the highest free energy should correspond to the layer that the activity was simulated in.
 
-.. GENERATED FROM PYTHON SOURCE LINES 478-513
+.. GENERATED FROM PYTHON SOURCE LINES 420-455
 
 .. code-block:: default
 
@@ -593,13 +549,13 @@ For each simulation, we can plot the free energy for all models relative to the 
     woi_idx = np.where((woi_t>=-20) & (woi_t<=20))[0]
     m_all_layerF = np.mean(all_layerF[:,:,woi_idx],axis=2)
 
-    col_r = plt.cm.cool(np.linspace(0,1, num=n_layers))
+    col_r = plt.cm.cool(np.linspace(0,1, num=surf_set.n_layers))
     plt.figure(figsize=(10,4))
 
     # For each simulation, plot the mean free energy of each layer model relative to that of the worst
     # model for that simulation
     plt.subplot(1,2,1)
-    for l in range(n_layers):
+    for l in range(surf_set.n_layers):
         layerF = m_all_layerF[l,:]
         plt.plot(layerF-np.min(layerF), label=f'{l}', color=col_r[l,:])
     plt.legend()
@@ -609,7 +565,7 @@ For each simulation, we can plot the free energy for all models relative to the 
     # For each simulation, find which layer model had the greatest free energy
     plt.subplot(1,2,2)
     peaks=[]
-    for l in range(n_layers):
+    for l in range(surf_set.n_layers):
         layerF = m_all_layerF[l,:]
         layerF = layerF-np.min(layerF)
         pk = np.argmax(layerF)
@@ -623,20 +579,20 @@ For each simulation, we can plot the free energy for all models relative to the 
     plt.tight_layout()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 514-517
+.. GENERATED FROM PYTHON SOURCE LINES 456-459
 
 .. image:: ../_static/tutorial_04_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 517-538
+.. GENERATED FROM PYTHON SOURCE LINES 459-480
 
 .. code-block:: default
 
 
     # Normalization step
     norm_layerF = np.zeros(m_all_layerF.shape)
-    for l in range(n_layers):
+    for l in range(surf_set.n_layers):
         norm_layerF[l,:] = m_all_layerF[l,:] - np.min(m_all_layerF[l,:])
 
     # Transpose for visualization
@@ -655,13 +611,13 @@ For each simulation, we can plot the free energy for all models relative to the 
     cb.set_label(r'$\Delta F$', fontsize=14)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 539-542
+.. GENERATED FROM PYTHON SOURCE LINES 481-484
 
 .. image:: ../_static/tutorial_04_results_matrix.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 544-549
+.. GENERATED FROM PYTHON SOURCE LINES 486-491
 
 .. code-block:: default
 

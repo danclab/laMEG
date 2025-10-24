@@ -17,7 +17,7 @@ The examples can be browsed directly on `Github <https://github.com/danclab/laME
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="Surface processing">
+    <div class="sphx-glr-thumbcontainer" tooltip="These operations are essential to obtain geometrically accurate, computationally efficient, and...">
 
 .. only:: html
 

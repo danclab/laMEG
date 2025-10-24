@@ -29,7 +29,7 @@ Setting up the simulations
 
 Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.
 
-.. GENERATED FROM PYTHON SOURCE LINES 12-48
+.. GENERATED FROM PYTHON SOURCE LINES 12-46
 
 .. code-block:: default
 
@@ -38,14 +38,14 @@ Simulations are based on an existing dataset, which is used to define the sampli
     import os
     import shutil
     import numpy as np
-    import nibabel as nib
     import matplotlib.pyplot as plt
     import tempfile
 
     from lameg.invert import invert_ebb, coregister, load_source_time_series
     from lameg.laminar import roi_power_comparison
     from lameg.simulate import run_current_density_simulation
-    from lameg.surf import interpolate_data
+    from lameg.surf import LayerSurfaceSet
+    from lameg.util import get_fiducial_coords
     from lameg.viz import show_surface, color_map
     import spm_standalone
 
@@ -54,52 +54,40 @@ Simulations are based on an existing dataset, which is used to define the sampli
     ses_id = 'ses-01'
 
     # Fiducial coil coordinates
-    nas = [0.9662503311032098, 108.83514306876269, 1.6712361927090313]
-    lpa = [-74.28671169006893, 20.15061014698176, -29.849056272705948]
-    rpa = [76.02110531729883, 18.9467849625573, -25.779407159603114]
+    fid_coords = get_fiducial_coords(subj_id, '../test_data/participants.tsv')
 
     # Data file to base simulations on
     data_file = os.path.join(
-        '../test_data', 
-        subj_id, 
+        '../test_data',
+        subj_id,
         'meg',
-        ses_id, 
-        'spm/spm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
+        ses_id,
+        f'spm/spm-converted_autoreject-{subj_id}-{ses_id}-001-btn_trial-epo.mat'
     )
 
     spm = spm_standalone.initialize()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 49-50
+.. GENERATED FROM PYTHON SOURCE LINES 47-48
 
 For source reconstructions, we need an MRI and a surface mesh. The simulations and source reconstructions will be based on a forward model using the multilayer mesh
 
-.. GENERATED FROM PYTHON SOURCE LINES 50-66
+.. GENERATED FROM PYTHON SOURCE LINES 48-54
 
 .. code-block:: default
 
 
-    # Native space MRI to use for coregistration
-    mri_fname = os.path.join('../test_data', subj_id, 'mri/s2023-02-28_13-33-133958-00001-00224-1.nii' )
+    surf_set_bilam = LayerSurfaceSet(subj_id, 2)
+    surf_set = LayerSurfaceSet(subj_id, 11)
 
-    # Mesh to use for forward model in the simulations
-    multilayer_mesh_fname = os.path.join('../test_data', subj_id, 'surf/multilayer.11.ds.link_vector.fixed.gii')
-
-    # Load multilayer mesh and compute the number of vertices per layer
-    mesh = nib.load(multilayer_mesh_fname)
-    n_layers = 11
-    verts_per_surf = int(mesh.darrays[0].data.shape[0]/n_layers)
-
-    # Inflated meshes for plotting
-    ds_inflated = nib.load(os.path.join('../test_data', subj_id, 'surf', 'inflated.ds.gii'))
-    orig_inflated = nib.load(os.path.join('../test_data', subj_id, 'surf', 'inflated.gii'))
+    verts_per_surf = surf_set.get_vertices_per_layer()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 67-68
+.. GENERATED FROM PYTHON SOURCE LINES 55-56
 
 We're going to copy the data file to a temporary directory and direct all output there.
 
-.. GENERATED FROM PYTHON SOURCE LINES 68-89
+.. GENERATED FROM PYTHON SOURCE LINES 56-77
 
 .. code-block:: default
 
@@ -125,11 +113,11 @@ We're going to copy the data file to a temporary directory and direct all output
     base_fname = os.path.join(tmp_dir, f'{data_base}.mat')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 90-91
+.. GENERATED FROM PYTHON SOURCE LINES 78-79
 
 Invert the subject's data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations
 
-.. GENERATED FROM PYTHON SOURCE LINES 91-118
+.. GENERATED FROM PYTHON SOURCE LINES 79-102
 
 .. code-block:: default
 
@@ -141,33 +129,29 @@ Invert the subject's data using the multilayer mesh. This step only has to be do
 
     # Coregister data to multilayer mesh
     coregister(
-        nas, 
-        lpa, 
-        rpa, 
-        mri_fname, 
-        multilayer_mesh_fname, 
+        fid_coords,
         base_fname,
+        surf_set,
         spm_instance=spm
     )
 
     # Run inversion
     [_,_] = invert_ebb(
-        multilayer_mesh_fname, 
-        base_fname, 
-        n_layers, 
+        base_fname,
+        surf_set,
         patch_size=patch_size, 
         n_temp_modes=n_temp_modes,
         spm_instance=spm
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 119-122
+.. GENERATED FROM PYTHON SOURCE LINES 103-106
 
 Simulating a signal on the pial surface
 ---------------------------------------
 We're going to simulate 1s of signal with a 20Hz sine wave that starts at 0.5s with a dipole moment of 10nAm
 
-.. GENERATED FROM PYTHON SOURCE LINES 122-140
+.. GENERATED FROM PYTHON SOURCE LINES 106-124
 
 .. code-block:: default
 
@@ -190,52 +174,48 @@ We're going to simulate 1s of signal with a 20Hz sine wave that starts at 0.5s w
     plt.ylabel('Amplitude (nAm)')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 141-144
+.. GENERATED FROM PYTHON SOURCE LINES 125-128
 
 .. image:: ../_static/tutorial_05_sim_signal.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 146-147
+.. GENERATED FROM PYTHON SOURCE LINES 130-131
 
 We need to pick a location (mesh vertex) to simulate at
 
-.. GENERATED FROM PYTHON SOURCE LINES 147-167
+.. GENERATED FROM PYTHON SOURCE LINES 131-147
 
 .. code-block:: default
 
 
     # Vertex to simulate activity at
-    sim_vertex=24585
+    sim_vertex=24581
 
-    pial_ds_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'pial.ds.link_vector.fixed.gii')
-    pial_ds_mesh = nib.load(pial_ds_mesh_fname)
-    pial_coord = pial_ds_mesh.darrays[0].data[sim_vertex,:]
-    pial_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'pial.gii')
-    pial_mesh = nib.load(pial_mesh_fname)
-    cam_view = [152, 28, 15,
-                3.5, 26, 38.5,
+    inflated_ds_mesh = surf_set.load('inflated', stage='ds')
+    coord = inflated_ds_mesh.darrays[0].data[sim_vertex,:]
+    cam_view = [335, 9.5, 51,
+                60, 37, 17,
                 0, 0, 1]
     plot = show_surface(
-        pial_mesh, 
-        opacity=1, 
-        coords=pial_coord,
-        coord_size=2,
+        surf_set,
+        marker_coords=coord,
+        marker_size=5,
         camera_view=cam_view
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 168-171
+.. GENERATED FROM PYTHON SOURCE LINES 148-151
 
 .. image:: ../_static/tutorial_05_sim_location.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 173-174
+.. GENERATED FROM PYTHON SOURCE LINES 153-154
 
 We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-.. GENERATED FROM PYTHON SOURCE LINES 174-196
+.. GENERATED FROM PYTHON SOURCE LINES 154-176
 
 .. code-block:: default
 
@@ -262,33 +242,29 @@ We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The d
     )   
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 197-200
+.. GENERATED FROM PYTHON SOURCE LINES 177-180
 
 Laminar comparison (pial - white matter)
 
 Now we can run source reconstruction using a source model based on the multi-laminar surface, define an ROI based on the change in power from a baseline time period, and then compare the change in power between the pial and white matter surfaces. First we'll run the inversion.
 
-.. GENERATED FROM PYTHON SOURCE LINES 200-224
+.. GENERATED FROM PYTHON SOURCE LINES 180-200
 
 .. code-block:: default
 
 
     # Coregister data to multilayer mesh
     coregister(
-        nas, 
-        lpa, 
-        rpa, 
-        mri_fname, 
-        multilayer_mesh_fname, 
+        fid_coords,
         pial_sim_fname,
+        surf_set_bilam,
         spm_instance=spm
     )
 
     # Run inversion on simulated data in a 5Hz window around the simulated frequency using the multilayer surface
     [_,_,MU] = invert_ebb(
-        multilayer_mesh_fname, 
-        pial_sim_fname, 
-        n_layers, 
+        pial_sim_fname,
+        surf_set_bilam,
         foi=[freq-10, freq+10],
         patch_size=patch_size, 
         n_temp_modes=n_temp_modes,
@@ -297,97 +273,107 @@ Now we can run source reconstruction using a source model based on the multi-lam
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 225-226
+.. GENERATED FROM PYTHON SOURCE LINES 201-202
 
 Now we can defined the ROI based on where the change in power from baseline exceeds some percentile threshold in either the pial or the white matter surface, then average the change in power within the ROI, and compare the magnitude of the change between layers. The t-statistic here should be positive, indicating a greater change in power from baseline in the pial surface, because we simulated activity on the pial surface
 
-.. GENERATED FROM PYTHON SOURCE LINES 226-259
+.. GENERATED FROM PYTHON SOURCE LINES 202-249
 
 .. code-block:: default
 
 
     laminar_t_statistic, laminar_p_value, df, roi_idx = roi_power_comparison(
-        pial_sim_fname, 
-        [0, 500], 
-        [-500, 0], 
-        mesh, 
-        n_layers, 
+        pial_sim_fname,
+        [0, 500],
+        [-500, 0],
         99.99,
+        surf_set_bilam,
         mu_matrix=MU
     )
     print(f't({df})={laminar_t_statistic}, p={laminar_p_value}')
 
-    roi=np.zeros(verts_per_surf)
-    roi[roi_idx]=1
+    roi = np.zeros(verts_per_surf)
+    roi[roi_idx] = 1
 
     # Interpolate for display on the original inflated surface
-    interpolated_data = interpolate_data(orig_inflated, ds_inflated, roi)
-          
+    interpolated_data = surf_set.interpolate_layer_data('pial', roi, from_stage='ds', to_stage='combined')
+
+    inflated_ds_mesh = surf_set.load('inflated', stage='ds')
+    coord = inflated_ds_mesh.darrays[0].data[sim_vertex, :]
+
     # Plot colors and camera view
     c_range = [-1, 1]
-    cam_view=[289, 32, -19,
-              3.5, 29, 26,
-              0, 0, 1]
+    cam_view = [335, 9.5, 51,
+                60, 37, 17,
+                0, 0, 1]
 
     # Plot change in power on each surface
-    colors,_ = color_map(
-        interpolated_data, 
-        "RdYlBu_r", 
-        c_range[0], 
+    colors, _ = color_map(
+        interpolated_data,
+        "RdYlBu_r",
+        c_range[0],
         c_range[1]
     )
-    plot = show_surface(orig_inflated, vertex_colors=colors, info=True, camera_view=cam_view)
+    thresh_colors = np.ones((colors.shape[0], 4)) * 255
+    thresh_colors[:, :3] = colors
+    thresh_colors[interpolated_data < .1, 3] = 0
+
+    plot = show_surface(
+        surf_set,
+        vertex_colors=thresh_colors,
+        info=True,
+        camera_view=cam_view,
+        marker_coords=coord,
+        marker_size=5,
+        marker_color=[0, 0, 255]
+    )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 260-263
+.. GENERATED FROM PYTHON SOURCE LINES 250-253
 
 .. image:: ../_static/tutorial_05_localizer.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 266-269
+.. GENERATED FROM PYTHON SOURCE LINES 256-259
 
 White matter surface simulation with pial - white matter ROI comparison
 -----------------------------------------------------------------------
 Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, there should be a greater change in power on the white matter surface.
 
-.. GENERATED FROM PYTHON SOURCE LINES 269-321
+.. GENERATED FROM PYTHON SOURCE LINES 259-307
 
 .. code-block:: default
 
 
     # Simulate at the corresponding vertex on the white matter surface
-    white_vertex = (n_layers-1)*verts_per_surf+sim_vertex
+    white_vertex = (surf_set.n_layers-1)*verts_per_surf+sim_vertex
     prefix = f'sim_{sim_vertex}_white_'
 
     # Generate simulated data
     white_sim_fname = run_current_density_simulation(
-        base_fname, 
-        prefix, 
-        white_vertex, 
-        sim_signal, 
+        base_fname,
+        prefix,
+        white_vertex,
+        sim_signal,
         dipole_moment,
-        sim_patch_size, 
+        sim_patch_size,
         SNR,
         spm_instance=spm
     )
 
     # Coregister data to multilayer mesh
     coregister(
-        nas, 
-        lpa, 
-        rpa, 
-        mri_fname, 
-        multilayer_mesh_fname, 
+        fid_coords,
         white_sim_fname,
+        surf_set_bilam,
         spm_instance=spm
     )
 
     # Run inversion on simulated data in a 5Hz window around the simulated frequency using the multilayer surface
     [_,_,MU] = invert_ebb(
-        multilayer_mesh_fname, 
         white_sim_fname,
-        n_layers, 
+        surf_set_bilam,
         foi=[freq-10, freq+10],
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
@@ -397,111 +383,97 @@ Let's simulate the same pattern of activity, in the same location, but on the wh
 
     # Compare power t statistic should be negative (more power in white matter layer)
     laminar_t_statistic, laminar_p_value, df, roi_idx = roi_power_comparison(
-        white_sim_fname, 
-        [0, 500], 
-        [-500, 0], 
-        mesh, 
-        n_layers, 
+        white_sim_fname,
+        [0, 500],
+        [-500, 0],
         99.99,
-        mu_matrix=MU
+        surf_set_bilam,
+        mu_matrix=MU,
+        roi_idx=roi_idx
     )
     print(f't({df})={laminar_t_statistic}, p={laminar_p_value}')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 322-325
+.. GENERATED FROM PYTHON SOURCE LINES 308-311
 
 Simulation in each layer with ROI power analysis across layers
 --------------------------------------------------------------
 That was the ROI analysis with two surfaces: the white matter and pial surfaces. Let's now simulate on each layer, and for each simulation, look at the change in power from baseline within the ROI across all layers. We'll turn off SPM visualization here.
 
-.. GENERATED FROM PYTHON SOURCE LINES 325-431
+.. GENERATED FROM PYTHON SOURCE LINES 311-402
 
 .. code-block:: default
 
 
     # Now simulate at the corresponding vertex on each layer, and for each simulation, compute power in
     # all layers
-    all_layerPow=[]
+    all_layerPow = []
 
-    for sl in range(n_layers):
+    for sl in range(surf_set.n_layers):
         print(f'Simulating in layer {sl}')
-        l_vertex = sl*verts_per_surf+sim_vertex
+        l_vertex = sl * verts_per_surf + sim_vertex
         prefix = f'sim_{sim_vertex}_{sl}_'
 
         l_sim_fname = run_current_density_simulation(
-            base_fname, 
-            prefix, 
-            l_vertex, 
-            sim_signal, 
-            dipole_moment, 
-            sim_patch_size, 
-            SNR, 
+            base_fname,
+            prefix,
+            l_vertex,
+            sim_signal,
+            dipole_moment,
+            sim_patch_size,
+            SNR,
             spm_instance=spm
-        ) 
+        )
 
         coregister(
-            nas, 
-            lpa, 
-            rpa, 
-            mri_fname, 
-            multilayer_mesh_fname, 
-            l_sim_fname, 
+            fid_coords,
+            l_sim_fname,
+            surf_set,
             viz=False,
             spm_instance=spm
         )
 
-        [_,_,MU] = invert_ebb(
-            multilayer_mesh_fname, 
-            l_sim_fname, 
-            n_layers, 
-            foi=[freq-10, freq+10], 
-            patch_size=patch_size, 
-            n_temp_modes=n_temp_modes, 
-            return_mu_matrix=True, 
+        [_, _, MU] = invert_ebb(
+            l_sim_fname,
+            surf_set,
+            foi=[freq - 10, freq + 10],
+            patch_size=patch_size,
+            n_temp_modes=n_temp_modes,
+            return_mu_matrix=True,
             viz=False,
             spm_instance=spm
         )
 
-        laminar_t_statistic, laminar_p_value, df, roi_idx = roi_power_comparison(
-            l_sim_fname, 
-            [0, 500], 
-            [-500, 0], 
-            mesh, 
-            n_layers, 
-            99.99,
-            mu_matrix=MU
-        )    
-
-        roi_pow=[]
-        for il in range(n_layers):
-            layer_roi_verts = il*verts_per_surf+roi_idx
+        roi_pow = []
+        for il in range(surf_set.n_layers):
+            layer_roi_verts = il * verts_per_surf + roi_idx
             layer_ts, time, _ = load_source_time_series(
-                l_sim_fname, 
-                mu_matrix=MU, 
+                l_sim_fname,
+                mu_matrix=MU,
                 vertices=layer_roi_verts.astype(int)
             )
             # Compute power in baseline and stimulus time periods
-            base_t_idx = np.where(time<0)[0]
-            exp_t_idx = np.where(time>=0)[0]
-        
-            layer_base_power = np.squeeze(np.var(layer_ts[:,base_t_idx,:],axis=1))
-            layer_exp_power = np.squeeze(np.var(layer_ts[:,exp_t_idx,:],axis=1))
-            layer_power_change = (layer_exp_power-layer_base_power)/layer_base_power
+            base_t_idx = np.where(time < 0)[0]
+            exp_t_idx = np.where(time >= 0)[0]
 
-            roi_pow.append(np.abs(np.mean(layer_power_change,axis=0)))
+            layer_base_power = np.squeeze(np.var(layer_ts[:, base_t_idx, :], axis=1))
+            layer_exp_power = np.squeeze(np.var(layer_ts[:, exp_t_idx, :], axis=1))
+            layer_power_change = (layer_exp_power - layer_base_power) / layer_base_power
+
+            roi_pow.append(np.abs(np.mean(layer_power_change, axis=0)))
 
         all_layerPow.append(roi_pow)
-    all_layerPow=np.array(all_layerPow)
+    all_layerPow = np.array(all_layerPow)
 
-    # Average power over trials
+    ## Average power over trials
     mean_layerPow=np.mean(all_layerPow,axis=-1)
 
-    col_r = plt.cm.cool(np.linspace(0,1, num=n_layers))
+    col_r = plt.cm.cool(np.linspace(0,1, num=surf_set.n_layers))
     plt.figure(figsize=(10,4))
 
     # For each simulation, plot the power in each layer model
     plt.subplot(1,2,1)
-    for l in range(n_layers):
+    for l in range(surf_set.n_layers):
         layerPow=mean_layerPow[l,:]
         plt.plot(layerPow, label=f'{l}', color=col_r[l,:])
     plt.legend()
@@ -511,7 +483,7 @@ That was the ROI analysis with two surfaces: the white matter and pial surfaces.
     # For each simulation, find which layer had the greatest power
     plt.subplot(1,2,2)
     peaks=[]
-    for l in range(n_layers):
+    for l in range(surf_set.n_layers):
         layerPow=mean_layerPow[l,:]
         pk=np.argmax(layerPow)
         peaks.append(pk)
@@ -522,24 +494,24 @@ That was the ROI analysis with two surfaces: the white matter and pial surfaces.
     plt.xlabel('Sim layer')
     plt.ylabel('Peak power')
     plt.tight_layout()
-    plt.savefig('roi_power.pdf')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 432-435
+.. GENERATED FROM PYTHON SOURCE LINES 403-406
 
 .. image:: ../_static/tutorial_05_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 437-460
+.. GENERATED FROM PYTHON SOURCE LINES 406-429
 
 .. code-block:: default
+
 
     mean_layerPow=np.mean(all_layerPow,axis=-1)
 
     # Normalization step
     norm_mean_layerPow = np.zeros(mean_layerPow.shape)
-    for l in range(n_layers):
+    for l in range(surf_set.n_layers):
         norm_mean_layerPow[l,:] = mean_layerPow[l,:] - np.min(mean_layerPow[l,:])
 
     # Transpose for visualization
@@ -556,16 +528,15 @@ That was the ROI analysis with two surfaces: the white matter and pial surfaces.
     plt.ylabel('Evaluated layer', fontsize=14)
     cb=plt.colorbar(im)
     cb.set_label('ROI mean power', fontsize=14)
-    plt.savefig('roi_power_matrix.pdf')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 461-464
+.. GENERATED FROM PYTHON SOURCE LINES 430-433
 
 .. image:: ../_static/tutorial_05_results_matrix.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 466-471
+.. GENERATED FROM PYTHON SOURCE LINES 435-440
 
 .. code-block:: default
 

@@ -47,14 +47,14 @@ Simulations are based on an existing dataset, which is used to define the sampli
     import os
     import shutil
     import numpy as np
-    import nibabel as nib
     import matplotlib.pyplot as plt
     import tempfile
 
     from lameg.invert import coregister, invert_ebb
     from lameg.simulate import run_current_density_simulation
     from lameg.laminar import model_comparison
-    from lameg.util import get_surface_names, load_meg_sensor_data, get_fiducial_coords
+    from lameg.surf import LayerSurfaceSet
+    from lameg.util import load_meg_sensor_data, get_fiducial_coords
     from lameg.viz import show_surface
     import spm_standalone
 
@@ -63,15 +63,15 @@ Simulations are based on an existing dataset, which is used to define the sampli
     ses_id = 'ses-01'
 
     # Fiducial coil coordinates
-    nas, lpa, rpa = get_fiducial_coords(subj_id, '../test_data/participants.tsv')
+    fid_coords = get_fiducial_coords(subj_id, '../test_data/participants.tsv')
 
     # Data file to base simulations on
     data_file = os.path.join(
-        '../test_data', 
-        subj_id, 
+        '../test_data',
+        subj_id,
         'meg',
-        ses_id, 
-        'spm/spm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
+        ses_id,
+        f'spm/spm-converted_autoreject-{subj_id}-{ses_id}-001-btn_trial-epo.mat'
     )
 
     spm = spm_standalone.initialize()
@@ -81,36 +81,22 @@ Simulations are based on an existing dataset, which is used to define the sampli
 
 For source reconstructions, we need an MRI and a surface mesh. The simulations will be based on a forward model using the multilayer mesh, and the model comparison will use each layer mesh
 
-.. GENERATED FROM PYTHON SOURCE LINES 57-77
+.. GENERATED FROM PYTHON SOURCE LINES 57-63
 
 .. code-block:: default
 
 
-    # Native space MRI to use for coregistration
-    mri_fname = os.path.join('../test_data', subj_id, 'mri', 's2023-02-28_13-33-133958-00001-00224-1.nii' )
+    surf_set_bilam = LayerSurfaceSet(subj_id, 2)
+    surf_set = LayerSurfaceSet(subj_id, 11)
 
-    # Mesh to use for forward model in the simulations
-    multilayer_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'multilayer.11.ds.link_vector.fixed.gii')
-
-    # Load multilayer mesh and compute the number of vertices per layer
-    mesh = nib.load(multilayer_mesh_fname)
-    n_layers = 11
-    verts_per_surf = int(mesh.darrays[0].data.shape[0]/n_layers)
-
-    # Get name of each mesh that makes up the layers of the multilayer mesh - these will be used for the source 
-    # reconstruction
-    layer_fnames = get_surface_names(
-        n_layers, 
-        os.path.join('../test_data', subj_id, 'surf'), 
-        'link_vector.fixed'
-    )
+    verts_per_surf = surf_set.get_vertices_per_layer()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 78-79
+.. GENERATED FROM PYTHON SOURCE LINES 64-65
 
 We're going to copy the data file to a temporary directory and direct all output there.
 
-.. GENERATED FROM PYTHON SOURCE LINES 79-100
+.. GENERATED FROM PYTHON SOURCE LINES 65-86
 
 .. code-block:: default
 
@@ -136,11 +122,11 @@ We're going to copy the data file to a temporary directory and direct all output
     base_fname = os.path.join(tmp_dir, f'{data_base}.mat')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 101-102
+.. GENERATED FROM PYTHON SOURCE LINES 87-88
 
 Invert the subject's data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations
 
-.. GENERATED FROM PYTHON SOURCE LINES 102-129
+.. GENERATED FROM PYTHON SOURCE LINES 88-111
 
 .. code-block:: default
 
@@ -152,33 +138,29 @@ Invert the subject's data using the multilayer mesh. This step only has to be do
 
     # Coregister data to multilayer mesh
     coregister(
-        nas, 
-        lpa, 
-        rpa, 
-        mri_fname, 
-        multilayer_mesh_fname, 
+        fid_coords,
         base_fname,
+        surf_set,
         spm_instance=spm
     )
 
     # Run inversion
     [_,_] = invert_ebb(
-        multilayer_mesh_fname, 
-        base_fname, 
-        n_layers, 
+        base_fname,
+        surf_set,
         patch_size=patch_size, 
         n_temp_modes=n_temp_modes,
         spm_instance=spm
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 130-133
+.. GENERATED FROM PYTHON SOURCE LINES 112-115
 
 Simulating a signal on the pial surface
 ---------------------------------------
 We're going to simulate 1s of a 20Hz sine wave with a dipole moment of 10nAm
 
-.. GENERATED FROM PYTHON SOURCE LINES 133-149
+.. GENERATED FROM PYTHON SOURCE LINES 115-131
 
 .. code-block:: default
 
@@ -199,52 +181,48 @@ We're going to simulate 1s of a 20Hz sine wave with a dipole moment of 10nAm
     plt.ylabel('Amplitude (nAm)')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 150-153
+.. GENERATED FROM PYTHON SOURCE LINES 132-135
 
 .. image:: ../_static/tutorial_02_sim_signal.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 155-156
+.. GENERATED FROM PYTHON SOURCE LINES 137-138
 
 We need to pick a location (mesh vertex) to simulate at
 
-.. GENERATED FROM PYTHON SOURCE LINES 156-176
+.. GENERATED FROM PYTHON SOURCE LINES 138-154
 
 .. code-block:: default
 
 
     # Vertex to simulate activity at
-    sim_vertex=24585
+    sim_vertex=24581
 
-    pial_ds_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'pial.ds.link_vector.fixed.gii')
-    pial_ds_mesh = nib.load(pial_ds_mesh_fname)
-    pial_coord = pial_ds_mesh.darrays[0].data[sim_vertex,:]
-    pial_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'pial.gii')
-    pial_mesh = nib.load(pial_mesh_fname)
-    cam_view = [152, 28, 15,
-                3.5, 26, 38.5,
+    inflated_ds_mesh = surf_set.load('inflated', stage='ds')
+    coord = inflated_ds_mesh.darrays[0].data[sim_vertex,:]
+    cam_view = [335, 9.5, 51,
+                60, 37, 17,
                 0, 0, 1]
     plot = show_surface(
-        pial_mesh, 
-        opacity=1, 
-        coords=pial_coord,
-        coord_size=2,
+        surf_set,
+        marker_coords=coord,
+        marker_size=5,
         camera_view=cam_view
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 177-180
+.. GENERATED FROM PYTHON SOURCE LINES 155-158
 
 .. image:: ../_static/tutorial_02_sim_location.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 182-183
+.. GENERATED FROM PYTHON SOURCE LINES 160-161
 
 We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-.. GENERATED FROM PYTHON SOURCE LINES 183-212
+.. GENERATED FROM PYTHON SOURCE LINES 161-190
 
 .. code-block:: default
 
@@ -278,31 +256,28 @@ We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The d
     plt.ylim([-225, 225])
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 213-216
+.. GENERATED FROM PYTHON SOURCE LINES 191-194
 
 .. image:: ../_static/tutorial_02_pial_sim_sensor_signal.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 218-221
+.. GENERATED FROM PYTHON SOURCE LINES 196-199
 
 Model comparison (pial - white matter)
 --------------------------------------
 Now we can run model comparison between source models based on the pial and white matter surfaces using free energy. Specifically, we'll look at the difference in free energy between the two models (pial - white matter). This should be positive (more model evidence for the pial surface model) because we simulated activity on the pial surface
 
-.. GENERATED FROM PYTHON SOURCE LINES 221-241
+.. GENERATED FROM PYTHON SOURCE LINES 199-212
 
 .. code-block:: default
 
 
     # Run model comparison between the first layer (pial) and the last layer (white matter)
     [F,_] = model_comparison(
-        nas, 
-        lpa, 
-        rpa, 
-        mri_fname, 
-        [layer_fnames[0], layer_fnames[-1]], 
-        pial_sim_fname, 
+        fid_coords,
+        pial_sim_fname,
+        surf_set_bilam,
         spm_instance=spm,
         invert_kwargs={
             'patch_size': patch_size, 
@@ -310,62 +285,75 @@ Now we can run model comparison between source models based on the pial and whit
         }
     )
 
-    # The difference in free energy is an approximation of the Bayes factor between the two models
-    # This value should be positive (more model evidence for the pial layer model)
+
+.. GENERATED FROM PYTHON SOURCE LINES 213-215
+
+The difference in free energy is an approximation of the Bayes factor between the two models
+This value should be positive (more model evidence for the pial layer model)
+
+.. GENERATED FROM PYTHON SOURCE LINES 215-217
+
+.. code-block:: default
+
     F[0]-F[1]
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 242-245
+.. GENERATED FROM PYTHON SOURCE LINES 218-221
 
 White matter surface simulation with pial - white matter model comparison
 -------------------------------------------------------------------------
 Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, model comparison should yield greater model evidence for the white matter surface, and therefore the difference in free energy (pial - white matter) should be negative.
 
-.. GENERATED FROM PYTHON SOURCE LINES 245-280
+.. GENERATED FROM PYTHON SOURCE LINES 221-249
 
 .. code-block:: default
 
 
     # Simulate at the corresponding vertex on the white matter surface
-    white_vertex = (n_layers-1)*verts_per_surf+sim_vertex
+    white_vertex = (surf_set.n_layers-1)*verts_per_surf+sim_vertex
     prefix = f'sim_{sim_vertex}_white_'
 
     # Generate simulated data
     white_sim_fname = run_current_density_simulation(
-        base_fname, 
-        prefix, 
-        white_vertex, 
-        sim_signal, 
-        dipole_moment, 
-        sim_patch_size, 
+        base_fname,
+        prefix,
+        white_vertex,
+        sim_signal,
+        dipole_moment,
+        sim_patch_size,
         SNR,
         spm_instance=spm
-    ) 
+    )
     # Run model comparison between the first layer (pial) and the last layer (white matter)
     [F,_] = model_comparison(
-        nas, 
-        lpa, 
-        rpa, 
-        mri_fname, 
-        [layer_fnames[0], layer_fnames[-1]], 
-        white_sim_fname, 
+        fid_coords,
+        white_sim_fname,
+        surf_set_bilam,
         spm_instance=spm,
         invert_kwargs={
             'patch_size': patch_size, 
             'n_temp_modes': n_temp_modes,    
         }
     )
-    
-    # The difference in free energy is an approximation of the Bayes factor between the two models
-    # This value should be negative (more model evidence for the white matter layer model)
+
+
+.. GENERATED FROM PYTHON SOURCE LINES 250-252
+
+The difference in free energy is an approximation of the Bayes factor between the two models
+This value should be negative (more model evidence for the white matter layer model)
+
+.. GENERATED FROM PYTHON SOURCE LINES 252-254
+
+.. code-block:: default
+
     F[0]-F[1]
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 281-282
+.. GENERATED FROM PYTHON SOURCE LINES 255-256
 
 Here's the sensor signals from the simulation of activity on the white matter surface. It's very similar to the sensor signals from the pial surface simulation
 
-.. GENERATED FROM PYTHON SOURCE LINES 282-290
+.. GENERATED FROM PYTHON SOURCE LINES 256-264
 
 .. code-block:: default
 
@@ -378,17 +366,17 @@ Here's the sensor signals from the simulation of activity on the white matter su
     plt.ylim([-225, 225])
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 291-294
+.. GENERATED FROM PYTHON SOURCE LINES 265-268
 
 .. image:: ../_static/tutorial_02_white_sim_sensor_signal.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 296-297
+.. GENERATED FROM PYTHON SOURCE LINES 270-271
 
 The difference between the two simulated sensor signals is quite small
 
-.. GENERATED FROM PYTHON SOURCE LINES 297-304
+.. GENERATED FROM PYTHON SOURCE LINES 271-278
 
 .. code-block:: default
 
@@ -400,19 +388,19 @@ The difference between the two simulated sensor signals is quite small
     plt.ylim([-225, 225])
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 305-308
+.. GENERATED FROM PYTHON SOURCE LINES 279-282
 
 .. image:: ../_static/tutorial_02_pial_white_sim_sensor_difference.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 310-313
+.. GENERATED FROM PYTHON SOURCE LINES 284-287
 
 Simulation in each layer with model comparison across layers
 ------------------------------------------------------------
 That was model comparison with two candidate models: one based on the white matter surface, and one on the pial. Let's now simulate on each layer, and for each simulation, run model comparison across all layers. We'll turn off SPM visualization here.
 
-.. GENERATED FROM PYTHON SOURCE LINES 313-351
+.. GENERATED FROM PYTHON SOURCE LINES 287-322
 
 .. code-block:: default
 
@@ -421,29 +409,26 @@ That was model comparison with two candidate models: one based on the white matt
     # all layers
     all_layerF = []
 
-    for l in range(n_layers):
+    for l in range(surf_set.n_layers):
         print(f'Simulating in layer {l}')
         l_vertex = l*verts_per_surf+sim_vertex
         prefix = f'sim_{sim_vertex}_{l}_'
 
         l_sim_fname = run_current_density_simulation(
-            base_fname, 
-            prefix, 
-            l_vertex, 
-            sim_signal, 
-            dipole_moment, 
-            sim_patch_size, 
+            base_fname,
+            prefix,
+            l_vertex,
+            sim_signal,
+            dipole_moment,
+            sim_patch_size,
             SNR,
             spm_instance=spm
-        ) 
+        )
 
         [layerF,_] = model_comparison(
-            nas, 
-            lpa, 
-            rpa, 
-            mri_fname, 
-            layer_fnames, 
-            l_sim_fname, 
+            fid_coords,
+            l_sim_fname,
+            surf_set,
             viz=False,
             spm_instance=spm,
             invert_kwargs={
@@ -455,22 +440,22 @@ That was model comparison with two candidate models: one based on the white matt
     all_layerF = np.array(all_layerF)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 352-353
+.. GENERATED FROM PYTHON SOURCE LINES 323-324
 
 For each simulation, we can plot the free energy for all models relative to the worst model. The layer model with the highest free energy should correspond to the layer that the activity was simulated in.
 
-.. GENERATED FROM PYTHON SOURCE LINES 353-382
+.. GENERATED FROM PYTHON SOURCE LINES 324-353
 
 .. code-block:: default
 
 
-    col_r = plt.cm.cool(np.linspace(0,1, num=n_layers))
+    col_r = plt.cm.cool(np.linspace(0,1, num=surf_set.n_layers))
     plt.figure(figsize=(10,4))
 
     # For each simulation, plot the free energy of each layer model relative to that of the worst
     # model for that simulation
     plt.subplot(1,2,1)
-    for l in range(n_layers):
+    for l in range(surf_set.n_layers):
         layerF = all_layerF[l,:]
         plt.plot(layerF-np.min(layerF), label=f'{l}', color=col_r[l,:])
     plt.legend()
@@ -480,7 +465,7 @@ For each simulation, we can plot the free energy for all models relative to the 
     # For each simulation, find which layer model had the greatest free energy
     plt.subplot(1,2,2)
     peaks = []
-    for l in range(n_layers):
+    for l in range(surf_set.n_layers):
         layerF = all_layerF[l,:]
         pk = np.argmax(layerF)
         peaks.append(pk)
@@ -493,20 +478,20 @@ For each simulation, we can plot the free energy for all models relative to the 
     plt.tight_layout()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 383-386
+.. GENERATED FROM PYTHON SOURCE LINES 354-357
 
 .. image:: ../_static/tutorial_02_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 386-407
+.. GENERATED FROM PYTHON SOURCE LINES 357-378
 
 .. code-block:: default
 
 
     # Normalization step
     norm_layerF = np.zeros(all_layerF.shape)
-    for l in range(n_layers):
+    for l in range(surf_set.n_layers):
         norm_layerF[l,:] = all_layerF[l,:] - np.min(all_layerF[l,:])
 
     # Transpose for visualization
@@ -525,13 +510,13 @@ For each simulation, we can plot the free energy for all models relative to the 
     cb.set_label(r'$\Delta F$', fontsize=14)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 408-411
+.. GENERATED FROM PYTHON SOURCE LINES 379-382
 
 .. image:: ../_static/tutorial_02_results_matrix.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 413-420
+.. GENERATED FROM PYTHON SOURCE LINES 384-391
 
 .. code-block:: default
 
