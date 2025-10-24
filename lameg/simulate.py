@@ -1,23 +1,31 @@
 """
-This module facilitates the simulation of MEG data using the Statistical Parametric Mapping (SPM)
-toolbox. It provides functionalities to simulate both current density and dipole-based MEG data
-under varying conditions and configurations.
+Simulation tools for MEG data generation using SPM.
 
-Key Features:
+This module provides functions for generating synthetic MEG datasets based on user-specified
+source parameters and an existing SPM forward model. It enables controlled simulations of both
+current density fields and discrete dipoles, with configurable spatial, temporal, and noise
+properties. These simulations are intended for testing source reconstruction pipelines, validating
+laminar inversion methods, and assessing model sensitivity under known ground truth conditions.
 
-- Current Density Simulation: Allows for the simulation of current density data based on
-  user-defined parameters such as vertices, signals, dipole moments, and patch sizes. Includes the
-  ability to specify the signal-to-noise ratio and window of interest for the simulations.
-- Dipole Simulation: Facilitates the simulation of dipole-based data, providing options to
-  configure dipole orientations, moments, and noise levels. It supports the simulation of unique
-  signals per trial and can average data across trials if needed.
+Key functionalities
+-------------------
+- **Current density simulations:** Generate distributed cortical activity from one or more
+  vertices with specified dipole moments, patch sizes, and time series, projected through the
+  SPM forward model.
+- **Dipole simulations:** Create focal dipolar sources with defined orientations, amplitudes,
+  and spatial extents, optionally unique across trials.
+- **Noise control:** Inject Gaussian sensor noise to achieve a user-defined signal-to-noise ratio
+  (SNR).
+- **Trial averaging:** Automatically perform trial-level averaging via SPM's `spm_eeg_averaging`.
 
-Examples of use:
-
-- Simulating data with specific noise levels and analyzing the impact of noise on signal processing
-  algorithms.
-- Generating datasets with known properties to test the efficacy of dipole fitting routines or
-  source localization methods.
+Notes
+-----
+- All simulations require a valid SPM M/EEG dataset containing a forward model.
+- Both single- and multi-source simulations are supported.
+- The generated data can be used to benchmark inversion algorithms (e.g., EBB, MSP),
+  estimate laminar sensitivity, or evaluate spatial leakage and depth bias.
+- Simulations are executed via SPM's `spm_eeg_simulate` interface, which ensures
+  biophysically realistic projection of cortical activity to MEG sensors.
 """
 
 import os
@@ -35,45 +43,56 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
                                    sim_patch_sizes, snr, sim_woi=None, average_trials=False,
                                    spm_instance=None):
     """
-    Simulate current density data based on specified parameters.
+    Simulate laminar current density data using SPM's MEG forward model.
 
-    This function generates simulated MEG data based on specified vertices, signals, dipole
-    moments, and patch sizes, incorporating a defined signal-to-noise ratio (SNR). White noise is
-    added at the sensor level to yield the given SNR.
+    This function generates synthetic MEG datasets by projecting user-defined source time series
+    (signals) from specified cortical vertices through an existing SPM forward model. Each
+    simulated source is defined by its vertex location, dipole moment, and patch extent. Gaussian
+    noise is added at the sensor level to achieve the desired signal-to-noise ratio (SNR), and the
+    simulated data can optionally be averaged across trials.
 
     Parameters
     ----------
     data_file : str
-        Filename or path of the MEG data file used as a template for simulation.
+        Path to an existing SPM M/EEG `.mat` file containing a valid forward model, used as the
+        simulation template.
     prefix : str
-        Prefix for the output simulated data filename.
-    sim_vertices : list or int
-        Indices of vertices where simulations are centered. Can be a single integer or a list.
-    sim_signals : ndarray
-        Array of simulated signals.
-    dipole_moments : list or float
-        Dipole moments for the simulation. Can be a single float or a list.
-    sim_patch_sizes : list or int
-        Sizes of patches around each vertex for the simulation. Can be a single integer or a list.
+        Prefix for the output simulated dataset (e.g., 'sim_').
+    sim_vertices : int or list of int
+        Indices of source vertices (0-based) defining the locations of simulated current sources.
+    sim_signals : np.ndarray, shape (n_sources, n_times)
+        Time series of the simulated source activity for each vertex.
+    dipole_moments : float or list of float
+        Dipole moments (in nA·m) associated with each simulated source.
+    sim_patch_sizes : float or list of float
+        Patch sizes (in mm) around each vertex that define spatial spread of the simulated sources.
     snr : float
-        Signal-to-noise ratio for the simulation.
-    sim_woi : list, optional
-        Window of interest for the simulation as [start, end]. Default is [-np.inf, np.inf].
+        Desired signal-to-noise ratio at the sensor level (in dB).
+    sim_woi : list of float, optional
+        Window of interest for the simulation, specified as [start, end] in milliseconds.
+        Default is [-np.inf, np.inf].
     average_trials : bool, optional
-        Whether to average the simulated data over trials. Default is False.
+        Whether to average across simulated trials (default: False).
     spm_instance : spm_standalone, optional
-        Instance of standalone SPM. Default is None.
+        Active standalone SPM instance. If None, a temporary instance is created and closed after
+        execution.
 
     Returns
     -------
     sim_fname : str
-        Filename of the generated simulated data.
+        Full path to the generated simulated MEG dataset (`.mat` file).
 
     Notes
     -----
-    - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
-    - The function will automatically close the standalone SPM instance if it was started
-      within the function.
+    - Uses SPM's `spm_eeg_simulate` function to project source-level activity through the forward
+      model and add Gaussian noise.
+    - Supports both single and multiple simulated sources with different dipole moments or spatial
+      extents.
+    - The forward model (lead field) must be precomputed and stored within `data_file`.
+    - If `average_trials=True`, the simulated data are averaged using SPM's `spm_eeg_averaging`
+      routine and saved with prefix `'m'`.
+    - This function is useful for validating inversion methods, testing model recovery, and
+      quantifying depth sensitivity under controlled SNR conditions.
     """
 
     if sim_woi is None:
@@ -155,49 +174,58 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
                           dipole_moments, sim_patch_sizes, snr, sim_woi=None, average_trials=False,
                           spm_instance=None):
     """
-    Simulate dipole-based MEG data based on specified parameters.
+    Simulate dipole-level MEG data using SPM's forward model.
 
-    This function generates simulated MEG data with specific dipole configurations. It creates
-    simulations based on specified vertices, signals, dipole orientations, moments, and patch
-    sizes, incorporating a defined signal-to-noise ratio (SNR). White noise is added at the sensor
-    level to yield the given SNR.
+    This function generates synthetic MEG datasets by projecting source-level dipole activity
+    through an existing SPM forward model. Each dipole is defined by its cortical vertex location,
+    orientation, moment, and patch extent. The resulting MEG data are corrupted with Gaussian
+    noise at the sensor level to achieve a specified signal-to-noise ratio (SNR), and can
+    optionally be averaged across trials.
 
     Parameters
     ----------
     data_file : str
-        Filename or path of the MEG data file used as a template for simulation.
+        Path to an existing SPM M/EEG `.mat` file containing a valid forward model, used as the
+        simulation template.
     prefix : str
-        Prefix for the output simulated data filename.
-    sim_vertices : list or int
-        Indices of vertices where simulations are centered. Can be a single integer or a list.
-    sim_signals : ndarray
-        Array of simulated signals. Either dipoles x time (signal will be used for each trial), or
-        dipoles x time x trials (unique signal for each trial).
-    dipole_orientations : ndarray
-        Array of dipole orientations for the simulation.
-    dipole_moments : list or float
-        Dipole moments for the simulation. Can be a single float or a list.
-    sim_patch_sizes : list or int
-        Sizes of patches around each vertex for the simulation. Can be a single integer or a list.
+        Prefix for the output simulated dataset (e.g., `'sim_'`).
+    sim_vertices : int or list of int
+        Indices of source vertices (0-based) where dipoles are positioned.
+    sim_signals : np.ndarray
+        Array of simulated dipole time courses, either shaped (n_dipoles × n_times) or
+        (n_dipoles × n_times × n_trials).
+    dipole_orientations : np.ndarray, shape (n_dipoles, 3)
+        Array specifying the 3D orientation vector for each dipole in head coordinates.
+    dipole_moments : float or list of float
+        Dipole moments (in nA·m) for each simulated source.
+    sim_patch_sizes : float or list of float
+        Spatial extent of the simulated dipole patch (in mm).
     snr : float
-        Signal-to-noise ratio for the simulation.
-    sim_woi : list, optional
-        Window of interest for the simulation as [start, end]. Default is [-np.inf, np.inf].
+        Desired signal-to-noise ratio at the sensor level (in dB).
+    sim_woi : list of float, optional
+        Simulation window of interest, specified as [start, end] in milliseconds.
+        Default is [-np.inf, np.inf].
     average_trials : bool, optional
-        Whether to average the simulated data over trials. Default is False.
+        Whether to average the simulated data over trials (default: False).
     spm_instance : spm_standalone, optional
-        Instance of standalone SPM. Default is None.
+        Active standalone SPM instance. If None, a temporary instance is created and closed after
+        execution.
 
     Returns
     -------
     sim_fname : str
-        Filename of the generated simulated data.
+        Full path to the generated simulated MEG dataset (`.mat` file).
 
     Notes
     -----
-    - If `spm_instance` is not provided, the function will start a new standalone SPM instance.
-    - The function will automatically close the standalone SPM instance if it was started
-      within the function.
+    - Uses SPM's `spm_eeg_simulate` function to generate sensor-level data from specified dipole
+      configurations.
+    - Supports multiple dipoles with distinct orientations, moments, or spatial extents.
+    - The forward model (`lead field`) must already exist in `data_file`.
+    - If `average_trials=True`, trial-averaged data are computed via SPM's
+      `spm_eeg_averaging` and saved with the `'m'` prefix.
+    - This function is primarily used for testing inversion accuracy, source localization
+      performance, and evaluating laminar sensitivity under controlled SNR conditions.
     """
 
     if sim_woi is None:

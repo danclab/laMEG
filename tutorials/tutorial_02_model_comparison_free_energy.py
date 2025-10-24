@@ -23,14 +23,14 @@ meshes. These models are then compared using free energy.
 import os
 import shutil
 import numpy as np
-import nibabel as nib
 import matplotlib.pyplot as plt
 import tempfile
 
 from lameg.invert import coregister, invert_ebb
 from lameg.simulate import run_current_density_simulation
 from lameg.laminar import model_comparison
-from lameg.util import get_surface_names, load_meg_sensor_data, get_fiducial_coords
+from lameg.surf import LayerSurfaceSet
+from lameg.util import load_meg_sensor_data, get_fiducial_coords
 from lameg.viz import show_surface
 import spm_standalone
 
@@ -39,15 +39,15 @@ subj_id = 'sub-104'
 ses_id = 'ses-01'
 
 # Fiducial coil coordinates
-nas, lpa, rpa = get_fiducial_coords(subj_id, '../test_data/participants.tsv')
+fid_coords = get_fiducial_coords(subj_id, '../test_data/participants.tsv')
 
 # Data file to base simulations on
 data_file = os.path.join(
-    '../test_data', 
-    subj_id, 
+    '../test_data',
+    subj_id,
     'meg',
-    ses_id, 
-    'spm/spm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
+    ses_id,
+    f'spm/spm-converted_autoreject-{subj_id}-{ses_id}-001-btn_trial-epo.mat'
 )
 
 spm = spm_standalone.initialize()
@@ -55,24 +55,10 @@ spm = spm_standalone.initialize()
 # %% [markdown]
 # For source reconstructions, we need an MRI and a surface mesh. The simulations will be based on a forward model using the multilayer mesh, and the model comparison will use each layer mesh
 
-# Native space MRI to use for coregistration
-mri_fname = os.path.join('../test_data', subj_id, 'mri', 's2023-02-28_13-33-133958-00001-00224-1.nii' )
+surf_set_bilam = LayerSurfaceSet(subj_id, 2)
+surf_set = LayerSurfaceSet(subj_id, 11)
 
-# Mesh to use for forward model in the simulations
-multilayer_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'multilayer.11.ds.link_vector.fixed.gii')
-
-# Load multilayer mesh and compute the number of vertices per layer
-mesh = nib.load(multilayer_mesh_fname)
-n_layers = 11
-verts_per_surf = int(mesh.darrays[0].data.shape[0]/n_layers)
-
-# Get name of each mesh that makes up the layers of the multilayer mesh - these will be used for the source 
-# reconstruction
-layer_fnames = get_surface_names(
-    n_layers, 
-    os.path.join('../test_data', subj_id, 'surf'), 
-    'link_vector.fixed'
-)
+verts_per_surf = surf_set.get_vertices_per_layer()
 
 # %% [markdown]
 # We're going to copy the data file to a temporary directory and direct all output there.
@@ -107,20 +93,16 @@ n_temp_modes = 4
 
 # Coregister data to multilayer mesh
 coregister(
-    nas, 
-    lpa, 
-    rpa, 
-    mri_fname, 
-    multilayer_mesh_fname, 
+    fid_coords,
     base_fname,
+    surf_set,
     spm_instance=spm
 )
 
 # Run inversion
 [_,_] = invert_ebb(
-    multilayer_mesh_fname, 
-    base_fname, 
-    n_layers, 
+    base_fname,
+    surf_set,
     patch_size=patch_size, 
     n_temp_modes=n_temp_modes,
     spm_instance=spm
@@ -155,21 +137,17 @@ plt.ylabel('Amplitude (nAm)')
 # We need to pick a location (mesh vertex) to simulate at
 
 # Vertex to simulate activity at
-sim_vertex=24585
+sim_vertex=24581
 
-pial_ds_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'pial.ds.link_vector.fixed.gii')
-pial_ds_mesh = nib.load(pial_ds_mesh_fname)
-pial_coord = pial_ds_mesh.darrays[0].data[sim_vertex,:]
-pial_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'pial.gii')
-pial_mesh = nib.load(pial_mesh_fname)
-cam_view = [152, 28, 15,
-            3.5, 26, 38.5,
+inflated_ds_mesh = surf_set.load('inflated', stage='ds')
+coord = inflated_ds_mesh.darrays[0].data[sim_vertex,:]
+cam_view = [335, 9.5, 51,
+            60, 37, 17,
             0, 0, 1]
 plot = show_surface(
-    pial_mesh, 
-    opacity=1, 
-    coords=pial_coord,
-    coord_size=2,
+    surf_set,
+    marker_coords=coord,
+    marker_size=5,
     camera_view=cam_view
 )
 
@@ -221,12 +199,9 @@ plt.ylim([-225, 225])
 
 # Run model comparison between the first layer (pial) and the last layer (white matter)
 [F,_] = model_comparison(
-    nas, 
-    lpa, 
-    rpa, 
-    mri_fname, 
-    [layer_fnames[0], layer_fnames[-1]], 
-    pial_sim_fname, 
+    fid_coords,
+    pial_sim_fname,
+    surf_set_bilam,
     spm_instance=spm,
     invert_kwargs={
         'patch_size': patch_size, 
@@ -234,6 +209,7 @@ plt.ylim([-225, 225])
     }
 )
 
+# %% [markdown]
 # The difference in free energy is an approximation of the Bayes factor between the two models
 # This value should be positive (more model evidence for the pial layer model)
 F[0]-F[1]
@@ -244,35 +220,33 @@ F[0]-F[1]
 # Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, model comparison should yield greater model evidence for the white matter surface, and therefore the difference in free energy (pial - white matter) should be negative.
 
 # Simulate at the corresponding vertex on the white matter surface
-white_vertex = (n_layers-1)*verts_per_surf+sim_vertex
+white_vertex = (surf_set.n_layers-1)*verts_per_surf+sim_vertex
 prefix = f'sim_{sim_vertex}_white_'
 
 # Generate simulated data
 white_sim_fname = run_current_density_simulation(
-    base_fname, 
-    prefix, 
-    white_vertex, 
-    sim_signal, 
-    dipole_moment, 
-    sim_patch_size, 
+    base_fname,
+    prefix,
+    white_vertex,
+    sim_signal,
+    dipole_moment,
+    sim_patch_size,
     SNR,
     spm_instance=spm
-) 
+)
 # Run model comparison between the first layer (pial) and the last layer (white matter)
 [F,_] = model_comparison(
-    nas, 
-    lpa, 
-    rpa, 
-    mri_fname, 
-    [layer_fnames[0], layer_fnames[-1]], 
-    white_sim_fname, 
+    fid_coords,
+    white_sim_fname,
+    surf_set_bilam,
     spm_instance=spm,
     invert_kwargs={
         'patch_size': patch_size, 
         'n_temp_modes': n_temp_modes,    
     }
 )
-    
+
+# %% [markdown]
 # The difference in free energy is an approximation of the Bayes factor between the two models
 # This value should be negative (more model evidence for the white matter layer model)
 F[0]-F[1]
@@ -315,29 +289,26 @@ plt.ylim([-225, 225])
 # all layers
 all_layerF = []
 
-for l in range(n_layers):
+for l in range(surf_set.n_layers):
     print(f'Simulating in layer {l}')
     l_vertex = l*verts_per_surf+sim_vertex
     prefix = f'sim_{sim_vertex}_{l}_'
 
     l_sim_fname = run_current_density_simulation(
-        base_fname, 
-        prefix, 
-        l_vertex, 
-        sim_signal, 
-        dipole_moment, 
-        sim_patch_size, 
+        base_fname,
+        prefix,
+        l_vertex,
+        sim_signal,
+        dipole_moment,
+        sim_patch_size,
         SNR,
         spm_instance=spm
-    ) 
+    )
 
     [layerF,_] = model_comparison(
-        nas, 
-        lpa, 
-        rpa, 
-        mri_fname, 
-        layer_fnames, 
-        l_sim_fname, 
+        fid_coords,
+        l_sim_fname,
+        surf_set,
         viz=False,
         spm_instance=spm,
         invert_kwargs={
@@ -351,13 +322,13 @@ all_layerF = np.array(all_layerF)
 # %% [markdown]
 # For each simulation, we can plot the free energy for all models relative to the worst model. The layer model with the highest free energy should correspond to the layer that the activity was simulated in.
 
-col_r = plt.cm.cool(np.linspace(0,1, num=n_layers))
+col_r = plt.cm.cool(np.linspace(0,1, num=surf_set.n_layers))
 plt.figure(figsize=(10,4))
 
 # For each simulation, plot the free energy of each layer model relative to that of the worst
 # model for that simulation
 plt.subplot(1,2,1)
-for l in range(n_layers):
+for l in range(surf_set.n_layers):
     layerF = all_layerF[l,:]
     plt.plot(layerF-np.min(layerF), label=f'{l}', color=col_r[l,:])
 plt.legend()
@@ -367,7 +338,7 @@ plt.ylabel(r'$\Delta$F')
 # For each simulation, find which layer model had the greatest free energy
 plt.subplot(1,2,2)
 peaks = []
-for l in range(n_layers):
+for l in range(surf_set.n_layers):
     layerF = all_layerF[l,:]
     pk = np.argmax(layerF)
     peaks.append(pk)
@@ -386,7 +357,7 @@ plt.tight_layout()
 
 # Normalization step
 norm_layerF = np.zeros(all_layerF.shape)
-for l in range(n_layers):
+for l in range(surf_set.n_layers):
     norm_layerF[l,:] = all_layerF[l,:] - np.min(all_layerF[l,:])
 
 # Transpose for visualization

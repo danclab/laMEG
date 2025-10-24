@@ -10,11 +10,11 @@ import numpy as np
 import mne
 import spm_standalone
 
+from lameg.surf import LayerSurfaceSet
 from lameg.util import (check_many, spm_context, big_brain_proportional_layer_boundaries,
                         get_fiducial_coords, get_files, get_directories, make_directory,
-                        calc_prop, batch, load_meg_sensor_data, get_surface_names,
-                        convert_fsaverage_to_native, convert_native_to_fsaverage,
-                        ttest_rel_corrected, get_bigbrain_layer_boundaries, ctf_fif_spm_conversion)
+                        calc_prop, batch, load_meg_sensor_data, ttest_rel_corrected,
+                        ctf_fif_spm_conversion)
 
 
 def test_spm_context():
@@ -78,18 +78,14 @@ def test_batch():
     """
     Test the spm batch functionality
     """
-    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
-    mri_fname = os.path.join(
-        test_data_path,
-        'sub-104/mri/s2023-02-28_13-33-133958-00001-00224-1.nii'
-    )
+    surf_set = LayerSurfaceSet('sub-104',2)
 
     with spm_context() as spm:
         cfg = {
             "spm": {
                 "util": {
                     "checkreg": {
-                        "data": np.asarray([f'{mri_fname},1'], dtype="object")
+                        "data": np.asarray([f'{surf_set.mri_file},1'], dtype="object")
                     }
                 }
             }
@@ -159,56 +155,6 @@ def test_load_meg_sensor_data():
     target = np.array([35.541718, 116.940315, -17.433748, 132.34103, 44.1114, 88.78001, -68.96891,
                        8.402161, -80.73266, -18.521292])
     assert np.allclose(data[0, 0, :10], target)
-
-
-def test_get_surface_names():
-    """
-   Tests the `get_surface_names` function to ensure it returns correct surface names
-   and handles errors appropriately when expected files are not found.
-
-   This function performs two main checks:
-   1. It verifies that the `get_surface_names` function correctly returns a list of filenames
-      for a given number of surface files in a specified directory with a given file suffix.
-   2. It tests the error handling of the `get_surface_names` function by passing a non-existent
-      file suffix and expecting a FileNotFoundError to be raised.
-
-   Steps:
-   - Retrieves a set of surface names from a directory for a given file type and asserts that
-     the number of files returned matches the expected count.
-   - Attempts to retrieve surface names using a file suffix that does not exist to ensure that
-     the function raises a FileNotFoundError, confirming proper error handling.
-
-   Assertions:
-   - Asserts that the number of filenames returned by the first call is exactly 11, matching
-     the specified number of surface layers.
-   - Asserts that a FileNotFoundError is raised when a non-existent file suffix is used,
-     indicating robust error handling.
-
-   Raises:
-       AssertionError: If any of the conditions checked by the assertions are not met, indicating
-       that there is an issue with the functionality of the `get_surface_names` function.
-   """
-    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
-    surf_dir = os.path.join(test_data_path, 'sub-104/surf')
-
-    layer_fnames = get_surface_names(
-        11,
-        surf_dir,
-        'link_vector.fixed'
-    )
-
-    assert len(layer_fnames) == 11
-
-    error_raise = False
-    try:
-        _ = get_surface_names(
-            11,
-            surf_dir,
-            'test'
-        )
-    except FileNotFoundError:
-        error_raise = True
-    assert error_raise
 
 
 def test_fif_spm_conversion():
@@ -444,149 +390,6 @@ def test_make_directory():
         assert result, "Function should return True if directory is presumed created"
 
 
-def test_convert_fsaverage_to_native():
-    """
-    Tests the `convert_fsaverage_to_native` function to ensure it accurately converts
-    FreeSurfer average coordinates to native brain space coordinates and handles errors
-    appropriately when provided with invalid inputs.
-
-    This test performs the following checks:
-    1. Verify that the function returns the correct native vertex index for given valid inputs.
-    2. Test the function's error handling by passing an out-of-range vertex index to ensure
-       an IndexError is raised.
-    3. Test the function's error handling by passing a non-existent subject ID to ensure
-       a FileNotFoundError is raised.
-
-    Procedures:
-    - Calls `convert_fsaverage_to_native` with a valid subject ID, hemisphere, and vertex index.
-      Checks if the returned value matches the expected native vertex index.
-    - Attempts to call the function with an invalid vertex index to verify that an IndexError
-      is properly triggered.
-    - Attempts to call the function with a non-existent subject ID to verify that a
-      FileNotFoundError is properly triggered.
-
-    Assertions:
-    - Asserts that the native vertex index returned matches the expected value of 166759 for
-      known valid inputs.
-    - Asserts that an IndexError is raised when a vertex index is used that exceeds the valid range.
-    - Asserts that a FileNotFoundError is raised when an invalid subject ID is used.
-
-    Raises:
-        AssertionError: If any of the conditions checked by the assertions are not met, indicating
-        an issue with the function's accuracy or error handling capabilities.
-    """
-    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
-    surf_path = os.path.join(test_data_path, 'sub-104/surf')
-
-    native_vtx = convert_fsaverage_to_native('sub-104', surf_path, 'lh', 1000)
-    assert native_vtx == 11331
-
-    native_vtx = convert_fsaverage_to_native('sub-104', surf_path, 'rh', 1000)
-    assert native_vtx == 33367
-
-    error_raise = False
-    try:
-        convert_fsaverage_to_native('sub-104', surf_path, 'lh', 100000000)
-    except IndexError:
-        error_raise = True
-    assert error_raise
-
-    error_raise = False
-    try:
-        convert_fsaverage_to_native('xxx', surf_path, 'lh', 1000)
-    except FileNotFoundError:
-        error_raise = True
-    assert error_raise
-
-    native_vtx = convert_fsaverage_to_native('sub-104', surf_path, 'lh')
-    assert native_vtx.shape[0] == 163842
-    target = np.array([ 9347,  2603, 10313, 17130, 12143,
-                        5358, 39031, 39280, 45726, 15326])
-    assert np.allclose(native_vtx[:10], target)
-
-
-def test_convert_native_to_fsaverage():
-    """
-    Tests the `convert_native_to_fsaverage` function to ensure it accurately maps native brain
-    space coordinates to FreeSurfer average brain coordinates and handles errors appropriately.
-
-    This function performs multiple checks:
-    1. Validate that the function correctly returns the hemisphere and fsaverage vertex index
-       for a given set of native space coordinates.
-    2. Test the function's error handling by passing an invalid subject ID, expecting a
-       FileNotFoundError to be raised.
-    3. Test the function's error handling by passing an invalid surface path, also expecting a
-       FileNotFoundError to be raised.
-
-    Procedures:
-    - Calls `convert_native_to_fsaverage` with a valid subject ID and surface path, checking
-      if the hemisphere and vertex index returned match expected values.
-    - Attempts to invoke the function with a non-existent subject ID to check for proper
-      exception handling.
-    - Attempts to invoke the function with a non-existent surface path to check for proper
-      exception handling.
-
-    Assertions:
-    - Asserts that the hemisphere and fsaverage vertex index are as expected for valid inputs,
-      confirming the function's accuracy in coordinate transformation.
-    - Asserts that a FileNotFoundError is raised for an invalid subject ID and surface path,
-      indicating robust error handling.
-
-    Raises:
-        AssertionError: If any of the conditions checked by the assertions are not met, indicating
-        an issue with the function's accuracy or error handling capabilities.
-    """
-    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
-    surf_path = os.path.join(test_data_path, 'sub-104/surf')
-    hemi, fs_vert = convert_native_to_fsaverage(
-        'sub-104',
-        surf_path,
-        [-5.045391, -58.015587, 28.667336]
-    )
-    assert hemi == 'lh'
-    assert fs_vert == 87729
-
-    hemi, fs_vert = convert_native_to_fsaverage(
-        'sub-104',
-        surf_path,
-        [25.045391, -58.015587, 28.667336]
-    )
-    assert hemi == 'rh'
-    assert fs_vert == 86092
-
-    error_raise = False
-    try:
-        _, _ = convert_native_to_fsaverage(
-            'xxx',
-            surf_path,
-            [-5.045391, -58.015587, 28.667336]
-        )
-    except FileNotFoundError:
-        error_raise = True
-    assert error_raise
-
-    error_raise = False
-    try:
-        _, _ = convert_native_to_fsaverage(
-            'sub-104',
-            'xxxx',
-            [-5.045391, -58.015587, 28.667336]
-        )
-    except FileNotFoundError:
-        error_raise = True
-    assert error_raise
-
-    hemis, verts = convert_native_to_fsaverage(
-        'sub-104',
-        surf_path
-    )
-    assert len(hemis) == len(verts) == 49733
-    target = ['lh', 'lh', 'lh', 'lh', 'lh', 'lh', 'lh', 'lh', 'lh', 'lh']
-    assert np.all(hemis[:10] == target)
-    target = [87729, 112541, 112542, 52282, 87824, 158647, 39230, 135879, 6903, 126602]
-    assert np.all(verts[:10] == target)
-
-
 def test_ttest_rel_corrected():
     """
     Tests the `ttest_rel_corrected` function with various configurations to ensure it accurately
@@ -737,69 +540,6 @@ def test_big_brain_proportional_layer_boundaries():
     assert np.allclose(bb_data['rh'][:, 0], expected)
 
 
-def test_get_bigbrain_layer_boundaries():
-    """
-    Tests the `get_bigbrain_layer_boundaries` function to ensure it accurately retrieves
-    the proportional boundaries of brain layers from the BigBrain model.
-
-    This function performs several checks:
-    1. Verifies that the function correctly returns the expected array of proportional
-       boundaries for a given subject and coordinates using known correct inputs.
-    2. Confirms that the function raises a FileNotFoundError when provided with an
-       invalid subject identifier, ensuring robust error handling.
-    3. Ensures that the function also raises a FileNotFoundError when given an incorrect
-       path to the surface files, which tests the function's dependency on file paths.
-
-    The tests use:
-    - A path to test data structured in a typical project directory format.
-    - Hardcoded coordinates which are representative of typical inputs.
-    - Assertions to verify both the data accuracy and the error handling mechanisms.
-    """
-
-    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
-    surf_path = os.path.join(test_data_path, 'sub-104/surf')
-
-    vert_bb_prop = get_bigbrain_layer_boundaries(
-        'sub-104',
-        surf_path,
-        [-5.045391, -58.015587, 28.667336]
-    )
-    expected = np.array([0.18065107, 0.2555629 , 0.4672846 , 0.7949229 , 0.90064305, 1.])
-    assert np.allclose(vert_bb_prop, expected)
-
-    error_raise = False
-    try:
-        _ = get_bigbrain_layer_boundaries(
-            'xxx',
-            surf_path,
-            [-5.045391, -58.015587, 28.667336]
-        )
-    except FileNotFoundError:
-        error_raise = True
-    assert error_raise
-
-    error_raise = False
-    try:
-        _ = get_bigbrain_layer_boundaries(
-            'sub-104',
-            'xxx',
-            [-5.045391, -58.015587, 28.667336]
-        )
-    except FileNotFoundError:
-        error_raise = True
-    assert error_raise
-
-    vert_bb_prop = get_bigbrain_layer_boundaries(
-        'sub-104',
-        surf_path
-    )
-    assert vert_bb_prop.shape[0] == 6
-    assert vert_bb_prop.shape[1] == 49733
-    expected = np.array([0.18065107, 0.17599325, 0.11645006, 0.16804233, 0.12389062, 0.15487793,
-                         0.15541628, 0.11214042, 0.18332304, 0.16658252])
-    assert np.allclose(vert_bb_prop[0,:10], expected)
-
-
 def test_get_fiducial_coords():
     """
     Tests the `get_fiducial_coords` function to ensure it correctly fetches and parses fiducial
@@ -817,25 +557,24 @@ def test_get_fiducial_coords():
     m_file = mock_open(read_data=tsv_data)
 
     with patch('builtins.open', m_file):
-        nas, lpa, rpa = get_fiducial_coords('subj1', 'dummy_filename.tsv')
+        fid_coords = get_fiducial_coords('subj1', 'dummy_filename.tsv')
 
     # Assert the expected outputs
-    assert nas == [1.0, 2.0, 3.0], "NAS coordinates do not match expected values"
-    assert lpa == [4.0, 5.0, 6.0], "LPA coordinates do not match expected values"
-    assert rpa == [7.0, 8.0, 9.0], "RPA coordinates do not match expected values"
+    assert fid_coords['nas'] == [1.0, 2.0, 3.0], "NAS coordinates do not match expected values"
+    assert fid_coords['lpa'] == [4.0, 5.0, 6.0], "LPA coordinates do not match expected values"
+    assert fid_coords['rpa'] == [7.0, 8.0, 9.0], "RPA coordinates do not match expected values"
 
     # Also, you might want to test the case where the subject ID is not found
     with patch('builtins.open', m_file):
-        nas, lpa, rpa = get_fiducial_coords('subj3', 'dummy_filename.tsv')
+        fid_coords = get_fiducial_coords('subj3', 'dummy_filename.tsv')
 
-    assert nas is None and lpa is None and rpa is None, ("Should return None for all coordinates if"
-                                                         " the subject ID is not found")
+    assert fid_coords is None, ("Should return None if the subject ID is not found")
 
-    nas, lpa, rpa = get_fiducial_coords('sub-104', './test_data/participants.tsv')
+    fid_coords = get_fiducial_coords('sub-104', './test_data/participants.tsv')
     nas_target = np.array([0.9662503311032098, 108.83514306876269, 1.6712361927090313])
     lpa_target = np.array([-74.28671169006893, 20.15061014698176, -29.849056272705948])
     rpa_target = np.array([76.02110531729883, 18.9467849625573, -25.779407159603114])
 
-    assert np.sum(np.abs(nas - nas_target)) < 1e-6
-    assert np.sum(np.abs(lpa - lpa_target)) < 1e-6
-    assert np.sum(np.abs(rpa - rpa_target)) < 1e-6
+    assert np.sum(np.abs(fid_coords['nas'] - nas_target)) < 1e-6
+    assert np.sum(np.abs(fid_coords['lpa'] - lpa_target)) < 1e-6
+    assert np.sum(np.abs(fid_coords['rpa'] - rpa_target)) < 1e-6

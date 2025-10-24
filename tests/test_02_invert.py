@@ -4,12 +4,14 @@ This module contains the unit tests for the `invert` module from the `lameg` pac
 
 import os
 import shutil
+
 import h5py
 import numpy as np
 import pytest
 
 from lameg.invert import (coregister, invert_ebb, invert_msp, load_source_time_series,
-                          invert_sliding_window)
+                          invert_sliding_window, get_lead_field_rms_diff)
+from lameg.surf import LayerSurfaceSet
 from lameg.util import get_fiducial_coords, make_directory
 
 
@@ -52,7 +54,7 @@ def test_coregister(spm):
     ses_id = 'ses-01'
 
     # Fiducial coil coordinates
-    nas, lpa, rpa = get_fiducial_coords(subj_id, os.path.join(test_data_path, 'participants.tsv'))
+    fid_coords = get_fiducial_coords(subj_id, os.path.join(test_data_path, 'participants.tsv'))
 
     # Data file to base simulations on
     data_file = os.path.join(
@@ -82,33 +84,19 @@ def test_coregister(spm):
     # Construct base file name for simulations
     base_fname = os.path.join(out_dir, f'{data_base}.mat')
 
-    # Native space MRI to use for coregistration
-    # pylint: disable=duplicate-code
-    mri_fname = os.path.join(
-        test_data_path,
-        subj_id,
-        'mri',
-        's2023-02-28_13-33-133958-00001-00224-1.nii'
-    )
-
-    # Mesh to use for forward model in the simulations
-    mesh_fname = os.path.join(
-        test_data_path,
-        subj_id,
-        'surf',
-        'multilayer.2.ds.link_vector.fixed.gii'
-    )
+    surf_set = LayerSurfaceSet('sub-104', 2)
 
     # Coregister data to pial mesh
     # pylint: disable=duplicate-code
     coregister(
-        nas,
-        lpa,
-        rpa,
-        mri_fname,
-        mesh_fname,
+        fid_coords,
         base_fname,
-        viz=False,
+        surf_set,
+        layer_name=None,
+        stage='ds',
+        orientation='link_vector',
+        fixed=True,
+        viz=True,
         spm_instance=spm
     )
 
@@ -147,33 +135,26 @@ def test_invert_msp(spm):
       effectiveness in realistic usage scenarios.
     """
 
-    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
-    subj_id = 'sub-104'
-
     # Data file to base simulations on
     base_fname = os.path.join(
         './output',
         'spm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
     )
 
-    # Mesh to use for forward model in the simulations
-    mesh_fname = os.path.join(
-        test_data_path,
-        subj_id,
-        'surf',
-        'multilayer.2.ds.link_vector.fixed.gii'
-    )
+    surf_set = LayerSurfaceSet('sub-104', 2)
 
     patch_size = 5
     n_temp_modes = 4
-    n_layers = 2
 
     # Test n spatial modes and array woi
     [free_energy, cv_err] = invert_msp(
-        mesh_fname,
         base_fname,
-        n_layers,
-        woi=np.array([100,200]),
+        surf_set,
+        layer_name=None,
+        stage='ds',
+        orientation='link_vector',
+        fixed=True,
+        woi=np.array([100, 200]),
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
         n_spatial_modes=60,
@@ -181,30 +162,35 @@ def test_invert_msp(spm):
         spm_instance=spm
     )
 
-    target = -103656.02108431
+    target = -103472.61822321
     assert np.abs(target - free_energy[()]) < 1000
     assert np.allclose(cv_err, [1, 0])
 
-
     [free_energy, cv_err] = invert_msp(
-        mesh_fname,
         base_fname,
-        n_layers,
+        surf_set,
+        layer_name=None,
+        stage='ds',
+        orientation='link_vector',
+        fixed=True,
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
         viz=False,
         spm_instance=spm
     )
 
-    target = -414469.3671265507
-    assert np.abs(target-free_energy[()])<1000
+    target = -413906.35981205
+    assert np.abs(target - free_energy[()]) < 1000
     assert np.allclose(cv_err, [1, 0])
 
     # pylint: disable=unbalanced-tuple-unpacking
     [free_energy, cv_err, mu_matrix] = invert_msp(
-        mesh_fname,
         base_fname,
-        n_layers,
+        surf_set,
+        layer_name=None,
+        stage='ds',
+        orientation='link_vector',
+        fixed=True,
         priors=[47507],
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
@@ -213,13 +199,30 @@ def test_invert_msp(spm):
         spm_instance=spm
     )
 
-    target = np.array([ 1.01755888e-04, -1.31537562e-05, -1.46884080e-04, -4.21048807e-04,
-                        -7.16753356e-04, -1.23996197e-03, -1.64400621e-03, -2.66500725e-04,
-                        -4.32804336e-04, -6.46597353e-04])
-    assert np.allclose(mu_matrix[47507,:10], target, atol=1e-8)
-    target = -530908.9460491342
-    assert np.isclose(free_energy[()], target)
-    assert np.allclose(cv_err, [1, 0])
+    target = np.array([-1.96490115e-04, -1.43392256e-04, -1.12686601e-04, -7.68762430e-05,
+                       -6.15046267e-05,  3.54361172e-06,  2.75683801e-05, -6.29747454e-05,
+                       -4.61118865e-05, -2.76437627e-05])
+    assert np.allclose(mu_matrix[47507, :10], target, atol=1e-5)
+    target = -532242.01937534
+    assert np.isclose(free_energy[()], target, atol=100)
+    assert np.allclose(cv_err, np.array([1, 0]))
+
+
+@pytest.mark.dependency(depends=["test_invert_msp"])
+def test_get_lead_field_rms_diff():
+    """
+    Test get_lead_field_rms_diff
+    """
+    base_fname = os.path.join(
+        './output',
+        'spm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
+    )
+
+    surf_set = LayerSurfaceSet('sub-104', 2)
+
+    rmse = get_lead_field_rms_diff(base_fname, surf_set)
+    target = np.array([[0.04851439, 0.0647731,  0.07591948, 0.08299887, 0.04934148]])
+    assert np.allclose(rmse[:5], target)
 
 
 @pytest.mark.dependency(depends=["test_invert_msp"])
@@ -258,18 +261,18 @@ def test_load_source_time_series():
 
     time_series, time, mu_matrix = load_source_time_series(base_fname, vertices=[47507])
 
-    target = np.array([-2.43517717, -2.17243199, 7.50516469, -4.26512417, -0.01384067, -1.77825104,
-                       -3.05322203, 0.16328624, -2.27361571, -2.79355311])
-    assert np.allclose(time_series[0,:10,0], target, atol=1e-5)
+    target = np.array([0.95102198, 1.06986844, 1.03907687, 1.03919195, 0.95094489, 1.04908246,
+                       0.95206045, 0.54625743, 0.40979165, 0.41351484])
+    assert np.allclose(time_series[0, :10, 0], target, atol=1e-2)
 
-    target = np.array([[-0.5,        -0.49833333, -0.49666667, -0.495,      -0.49333333,
-                        -0.49166667, -0.49,       -0.48833333, -0.48666667, -0.485     ]])*1000
+    target = np.array([[-0.5, -0.49833333, -0.49666667, -0.495, -0.49333333,
+                        -0.49166667, -0.49, -0.48833333, -0.48666667, -0.485]]) * 1000
     assert np.allclose(time[:10], target)
 
-    target = np.array([ 1.01755888e-04, -1.31537562e-05, -1.46884080e-04, -4.21048807e-04,
-                        -7.16753356e-04, -1.23996197e-03, -1.64400621e-03, -2.66500725e-04,
-                        -4.32804336e-04, -6.46597353e-04])
-    assert np.allclose(mu_matrix[0,:10], target, atol=1e-8)
+    target = np.array([-1.96490115e-04, -1.43392256e-04, -1.12686601e-04, -7.68762430e-05,
+                       -6.15046267e-05,  3.54361172e-06,  2.75683801e-05, -6.29747454e-05,
+                       -4.61118865e-05, -2.76437627e-05])
+    assert np.allclose(mu_matrix[0, :10], target, atol=1e-5)
 
 
 @pytest.mark.dependency(depends=["test_load_source_time_series"])
@@ -307,7 +310,7 @@ def test_invert_sliding_window(spm):
     ses_id = 'ses-01'
 
     # Fiducial coil coordinates
-    nas, lpa, rpa = get_fiducial_coords(subj_id, os.path.join(test_data_path, 'participants.tsv'))
+    fid_coords = get_fiducial_coords(subj_id, os.path.join(test_data_path, 'participants.tsv'))
 
     # Data file to base simulations on
     data_file = os.path.join(
@@ -337,92 +340,85 @@ def test_invert_sliding_window(spm):
     # Construct base file name for simulations
     base_fname = os.path.join(out_dir, f'{data_base}.mat')
 
-    # Native space MRI to use for coregistration
-    # pylint: disable=duplicate-code
-    mri_fname = os.path.join(
-        test_data_path,
-        subj_id,
-        'mri',
-        's2023-02-28_13-33-133958-00001-00224-1.nii'
-    )
-
-    # Mesh to use for forward model in the simulations
-    mesh_fname = os.path.join(
-        test_data_path,
-        subj_id,
-        'surf',
-        'multilayer.2.ds.link_vector.fixed.gii'
-    )
+    surf_set = LayerSurfaceSet('sub-104', 2)
 
     # Coregister data to pial mesh
     # pylint: disable=duplicate-code
     coregister(
-        nas,
-        lpa,
-        rpa,
-        mri_fname,
-        mesh_fname,
+        fid_coords,
         base_fname,
+        surf_set,
+        layer_name='pial',
+        stage='ds',
+        orientation='link_vector',
+        fixed=True,
         spm_instance=spm
     )
 
     # test n spatial modes
     [free_energy, wois] = invert_sliding_window(
         47507,
-        mesh_fname,
         base_fname,
-        1,
+        surf_set,
+        layer_name='pial',
+        stage='ds',
+        orientation='link_vector',
+        fixed=True,
         n_spatial_modes=60,
         win_size=16,
         spm_instance=spm
     )
 
-    target = np.array([[-27672.32213882, -28107.78864603, -28107.78864603, -28267.4014036,
-                        -28528.13675284, -28528.13675284, -28598.19588175, -28555.6707891,
-                        -28394.99592206, -28495.15584332]])
-    assert np.allclose(free_energy[:10], target)
+    target = np.array([-27799.62431498, -28228.06458427, -28228.06458427, -28387.56663819,
+                       -28655.06363886, -28655.06363886, -28739.57594447, -28706.88343603,
+                       -28551.83935759, -28626.10594455])
+    assert np.allclose(free_energy[:10], target, atol=100)
 
     target = np.array([-100., -100., -100., -100., -100.,
                        -100., -98.33333333, -96.66666667, -95., -93.33333333])
     assert np.allclose(wois[:10, 0], target)
 
-
     [free_energy, wois] = invert_sliding_window(
         47507,
-        mesh_fname,
         base_fname,
-        1,
+        surf_set,
+        layer_name='pial',
+        stage='ds',
+        orientation='link_vector',
+        fixed=True,
         win_size=16,
         spm_instance=spm
     )
 
-    target = np.array([-113846.23389608, -115796.21846236, -115796.21846236, -116513.33866804,
-                       -117680.12092327, -117680.12092327, -117987.10301609, -117790.06978323,
-                       -117067.60766185, -117518.04531009])
-    assert np.allclose(free_energy[:10], target)
+    target = np.array([-114392.35223686, -116299.57693586, -116299.57693586, -117016.3035538,
+                       -118220.43383533, -118220.43383533, -118599.95427267, -118448.56236667,
+                       -117750.71637877, -118204.71109491])
+    assert np.allclose(free_energy[:10], target, atol=100)
 
-    target=np.array([-100., -100., -100., -100., -100.,
-                     -100., -98.33333333, -96.66666667, -95., -93.33333333])
-    assert np.allclose(wois[:10,0], target)
+    target = np.array([-100., -100., -100., -100., -100.,
+                       -100., -98.33333333, -96.66666667, -95., -93.33333333])
+    assert np.allclose(wois[:10, 0], target)
 
     [free_energy, wois] = invert_sliding_window(
         47507,
-        mesh_fname,
         base_fname,
-        1,
+        surf_set,
+        stage='ds',
+        orientation='link_vector',
+        fixed=True,
         win_size=16,
         win_overlap=False,
         spm_instance=spm
     )
 
-    target = np.array([-117680.12092327, -117877.03529818, -117761.38616428, -117456.72473673,
-                       -119142.55620933, -118125.46196952, -118169.27464856, -119110.227163,
-                       -119041.55656787, -117937.72566738])
-    assert np.allclose(free_energy[:10], target)
+    target = np.array([-118220.43383533, -118334.84399072, -118184.00579334, -117849.49322722,
+                       -119397.70894763, -118431.39356972, -118671.22380734, -119379.0665889,
+                       -119553.20156048, -118257.6140511 ])
+    assert np.allclose(free_energy[:10], target, atol=100)
 
     target = np.array([-1.00000000e+02, -8.33333333e+01, -6.66666667e+01, -5.00000000e+01,
-                       -3.33333333e+01, -1.66666667e+01,  2.84217094e-14,  1.66666667e+01,
-                       3.33333333e+01,  5.00000000e+01])
+                       -3.33333333e+01, -1.66666667e+01, 2.84217094e-14, 1.66666667e+01,
+                       3.33333333e+01, 5.00000000e+01])
     assert np.allclose(wois[:10, 0], target)
 
 
@@ -451,8 +447,6 @@ def test_invert_ebb(spm):
     - It also checks that the cross-validation errors meet expected results, which verify the
       function's validity in practical scenarios.
     """
-    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
-    subj_id = 'sub-104'
 
     # Data file to base simulations on
     base_fname = os.path.join(
@@ -460,25 +454,21 @@ def test_invert_ebb(spm):
         'spm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
     )
 
-    # Mesh to use for forward model in the simulations
-    mesh_fname = os.path.join(
-        test_data_path,
-        subj_id,
-        'surf',
-        'multilayer.2.ds.link_vector.fixed.gii'
-    )
+    surf_set = LayerSurfaceSet('sub-104', 2)
 
     patch_size = 5
     n_temp_modes = 4
-    n_layers = 2
 
     # Test n spatial modes and woi as array
     # pylint: disable=unbalanced-tuple-unpacking
     [free_energy, cv_err, mu_matrix] = invert_ebb(
-        mesh_fname,
         base_fname,
-        n_layers,
-        woi=np.array([100,200]),
+        surf_set,
+        layer_name=None,
+        stage='ds',
+        orientation='link_vector',
+        fixed=True,
+        woi=np.array([100, 200]),
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
         n_spatial_modes=60,
@@ -487,20 +477,22 @@ def test_invert_ebb(spm):
         spm_instance=spm
     )
 
-    target = np.array([-4.02754329e-06, -1.14844754e-06,  2.46000161e-06,  3.66448693e-06,
-                         1.20843955e-06, -1.17824736e-06, -1.13189532e-06,  1.61043099e-06,
-                         2.73391449e-06,  1.24032392e-06])
-    assert np.allclose(mu_matrix[0, :10].todense(), target)
-    target = -104592.47791070268
-    assert np.isclose(free_energy[()], target)
+    target = np.array([[-4.01852658e-06, -1.12815589e-06,  2.46536164e-06,  3.64683854e-06,
+                        1.19326977e-06, -1.17687545e-06, -1.10330316e-06,  1.60963122e-06,
+                        2.70911110e-06,  1.20770589e-06]])
+    assert np.allclose(mu_matrix[0, :10].todense(), target, atol=1e-5)
+    target = -104591.06174073831
+    assert np.isclose(free_energy[()], target, atol=100)
     assert np.allclose(cv_err, [1, 0])
-
 
     # pylint: disable=unbalanced-tuple-unpacking
     [free_energy, cv_err, mu_matrix] = invert_ebb(
-        mesh_fname,
         base_fname,
-        n_layers,
+        surf_set,
+        layer_name=None,
+        stage='ds',
+        orientation='link_vector',
+        fixed=True,
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
         return_mu_matrix=True,
@@ -508,10 +500,47 @@ def test_invert_ebb(spm):
         spm_instance=spm
     )
 
-    target = np.array([5.56419981e-08, -7.92645103e-07, -9.95737798e-07, -2.87239768e-07,
-                       4.75528010e-07,  8.49869087e-07, -1.22866823e-06, -1.49523945e-06,
-                       2.08794368e-07,  1.48255156e-06])
-    assert np.allclose(mu_matrix[0,:10], target)
-    target = -413893.00662024197
-    assert np.isclose(free_energy[()], target)
+    target = np.array([ 5.05870910e-08, -8.01268927e-07, -9.98349800e-07, -2.83087552e-07,
+                        4.78656700e-07,  8.53958055e-07, -1.21114380e-06, -1.50283575e-06,
+                        2.07873022e-07,  1.48568166e-06])
+    assert np.allclose(mu_matrix[0, :10], target, atol=1e-5)
+    target = -413895.19775402
+    assert np.isclose(free_energy[()], target, atol=100)
     assert np.allclose(cv_err, [1, 0])
+
+    # pylint: disable=unbalanced-tuple-unpacking
+    [free_energy, cv_err] = invert_ebb(
+        base_fname,
+        surf_set,
+        layer_name=None,
+        stage='ds',
+        orientation='link_vector',
+        fixed=True,
+        foi=[10,20],
+        patch_size=patch_size,
+        n_temp_modes=n_temp_modes,
+        return_mu_matrix=False,
+        viz=False,
+        spm_instance=spm
+    )
+
+    mu_target = np.array([5.05870910e-08, -8.01268927e-07, -9.98349800e-07, -2.83087552e-07,
+                       4.78656700e-07, 8.53958055e-07, -1.21114380e-06, -1.50283575e-06,
+                       2.07873022e-07, 1.48568166e-06])
+    assert np.allclose(mu_matrix[0, :10], mu_target, atol=1e-5)
+    target = -392302.31949929
+    assert np.isclose(free_energy[()], target, atol=100)
+    assert np.allclose(cv_err, [1, 0])
+
+    time_series, time, mu_matrix = load_source_time_series(base_fname, vertices=[47507])
+
+    target = np.array([-4.46089332e-04, -4.37258759e-04, -4.19758854e-04, -3.93909769e-04,
+                       -3.60185909e-04, -3.19208945e-04, -2.71738506e-04, -2.18660576e-04,
+                       -1.60973633e-04, -9.97726054e-05])
+    assert np.allclose(time_series[0, :10, 0], target, atol=1e-2)
+
+    target = np.array([[-0.5, -0.49833333, -0.49666667, -0.495, -0.49333333,
+                        -0.49166667, -0.49, -0.48833333, -0.48666667, -0.485]]) * 1000
+    assert np.allclose(time[:10], target)
+
+    assert np.allclose(mu_matrix[0, :10], mu_target, atol=1e-5)

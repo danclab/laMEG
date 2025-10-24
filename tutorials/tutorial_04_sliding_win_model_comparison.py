@@ -15,15 +15,14 @@ This tutorial demonstrates how to perform laminar inference of event-related res
 import os
 import shutil
 import numpy as np
-import nibabel as nib
 import matplotlib.pyplot as plt
 import tempfile
 
 from lameg.invert import coregister, invert_ebb, load_source_time_series
 from lameg.laminar import sliding_window_model_comparison
 from lameg.simulate import run_dipole_simulation
-from lameg.surf import interpolate_data
-from lameg.util import get_surface_names
+from lameg.surf import LayerSurfaceSet
+from lameg.util import get_fiducial_coords
 from lameg.viz import show_surface, color_map
 import spm_standalone
 
@@ -32,17 +31,15 @@ subj_id = 'sub-104'
 ses_id = 'ses-01'
 
 # Fiducial coil coordinates
-nas = [0.9662503311032098, 108.83514306876269, 1.6712361927090313]
-lpa = [-74.28671169006893, 20.15061014698176, -29.849056272705948]
-rpa = [76.02110531729883, 18.9467849625573, -25.779407159603114]
+fid_coords = get_fiducial_coords(subj_id, '../test_data/participants.tsv')
 
 # Data file to base simulations on
 data_file = os.path.join(
-    '../test_data', 
-    subj_id, 
+    '../test_data',
+    subj_id,
     'meg',
-    ses_id, 
-    'spm/pspm-converted_autoreject-sub-104-ses-01-001-btn_trial-epo.mat'
+    ses_id,
+    f'spm/pspm-converted_autoreject-{subj_id}-{ses_id}-001-btn_trial-epo.mat'
 )
 
 spm = spm_standalone.initialize()
@@ -50,28 +47,10 @@ spm = spm_standalone.initialize()
 # %% [markdown]
 # For source reconstructions, we need an MRI and a surface mesh. The simulations will be based on a forward model using the multilayer mesh, and the model comparison will use each layer mesh
 
-# Native space MRI to use for coregistration
-mri_fname = os.path.join('../test_data', subj_id, 'mri/s2023-02-28_13-33-133958-00001-00224-1.nii' )
+surf_set_bilam = LayerSurfaceSet(subj_id, 2)
+surf_set = LayerSurfaceSet(subj_id, 11)
 
-# Mesh to use for forward model in the simulations
-multilayer_mesh_fname = os.path.join('../test_data', subj_id, 'surf/multilayer.11.ds.link_vector.fixed.gii')
-
-# Load multilayer mesh and compute the number of vertices per layer
-mesh = nib.load(multilayer_mesh_fname)
-n_layers = 11
-verts_per_surf = int(mesh.darrays[0].data.shape[0]/n_layers)
-
-# Get name of each mesh that makes up the layers of the multilayer mesh - these will be used for the source 
-# reconstruction
-layer_fnames = get_surface_names(
-    n_layers, 
-    os.path.join('../test_data', subj_id, 'surf'), 
-    'link_vector.fixed'
-)
-
-# Inflated meshes for plotting
-ds_inflated = nib.load(os.path.join('../test_data', subj_id, 'surf', 'inflated.ds.gii'))
-orig_inflated = nib.load(os.path.join('../test_data', subj_id, 'surf', 'inflated.gii'))
+verts_per_surf = surf_set.get_vertices_per_layer()
 
 # %% [markdown]
 # We're going to copy the data file to a temporary directory and direct all output there.
@@ -106,20 +85,16 @@ n_temp_modes = 4
 
 # Coregister data to multilayer mesh
 coregister(
-    nas, 
-    lpa, 
-    rpa, 
-    mri_fname, 
-    multilayer_mesh_fname, 
+    fid_coords,
     base_fname,
+    surf_set,
     spm_instance=spm
 )
 
 # Run inversion
 [_,_] = invert_ebb(
-    multilayer_mesh_fname, 
-    base_fname, 
-    n_layers, 
+    base_fname,
+    surf_set,
     patch_size=patch_size, 
     n_temp_modes=n_temp_modes,
     spm_instance=spm
@@ -131,7 +106,7 @@ coregister(
 # We're going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a width of 25ms
 
 # Strength of simulated activity (nAm)
-dipole_moment = 8
+dipole_moment = 10
 # Temporal width of the simulated Gaussian
 signal_width=.025 # 25ms
 # Sampling rate (must match the data file)
@@ -154,21 +129,17 @@ plt.ylabel('Amplitude (nAm)')
 # We need to pick a location (mesh vertex) to simulate at
 
 # Vertex to simulate activity at
-sim_vertex=24585
+sim_vertex=24581
 
-pial_ds_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'pial.ds.link_vector.fixed.gii')
-pial_ds_mesh = nib.load(pial_ds_mesh_fname)
-pial_coord = pial_ds_mesh.darrays[0].data[sim_vertex,:]
-pial_mesh_fname = os.path.join('../test_data', subj_id, 'surf', 'pial.gii')
-pial_mesh = nib.load(pial_mesh_fname)
-cam_view = [152, 28, 15,
-            3.5, 26, 38.5,
+inflated_ds_mesh = surf_set.load('inflated', stage='ds')
+coord = inflated_ds_mesh.darrays[0].data[sim_vertex,:]
+cam_view = [335, 9.5, 51,
+            60, 37, 17,
             0, 0, 1]
 plot = show_surface(
-    pial_mesh, 
-    opacity=1, 
-    coords=pial_coord,
-    coord_size=2,
+    surf_set,
+    marker_coords=coord,
+    marker_size=5,
     camera_view=cam_view
 )
 
@@ -183,7 +154,8 @@ plot = show_surface(
 # Simulate at a vertex on the pial surface
 pial_vertex = sim_vertex
 # Orientation of the simulated dipole
-pial_unit_norm = mesh.darrays[2].data[pial_vertex,:]
+multilayer_mesh = surf_set.load(stage='ds', orientation='link_vector', fixed=True)
+pial_unit_norm = multilayer_mesh.darrays[2].data[pial_vertex,:]
 prefix = f'sim_{sim_vertex}_pial_'
 
 # Size of simulated patch of activity (mm)
@@ -209,12 +181,10 @@ pial_sim_fname = run_dipole_simulation(
 # -------------------
 # Now we'll run a source reconstruction using the multilayer mesh, extract the signal in the pial layer, and select a prior based on the peak.
 
-
 [_,_,MU] = invert_ebb(
-    multilayer_mesh_fname, 
-    pial_sim_fname, 
-    n_layers, 
-    patch_size=patch_size, 
+    pial_sim_fname,
+    surf_set,
+    patch_size=patch_size,
     n_temp_modes=n_temp_modes,
     return_mu_matrix=True,
     spm_instance=spm
@@ -222,53 +192,49 @@ pial_sim_fname = run_dipole_simulation(
 
 layer_vertices = np.arange(verts_per_surf)
 layer_ts, time, ch_names = load_source_time_series(
-    pial_sim_fname, 
-    mu_matrix=MU, 
+    pial_sim_fname,
+    mu_matrix=MU,
     vertices=layer_vertices
 )
 
-# Layer peak
 m_layer_max = np.max(np.mean(layer_ts,axis=-1),-1)
 prior = np.argmax(m_layer_max)
-
-sim_coord = ds_inflated.darrays[0].data[sim_vertex,:]
-prior_coord = ds_inflated.darrays[0].data[prior,:]
-
-print(f'Simulated vertex={sim_vertex}, Prior vertex={prior}')
-print('Simulated coordinate')
-print(sim_coord)
-print('Prior coordinate')
-print(prior_coord)
 
 # %% [markdown]
 # We can see that the prior is the same as the location we simulated at
 
 # Interpolate for display on the original inflated surface
-interpolated_data = interpolate_data(orig_inflated, ds_inflated, m_layer_max)
-          
+interpolated_data = surf_set.interpolate_layer_data('pial', m_layer_max, from_stage='ds', to_stage='combined')
+
+inflated_ds_mesh = surf_set.load('inflated', stage='ds')
+coord = inflated_ds_mesh.darrays[0].data[prior, :]
+
 # Plot colors and camera view
-max_abs = np.max(np.abs(m_layer_max))
+max_abs = np.max(np.abs(interpolated_data))
 c_range = [-max_abs, max_abs]
-cam_view=[289, 32, -19,
-          3.5, 29, 26,
-          0, 0, 1]
+cam_view = [335, 9.5, 51,
+            60, 37, 17,
+            0, 0, 1]
 
 # Plot peak
-colors,_ = color_map(
-    interpolated_data, 
-    "RdYlBu_r", 
-    c_range[0], 
-    c_range[1]    
+colors, _ = color_map(
+    interpolated_data,
+    "RdYlBu_r",
+    c_range[0],
+    c_range[1]
 )
+thresh_colors = np.ones((colors.shape[0], 4)) * 255
+thresh_colors[:, :3] = colors
+thresh_colors[interpolated_data < np.percentile(interpolated_data, 99.9), 3] = 0
 
 plot = show_surface(
-    orig_inflated, 
-    vertex_colors=colors, 
-    info=True, 
-    camera_view=cam_view, 
-    coords=prior_coord, 
-    coord_size=2, 
-    coord_color=[0,0,255]
+    surf_set,
+    vertex_colors=thresh_colors,
+    info=True,
+    camera_view=cam_view,
+    marker_coords=coord,
+    marker_size=5,
+    marker_color=[0, 0, 255]
 )
 
 # %%
@@ -291,12 +257,9 @@ win_overlap = True
 # Run sliding time window model comparison between the first layer (pial) and the last layer (white matter)
 [Fs,wois] = sliding_window_model_comparison(
     prior, 
-    nas, 
-    lpa, 
-    rpa, 
-    mri_fname, 
-    [layer_fnames[0], layer_fnames[-1]], 
-    pial_sim_fname,     
+    fid_coords,
+    pial_sim_fname,
+    surf_set_bilam,
     spm_instance=spm,
     invert_kwargs={
         'patch_size': patch_size, 
@@ -306,6 +269,7 @@ win_overlap = True
     }
 )
 
+# %% [markdown]
 # Plot difference in free energy over time (pial minus white) - this should be positive
 plt.plot(np.mean(wois,axis=-1), Fs[0,:]-Fs[1,:])
 plt.xlabel('Time (ms)')
@@ -321,30 +285,28 @@ plt.ylabel(r'$\Delta$F')
 # ---------------------------------------------------------------------------------------------
 # Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, sliding time window model comparison should yield greater model evidence for the white matter surface, and therefore the difference in free energy (pial - white matter) should be negative.
 
-
 # Simulate at the corresponding vertex on the white matter surface
-white_vertex = (n_layers-1)*verts_per_surf+sim_vertex
+white_vertex = (surf_set.n_layers-1)*verts_per_surf+sim_vertex
 prefix = f'sim_{sim_vertex}_white_'
 
 # Generate simulated data
 white_sim_fname = run_dipole_simulation(
-    base_fname, 
-    prefix, 
-    white_vertex, 
-    sim_signal, 
-    pial_unit_norm, 
-    dipole_moment, 
-    sim_patch_size, 
+    base_fname,
+    prefix,
+    white_vertex,
+    sim_signal,
+    pial_unit_norm,
+    dipole_moment,
+    sim_patch_size,
     SNR,
     spm_instance=spm
-) 
+)
 
 # Localizer
 [_,_,MU] = invert_ebb(
-    multilayer_mesh_fname, 
-    white_sim_fname, 
-    n_layers, 
-    patch_size=patch_size, 
+    white_sim_fname,
+    surf_set,
+    patch_size=patch_size,
     n_temp_modes=n_temp_modes,
     return_mu_matrix=True,
     spm_instance=spm
@@ -352,31 +314,21 @@ white_sim_fname = run_dipole_simulation(
 
 layer_vertices = np.arange(verts_per_surf)
 layer_ts, time, _ = load_source_time_series(
-    white_sim_fname, 
-    mu_matrix=MU, 
+    white_sim_fname,
+    mu_matrix=MU,
     vertices=layer_vertices
 )
 
 # Layer peak
 m_layer_max = np.max(np.mean(layer_ts,axis=-1),-1)
 prior = np.argmax(m_layer_max)
-prior_coord = ds_inflated.darrays[0].data[prior,:]
-
-print(f'Simulated vertex={sim_vertex}, Prior vertex={prior}')
-print('Simulated coordinate')
-print(sim_coord)
-print('Prior coordinate')
-print(prior_coord)
 
 # Run sliding time window model comparison between the first layer (pial) and the last layer (white matter)
 [Fs,wois] = sliding_window_model_comparison(
-    prior, 
-    nas, 
-    lpa, 
-    rpa, 
-    mri_fname, 
-    [layer_fnames[0], layer_fnames[-1]], 
-    white_sim_fname, 
+    prior,
+    fid_coords,
+    white_sim_fname,
+    surf_set_bilam,
     spm_instance=spm,
     invert_kwargs={
         'patch_size': patch_size, 
@@ -386,6 +338,7 @@ print(prior_coord)
     }
 )
 
+# %% [markdown]
 # Plot difference in free energy over time (pial minus white) - this should be negative
 plt.plot(np.mean(wois,axis=-1), Fs[0,:]-Fs[1,:])
 plt.xlabel('Time (ms)')
@@ -405,29 +358,28 @@ plt.ylabel(r'$\Delta$F')
 # Now simulate at the corresponding vertex on each layer, and for each simulation, run sliding window model
 # comparison across all layers
 all_layerF = []
-for l in range(n_layers):
+for l in range(surf_set.n_layers):
     print(f'Simulating in layer {l}')
-    l_vertex = l*verts_per_surf+sim_vertex
+    l_vertex = l * verts_per_surf + sim_vertex
     prefix = f'sim_{sim_vertex}{l}_'
-    
+
     l_sim_fname = run_dipole_simulation(
-        base_fname, 
-        prefix, 
-        l_vertex, 
-        sim_signal, 
-        pial_unit_norm, 
-        dipole_moment, 
-        sim_patch_size, 
-        SNR, 
+        base_fname,
+        prefix,
+        l_vertex,
+        sim_signal,
+        pial_unit_norm,
+        dipole_moment,
+        sim_patch_size,
+        SNR,
         spm_instance=spm
-    ) 
-    
+    )
+
     # Localizer
-    [_,_,MU] = invert_ebb(
-        multilayer_mesh_fname, 
-        l_sim_fname, 
-        n_layers, 
-        patch_size=patch_size, 
+    [_, _, MU] = invert_ebb(
+        l_sim_fname,
+        surf_set,
+        patch_size=patch_size,
         n_temp_modes=n_temp_modes,
         return_mu_matrix=True,
         viz=False,
@@ -436,40 +388,30 @@ for l in range(n_layers):
 
     layer_vertices = np.arange(verts_per_surf)
     layer_ts, time, _ = load_source_time_series(
-        l_sim_fname, 
-        mu_matrix=MU, 
+        l_sim_fname,
+        mu_matrix=MU,
         vertices=layer_vertices
     )
 
     # Layer peak
-    m_layer_max = np.max(np.mean(layer_ts,axis=-1),-1)
-    prior = np.argmax(m_layer_max)    
-    prior_coord = ds_inflated.darrays[0].data[prior,:]
+    m_layer_max = np.max(np.mean(layer_ts, axis=-1), -1)
+    prior = np.argmax(m_layer_max)
 
-    print(f'Simulated vertex={sim_vertex}, Prior vertex={prior}')
-    print('Simulated coordinate')
-    print(sim_coord)
-    print('Prior coordinate')
-    print(prior_coord)
-
-    [Fs,wois] = sliding_window_model_comparison(
-        prior, 
-        nas, 
-        lpa, 
-        rpa, 
-        mri_fname, 
-        layer_fnames, 
-        l_sim_fname, 
+    [Fs, wois] = sliding_window_model_comparison(
+        prior,
+        fid_coords,
+        l_sim_fname,
+        surf_set,
         viz=False,
         spm_instance=spm,
         invert_kwargs={
-            'patch_size': patch_size, 
+            'patch_size': patch_size,
             'n_temp_modes': sliding_n_temp_modes,
-            'win_size': win_size, 
+            'win_size': win_size,
             'win_overlap': win_overlap,
         }
     )
-    
+
     all_layerF.append(Fs)
 all_layerF = np.squeeze(np.array(all_layerF))
 
@@ -481,13 +423,13 @@ woi_t = np.mean(wois,axis=-1)
 woi_idx = np.where((woi_t>=-20) & (woi_t<=20))[0]
 m_all_layerF = np.mean(all_layerF[:,:,woi_idx],axis=2)
 
-col_r = plt.cm.cool(np.linspace(0,1, num=n_layers))
+col_r = plt.cm.cool(np.linspace(0,1, num=surf_set.n_layers))
 plt.figure(figsize=(10,4))
 
 # For each simulation, plot the mean free energy of each layer model relative to that of the worst
 # model for that simulation
 plt.subplot(1,2,1)
-for l in range(n_layers):
+for l in range(surf_set.n_layers):
     layerF = m_all_layerF[l,:]
     plt.plot(layerF-np.min(layerF), label=f'{l}', color=col_r[l,:])
 plt.legend()
@@ -497,7 +439,7 @@ plt.ylabel(r'$\Delta$F')
 # For each simulation, find which layer model had the greatest free energy
 plt.subplot(1,2,2)
 peaks=[]
-for l in range(n_layers):
+for l in range(surf_set.n_layers):
     layerF = m_all_layerF[l,:]
     layerF = layerF-np.min(layerF)
     pk = np.argmax(layerF)
@@ -517,7 +459,7 @@ plt.tight_layout()
 
 # Normalization step
 norm_layerF = np.zeros(m_all_layerF.shape)
-for l in range(n_layers):
+for l in range(surf_set.n_layers):
     norm_layerF[l,:] = m_all_layerF[l,:] - np.min(m_all_layerF[l,:])
 
 # Transpose for visualization

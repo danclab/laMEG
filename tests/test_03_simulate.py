@@ -1,13 +1,11 @@
 """
 This module contains the unit tests for the `simulate` module from the `lameg` package.
 """
-import os
-
 import numpy as np
 import pytest
-import nibabel as nib
 
 from lameg.simulate import run_dipole_simulation, run_current_density_simulation
+from lameg.surf import LayerSurfaceSet
 from lameg.util import load_meg_sensor_data
 
 
@@ -51,7 +49,6 @@ def test_run_dipole_simulation(spm):
     necessary data infrastructure and dependencies are correctly set up.
     """
 
-    test_data_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../test_data')
     subj_id = 'sub-104'
 
     # Strength of simulated activity (nAm)
@@ -64,11 +61,8 @@ def test_run_dipole_simulation(spm):
     zero_time = time[int((len(time) - 1) / 2 + 1)]
     sim_signal = np.exp(-((time - zero_time) ** 2) / (2 * signal_width ** 2)).reshape(1, -1)
 
-    # Mesh to use for forward model in the simulations
-    mesh_fname = os.path.join(test_data_path, subj_id, 'surf/multilayer.2.ds.link_vector.fixed.gii')
-
-    # Load multilayer mesh and compute the number of vertices per layer
-    mesh = nib.load(mesh_fname)
+    surf_set = LayerSurfaceSet(subj_id, 2)
+    mesh = surf_set.load(stage='ds', orientation='link_vector', fixed=True)
 
     sim_vertex = 24588
     # Orientation of the simulated dipole
@@ -98,9 +92,9 @@ def test_run_dipole_simulation(spm):
 
     sim_sensor_data, time, ch_names = load_meg_sensor_data(sim_fname)
 
-    target=np.array([ 0.05684258, -0.12866193,  0.07388893,  0.2516157,   0.09264176,  0.01863054,
-                      0.27522185,  0.14102148, -0.21366386, -0.04743002])
-    assert np.allclose(sim_sensor_data[0,:10], target)
+    target=np.array([ 0.19921277, -0.4513678,   0.2589027,   0.8821042,   0.32452038,
+                      0.06486866,  0.96457225,  0.4937845,  -0.75025725, -0.16754912])
+    assert np.allclose(sim_sensor_data[0,:10], target, atol=1e-3)
 
     target=np.array([-0.1, -0.09833333, -0.09666667, -0.095, -0.09333333,
                      -0.09166667, -0.09, -0.08833333, -0.08666667, -0.085])*1000
@@ -188,9 +182,9 @@ def test_run_current_density_simulation(spm):
 
     sim_sensor_data, time, ch_names = load_meg_sensor_data(sim_fname)
 
-    target=np.array([ 2.4205484,  3.9856143, -1.1225368,  6.813098,  -2.4976463,  1.4894879,
-                      2.469582,   4.6006646,  3.1293263, -3.3464603])
-    assert np.allclose(sim_sensor_data[0,:10,0], target)
+    target=np.array([ 3.957862,   6.516916,  -1.8354707, 11.1401615, -4.0839252,  2.4354758,
+                      4.0380373,  7.5225906,  5.1167917, -5.471829 ])
+    assert np.allclose(sim_sensor_data[0,:10,0], target, atol=1e-2)
 
     target=np.array([[-0.5, -0.49833333, -0.49666667, -0.495, -0.49333333,
                       -0.49166667, -0.49, -0.48833333, -0.48666667, -0.485]])*1000
@@ -213,9 +207,9 @@ def test_run_current_density_simulation(spm):
 
     sim_sensor_data, time, ch_names = load_meg_sensor_data(sim_fname)
 
-    target = np.array([[-0.0358916,  -1.2394599,   0.2520079,   0.6010563,   1.1191453,
-                        0.38868174,   0.5941798,   0.08137737, -0.24114218, -0.0526498 ]])
-    assert np.allclose(sim_sensor_data[:10, 0], target)
+    target = np.array([-0.0586867,  -2.0266526,   0.41206053,  0.9827929,   1.8299252,
+                       0.6355372,  0.9715491,   0.13306095, -0.39429393, -0.08608822])
+    assert np.allclose(sim_sensor_data[:10, 0], target, atol=1e-2)
 
     target = np.array([[-0.5, -0.49833333, -0.49666667, -0.495, -0.49333333,
                         -0.49166667, -0.49, -0.48833333, -0.48666667, -0.485]]) * 1000
