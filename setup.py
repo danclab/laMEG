@@ -142,7 +142,7 @@ with open('README.rst', 'r', encoding="utf-8") as f:
 
 setup(
     name='lameg',
-    version='0.0.7',
+    version='0.1.0',
     description='A toolbox for laminar inference with MEG',
     long_description=long_description,
     long_description_content_type='text/x-rst',
