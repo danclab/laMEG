@@ -36,13 +36,15 @@ jobs:
     - name: Test with pytest
       env:
         SUBJECTS_DIR: ${{ github.workspace }}/test_data/fs
+        MALLOC_TRIM_THRESHOLD_: 0
       run: |
         conda activate lameg
-        export MALLOC_TRIM_THRESHOLD_=0
         wget -q -c https://osf.io/s2ehv/download -O "${{ github.workspace }}/test_data_v2.tar.gz"
         tar -xzf ${{ github.workspace }}/test_data_v2.tar.gz -C ${{ github.workspace }}
         rm ${{ github.workspace }}/test_data_v2.tar.gz
-        pytest --cov=lameg --cov-report=xml
+        pytest --disable-warnings --maxfail=1
+        coverage run -m pytest --collect-only
+        coverage xml
       shell: bash -l {0}
 
     - name: Upload coverage to Codecov
