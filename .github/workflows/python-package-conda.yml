@@ -42,7 +42,7 @@ jobs:
         wget -q -c https://osf.io/s2ehv/download -O "${{ github.workspace }}/test_data_v2.tar.gz"
         tar -xzf ${{ github.workspace }}/test_data_v2.tar.gz -C ${{ github.workspace }}
         rm ${{ github.workspace }}/test_data_v2.tar.gz
-        python -m pytest --cov=lameg --cov-report=xml
+        pytest --cov=lameg --cov-report=xml --forked --maxfail=1 --disable-warnings
       shell: bash -l {0}
 
     - name: Upload coverage to Codecov
