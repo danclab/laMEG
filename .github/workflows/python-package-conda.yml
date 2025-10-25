@@ -42,7 +42,7 @@ jobs:
         tar -xzf ${{ github.workspace }}/test_data_v2.tar.gz -C ${{ github.workspace }}
         rm ${{ github.workspace }}/test_data_v2.tar.gz
         pytest --cov=lameg --cov-report=term
-        coverage xm
+        coverage xml
       shell: bash -l {0}
 
     - name: Upload coverage to Codecov
