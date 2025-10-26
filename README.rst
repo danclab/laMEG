@@ -97,7 +97,7 @@ Funding
    :alt: laMEG
    :width: 300
 
-.. |PyPI version| image:: https://badge.fury.io/py/lameg.svg
+.. |PyPI version| image:: https://badge.fury.io/py/lameg.svg?cache-control=no-cache
    :target: https://badge.fury.io/py/lameg
    :alt: PyPI version
 
