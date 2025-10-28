@@ -403,7 +403,8 @@ class LayerSurfaceSet:
             layer_idx = layer
         else:
             layer_idx = self.get_layer_names().index(layer)
-        return layer_idx * self.get_vertices_per_layer(orientation=orientation, fixed=fixed) + layer_vertex
+        n_vertices_per_layer = self.get_vertices_per_layer(orientation=orientation, fixed=fixed)
+        return layer_idx * n_vertices_per_layer + layer_vertex
 
     def load(self, layer_name=None, stage='raw', hemi=None, orientation=None, fixed=None):
         """
@@ -920,6 +921,9 @@ class LayerSurfaceSet:
         ----------
         ds_factor : float
             Fraction of vertices to retain during decimation (e.g., 0.1 retains 10% of vertices).
+        spm_instance : spm_standalone, optional
+            Active standalone SPM instance. If None, a temporary instance is created and closed
+            after execution.
 
         Notes
         -----
@@ -952,7 +956,11 @@ class LayerSurfaceSet:
         primary_surf = self.load(surfaces_to_process[0], stage='combined')
         primary_meta = self.load_meta(surfaces_to_process[0], stage='combined')
         primary_meta['ds_factor'] = ds_factor
-        ds_primary_surf = _downsample_single_surface(primary_surf, ds_factor=ds_factor, spm_instance=spm_instance)
+        ds_primary_surf = _downsample_single_surface(
+            primary_surf,
+            ds_factor=ds_factor,
+            spm_instance=spm_instance
+        )
         reduced_vertices = ds_primary_surf.darrays[0].data
         reduced_faces = ds_primary_surf.darrays[1].data
 
@@ -1288,7 +1296,8 @@ class LayerSurfaceSet:
 
 
     # pylint: disable=R0912,R0915
-    def create(self, ds_factor=0.1, orientation='link_vector', fix_orientation=True, n_jobs=-1, spm_instance=None):
+    def create(self, ds_factor=0.1, orientation='link_vector', fix_orientation=True, n_jobs=-1,
+               spm_instance=None):
         """
         Postprocess and combine FreeSurfer cortical surface meshes for laminar analysis.
 
@@ -1317,6 +1326,9 @@ class LayerSurfaceSet:
         n_jobs : int, optional
             Number of parallel jobs used when generating intermediate surfaces (default: -1 for all
             cores).
+        spm_instance : spm_standalone, optional
+            Active standalone SPM instance. If None, a temporary instance is created and closed
+            after execution.
 
         Raises
         ------
@@ -2344,6 +2356,9 @@ def _downsample_single_surface(gifti_surf, ds_factor=0.1, spm_instance=None):
     ds_factor : float, optional
         Fraction of vertices to retain. For example, `0.1` retains 10% of the
         original vertices. Default is 0.1.
+    spm_instance : spm_standalone, optional
+        Active standalone SPM instance. If None, a temporary instance is created and closed
+        after execution.
 
     Returns
     -------
