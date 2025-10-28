@@ -153,7 +153,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "nibabel==3.2.2",
-        "numpy==1.19.5",
+        "numpy==1.21.6",
         "scipy==1.5.4",
         "matplotlib==3.3.4",
         "joblib==1.1.1",
