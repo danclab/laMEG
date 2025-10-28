@@ -39,14 +39,9 @@ import numpy as np
 from joblib import Parallel, delayed
 from scipy.sparse import csr_matrix
 from scipy.spatial import cKDTree  # pylint: disable=E0611
-from vtkmodules.util.numpy_support import vtk_to_numpy
-# pylint: disable=E0611
-from vtkmodules.vtkCommonCore import vtkPoints
-from vtkmodules.vtkCommonDataModel import vtkPolyData, vtkCellArray
-from vtkmodules.vtkFiltersCore import vtkDecimatePro
 
-from lameg.util import big_brain_proportional_layer_boundaries, check_freesurfer_setup
-
+from lameg.util import spm_context, big_brain_proportional_layer_boundaries, check_freesurfer_setup
+import matlab # pylint: disable=wrong-import-order,import-error
 
 # pylint: disable=R0902
 class LayerSurfaceSet:
@@ -372,6 +367,43 @@ class LayerSurfaceSet:
             else:
                 layer_names.append(f'{layer:.3f}')
         return layer_names
+
+    def get_multilayer_vertex(self, layer, layer_vertex, orientation='link_vector', fixed=True):
+        """
+        Compute the global vertex index within the concatenated multilayer surface mesh.
+
+        This function converts a vertex index belonging to a specific cortical layer into
+        its corresponding global index in the multilayer surface representation, where
+        vertices from all layers are stored contiguously.
+
+        Parameters
+        ----------
+        layer : int or str
+            Layer identifier. If an integer, it is treated as a zero-based layer index.
+            If a string, it must match one of the layer names in `self.get_layer_names()`.
+        layer_vertex : int
+            Vertex index within the specified layer.
+        orientation : {'link_vector', 'surface_normal'}, optional
+            Dipole orientation model used to determine vertex ordering. Default is `'link_vector'`.
+        fixed : bool, optional
+            Whether to use the fixed-orientation surface set. Default is True.
+
+        Returns
+        -------
+        global_vertex : int
+            The global vertex index corresponding to the given layer and local vertex index.
+
+        Notes
+        -----
+        - Vertices across layers are assumed to be stored in sequential order
+          (i.e., all vertices from layer 0 precede those from layer 1, etc.).
+        - Useful for indexing vertex-wise quantities defined over the full multilayer mesh.
+        """
+        if isinstance(layer, int):
+            layer_idx = layer
+        else:
+            layer_idx = self.get_layer_names().index(layer)
+        return layer_idx * self.get_vertices_per_layer(orientation=orientation, fixed=fixed) + layer_vertex
 
     def load(self, layer_name=None, stage='raw', hemi=None, orientation=None, fixed=None):
         """
@@ -875,7 +907,7 @@ class LayerSurfaceSet:
 
         return orientations
 
-    def downsample(self, ds_factor):
+    def downsample(self, ds_factor, spm_instance=None):
         """
         Downsample all combined cortical surface meshes using the VTK decimation algorithm.
 
@@ -920,7 +952,7 @@ class LayerSurfaceSet:
         primary_surf = self.load(surfaces_to_process[0], stage='combined')
         primary_meta = self.load_meta(surfaces_to_process[0], stage='combined')
         primary_meta['ds_factor'] = ds_factor
-        ds_primary_surf = _iterative_downsample_single_surface(primary_surf, ds_factor=ds_factor)
+        ds_primary_surf = _downsample_single_surface(primary_surf, ds_factor=ds_factor, spm_instance=spm_instance)
         reduced_vertices = ds_primary_surf.darrays[0].data
         reduced_faces = ds_primary_surf.darrays[1].data
 
@@ -1256,7 +1288,7 @@ class LayerSurfaceSet:
 
 
     # pylint: disable=R0912,R0915
-    def create(self, ds_factor=0.1, orientation='link_vector', fix_orientation=True, n_jobs=-1):
+    def create(self, ds_factor=0.1, orientation='link_vector', fix_orientation=True, n_jobs=-1, spm_instance=None):
         """
         Postprocess and combine FreeSurfer cortical surface meshes for laminar analysis.
 
@@ -1426,7 +1458,7 @@ class LayerSurfaceSet:
             self.save(combined, surface_name, stage='combined', meta=surf_meta)
 
         # Downsample surfaces at the same time
-        self.downsample(ds_factor)
+        self.downsample(ds_factor, spm_instance=spm_instance)
         meta['ds_factor'] = ds_factor
 
         # Compute dipole orientations
@@ -2295,7 +2327,7 @@ def _fix_non_manifold_edges(vertices, faces):
     return vertices, new_faces
 
 
-def _downsample_single_surface(gifti_surf, ds_factor=0.1):
+def _downsample_single_surface(gifti_surf, ds_factor=0.1, spm_instance=None):
     """
     Downsample a GIFTI surface using VTK mesh decimation.
 
@@ -2337,41 +2369,24 @@ def _downsample_single_surface(gifti_surf, ds_factor=0.1):
     vertices = gifti_surf.darrays[0].data
     faces = gifti_surf.darrays[1].data
 
-    # Convert vertices and faces to a VTK PolyData object
-    points = vtkPoints()
-    for point in vertices:
-        points.InsertNextPoint(point)
+    # Call reducepatch
+    with spm_context(spm_instance) as spm:
+        reduced_patch = spm.reducepatch(
+            {
+                'faces': matlab.double((faces + 1).tolist()),
+                'vertices': matlab.double(vertices.tolist())
+            },
+            ds_factor,
+            nargout=1
+        )
 
-    cells = vtkCellArray()
-    for face in faces:
-        cells.InsertNextCell(len(face))
-        for vertex in face:
-            cells.InsertCellPoint(vertex)
+    reduced_vertices = np.array(reduced_patch['vertices'])
+    reduced_faces = np.array(reduced_patch['faces']) - 1
 
-    polydata = vtkPolyData()
-    polydata.SetPoints(points)
-    polydata.SetPolys(cells)
-
-    # Apply vtkDecimatePro for decimation
-    decimate = vtkDecimatePro()
-    decimate.SetInputData(polydata)
-    decimate.SetTargetReduction(1 - ds_factor)
-    decimate.Update()
-
-    # Extract the decimated mesh
-    decimated_polydata = decimate.GetOutput()
-
-    # Convert back to numpy arrays
-    reduced_vertices = vtk_to_numpy(decimated_polydata.GetPoints().GetData())
-
-    # Extract and reshape the face data
-    face_data = vtk_to_numpy(decimated_polydata.GetPolys().GetData())
-    # Assuming the mesh is triangulated, every fourth item is the size (3), followed by three
-    # vertex indices
-    reduced_faces = face_data.reshape(-1, 4)[:, 1:4]
+    reduced_vertices, reduced_faces = _fix_non_manifold_edges(reduced_vertices, reduced_faces)
 
     # Find the original vertices closest to the downsampled vertices
-    kdtree = cKDTree(gifti_surf.darrays[0].data)
+    kdtree = cKDTree(vertices)
     _, orig_vert_idx = kdtree.query(reduced_vertices, k=1)
     orig_vert_idx = np.squeeze(orig_vert_idx)
     # enforce deterministic tie-break by sorting indices for identical distances
@@ -2386,82 +2401,6 @@ def _downsample_single_surface(gifti_surf, ds_factor=0.1):
     new_gifti_surf = _create_surf_gifti(reduced_vertices, reduced_faces, normals=reduced_normals)
 
     return new_gifti_surf
-
-
-def _iterative_downsample_single_surface(gifti_surf, ds_factor=0.1):
-    """
-    Iteratively downsample a GIFTI surface mesh to a target vertex fraction.
-
-    This function progressively reduces the number of vertices in a surface mesh
-    using repeated applications of `_downsample_single_surface`, refining the
-    downsampling ratio at each iteration until the target fraction of vertices is
-    reached or closely approximated. Non-manifold edges and unconnected vertices
-    are removed in post-processing.
-
-    Parameters
-    ----------
-    gifti_surf : nibabel.gifti.GiftiImage
-        Input surface containing vertex (`NIFTI_INTENT_POINTSET`) and face
-        (`NIFTI_INTENT_TRIANGLE`) arrays.
-    ds_factor : float, optional
-        Target vertex retention fraction (e.g., `0.1` retains 10% of vertices).
-        Default is 0.1.
-
-    Returns
-    -------
-    current_surf : nibabel.gifti.GiftiImage
-        The final downsampled surface, cleaned of non-manifold edges and
-        unconnected vertices.
-
-    Notes
-    -----
-    - The algorithm adaptively adjusts the decimation ratio per iteration to
-      approach the target number of vertices without overshooting.
-    - If the computed per-iteration reduction factor > 1, iteration stops to
-      prevent upsampling.
-    - Non-manifold and isolated vertices are automatically removed at the end.
-
-    Examples
-    --------
-    >>> gii = nib.load("lh.pial.converted.gii")
-    >>> ds_gii = _iterative_downsample_single_surface(gii, ds_factor=0.2)
-    >>> print(ds_gii.darrays[0].data.shape)
-    (20512, 3)
-    """
-
-    current_surf = gifti_surf
-    current_vertices = gifti_surf.darrays[0].data.shape[0]
-    target_vertices = int(current_vertices * ds_factor)
-    current_ds_factor = target_vertices / current_vertices
-
-    while current_vertices > target_vertices:
-        # Downsample the mesh
-        current_surf = _downsample_single_surface(current_surf, ds_factor=current_ds_factor)
-
-        # Update the current vertices
-        current_vertices = current_surf.darrays[0].data.shape[0]
-
-        current_ds_factor = (target_vertices / current_vertices) * 1.25
-        if current_ds_factor >= 1:
-            break
-
-    # Remove non-manifold edges
-    ds_vertices = current_surf.darrays[0].data
-    ds_faces = current_surf.darrays[1].data
-    nonmani_vertices, nonmani_faces = _fix_non_manifold_edges(ds_vertices, ds_faces)
-
-    normals = None
-    if len(current_surf.darrays) > 2 and \
-            current_surf.darrays[2].intent == nib.nifti1.intent_codes['NIFTI_INTENT_VECTOR'] and \
-            current_surf.darrays[2].data.shape[0] == current_surf.darrays[0].data.shape[0]:
-        normals = current_surf.darrays[2].data
-
-    current_surf = _create_surf_gifti(nonmani_vertices, nonmani_faces, normals=normals)
-
-    # Remove unconnected vertices
-    current_surf = _remove_unconnected_vertices(current_surf)
-
-    return current_surf
 
 
 def _concatenate_surfaces(surfaces):

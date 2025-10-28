@@ -236,7 +236,7 @@ def color_map(data, cmap, vmin, vmax, n_bins=1000, vcenter=0, norm="TS"):
 def show_surface(
         surf_set,
         layer_name='inflated',
-        stage='combined',
+        stage='ds',
         hemi=None,
         orientation=None,
         fixed=None,
@@ -331,6 +331,8 @@ def show_surface(
         warnings.warn("Both `marker_vertices` and `marker_coords` specified - using "
                       "`marker_vertices` only.")
         marker_coords = None  # ignore manual coord
+    if np.isscalar(marker_vertices):
+        marker_vertices=[marker_vertices]
 
     base_color = rgbtoint(color)
     marker_color = np.array(marker_color).reshape(-1, 3)

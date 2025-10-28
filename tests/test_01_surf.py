@@ -12,7 +12,7 @@ from scipy.sparse import csr_matrix
 from lameg.surf import _split_connected_components, _mesh_adjacency, _fix_non_manifold_edges, \
     _find_non_manifold_edges, _create_surf_gifti, _normit, _vertex_normal_vectors, \
     _remove_vertices, _remove_unconnected_vertices, _downsample_single_surface, \
-    _iterative_downsample_single_surface, _concatenate_surfaces, interpolate_data, \
+    _concatenate_surfaces, interpolate_data, \
     convert_fsaverage_to_native, convert_native_to_fsaverage, \
     LayerSurfaceSet  # pylint: disable=no-name-in-module
 
@@ -406,7 +406,7 @@ def large_gifti():
 
 
 # pylint: disable=W0621
-def test_downsample_single_surface(large_gifti):
+def test_downsample_single_surface(large_gifti, spm):
     """
     Test the downsampling of a single surface represented as a Gifti file.
 
@@ -427,64 +427,27 @@ def test_downsample_single_surface(large_gifti):
     This function will raise an AssertionError if the conditions are not met, indicating a
     potential issue in the `downsample_single_surface` function or the input data.
     """
-    ds_gifti = _downsample_single_surface(large_gifti, 0.1)
+    ds_gifti = _downsample_single_surface(large_gifti, 0.1, spm_instance=spm)
 
-    assert ds_gifti.darrays[0].data.shape[0] == 3224
-    assert ds_gifti.darrays[1].data.shape[0] == 1960
-    assert ds_gifti.darrays[2].data.shape[0] == 3224
-    target = np.array([[0., 1., 0.], [0., 6., 0.], [0., 9., -0.], [0., 21., -0.],
-                       [0., 31., 0.], [0., 41., -0.], [0., 43., 0.], [0., 53., -0.],
-                       [0., 68., 0.], [0., 75., 0.]])
+    assert ds_gifti.darrays[0].data.shape[0] == 1031
+    assert ds_gifti.darrays[1].data.shape[0] == 1959
+    assert ds_gifti.darrays[2].data.shape[0] == 1031
+    target = np.array([[ 0.,  0.,  0.], [ 0.,  5.,  0.], [ 0.,  8., -0.],
+                       [ 0., 11.,  0.], [ 0., 18.,  0.], [ 0., 27., -0.],
+                       [ 0., 30.,  0.], [ 0., 33., -0.], [ 0., 40., -0.],
+                       [ 0., 49.,  0.]])
     assert np.allclose(ds_gifti.darrays[0].data[:10, :], target)
-    target = np.array([[12, 13, 0], [1834, 1, 1717], [16, 27, 1004],
-                       [1628, 3, 1627], [2851, 60, 2818], [60, 1805, 2818],
-                       [1361, 2618, 2387], [1001, 17, 4], [2074, 37, 998],
-                       [37, 1620, 998]])
+    target = np.array([[ 0, 26,  1], [27, 20,  4], [ 4, 20,  5],
+                       [ 7, 29,  8], [29, 30,  8], [30, 21,  8],
+                       [ 8, 21,  9], [11, 22, 12], [22, 33, 12],
+                       [33, 23, 12]])
     assert np.allclose(ds_gifti.darrays[1].data[:10, :], target)
-    target = np.array([[0., 1., 1.620907], [0., 6., 2.8805108], [0., 9., -2.7333908],
-                       [0., 21., -1.6431878], [0., 31., 2.7442272]])
+    target = np.array([[ 0.0000000e+00,  0.0000000e+00 , 3.0000000e+00],
+                       [ 0.0000000e+00,  5.0000000e+00,  8.5098654e-01],
+                       [ 0.0000000e+00,  8.0000000e+00, -4.3650010e-01],
+                       [ 0.0000000e+00,  1.1000000e+01,  1.3277094e-02],
+                       [ 0.0000000e+00,  1.8000000e+01,  1.9809501e+00]])
     assert np.allclose(ds_gifti.darrays[2].data[:5, :], target)
-
-
-# pylint: disable=W0621
-def test_iterative_downsample_single_surface(large_gifti):
-    """
-    Test the iterative downsampling process on a single surface represented as a Gifti file.
-
-    This function tests the `iterative_downsample_single_surface` function to ensure it correctly
-    applies an iterative downsampling algorithm to reduce the complexity of a 3D surface mesh
-    while maintaining the integrity of the data structure. The test checks if the output dimensions
-    and specific data points of the vertex and face arrays conform to expected values after
-    downsampling.
-
-    Parameters:
-    - large_gifti (GiftiImage): A GiftiImage object that represents a 3D surface mesh to be
-      downsampled.
-
-    Asserts:
-    - The number of vertices in the first data array after downsampling should be exactly 3224.
-    - The number of vertices in the second data array after downsampling should be exactly 1960.
-    - The first ten entries of the vertex and face arrays are checked against predefined target
-      arrays, ensuring that the iterative downsampling process preserves data fidelity and
-      accuracy.
-
-    Raises:
-    - AssertionError: If any of the conditions are not met, an AssertionError is raised, indicating
-      a potential issue in the iterative downsampling process or the initial data.
-    """
-    ds_gifti = _iterative_downsample_single_surface(large_gifti, 0.1)
-
-    assert ds_gifti.darrays[0].data.shape[0] == 1202
-    assert ds_gifti.darrays[1].data.shape[0] == 759
-    target = np.array([[0., 9., -0.], [0., 21., -0.], [0., 43., 0.], [0., 68., 0.],
-                       [0., 75., 0.], [1., 0., 0.84147096], [1., 3., -.83305],
-                       [1., 12., 0.71008], [1., 65., -0.47329], [1., 94., 0.81577]])
-    assert np.allclose(ds_gifti.darrays[0].data[:10, :], target)
-    target = np.array([[603, 1, 602], [17, 656, 1015], [501, 941, 865],
-                       [596, 1153, 8], [610, 11, 4], [771, 1117, 1118],
-                       [945, 946, 947], [750, 951, 907], [972, 670, 0],
-                       [752, 678, 7]])
-    assert np.allclose(ds_gifti.darrays[1].data[:10, :], target)
 
 
 # pylint: disable=W0621
@@ -550,7 +513,7 @@ def test_concatenate_surfaces(large_gifti):
 
 
 @pytest.mark.dependency()
-def test_create_layer_surface_set():
+def test_create_layer_surface_set(spm):
     """
     Test the `create` function of `LayerSurfaceSet` to ensure it processes surface meshes
     correctly.
@@ -601,7 +564,7 @@ def test_create_layer_surface_set():
     error_raised = False
     try:
         surf_set = LayerSurfaceSet(subj_id, 2)
-        surf_set.create()
+        surf_set.create(spm_instance=spm)
     except EnvironmentError:
         error_raised = True
     assert error_raised
@@ -618,7 +581,7 @@ def test_create_layer_surface_set():
             patch('subprocess.run', mock_run):
 
         surf_set = LayerSurfaceSet(subj_id, 2)
-        surf_set.create()
+        surf_set.create(spm_instance=spm)
 
         # Assert we asked for the two matrices
         assert mock_chk.call_count == 2
@@ -629,29 +592,29 @@ def test_create_layer_surface_set():
 
         final_surf = surf_set.load(stage='ds', orientation='link_vector', fixed=True)
 
-        assert final_surf.darrays[0].data.shape[0] == 99418
-        assert final_surf.darrays[1].data.shape[0] == 156346
-        assert final_surf.darrays[2].data.shape[0] == 99418
+        assert final_surf.darrays[0].data.shape[0] == 102182
+        assert final_surf.darrays[1].data.shape[0] == 202430
+        assert final_surf.darrays[2].data.shape[0] == 102182
 
-        target = np.array([[-5.045371, -58.015545, 28.667315],
-                           [-5.780028, -58.10384, 27.128946],
-                           [-6.1046896, -58.029255, 25.388483],
-                           [-6.6609564, -57.708035, 24.487747],
-                           [-11.3597355, -58.080082, 20.150642]])
+        target = np.array([[-72.43722,   15.020615,  15.273759],
+                           [-72.25261,   11.791885,  20.298334],
+                           [-72.09756,    8.820507,  17.382414],
+                           [-71.91309,   13.373682,  21.753763],
+                           [-71.90388,   16.401394,  12.875579]])
         assert np.allclose(final_surf.darrays[0].data[:5, :], target)
 
-        target = np.array([[0, 10, 28],
-                           [0, 28, 8],
-                           [11, 0, 8],
-                           [0, 11, 46254],
-                           [10, 13, 46877]])
+        target = np.array([[21035, 21432, 23094],
+                           [22114, 21432, 21865],
+                           [22114, 23094, 21432],
+                           [21035, 20434, 21432],
+                           [19739, 21035, 20227]])
         assert np.allclose(final_surf.darrays[1].data[:5, :], target)
 
-        target = np.array([[0.14771064, 0.9553547, -0.25588843],
-                           [0.22574118, 0.97246087, -0.05797191],
-                           [0.28987604, 0.95356506, 0.08176449],
-                           [0.4109391, 0.89564127, 0.17016393],
-                           [-0.06476931, 0.996889, -0.04491389]])
+        target = np.array([[ 0.9354371,  -0.35336936,  0.00935574],
+                           [ 0.8999253,   0.07720076, -0.4291557 ],
+                           [ 0.92062426,  0.28157225, -0.2704958 ],
+                           [ 0.8825381,  -0.04423492, -0.4681556 ],
+                           [ 0.9027683,  -0.39776868,  0.16367494]])
         assert np.allclose(final_surf.darrays[2].data[:5, :], target)
 
 
@@ -684,7 +647,7 @@ def test_mesh_adjacency(faces, expected):
 
 
 # pylint: disable=W0621
-def test_interpolate_data(large_gifti):
+def test_interpolate_data(large_gifti, spm):
     """
     Tests the interpolate_data function by comparing the interpolated results
     from a downsampled GIFTI surface with known target values.
@@ -699,12 +662,12 @@ def test_interpolate_data(large_gifti):
     4. Asserts that the interpolated data closely matches a predefined target array
        for the first 10 vertices.
     """
-    smaller_gifti = _downsample_single_surface(large_gifti, 0.1)
+    smaller_gifti = _downsample_single_surface(large_gifti, 0.1, spm_instance=spm)
     n_verts = smaller_gifti.darrays[0].data.shape[0]
     ds_data = np.linspace(0, 100, n_verts)
     interp_data = interpolate_data(large_gifti, smaller_gifti, ds_data)
-    target = np.array([[15.25175214, 27.25540839, 49.9735954, 56.24878169, 49.07015577,
-                        33.66244014, 31.40144587, 28.00277272, 20.85717175, 27.23136023]])
+    target = np.array([1.58295737, 1.66810788, 1.53601986, 1.46133576, 1.0740715,
+                       1.14209386, 1.22528707, 0.95283012, 1.00833675, 1.09524968])
     assert np.allclose(interp_data[:10], target)
 
 
@@ -832,38 +795,38 @@ def test_compute_dipole_orientations():
     with patch('os.getenv', return_value='./test_data/fs'):
         surf_set = LayerSurfaceSet('sub-104', 2)
         normals = surf_set.compute_dipole_orientations('link_vector', fixed=True)
-        target = np.array([[0.14771064, 0.9553547, -0.25588843],
-                           [0.22574118, 0.97246087, -0.05797153],
-                           [0.28987604, 0.95356506, 0.08176449],
-                           [0.4109391, 0.89564127, 0.17016393],
-                           [-0.06476931, 0.99688905, -0.04491353]])
+        target = np.array([[ 0.9354371,  -0.35336936,  0.00935574],
+                           [ 0.8999253,   0.07720076, -0.4291557 ],
+                           [ 0.92062426,  0.28157225, -0.2704958 ],
+                           [ 0.8825381,  -0.04423492, -0.4681556 ],
+                           [ 0.9027683,  -0.39776868,  0.16367494]])
         assert np.allclose(normals[0, :5, :], target)
         assert np.allclose(normals[1, :5, :], target)
 
         normals = surf_set.compute_dipole_orientations('ds_surf_norm', fixed=True)
-        target = np.array([[0.11921045, 0.9877371, -0.10081787],
-                           [-0.20836607, 0.97758627, 0.03014262],
-                           [-0.00309545, 0.98333, 0.18180308],
-                           [0.4079666, 0.9053587, 0.11785118],
-                           [-0.05669601, 0.9797419, 0.1920715]])
+        target = np.array([[ 0.99113363, -0.13197988,  0.01534561],
+                           [ 0.9682993,   0.06845532, -0.24022974],
+                           [ 0.977794,    0.20671482, -0.03446477],
+                           [ 0.88111407, -0.41504905, -0.22665466],
+                           [ 0.97121817, -0.14589955,  0.18827817]])
         assert np.allclose(normals[0, :5, :], target)
         assert np.allclose(normals[1, :5, :], target)
 
         normals = surf_set.compute_dipole_orientations('orig_surf_norm', fixed=True)
-        target = np.array([[0.10781617, 0.9787314, -0.17452957],
-                           [0.23795962, 0.9670099, -0.09092305],
-                           [0.22581099, 0.9701262, 0.08868194],
-                           [0.405921, 0.87620986, 0.25977778],
-                           [-0.0196353, 0.994927, 0.09866542]])
+        target = np.array([[ 0.997933,   -0.04159617, -0.04898577],
+                           [ 0.9741508,   0.10425219, -0.20040412],
+                           [ 0.9562965,   0.27824983, -0.08985566],
+                           [ 0.9326735,  -0.15417571, -0.3261135 ],
+                           [ 0.96156543, -0.20410974,  0.18366058]])
         assert np.allclose(normals[0, :5, :], target)
         assert np.allclose(normals[1, :5, :], target)
 
         normals = surf_set.compute_dipole_orientations('cps', fixed=True)
-        target = np.array([[0.05076333, 0.9803699, -0.19052005],
-                           [0.17128408, 0.98397416, -0.04956321],
-                           [0.07817034, 0.9902022, 0.11571109],
-                           [0.44305757, 0.8352342, 0.325705],
-                           [-0.02427451, 0.99666697, 0.0778831]])
+        target = np.array([[ 0.9967677,   0.02260102,  0.07709316],
+                           [ 0.9881614,   0.04284213, -0.14731486],
+                           [ 0.981517,    0.19136654, -0.00179475],
+                           [ 0.9361569,  -0.2301073,  -0.26582086],
+                           [ 0.96834785, -0.1248095,   0.21615978]])
         assert np.allclose(normals[0, :5, :], target)
         assert np.allclose(normals[1, :5, :], target)
 
@@ -902,11 +865,11 @@ def test_convert_fsaverage_to_native():
     """
     surf_set = LayerSurfaceSet('sub-104', 2)
     native_vtx = convert_fsaverage_to_native(surf_set, 'pial', 'lh', vert_idx=1000)
-    target = 11341
+    target = 7322
     assert native_vtx == target
 
     native_vtx = convert_fsaverage_to_native(surf_set, 'pial', 'rh', vert_idx=1000)
-    target = 33360
+    target = 37132
     assert native_vtx == target
 
     error_raise = False
@@ -919,7 +882,7 @@ def test_convert_fsaverage_to_native():
     native_vtx = convert_fsaverage_to_native(surf_set, 'pial', 'lh')
     target = 163842
     assert native_vtx.shape[0] == target
-    target = np.array([9343, 2602, 10319, 17133, 12151, 5355, 39024, 39271, 45703, 15326])
+    target = np.array([10863, 18024, 22275, 13628,  2818, 7142, 13523, 17075, 23808, 13112])
     assert np.allclose(native_vtx[:10], target)
 
 
@@ -978,10 +941,10 @@ def test_convert_native_to_fsaverage():
             surf_set,
             'pial'
         )
-        assert len(hemis) == len(verts) == 49709
+        assert len(hemis) == len(verts) == 51091
         target = ['lh', 'lh', 'lh', 'lh', 'lh', 'lh', 'lh', 'lh', 'lh', 'lh']
         assert np.all(hemis[:10] == target)
-        target = [87729, 112541, 112542, 52282, 87824, 158647, 39230, 135879, 6903, 126602]
+        target = [107623, 79526, 8542, 4357, 18832, 107622, 8543, 107626, 79523, 107625]
         assert np.all(verts[:10] == target)
 
 
@@ -1087,7 +1050,7 @@ def test_layersurfaceset():
         np.random.seed(42)
         ds_data = np.random.random(pial_ds.darrays[0].data.shape[0])
         interp_data = surf_set.interpolate_layer_data('pial', ds_data)
-        target = np.array([0.42281239, 0.46960404, 0.50846158, 0.57337757, 0.38641278])
+        target = np.array([0.52863991, 0.41305474, 0.2971323,  0.29360893, 0.51689645])
         assert np.allclose(interp_data[:5], target)
 
 
@@ -1186,9 +1149,9 @@ def test_get_bigbrain_layer_boundaries():
 
     vert_bb_prop = surf_set.get_bigbrain_layer_boundaries()
     assert vert_bb_prop.shape[0] == 6
-    assert vert_bb_prop.shape[1] == 49709
-    expected = np.array([0.18065107, 0.17599325, 0.11645006, 0.16804233, 0.12389062, 0.15487793,
-                         0.15541628, 0.11214042, 0.18332304, 0.16658252])
+    assert vert_bb_prop.shape[1] == 51091
+    expected = np.array([0.08437561, 0.0782245,  0.15363126, 0.08172216, 0.08320902, 0.084682,
+                         0.06989553, 0.07062837, 0.08574223, 0.08106723])
     assert np.allclose(vert_bb_prop[0,:10], expected)
 
 
@@ -1200,7 +1163,7 @@ def test_get_cortical_thickness():
     subj_id = 'sub-104'
     surf_set = LayerSurfaceSet(subj_id, 2)
     thickness = surf_set.get_cortical_thickness(stage='ds')
-    expected = np.array([1.9739379, 2.545998,  2.6078107, 2.5250378, 1.9865115])
+    expected = np.array([4.6696258, 4.107134,  3.9266396, 4.407326,  4.3727565])
     assert np.allclose(thickness[:5], expected)
 
     thickness = surf_set.get_cortical_thickness(stage='combined')
@@ -1219,7 +1182,7 @@ def test_get_distance_to_scalp():
     subj_id = 'sub-104'
     surf_set = LayerSurfaceSet(subj_id, 2)
     distance = surf_set.get_distance_to_scalp(stage='ds')
-    expected = np.array([11.655455,   11.32269334, 11.4108027,  11.85575421, 11.56102818])
+    expected = np.array([12.11558562, 12.49536067, 13.14079539, 12.91111269, 12.44810503])
     assert np.allclose(distance[:5], expected)
 
     distance = surf_set.get_distance_to_scalp(layer_name='white', stage='combined')
@@ -1237,7 +1200,7 @@ def test_get_radiality_to_scalp():
     subj_id = 'sub-104'
     surf_set = LayerSurfaceSet(subj_id, 2)
     radiality = surf_set.get_radiality_to_scalp(layer_name='white')
-    expected = np.array([0.98478,    0.98240334, 0.9504422,  0.8885453,  0.9843805 ])
+    expected = np.array([0.9701514,  0.9108665,  0.90277934, 0.9031148,  0.9678134 ])
     assert np.allclose(radiality[:5], expected)
 
 def test_get_vertices_per_layer():
@@ -1248,3 +1211,17 @@ def test_get_vertices_per_layer():
     surf_set = LayerSurfaceSet(subj_id, 2)
     pial_mesh = surf_set.load(layer_name='pial', stage='ds')
     assert surf_set.get_vertices_per_layer() == pial_mesh.darrays[0].data.shape[0]
+
+def test_get_multilayer_vertex():
+    """
+    Test the get_multilayer_vertex function of LayerSurfaceSet
+    """
+    subj_id = 'sub-104'
+    surf_set = LayerSurfaceSet(subj_id, 2)
+    pial_mesh = surf_set.load(layer_name='pial', stage='ds')
+    v_idx=1000
+    w_v_idx = surf_set.get_multilayer_vertex('white', v_idx)
+    assert w_v_idx == (pial_mesh.darrays[0].data.shape[0] + v_idx)
+
+    w_v_idx = surf_set.get_multilayer_vertex(1, v_idx)
+    assert w_v_idx == (pial_mesh.darrays[0].data.shape[0] + v_idx)

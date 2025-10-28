@@ -15,7 +15,6 @@ readme = "README.rst"
 requires-python = "~=3.7"
 dependencies = [
     "nibabel==3.2.2",
-    "vtk==9.3.0",
     "numpy==1.19.5",
     "scipy==1.5.4",
     "matplotlib==3.3.4",
@@ -30,7 +29,8 @@ dependencies = [
     "widgetsnbextension==3.6.6",
     "ipywidgets==7.8.1",
     "jupyterlab-widgets==1.1.7",
-    "k3d==2.14.5"
+    "k3d==2.14.5",
+    "numpy-stl==3.1.2"
 ]
 authors = [
     { name = "James Bonaiuto", email = "james.bonaiuto@isc.cnrs.fr" },
