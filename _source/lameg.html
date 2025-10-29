@@ -388,6 +388,24 @@ document.write(`
 </section>
 <section id="module-lameg.postinstall">
 <span id="lameg-postinstall-module"></span><h2>lameg.postinstall module<a class="headerlink" href="#module-lameg.postinstall" title="Permalink to this heading">#</a></h2>
+<section id="lameg-post-installation-script">
+<h3>laMEG Post-installation Script<a class="headerlink" href="#lameg-post-installation-script" title="Permalink to this heading">#</a></h3>
+<p>This module performs all post-installation setup tasks for the laMEG package.
+It installs the DANC SPM Python interface, configures Jupyter notebook
+extensions (e.g., <cite>k3d</cite>), and creates a marker file in the user’s home
+directory (<cite>~/.lameg_postinstall</cite>) indicating that setup has been completed.</p>
+<p>Typical usage (after <cite>pip install lameg</cite>):</p>
+<blockquote>
+<div><p>$ lameg-postinstall</p>
+</div></blockquote>
+<p>If laMEG is installed inside a conda environment, users should deactivate and
+reactivate the environment after running this script so that any new environment
+variables take effect:</p>
+<blockquote>
+<div><p>conda deactivate
+conda activate &lt;env_name&gt;</p>
+</div></blockquote>
+</section>
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.postinstall.clone_and_install_spm">
 <span class="sig-prename descclassname"><span class="pre">lameg.postinstall.</span></span><span class="sig-name descname"><span class="pre">clone_and_install_spm</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lameg.postinstall.clone_and_install_spm" title="Permalink to this definition">#</a></dt>
@@ -716,6 +734,7 @@ is True.</p></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg-invert-module">lameg.invert module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg-laminar-module">lameg.laminar module</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-lameg.postinstall">lameg.postinstall module</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg-post-installation-script">laMEG Post-installation Script</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.postinstall.clone_and_install_spm"><code class="docutils literal notranslate"><span class="pre">clone_and_install_spm()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.postinstall.run_postinstall"><code class="docutils literal notranslate"><span class="pre">run_postinstall()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.postinstall.setup_jupyter_extensions"><code class="docutils literal notranslate"><span class="pre">setup_jupyter_extensions()</span></code></a></li>
