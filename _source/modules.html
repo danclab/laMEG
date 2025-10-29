@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>lameg &#8212; laMEG 0.1.1 documentation</title>
+    <title>lameg &#8212; laMEG 0.1.2 documentation</title>
   
   
   
@@ -381,92 +381,20 @@ document.write(`
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="lameg.html">lameg package</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="lameg.html#submodules">Submodules</a></li>
-<li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg.invert">lameg.invert module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#main-functionalities">Main functionalities</a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.check_inversion_exists"><code class="docutils literal notranslate"><span class="pre">check_inversion_exists()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.coregister"><code class="docutils literal notranslate"><span class="pre">coregister()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.get_lead_field_rms_diff"><code class="docutils literal notranslate"><span class="pre">get_lead_field_rms_diff()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.invert_ebb"><code class="docutils literal notranslate"><span class="pre">invert_ebb()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.invert_msp"><code class="docutils literal notranslate"><span class="pre">invert_msp()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.invert_sliding_window"><code class="docutils literal notranslate"><span class="pre">invert_sliding_window()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.load_forward_model_vertices"><code class="docutils literal notranslate"><span class="pre">load_forward_model_vertices()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.load_source_time_series"><code class="docutils literal notranslate"><span class="pre">load_source_time_series()</span></code></a></li>
+<li class="toctree-l2"><a class="reference internal" href="lameg.html#lameg-invert-module">lameg.invert module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lameg.html#lameg-laminar-module">lameg.laminar module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg.postinstall">lameg.postinstall module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.postinstall.clone_and_install_spm"><code class="docutils literal notranslate"><span class="pre">clone_and_install_spm()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.postinstall.run_postinstall"><code class="docutils literal notranslate"><span class="pre">run_postinstall()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.postinstall.setup_jupyter_extensions"><code class="docutils literal notranslate"><span class="pre">setup_jupyter_extensions()</span></code></a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg.laminar">lameg.laminar module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#key-functionalities">Key functionalities</a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.laminar.compute_csd"><code class="docutils literal notranslate"><span class="pre">compute_csd()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.laminar.model_comparison"><code class="docutils literal notranslate"><span class="pre">model_comparison()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.laminar.roi_power_comparison"><code class="docutils literal notranslate"><span class="pre">roi_power_comparison()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.laminar.sliding_window_model_comparison"><code class="docutils literal notranslate"><span class="pre">sliding_window_model_comparison()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg.simulate">lameg.simulate module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#id1">Key functionalities</a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.simulate.run_current_density_simulation"><code class="docutils literal notranslate"><span class="pre">run_current_density_simulation()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.simulate.run_dipole_simulation"><code class="docutils literal notranslate"><span class="pre">run_dipole_simulation()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg.surf">lameg.surf module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#public-api">Public API</a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#classes">Classes</a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#functions">Functions</a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet</span></code></a><ul>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.subj_id"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.subj_id</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.n_layers"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.n_layers</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.layer_spacing"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.layer_spacing</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.subjects_dir"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.subjects_dir</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.subj_dir"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.subj_dir</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.mri_file"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.mri_file</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.surf_dir"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.surf_dir</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.laminar_surf_dir"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.laminar_surf_dir</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.__init__"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.__init__()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.compute_dipole_orientations"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.compute_dipole_orientations()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.create"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.create()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.downsample"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.downsample()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.get_bigbrain_layer_boundaries"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_bigbrain_layer_boundaries()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.get_cortical_thickness"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_cortical_thickness()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.get_distance_to_scalp"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_distance_to_scalp()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.get_layer_names"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_layer_names()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.get_mesh_path"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_mesh_path()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.get_multilayer_vertex"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_multilayer_vertex()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.get_radiality_to_scalp"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_radiality_to_scalp()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.get_vertices_per_layer"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_vertices_per_layer()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.interpolate_layer_data"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.interpolate_layer_data()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.load"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.load()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.load_meta"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.load_meta()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.map_between_stages"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.map_between_stages()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.save"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.save()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.update_meta"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.update_meta()</span></code></a></li>
-<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.surf.LayerSurfaceSet.validate"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.validate()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.convert_fsaverage_to_native"><code class="docutils literal notranslate"><span class="pre">convert_fsaverage_to_native()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.convert_native_to_fsaverage"><code class="docutils literal notranslate"><span class="pre">convert_native_to_fsaverage()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.surf.interpolate_data"><code class="docutils literal notranslate"><span class="pre">interpolate_data()</span></code></a></li>
-</ul>
-</li>
-<li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg.util">lameg.util module</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#core-functionalities">Core functionalities</a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.batch"><code class="docutils literal notranslate"><span class="pre">batch()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.big_brain_proportional_layer_boundaries"><code class="docutils literal notranslate"><span class="pre">big_brain_proportional_layer_boundaries()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.calc_prop"><code class="docutils literal notranslate"><span class="pre">calc_prop()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.check_freesurfer_setup"><code class="docutils literal notranslate"><span class="pre">check_freesurfer_setup()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.check_many"><code class="docutils literal notranslate"><span class="pre">check_many()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.coregister_3d_scan_mri"><code class="docutils literal notranslate"><span class="pre">coregister_3d_scan_mri()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.ctf_fif_spm_conversion"><code class="docutils literal notranslate"><span class="pre">ctf_fif_spm_conversion()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.get_directories"><code class="docutils literal notranslate"><span class="pre">get_directories()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.get_fiducial_coords"><code class="docutils literal notranslate"><span class="pre">get_fiducial_coords()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.get_files"><code class="docutils literal notranslate"><span class="pre">get_files()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.load_meg_sensor_data"><code class="docutils literal notranslate"><span class="pre">load_meg_sensor_data()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.make_directory"><code class="docutils literal notranslate"><span class="pre">make_directory()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.spm_context"><code class="docutils literal notranslate"><span class="pre">spm_context()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.util.ttest_rel_corrected"><code class="docutils literal notranslate"><span class="pre">ttest_rel_corrected()</span></code></a></li>
-</ul>
-</li>
+<li class="toctree-l2"><a class="reference internal" href="lameg.html#lameg-simulate-module">lameg.simulate module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lameg.html#lameg-surf-module">lameg.surf module</a></li>
+<li class="toctree-l2"><a class="reference internal" href="lameg.html#lameg-util-module">lameg.util module</a></li>
 <li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg.viz">lameg.viz module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="lameg.html#main-features">Main Features</a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#id4">Functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#functions">Functions</a></li>
 <li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.viz.color_map"><code class="docutils literal notranslate"><span class="pre">color_map()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.viz.data_to_rgb"><code class="docutils literal notranslate"><span class="pre">data_to_rgb()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.viz.plot_csd"><code class="docutils literal notranslate"><span class="pre">plot_csd()</span></code></a></li>

@@ -20,6 +20,14 @@ lameg.laminar module
    :undoc-members:
    :show-inheritance:
 
+lameg.postinstall module
+------------------------
+
+.. automodule:: lameg.postinstall
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 lameg.simulate module
 ---------------------
 
