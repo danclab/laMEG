@@ -2,28 +2,7 @@
 This module configures the installation setup for the laMEG package, facilitating its installation
 and post-installation steps.
 """
-import os
-import logging
 from setuptools import setup, find_packages
-
-# Set up logging to both the console and a log file in the user's home directory
-home_dir = os.path.expanduser("~")  # Get the user's home directory
-log_file = os.path.join(home_dir, 'laMEG_installation.log')
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
-
-# Create a file handler for logging to a file
-file_handler = logging.FileHandler(log_file)
-file_handler.setLevel(logging.INFO)
-file_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
-
-# Create a console handler for logging to the console
-console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
-console_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
-
-# Add both handlers to the root logger
-logging.getLogger().addHandler(file_handler)
-logging.getLogger().addHandler(console_handler)
 
 # Read the long description from the README.rst
 with open('README.rst', 'r', encoding="utf-8") as f:
