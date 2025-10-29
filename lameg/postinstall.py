@@ -1,3 +1,24 @@
+"""
+laMEG Post-installation Script
+------------------------------
+
+This module performs all post-installation setup tasks for the laMEG package.
+It installs the DANC SPM Python interface, configures Jupyter notebook
+extensions (e.g., `k3d`), and creates a marker file in the user?s home
+directory (`~/.lameg_postinstall`) indicating that setup has been completed.
+
+Typical usage (after `pip install lameg`):
+
+    $ lameg-postinstall
+
+If laMEG is installed inside a conda environment, users should deactivate and
+reactivate the environment after running this script so that any new environment
+variables take effect:
+
+    conda deactivate
+    conda activate <env_name>
+"""
+
 import logging
 import os
 import shutil
@@ -129,10 +150,10 @@ def run_postinstall():
     # ----------------------------------------------------------------------
     marker_path = os.path.join(os.path.expanduser("~"), ".lameg_postinstall")
     try:
-        with open(marker_path, "w", encoding="utf-8") as f:
-            f.write("Post-installation completed successfully.\n")
-    except Exception as e:
-        print(f"Warning: could not create postinstall marker file ({marker_path}): {e}")
+        with open(marker_path, "w", encoding="utf-8") as file:
+            file.write("Post-installation completed successfully.\n")
+    except OSError as err:
+        print(f"Warning: could not create postinstall marker file ({marker_path}): {err}")
 
 if __name__ == "__main__":
     run_postinstall()
