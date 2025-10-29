@@ -49,8 +49,6 @@ spm = spm_standalone.initialize()
 surf_set_bilam = LayerSurfaceSet(subj_id, 2)
 surf_set = LayerSurfaceSet(subj_id, 11)
 
-verts_per_surf = surf_set.get_vertices_per_layer()
-
 # %% [markdown]
 # We're going to copy the data file to a temporary directory and direct all output there.
 
@@ -128,16 +126,14 @@ plt.ylabel('Amplitude (nAm)')
 # We need to pick a location (mesh vertex) to simulate at
 
 # Vertex to simulate activity at
-sim_vertex=24581
+sim_vertex=50492
 
-inflated_ds_mesh = surf_set.load('inflated', stage='ds')
-coord = inflated_ds_mesh.darrays[0].data[sim_vertex,:]
 cam_view = [335, 9.5, 51,
             60, 37, 17,
             0, 0, 1]
 plot = show_surface(
     surf_set,
-    marker_coords=coord,
+    marker_vertices=sim_vertex,
     marker_size=5,
     camera_view=cam_view
 )
@@ -151,7 +147,7 @@ plot = show_surface(
 # We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
 # Simulate at a vertex on the pial surface
-pial_vertex = sim_vertex
+pial_vertex = surf_set.get_multilayer_vertex('pial', sim_vertex)
 prefix = f'sim_{sim_vertex}_pial_'
 
 # Size of simulated patch of activity (mm)
@@ -206,7 +202,7 @@ np.mean(np.mean(cvErr[0],axis=-1),axis=-1)-np.mean(np.mean(cvErr[1],axis=-1),axi
 # Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, model comparison should yield lower cross-validation error for the white matter surface.
 
 # Simulate at the corresponding vertex on the white matter surface
-white_vertex = (surf_set.n_layers-1)*verts_per_surf+sim_vertex
+white_vertex = surf_set.get_multilayer_vertex('white', sim_vertex)
 prefix = f'sim_{sim_vertex}_white_'
 
 # Generate simulated data
@@ -251,7 +247,7 @@ all_layerCvErr = []
 
 for l in range(surf_set.n_layers):
     print(f'Simulating in layer {l}')
-    l_vertex = l*verts_per_surf+sim_vertex
+    l_vertex = surf_set.get_multilayer_vertex(l, sim_vertex)
     prefix = f'sim_{sim_vertex}_{l}_'
 
     l_sim_fname = run_current_density_simulation(
