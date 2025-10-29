@@ -69,7 +69,11 @@ Installation
 
        pip install lameg
 
-   This also installs SPM standalone and Matlab runtime, which can take some time depending on your connection speed.
+   Then run the post-installation script::
+
+       lameg-postinstall
+
+   This installs SPM standalone and Matlab runtime, which can take some time depending on your connection speed.
 
 6. Before using, deactivate and reactivate the environment for changes to environment variables to take effect::
 
