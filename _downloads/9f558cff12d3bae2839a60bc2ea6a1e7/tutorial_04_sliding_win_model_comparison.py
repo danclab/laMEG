@@ -50,8 +50,6 @@ spm = spm_standalone.initialize()
 surf_set_bilam = LayerSurfaceSet(subj_id, 2)
 surf_set = LayerSurfaceSet(subj_id, 11)
 
-verts_per_surf = surf_set.get_vertices_per_layer()
-
 # %% [markdown]
 # We're going to copy the data file to a temporary directory and direct all output there.
 
@@ -129,16 +127,14 @@ plt.ylabel('Amplitude (nAm)')
 # We need to pick a location (mesh vertex) to simulate at
 
 # Vertex to simulate activity at
-sim_vertex=24581
+sim_vertex=50492
 
-inflated_ds_mesh = surf_set.load('inflated', stage='ds')
-coord = inflated_ds_mesh.darrays[0].data[sim_vertex,:]
 cam_view = [335, 9.5, 51,
             60, 37, 17,
             0, 0, 1]
 plot = show_surface(
     surf_set,
-    marker_coords=coord,
+    marker_vertices=sim_vertex,
     marker_size=5,
     camera_view=cam_view
 )
@@ -152,7 +148,7 @@ plot = show_surface(
 # We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
 # Simulate at a vertex on the pial surface
-pial_vertex = sim_vertex
+pial_vertex = surf_set.get_multilayer_vertex('pial', sim_vertex)
 # Orientation of the simulated dipole
 multilayer_mesh = surf_set.load(stage='ds', orientation='link_vector', fixed=True)
 pial_unit_norm = multilayer_mesh.darrays[2].data[pial_vertex,:]
@@ -190,6 +186,7 @@ pial_sim_fname = run_dipole_simulation(
     spm_instance=spm
 )
 
+verts_per_surf = surf_set.get_vertices_per_layer()
 layer_vertices = np.arange(verts_per_surf)
 layer_ts, time, ch_names = load_source_time_series(
     pial_sim_fname,
@@ -203,38 +200,32 @@ prior = np.argmax(m_layer_max)
 # %% [markdown]
 # We can see that the prior is the same as the location we simulated at
 
-# Interpolate for display on the original inflated surface
-interpolated_data = surf_set.interpolate_layer_data('pial', m_layer_max, from_stage='ds', to_stage='combined')
-
-inflated_ds_mesh = surf_set.load('inflated', stage='ds')
-coord = inflated_ds_mesh.darrays[0].data[prior, :]
-
 # Plot colors and camera view
-max_abs = np.max(np.abs(interpolated_data))
+max_abs = np.max(np.abs(m_layer_max))
 c_range = [-max_abs, max_abs]
 cam_view = [335, 9.5, 51,
             60, 37, 17,
             0, 0, 1]
 
 # Plot peak
-colors, _ = color_map(
-    interpolated_data,
+colors,_ = color_map(
+    m_layer_max,
     "RdYlBu_r",
     c_range[0],
     c_range[1]
 )
-thresh_colors = np.ones((colors.shape[0], 4)) * 255
-thresh_colors[:, :3] = colors
-thresh_colors[interpolated_data < np.percentile(interpolated_data, 99.9), 3] = 0
+thresh_colors=np.ones((colors.shape[0],4))*255
+thresh_colors[:,:3]=colors
+thresh_colors[m_layer_max<np.percentile(m_layer_max,99.9),3]=0
 
 plot = show_surface(
     surf_set,
     vertex_colors=thresh_colors,
     info=True,
     camera_view=cam_view,
-    marker_coords=coord,
+    marker_vertices=prior,
     marker_size=5,
-    marker_color=[0, 0, 255]
+    marker_color=[0,0,255]
 )
 
 # %%
@@ -286,7 +277,7 @@ plt.ylabel(r'$\Delta$F')
 # Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, sliding time window model comparison should yield greater model evidence for the white matter surface, and therefore the difference in free energy (pial - white matter) should be negative.
 
 # Simulate at the corresponding vertex on the white matter surface
-white_vertex = (surf_set.n_layers-1)*verts_per_surf+sim_vertex
+white_vertex = surf_set.get_multilayer_vertex('white', sim_vertex)
 prefix = f'sim_{sim_vertex}_white_'
 
 # Generate simulated data
@@ -360,7 +351,7 @@ plt.ylabel(r'$\Delta$F')
 all_layerF = []
 for l in range(surf_set.n_layers):
     print(f'Simulating in layer {l}')
-    l_vertex = l * verts_per_surf + sim_vertex
+    l_vertex = surf_set.get_multilayer_vertex(l, sim_vertex)
     prefix = f'sim_{sim_vertex}{l}_'
 
     l_sim_fname = run_dipole_simulation(

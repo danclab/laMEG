@@ -73,7 +73,7 @@ Simulations are based on an existing dataset, which is used to define the sampli
 
 For source reconstructions, we need an MRI and a surface mesh. The simulations will be based on a forward model using the multilayer mesh, and the model comparison will use each layer mesh
 
-.. GENERATED FROM PYTHON SOURCE LINES 49-55
+.. GENERATED FROM PYTHON SOURCE LINES 49-53
 
 .. code-block:: default
 
@@ -81,14 +81,12 @@ For source reconstructions, we need an MRI and a surface mesh. The simulations w
     surf_set_bilam = LayerSurfaceSet(subj_id, 2)
     surf_set = LayerSurfaceSet(subj_id, 11)
 
-    verts_per_surf = surf_set.get_vertices_per_layer()
 
-
-.. GENERATED FROM PYTHON SOURCE LINES 56-57
+.. GENERATED FROM PYTHON SOURCE LINES 54-55
 
 We're going to copy the data file to a temporary directory and direct all output there.
 
-.. GENERATED FROM PYTHON SOURCE LINES 57-78
+.. GENERATED FROM PYTHON SOURCE LINES 55-76
 
 .. code-block:: default
 
@@ -114,11 +112,11 @@ We're going to copy the data file to a temporary directory and direct all output
     base_fname = os.path.join(tmp_dir, f'{data_base}.mat')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 79-80
+.. GENERATED FROM PYTHON SOURCE LINES 77-78
 
 Invert the subject's data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations
 
-.. GENERATED FROM PYTHON SOURCE LINES 80-103
+.. GENERATED FROM PYTHON SOURCE LINES 78-101
 
 .. code-block:: default
 
@@ -146,13 +144,13 @@ Invert the subject's data using the multilayer mesh. This step only has to be do
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 104-107
+.. GENERATED FROM PYTHON SOURCE LINES 102-105
 
 Simulating a signal on the pial surface
 ---------------------------------------
 We're going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a width of 25ms
 
-.. GENERATED FROM PYTHON SOURCE LINES 107-123
+.. GENERATED FROM PYTHON SOURCE LINES 105-121
 
 .. code-block:: default
 
@@ -173,54 +171,52 @@ We're going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a w
     plt.ylabel('Amplitude (nAm)')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 124-127
+.. GENERATED FROM PYTHON SOURCE LINES 122-125
 
 .. image:: ../_static/tutorial_04_sim_signal.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 129-130
+.. GENERATED FROM PYTHON SOURCE LINES 127-128
 
 We need to pick a location (mesh vertex) to simulate at
 
-.. GENERATED FROM PYTHON SOURCE LINES 130-146
+.. GENERATED FROM PYTHON SOURCE LINES 128-142
 
 .. code-block:: default
 
 
     # Vertex to simulate activity at
-    sim_vertex=24581
+    sim_vertex=50492
 
-    inflated_ds_mesh = surf_set.load('inflated', stage='ds')
-    coord = inflated_ds_mesh.darrays[0].data[sim_vertex,:]
     cam_view = [335, 9.5, 51,
                 60, 37, 17,
                 0, 0, 1]
     plot = show_surface(
         surf_set,
-        marker_coords=coord,
+        marker_vertices=sim_vertex,
         marker_size=5,
         camera_view=cam_view
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 147-150
+.. GENERATED FROM PYTHON SOURCE LINES 143-146
 
 .. image:: ../_static/tutorial_04_sim_location.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 152-153
+.. GENERATED FROM PYTHON SOURCE LINES 148-149
 
 We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-.. GENERATED FROM PYTHON SOURCE LINES 153-179
+.. GENERATED FROM PYTHON SOURCE LINES 149-175
 
 .. code-block:: default
 
 
     # Simulate at a vertex on the pial surface
-    pial_vertex = sim_vertex
+    pial_vertex = surf_set.get_multilayer_vertex('pial', sim_vertex)
     # Orientation of the simulated dipole
     multilayer_mesh = surf_set.load(stage='ds', orientation='link_vector', fixed=True)
     pial_unit_norm = multilayer_mesh.darrays[2].data[pial_vertex,:]
@@ -245,13 +241,13 @@ We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The d
     ) 
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 180-183
+.. GENERATED FROM PYTHON SOURCE LINES 176-179
 
 Localizer inversion
 -------------------
 Now we'll run a source reconstruction using the multilayer mesh, extract the signal in the pial layer, and select a prior based on the peak.
 
-.. GENERATED FROM PYTHON SOURCE LINES 183-203
+.. GENERATED FROM PYTHON SOURCE LINES 179-200
 
 .. code-block:: default
 
@@ -265,6 +261,7 @@ Now we'll run a source reconstruction using the multilayer mesh, extract the sig
         spm_instance=spm
     )
 
+    verts_per_surf = surf_set.get_vertices_per_layer()
     layer_vertices = np.arange(verts_per_surf)
     layer_ts, time, ch_names = load_source_time_series(
         pial_sim_fname,
@@ -276,63 +273,57 @@ Now we'll run a source reconstruction using the multilayer mesh, extract the sig
     prior = np.argmax(m_layer_max)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 204-205
+.. GENERATED FROM PYTHON SOURCE LINES 201-202
 
 We can see that the prior is the same as the location we simulated at
 
-.. GENERATED FROM PYTHON SOURCE LINES 205-240
+.. GENERATED FROM PYTHON SOURCE LINES 202-231
 
 .. code-block:: default
 
 
-    # Interpolate for display on the original inflated surface
-    interpolated_data = surf_set.interpolate_layer_data('pial', m_layer_max, from_stage='ds', to_stage='combined')
-
-    inflated_ds_mesh = surf_set.load('inflated', stage='ds')
-    coord = inflated_ds_mesh.darrays[0].data[prior, :]
-
     # Plot colors and camera view
-    max_abs = np.max(np.abs(interpolated_data))
+    max_abs = np.max(np.abs(m_layer_max))
     c_range = [-max_abs, max_abs]
     cam_view = [335, 9.5, 51,
                 60, 37, 17,
                 0, 0, 1]
 
     # Plot peak
-    colors, _ = color_map(
-        interpolated_data,
+    colors,_ = color_map(
+        m_layer_max,
         "RdYlBu_r",
         c_range[0],
         c_range[1]
     )
-    thresh_colors = np.ones((colors.shape[0], 4)) * 255
-    thresh_colors[:, :3] = colors
-    thresh_colors[interpolated_data < np.percentile(interpolated_data, 99.9), 3] = 0
+    thresh_colors=np.ones((colors.shape[0],4))*255
+    thresh_colors[:,:3]=colors
+    thresh_colors[m_layer_max<np.percentile(m_layer_max,99.9),3]=0
 
     plot = show_surface(
         surf_set,
         vertex_colors=thresh_colors,
         info=True,
         camera_view=cam_view,
-        marker_coords=coord,
+        marker_vertices=prior,
         marker_size=5,
-        marker_color=[0, 0, 255]
+        marker_color=[0,0,255]
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 241-244
+.. GENERATED FROM PYTHON SOURCE LINES 232-235
 
 .. image:: ../_static/tutorial_04_localizer.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 246-249
+.. GENERATED FROM PYTHON SOURCE LINES 237-240
 
 Sliding time window model comparison (pial - white matter)
 ----------------------------------------------------------
 Now we can run sliding time window model comparison between source models based on the pial and white matter surfaces using free energy. Specifically, we'll look at the difference in free energy between the two models (pial - white matter), in sliding and overlapping windows of 16ms. The free energy difference (pial - white matter) should be positive (more model evidence for the pial surface model) because we simulated activity on the pial surface.
 
-.. GENERATED FROM PYTHON SOURCE LINES 249-272
+.. GENERATED FROM PYTHON SOURCE LINES 240-263
 
 .. code-block:: default
 
@@ -360,11 +351,11 @@ Now we can run sliding time window model comparison between source models based 
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 273-274
+.. GENERATED FROM PYTHON SOURCE LINES 264-265
 
 Plot difference in free energy over time (pial minus white) - this should be positive
 
-.. GENERATED FROM PYTHON SOURCE LINES 274-278
+.. GENERATED FROM PYTHON SOURCE LINES 265-269
 
 .. code-block:: default
 
@@ -373,25 +364,25 @@ Plot difference in free energy over time (pial minus white) - this should be pos
     plt.ylabel(r'$\Delta$F')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 279-282
+.. GENERATED FROM PYTHON SOURCE LINES 270-273
 
 .. image:: ../_static/tutorial_04_pial_sim_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 284-287
+.. GENERATED FROM PYTHON SOURCE LINES 275-278
 
 White matter surface simulation with pial - white matter sliding time window model comparison
 ---------------------------------------------------------------------------------------------
 Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, sliding time window model comparison should yield greater model evidence for the white matter surface, and therefore the difference in free energy (pial - white matter) should be negative.
 
-.. GENERATED FROM PYTHON SOURCE LINES 287-341
+.. GENERATED FROM PYTHON SOURCE LINES 278-332
 
 .. code-block:: default
 
 
     # Simulate at the corresponding vertex on the white matter surface
-    white_vertex = (surf_set.n_layers-1)*verts_per_surf+sim_vertex
+    white_vertex = surf_set.get_multilayer_vertex('white', sim_vertex)
     prefix = f'sim_{sim_vertex}_white_'
 
     # Generate simulated data
@@ -444,11 +435,11 @@ Let's simulate the same pattern of activity, in the same location, but on the wh
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 342-343
+.. GENERATED FROM PYTHON SOURCE LINES 333-334
 
 Plot difference in free energy over time (pial minus white) - this should be negative
 
-.. GENERATED FROM PYTHON SOURCE LINES 343-347
+.. GENERATED FROM PYTHON SOURCE LINES 334-338
 
 .. code-block:: default
 
@@ -457,19 +448,19 @@ Plot difference in free energy over time (pial minus white) - this should be neg
     plt.ylabel(r'$\Delta$F')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 348-351
+.. GENERATED FROM PYTHON SOURCE LINES 339-342
 
 .. image:: ../_static/tutorial_04_white_sim_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 354-357
+.. GENERATED FROM PYTHON SOURCE LINES 345-348
 
 Simulation in each layer with sliding time window model comparison across layers
 --------------------------------------------------------------------------------
 That was sliding time window model comparison with two candidate models: one based on the white matter surface, and one on the pial. Let's now simulate on each layer, and for each simulation, run sliding time window model comparison across all layers. We'll turn off SPM visualization here.
 
-.. GENERATED FROM PYTHON SOURCE LINES 357-418
+.. GENERATED FROM PYTHON SOURCE LINES 348-409
 
 .. code-block:: default
 
@@ -479,7 +470,7 @@ That was sliding time window model comparison with two candidate models: one bas
     all_layerF = []
     for l in range(surf_set.n_layers):
         print(f'Simulating in layer {l}')
-        l_vertex = l * verts_per_surf + sim_vertex
+        l_vertex = surf_set.get_multilayer_vertex(l, sim_vertex)
         prefix = f'sim_{sim_vertex}{l}_'
 
         l_sim_fname = run_dipole_simulation(
@@ -535,11 +526,11 @@ That was sliding time window model comparison with two candidate models: one bas
     all_layerF = np.squeeze(np.array(all_layerF))
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 419-420
+.. GENERATED FROM PYTHON SOURCE LINES 410-411
 
 For each simulation, we can plot the free energy for all models relative to the worst model within a central time window. The layer model with the highest free energy should correspond to the layer that the activity was simulated in.
 
-.. GENERATED FROM PYTHON SOURCE LINES 420-455
+.. GENERATED FROM PYTHON SOURCE LINES 411-446
 
 .. code-block:: default
 
@@ -579,13 +570,13 @@ For each simulation, we can plot the free energy for all models relative to the 
     plt.tight_layout()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 456-459
+.. GENERATED FROM PYTHON SOURCE LINES 447-450
 
 .. image:: ../_static/tutorial_04_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 459-480
+.. GENERATED FROM PYTHON SOURCE LINES 450-471
 
 .. code-block:: default
 
@@ -611,13 +602,13 @@ For each simulation, we can plot the free energy for all models relative to the 
     cb.set_label(r'$\Delta F$', fontsize=14)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 481-484
+.. GENERATED FROM PYTHON SOURCE LINES 472-475
 
 .. image:: ../_static/tutorial_04_results_matrix.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 486-491
+.. GENERATED FROM PYTHON SOURCE LINES 477-482
 
 .. code-block:: default
 

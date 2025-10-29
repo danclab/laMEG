@@ -72,7 +72,7 @@ Simulations are based on an existing dataset, which is used to define the sampli
 
 For source reconstructions, we need an MRI and a surface mesh. The simulations will be based on a forward model using the multilayer mesh, and the model comparison will use each layer mesh
 
-.. GENERATED FROM PYTHON SOURCE LINES 48-54
+.. GENERATED FROM PYTHON SOURCE LINES 48-52
 
 .. code-block:: default
 
@@ -80,14 +80,12 @@ For source reconstructions, we need an MRI and a surface mesh. The simulations w
     surf_set_bilam = LayerSurfaceSet(subj_id, 2)
     surf_set = LayerSurfaceSet(subj_id, 11)
 
-    verts_per_surf = surf_set.get_vertices_per_layer()
 
-
-.. GENERATED FROM PYTHON SOURCE LINES 55-56
+.. GENERATED FROM PYTHON SOURCE LINES 53-54
 
 We're going to copy the data file to a temporary directory and direct all output there.
 
-.. GENERATED FROM PYTHON SOURCE LINES 56-77
+.. GENERATED FROM PYTHON SOURCE LINES 54-75
 
 .. code-block:: default
 
@@ -113,11 +111,11 @@ We're going to copy the data file to a temporary directory and direct all output
     base_fname = os.path.join(tmp_dir, f'{data_base}.mat')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 78-79
+.. GENERATED FROM PYTHON SOURCE LINES 76-77
 
 Invert the subject's data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations
 
-.. GENERATED FROM PYTHON SOURCE LINES 79-102
+.. GENERATED FROM PYTHON SOURCE LINES 77-100
 
 .. code-block:: default
 
@@ -145,13 +143,13 @@ Invert the subject's data using the multilayer mesh. This step only has to be do
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 103-106
+.. GENERATED FROM PYTHON SOURCE LINES 101-104
 
 Simulating a signal on the pial surface
 ---------------------------------------
 We're going to simulate 1s of a 20Hz sine wave with a dipole moment of 10nAm
 
-.. GENERATED FROM PYTHON SOURCE LINES 106-122
+.. GENERATED FROM PYTHON SOURCE LINES 104-120
 
 .. code-block:: default
 
@@ -172,54 +170,52 @@ We're going to simulate 1s of a 20Hz sine wave with a dipole moment of 10nAm
     plt.ylabel('Amplitude (nAm)')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 123-126
+.. GENERATED FROM PYTHON SOURCE LINES 121-124
 
 .. image:: ../_static/tutorial_03_sim_signal.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 128-129
+.. GENERATED FROM PYTHON SOURCE LINES 126-127
 
 We need to pick a location (mesh vertex) to simulate at
 
-.. GENERATED FROM PYTHON SOURCE LINES 129-145
+.. GENERATED FROM PYTHON SOURCE LINES 127-141
 
 .. code-block:: default
 
 
     # Vertex to simulate activity at
-    sim_vertex=24581
+    sim_vertex=50492
 
-    inflated_ds_mesh = surf_set.load('inflated', stage='ds')
-    coord = inflated_ds_mesh.darrays[0].data[sim_vertex,:]
     cam_view = [335, 9.5, 51,
                 60, 37, 17,
                 0, 0, 1]
     plot = show_surface(
         surf_set,
-        marker_coords=coord,
+        marker_vertices=sim_vertex,
         marker_size=5,
         camera_view=cam_view
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 146-149
+.. GENERATED FROM PYTHON SOURCE LINES 142-145
 
 .. image:: ../_static/tutorial_03_sim_location.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 151-152
+.. GENERATED FROM PYTHON SOURCE LINES 147-148
 
 We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-.. GENERATED FROM PYTHON SOURCE LINES 152-174
+.. GENERATED FROM PYTHON SOURCE LINES 148-170
 
 .. code-block:: default
 
 
     # Simulate at a vertex on the pial surface
-    pial_vertex = sim_vertex
+    pial_vertex = surf_set.get_multilayer_vertex('pial', sim_vertex)
     prefix = f'sim_{sim_vertex}_pial_'
 
     # Size of simulated patch of activity (mm)
@@ -240,13 +236,13 @@ We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The d
     )   
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 175-178
+.. GENERATED FROM PYTHON SOURCE LINES 171-174
 
 Model comparison (pial - white matter)
 --------------------------------------
 Now we can run model comparison between source models based on the pial and white matter surfaces using cross-validation error. For computing cross-validation error, we'll run 10 folds, leaving out 10% of the channels in each fold. We'll then look at the difference in cross-validation error between the two models (pial - white matter). This should be lower for the pial surface model because we simulated activity on the pial surface
 
-.. GENERATED FROM PYTHON SOURCE LINES 178-198
+.. GENERATED FROM PYTHON SOURCE LINES 174-194
 
 .. code-block:: default
 
@@ -271,31 +267,31 @@ Now we can run model comparison between source models based on the pial and whit
     )
     
 
-.. GENERATED FROM PYTHON SOURCE LINES 199-201
+.. GENERATED FROM PYTHON SOURCE LINES 195-197
 
 The difference in cross validation error after averaging over test channels and folds
 This value should be negative (less error for the pial layer model)
 
-.. GENERATED FROM PYTHON SOURCE LINES 201-203
+.. GENERATED FROM PYTHON SOURCE LINES 197-199
 
 .. code-block:: default
 
     np.mean(np.mean(cvErr[0],axis=-1),axis=-1)-np.mean(np.mean(cvErr[1],axis=-1),axis=-1)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 204-207
+.. GENERATED FROM PYTHON SOURCE LINES 200-203
 
 White matter surface simulation with pial - white matter model comparison
 -------------------------------------------------------------------------
 Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, model comparison should yield lower cross-validation error for the white matter surface.
 
-.. GENERATED FROM PYTHON SOURCE LINES 207-238
+.. GENERATED FROM PYTHON SOURCE LINES 203-234
 
 .. code-block:: default
 
 
     # Simulate at the corresponding vertex on the white matter surface
-    white_vertex = (surf_set.n_layers-1)*verts_per_surf+sim_vertex
+    white_vertex = surf_set.get_multilayer_vertex('white', sim_vertex)
     prefix = f'sim_{sim_vertex}_white_'
 
     # Generate simulated data
@@ -325,25 +321,25 @@ Let's simulate the same pattern of activity, in the same location, but on the wh
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 239-241
+.. GENERATED FROM PYTHON SOURCE LINES 235-237
 
 The difference in cross validation error after averaging over test channels and folds
 This value should be positive (less error for the white matter layer model)
 
-.. GENERATED FROM PYTHON SOURCE LINES 241-243
+.. GENERATED FROM PYTHON SOURCE LINES 237-239
 
 .. code-block:: default
 
     np.mean(np.mean(cvErr[0],axis=-1),axis=-1)-np.mean(np.mean(cvErr[1],axis=-1),axis=-1)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 244-247
+.. GENERATED FROM PYTHON SOURCE LINES 240-243
 
 Simulation in each layer with model comparison across layers
 ------------------------------------------------------------
 That was model comparison with two candidate models: one based on the white matter surface, and one on the pial. Let's now simulate on each layer, and for each simulation, run model comparison across all layers. We'll turn off SPM visualization here.
 
-.. GENERATED FROM PYTHON SOURCE LINES 247-287
+.. GENERATED FROM PYTHON SOURCE LINES 243-283
 
 .. code-block:: default
 
@@ -354,7 +350,7 @@ That was model comparison with two candidate models: one based on the white matt
 
     for l in range(surf_set.n_layers):
         print(f'Simulating in layer {l}')
-        l_vertex = l*verts_per_surf+sim_vertex
+        l_vertex = surf_set.get_multilayer_vertex(l, sim_vertex)
         prefix = f'sim_{sim_vertex}_{l}_'
 
         l_sim_fname = run_current_density_simulation(
@@ -388,11 +384,11 @@ That was model comparison with two candidate models: one based on the white matt
     all_layerCvErr = np.mean(np.mean(all_layerCvErr, axis=-1), axis=-1)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 288-289
+.. GENERATED FROM PYTHON SOURCE LINES 284-285
 
 For each simulation, we can plot the cross-validation error for all models relative to the worst model. The layer model with the lowest cross-validation error should correspond to the layer that the activity was simulated in.
 
-.. GENERATED FROM PYTHON SOURCE LINES 289-318
+.. GENERATED FROM PYTHON SOURCE LINES 285-314
 
 .. code-block:: default
 
@@ -426,13 +422,13 @@ For each simulation, we can plot the cross-validation error for all models relat
     plt.tight_layout()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 319-322
+.. GENERATED FROM PYTHON SOURCE LINES 315-318
 
 .. image:: ../_static/tutorial_03_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 322-338
+.. GENERATED FROM PYTHON SOURCE LINES 318-334
 
 .. code-block:: default
 
@@ -453,13 +449,13 @@ For each simulation, we can plot the cross-validation error for all models relat
     cb.set_label('CVerr', fontsize=14)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 339-342
+.. GENERATED FROM PYTHON SOURCE LINES 335-338
 
 .. image:: ../_static/tutorial_03_results_matrix.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 344-349
+.. GENERATED FROM PYTHON SOURCE LINES 340-345
 
 .. code-block:: default
 

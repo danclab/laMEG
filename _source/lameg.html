@@ -1382,7 +1382,7 @@ nearest-neighbour search.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="lameg.surf.LayerSurfaceSet.create">
-<span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.LayerSurfaceSet.create" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.LayerSurfaceSet.create" title="Permalink to this definition">#</a></dt>
 <dd><p>Postprocess and combine FreeSurfer cortical surface meshes for laminar analysis.</p>
 <p>This function reconstructs a complete laminar surface hierarchy for a given FreeSurfer
 subject. It generates intermediate cortical layers between the pial and white matter
@@ -1410,6 +1410,8 @@ surfaces are stored in:
 to all other layers (default: True).</p></li>
 <li><p><strong>n_jobs</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of parallel jobs used when generating intermediate surfaces (default: -1 for all
 cores).</p></li>
+<li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Active standalone SPM instance. If None, a temporary instance is created and closed
+after execution.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
@@ -1434,7 +1436,7 @@ to preserve laminar alignment.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="lameg.surf.LayerSurfaceSet.downsample">
-<span class="sig-name descname"><span class="pre">downsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.LayerSurfaceSet.downsample" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">downsample</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.LayerSurfaceSet.downsample" title="Permalink to this definition">#</a></dt>
 <dd><p>Downsample all combined cortical surface meshes using the VTK decimation algorithm.</p>
 <p>This function applies geometric mesh reduction to each combined surface (including all
 laminar layers and the inflated mesh) using the <cite>vtkDecimatePro</cite> algorithm. The first
@@ -1442,7 +1444,11 @@ surface in the sequence defines the downsampling vertex mapping, which is then a
 all other surfaces to ensure topological and vertex-wise correspondence across layers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>ds_factor</strong> (<em>float</em>) – Fraction of vertices to retain during decimation (e.g., 0.1 retains 10% of vertices).</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>ds_factor</strong> (<em>float</em>) – Fraction of vertices to retain during decimation (e.g., 0.1 retains 10% of vertices).</p></li>
+<li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Active standalone SPM instance. If None, a temporary instance is created and closed
+after execution.</p></li>
+</ul>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
@@ -1628,6 +1634,38 @@ filename. Default is True.</p></li>
 <dd class="field-odd"><p>str</p>
 </dd>
 </dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lameg.surf.LayerSurfaceSet.get_multilayer_vertex">
+<span class="sig-name descname"><span class="pre">get_multilayer_vertex</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_vertex</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.LayerSurfaceSet.get_multilayer_vertex" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute the global vertex index within the concatenated multilayer surface mesh.</p>
+<p>This function converts a vertex index belonging to a specific cortical layer into
+its corresponding global index in the multilayer surface representation, where
+vertices from all layers are stored contiguously.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<em>int</em><em> or </em><em>str</em>) – Layer identifier. If an integer, it is treated as a zero-based layer index.
+If a string, it must match one of the layer names in <cite>self.get_layer_names()</cite>.</p></li>
+<li><p><strong>layer_vertex</strong> (<em>int</em>) – Vertex index within the specified layer.</p></li>
+<li><p><strong>orientation</strong> (<em>{'link_vector'</em><em>, </em><em>'surface_normal'}</em><em>, </em><em>optional</em>) – Dipole orientation model used to determine vertex ordering. Default is <cite>‘link_vector’</cite>.</p></li>
+<li><p><strong>fixed</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use the fixed-orientation surface set. Default is True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>global_vertex</strong> – The global vertex index corresponding to the given layer and local vertex index.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>int</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>Vertices across layers are assumed to be stored in sequential order
+(i.e., all vertices from layer 0 precede those from layer 1, etc.).</p></li>
+<li><p>Useful for indexing vertex-wise quantities defined over the full multilayer mesh.</p></li>
+</ul>
 </dd></dl>
 
 <dl class="py method">
@@ -2846,7 +2884,7 @@ decoded back into RGB components via bitwise operations.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.viz.show_surface">
-<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">show_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'inflated'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'combined'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hemi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">menu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertex_colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camera_view</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker_coords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker_vertices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_curvature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.viz.show_surface" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">show_surface</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'inflated'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ds'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hemi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">grid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">menu</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertex_colors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camera_view</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">height</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opacity</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker_coords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker_vertices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">marker_color</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">plot_curvature</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.viz.show_surface" title="Permalink to this definition">#</a></dt>
 <dd><p>Render a 3D cortical surface with optional curvature, vertex-wise data, and marker overlays.</p>
 <p>This function visualizes a laminar or pial surface loaded from a <cite>LayerSurfaceSet</cite> object
 using the <cite>k3d</cite> rendering backend. It supports curvature shading, vertex-specific color
@@ -2983,6 +3021,7 @@ is True.</p></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.LayerSurfaceSet.get_distance_to_scalp"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_distance_to_scalp()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.LayerSurfaceSet.get_layer_names"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_layer_names()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.LayerSurfaceSet.get_mesh_path"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_mesh_path()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.LayerSurfaceSet.get_multilayer_vertex"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_multilayer_vertex()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.LayerSurfaceSet.get_radiality_to_scalp"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_radiality_to_scalp()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.LayerSurfaceSet.get_vertices_per_layer"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_vertices_per_layer()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.LayerSurfaceSet.interpolate_layer_data"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.interpolate_layer_data()</span></code></a></li>

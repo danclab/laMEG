@@ -119,6 +119,23 @@ The examples can be browsed directly on `Github <https://github.com/danclab/laME
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="Anatomical Predictors of Laminar Inference Accuracy">
+
+.. only:: html
+
+  .. image:: /auto_tutorials/images/thumb/sphx_glr_tutorial_07_anatomy_inference_accuracy_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_tutorials_tutorial_07_anatomy_inference_accuracy.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Anatomical Predictors of Laminar Inference Accuracy</div>
+    </div>
+
+
+.. raw:: html
+
     </div>
 
 
@@ -131,6 +148,7 @@ The examples can be browsed directly on `Github <https://github.com/danclab/laME
    /auto_tutorials/tutorial_04_sliding_win_model_comparison
    /auto_tutorials/tutorial_05_roi_power_analysis
    /auto_tutorials/tutorial_06_csd
+   /auto_tutorials/tutorial_07_anatomy_inference_accuracy
 
 
 .. only:: html

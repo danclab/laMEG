@@ -339,6 +339,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="tutorial_04_sliding_win_model_comparison.html">Sliding time window laminar model comparison using free energy</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial_05_roi_power_analysis.html">Laminar ROI analysis of power in source space</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial_06_csd.html">Laminar CSD analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_07_anatomy_inference_accuracy.html">Anatomical Predictors of Laminar Inference Accuracy</a></li>
 </ul>
 </div>
 </nav></div>
@@ -443,8 +444,6 @@ to download the full example code</p>
 <p>For source reconstructions, we need an MRI and a surface mesh. The simulations will be based on a forward model using the multilayer mesh, and the model comparison will use each layer mesh</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">surf_set_bilam</span> <span class="o">=</span> <span class="n">LayerSurfaceSet</span><span class="p">(</span><span class="n">subj_id</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 <span class="n">surf_set</span> <span class="o">=</span> <span class="n">LayerSurfaceSet</span><span class="p">(</span><span class="n">subj_id</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
-
-<span class="n">verts_per_surf</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">get_vertices_per_layer</span><span class="p">()</span>
 </pre></div>
 </div>
 <p>We’re going to copy the data file to a temporary directory and direct all output there.</p>
@@ -516,16 +515,14 @@ to download the full example code</p>
 <a class="reference internal image-reference" href="../_images/tutorial_03_sim_signal.png"><img alt="" src="../_images/tutorial_03_sim_signal.png" style="width: 800px;" /></a>
 <p>We need to pick a location (mesh vertex) to simulate at</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Vertex to simulate activity at</span>
-<span class="n">sim_vertex</span><span class="o">=</span><span class="mi">24581</span>
+<span class="n">sim_vertex</span><span class="o">=</span><span class="mi">50492</span>
 
-<span class="n">inflated_ds_mesh</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;inflated&#39;</span><span class="p">,</span> <span class="n">stage</span><span class="o">=</span><span class="s1">&#39;ds&#39;</span><span class="p">)</span>
-<span class="n">coord</span> <span class="o">=</span> <span class="n">inflated_ds_mesh</span><span class="o">.</span><span class="n">darrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sim_vertex</span><span class="p">,:]</span>
 <span class="n">cam_view</span> <span class="o">=</span> <span class="p">[</span><span class="mi">335</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">,</span> <span class="mi">51</span><span class="p">,</span>
             <span class="mi">60</span><span class="p">,</span> <span class="mi">37</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span>
             <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
 <span class="n">plot</span> <span class="o">=</span> <span class="n">show_surface</span><span class="p">(</span>
     <span class="n">surf_set</span><span class="p">,</span>
-    <span class="n">marker_coords</span><span class="o">=</span><span class="n">coord</span><span class="p">,</span>
+    <span class="n">marker_vertices</span><span class="o">=</span><span class="n">sim_vertex</span><span class="p">,</span>
     <span class="n">marker_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
     <span class="n">camera_view</span><span class="o">=</span><span class="n">cam_view</span>
 <span class="p">)</span>
@@ -534,7 +531,7 @@ to download the full example code</p>
 <a class="reference internal image-reference" href="../_images/tutorial_03_sim_location.png"><img alt="" src="../_images/tutorial_03_sim_location.png" style="width: 800px;" /></a>
 <p>We’ll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate at a vertex on the pial surface</span>
-<span class="n">pial_vertex</span> <span class="o">=</span> <span class="n">sim_vertex</span>
+<span class="n">pial_vertex</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">get_multilayer_vertex</span><span class="p">(</span><span class="s1">&#39;pial&#39;</span><span class="p">,</span> <span class="n">sim_vertex</span><span class="p">)</span>
 <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_pial_&#39;</span>
 
 <span class="c1"># Size of simulated patch of activity (mm)</span>
@@ -589,7 +586,7 @@ This value should be negative (less error for the pial layer model)</p>
 <h2>White matter surface simulation with pial - white matter model comparison<a class="headerlink" href="#white-matter-surface-simulation-with-pial-white-matter-model-comparison" title="Permalink to this heading">#</a></h2>
 <p>Let’s simulate the same pattern of activity, in the same location, but on the white matter surface. This time, model comparison should yield lower cross-validation error for the white matter surface.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate at the corresponding vertex on the white matter surface</span>
-<span class="n">white_vertex</span> <span class="o">=</span> <span class="p">(</span><span class="n">surf_set</span><span class="o">.</span><span class="n">n_layers</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">verts_per_surf</span><span class="o">+</span><span class="n">sim_vertex</span>
+<span class="n">white_vertex</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">get_multilayer_vertex</span><span class="p">(</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">sim_vertex</span><span class="p">)</span>
 <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_white_&#39;</span>
 
 <span class="c1"># Generate simulated data</span>
@@ -634,7 +631,7 @@ This value should be positive (less error for the white matter layer model)</p>
 
 <span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">surf_set</span><span class="o">.</span><span class="n">n_layers</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Simulating in layer </span><span class="si">{</span><span class="n">l</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-    <span class="n">l_vertex</span> <span class="o">=</span> <span class="n">l</span><span class="o">*</span><span class="n">verts_per_surf</span><span class="o">+</span><span class="n">sim_vertex</span>
+    <span class="n">l_vertex</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">get_multilayer_vertex</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">sim_vertex</span><span class="p">)</span>
     <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">l</span><span class="si">}</span><span class="s1">_&#39;</span>
 
     <span class="n">l_sim_fname</span> <span class="o">=</span> <span class="n">run_current_density_simulation</span><span class="p">(</span>

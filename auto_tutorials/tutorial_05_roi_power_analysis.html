@@ -339,6 +339,7 @@ document.write(`
 <li class="toctree-l1"><a class="reference internal" href="tutorial_04_sliding_win_model_comparison.html">Sliding time window laminar model comparison using free energy</a></li>
 <li class="toctree-l1 current active"><a class="current reference internal" href="#">Laminar ROI analysis of power in source space</a></li>
 <li class="toctree-l1"><a class="reference internal" href="tutorial_06_csd.html">Laminar CSD analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tutorial_07_anatomy_inference_accuracy.html">Anatomical Predictors of Laminar Inference Accuracy</a></li>
 </ul>
 </div>
 </nav></div>
@@ -518,16 +519,14 @@ to download the full example code</p>
 <a class="reference internal image-reference" href="../_images/tutorial_05_sim_signal.png"><img alt="" src="../_images/tutorial_05_sim_signal.png" style="width: 800px;" /></a>
 <p>We need to pick a location (mesh vertex) to simulate at</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Vertex to simulate activity at</span>
-<span class="n">sim_vertex</span><span class="o">=</span><span class="mi">24581</span>
+<span class="n">sim_vertex</span><span class="o">=</span><span class="mi">50492</span>
 
-<span class="n">inflated_ds_mesh</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;inflated&#39;</span><span class="p">,</span> <span class="n">stage</span><span class="o">=</span><span class="s1">&#39;ds&#39;</span><span class="p">)</span>
-<span class="n">coord</span> <span class="o">=</span> <span class="n">inflated_ds_mesh</span><span class="o">.</span><span class="n">darrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sim_vertex</span><span class="p">,:]</span>
 <span class="n">cam_view</span> <span class="o">=</span> <span class="p">[</span><span class="mi">335</span><span class="p">,</span> <span class="mf">9.5</span><span class="p">,</span> <span class="mi">51</span><span class="p">,</span>
             <span class="mi">60</span><span class="p">,</span> <span class="mi">37</span><span class="p">,</span> <span class="mi">17</span><span class="p">,</span>
             <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
 <span class="n">plot</span> <span class="o">=</span> <span class="n">show_surface</span><span class="p">(</span>
     <span class="n">surf_set</span><span class="p">,</span>
-    <span class="n">marker_coords</span><span class="o">=</span><span class="n">coord</span><span class="p">,</span>
+    <span class="n">marker_vertices</span><span class="o">=</span><span class="n">sim_vertex</span><span class="p">,</span>
     <span class="n">marker_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
     <span class="n">camera_view</span><span class="o">=</span><span class="n">cam_view</span>
 <span class="p">)</span>
@@ -536,7 +535,7 @@ to download the full example code</p>
 <a class="reference internal image-reference" href="../_images/tutorial_05_sim_location.png"><img alt="" src="../_images/tutorial_05_sim_location.png" style="width: 800px;" /></a>
 <p>We’ll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate at a vertex on the pial surface</span>
-<span class="n">pial_vertex</span> <span class="o">=</span> <span class="n">sim_vertex</span>
+<span class="n">pial_vertex</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">get_multilayer_vertex</span><span class="p">(</span><span class="s1">&#39;pial&#39;</span><span class="p">,</span> <span class="n">sim_vertex</span><span class="p">)</span>
 <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_pial_&#39;</span>
 
 <span class="c1"># Size of simulated patch of activity (mm)</span>
@@ -590,14 +589,8 @@ to download the full example code</p>
 <span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;t(</span><span class="si">{</span><span class="n">df</span><span class="si">}</span><span class="s1">)=</span><span class="si">{</span><span class="n">laminar_t_statistic</span><span class="si">}</span><span class="s1">, p=</span><span class="si">{</span><span class="n">laminar_p_value</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
 
-<span class="n">roi</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">verts_per_surf</span><span class="p">)</span>
-<span class="n">roi</span><span class="p">[</span><span class="n">roi_idx</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-
-<span class="c1"># Interpolate for display on the original inflated surface</span>
-<span class="n">interpolated_data</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">interpolate_layer_data</span><span class="p">(</span><span class="s1">&#39;pial&#39;</span><span class="p">,</span> <span class="n">roi</span><span class="p">,</span> <span class="n">from_stage</span><span class="o">=</span><span class="s1">&#39;ds&#39;</span><span class="p">,</span> <span class="n">to_stage</span><span class="o">=</span><span class="s1">&#39;combined&#39;</span><span class="p">)</span>
-
-<span class="n">inflated_ds_mesh</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;inflated&#39;</span><span class="p">,</span> <span class="n">stage</span><span class="o">=</span><span class="s1">&#39;ds&#39;</span><span class="p">)</span>
-<span class="n">coord</span> <span class="o">=</span> <span class="n">inflated_ds_mesh</span><span class="o">.</span><span class="n">darrays</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">sim_vertex</span><span class="p">,</span> <span class="p">:]</span>
+<span class="n">roi</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">verts_per_surf</span><span class="p">)</span>
+<span class="n">roi</span><span class="p">[</span><span class="n">roi_idx</span><span class="p">]</span><span class="o">=</span><span class="mi">1</span>
 
 <span class="c1"># Plot colors and camera view</span>
 <span class="n">c_range</span> <span class="o">=</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
@@ -606,24 +599,21 @@ to download the full example code</p>
             <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
 
 <span class="c1"># Plot change in power on each surface</span>
-<span class="n">colors</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">color_map</span><span class="p">(</span>
-    <span class="n">interpolated_data</span><span class="p">,</span>
+<span class="n">colors</span><span class="p">,</span><span class="n">_</span> <span class="o">=</span> <span class="n">color_map</span><span class="p">(</span>
+    <span class="n">roi</span><span class="p">,</span>
     <span class="s2">&quot;RdYlBu_r&quot;</span><span class="p">,</span>
     <span class="n">c_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
     <span class="n">c_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
 <span class="p">)</span>
-<span class="n">thresh_colors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">colors</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">4</span><span class="p">))</span> <span class="o">*</span> <span class="mi">255</span>
-<span class="n">thresh_colors</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">colors</span>
-<span class="n">thresh_colors</span><span class="p">[</span><span class="n">interpolated_data</span> <span class="o">&lt;</span> <span class="mf">.1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="n">thresh_colors</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">colors</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">4</span><span class="p">))</span><span class="o">*</span><span class="mi">255</span>
+<span class="n">thresh_colors</span><span class="p">[:,:</span><span class="mi">3</span><span class="p">]</span><span class="o">=</span><span class="n">colors</span>
+<span class="n">thresh_colors</span><span class="p">[</span><span class="n">roi</span><span class="o">&lt;</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">]</span><span class="o">=</span><span class="mi">0</span>
 
 <span class="n">plot</span> <span class="o">=</span> <span class="n">show_surface</span><span class="p">(</span>
     <span class="n">surf_set</span><span class="p">,</span>
     <span class="n">vertex_colors</span><span class="o">=</span><span class="n">thresh_colors</span><span class="p">,</span>
     <span class="n">info</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">camera_view</span><span class="o">=</span><span class="n">cam_view</span><span class="p">,</span>
-    <span class="n">marker_coords</span><span class="o">=</span><span class="n">coord</span><span class="p">,</span>
-    <span class="n">marker_size</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
-    <span class="n">marker_color</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">255</span><span class="p">]</span>
+    <span class="n">camera_view</span><span class="o">=</span><span class="n">cam_view</span>
 <span class="p">)</span>
 </pre></div>
 </div>
@@ -633,7 +623,7 @@ to download the full example code</p>
 <h2>White matter surface simulation with pial - white matter ROI comparison<a class="headerlink" href="#white-matter-surface-simulation-with-pial-white-matter-roi-comparison" title="Permalink to this heading">#</a></h2>
 <p>Let’s simulate the same pattern of activity, in the same location, but on the white matter surface. This time, there should be a greater change in power on the white matter surface.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate at the corresponding vertex on the white matter surface</span>
-<span class="n">white_vertex</span> <span class="o">=</span> <span class="p">(</span><span class="n">surf_set</span><span class="o">.</span><span class="n">n_layers</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">verts_per_surf</span><span class="o">+</span><span class="n">sim_vertex</span>
+<span class="n">white_vertex</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">get_multilayer_vertex</span><span class="p">(</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">sim_vertex</span><span class="p">)</span>
 <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_white_&#39;</span>
 
 <span class="c1"># Generate simulated data</span>
@@ -690,7 +680,7 @@ to download the full example code</p>
 
 <span class="k">for</span> <span class="n">sl</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">surf_set</span><span class="o">.</span><span class="n">n_layers</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Simulating in layer </span><span class="si">{</span><span class="n">sl</span><span class="si">}</span><span class="s1">&#39;</span><span class="p">)</span>
-    <span class="n">l_vertex</span> <span class="o">=</span> <span class="n">sl</span> <span class="o">*</span> <span class="n">verts_per_surf</span> <span class="o">+</span> <span class="n">sim_vertex</span>
+    <span class="n">l_vertex</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">get_multilayer_vertex</span><span class="p">(</span><span class="n">sl</span><span class="p">,</span> <span class="n">sim_vertex</span><span class="p">)</span>
     <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_</span><span class="si">{</span><span class="n">sl</span><span class="si">}</span><span class="s1">_&#39;</span>
 
     <span class="n">l_sim_fname</span> <span class="o">=</span> <span class="n">run_current_density_simulation</span><span class="p">(</span>
