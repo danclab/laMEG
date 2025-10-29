@@ -237,7 +237,7 @@ plot = show_surface(
 # %% [markdown]
 # We need the indices of the vertex at each layer for this location, and the distances between them
 
-layer_verts = [l*int(verts_per_surf)+peak for l in range(surf_set.n_layers)]
+layer_verts = [surf_set.get_multilayer_vertex(l, peak) for l in range(surf_set.n_layers)]
 layer_coords = multilayer_mesh.darrays[0].data[layer_verts,:]
 layer_dists = np.sqrt(np.sum(np.diff(layer_coords,axis=0)**2,axis=1))
 print(layer_dists)
@@ -323,7 +323,7 @@ peak = np.argmax(m_layer_max)
 
 print(f'Simulated vertex={sim_vertex}, Prior vertex={peak}')
 
-layer_verts = [l * int(verts_per_surf) + peak for l in range(surf_set.n_layers)]
+layer_verts = [surf_set.get_multilayer_vertex(l, peak) for l in range(surf_set.n_layers)]
 layer_coords = multilayer_mesh.darrays[0].data[layer_verts, :]
 layer_dists = np.sqrt(np.sum(np.diff(layer_coords, axis=0) ** 2, axis=1))
 print(layer_dists)
@@ -409,7 +409,7 @@ for l in range(surf_set.n_layers):
 
     print(f'Simulated vertex={sim_vertex}, Prior vertex={peak}')
 
-    layer_verts = [l * int(verts_per_surf) + peak for l in range(surf_set.n_layers)]
+    layer_verts = [surf_set.get_multilayer_vertex(l, peak) for l in range(surf_set.n_layers)]
     layer_coords = multilayer_mesh.darrays[0].data[layer_verts, :]
     layer_dists = np.sqrt(np.sum(np.diff(layer_coords, axis=0) ** 2, axis=1))
     print(layer_dists)
@@ -727,7 +727,7 @@ peak = np.argmax(m_layer_max)
 
 print(f'Simulated vertex={sim_vertex}, Prior vertex={peak}')
 
-layer_verts = [l * int(verts_per_surf) + peak for l in range(surf_set.n_layers)]
+layer_verts = [surf_set.get_multilayer_vertex(l, peak) for l in range(surf_set.n_layers)]
 layer_coords = multilayer_mesh.darrays[0].data[layer_verts, :]
 layer_dists = np.sqrt(np.sum(np.diff(layer_coords, axis=0) ** 2, axis=1))
 print(layer_dists)
