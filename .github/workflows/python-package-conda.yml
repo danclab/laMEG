@@ -24,6 +24,7 @@ jobs:
       run: |
         conda activate lameg
         pip install -v .
+        lameg-postinstall
       shell: bash -l {0}
 
     - name: Lint with pylint
