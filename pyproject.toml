@@ -1,11 +1,11 @@
 [build-system]
 requires = [
     "setuptools>=42",
-    "wheel",
-    "setuptools_scm",
-    "pip"
+    "wheel<0.38",
+    "pip<23",
+    "setuptools_scm<7"
 ]
-build-backend = "setuptools.build_meta"
+build-backend = "setuptools.build_meta:__legacy__"
 
 [project]
 name = "lameg"
