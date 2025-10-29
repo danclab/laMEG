@@ -4,7 +4,7 @@ laMEG Post-installation Script
 
 This module performs all post-installation setup tasks for the laMEG package.
 It installs the DANC SPM Python interface, configures Jupyter notebook
-extensions (e.g., `k3d`), and creates a marker file in the user?s home
+extensions (e.g., `k3d`), and creates a marker file in the user's home
 directory (`~/.lameg_postinstall`) indicating that setup has been completed.
 
 Typical usage (after `pip install lameg`):
