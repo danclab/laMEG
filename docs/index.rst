@@ -58,10 +58,37 @@ Requirements
 * git
 * curl
 
+Upgrade Notice (v0.1.0)
+=======================
+
+If you used laMEG versions prior to v0.1.0, the internal format of laminar surface directories has changed.
+They are now stored within ``<SUBJECTS_DIR>/<subject_id>/surf/laminar``, and ``<SUBJECTS_DIR>/<subject_id>/mri/orig.mgz`` is automatically used for co-registration.
+Older surfaces must be converted before they can be loaded with the new LayerSurfaceSet interface.
+
+Run the conversion script::
+
+    python convert_legacy_surfaces.py <subject_id> <path_to_old_lameg_surf_dir>
+
+For example::
+
+    python convert_legacy_surfaces.py sub-104 /data/old_surfaces/sub-104
+
+This will rebuild the standardized hierarchy under::
+
+    <SUBJECTS_DIR>/<subject_id>/surf/laminar
+
+and generate complete metadata for each processing stage.
+
+After conversion, you can validate the new structure::
+
+    from lameg.surf import LayerSurfaceSet
+    surf_set = LayerSurfaceSet('sub-104', 11)
+    surf_set.validate()
+
 Installation
-----------------
+============
 1. Install git and curl if needed::
-       
+
        sudo apt-get install git curl
 
 2. Create a conda environment::
@@ -76,20 +103,24 @@ Installation
 
    replacing ``<env name>`` with name of the environment you created.
 
-4. Install FreeSurfer, following the instructions `here <https://danclab.github.io/laMEG/freesurfer_installation.html>`_
+4. Install FreeSurfer, following the instructions `on this page <https://github.com/danclab/laMEG/blob/main/freesurfer_instructions.md>`_
 
 5. To install ``laMEG``, run::
 
        pip install lameg
 
-   This also installs SPM standalone and Matlab runtime, which can take some time depending on your connection speed.
+   Then run the post-installation script::
+
+       lameg-postinstall
+
+   This installs SPM standalone and Matlab runtime, which can take some time depending on your connection speed.
 
 6. Before using, deactivate and reactivate the environment for changes to environment variables to take effect::
 
        conda deactivate
        conda activate <env name>
 
-7. If you want to run the tutorials, download and extract the `test data <https://osf.io/mgz9q/download>`_
+7. If you want to run the tutorials, download and extract the `test data <https://osf.io/hbm8x/download>`_
 
 Indices and tables
 ------------------
