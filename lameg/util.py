@@ -55,7 +55,6 @@ from contextlib import contextmanager
 
 import mne
 import numpy as np
-from stl import mesh
 import h5py
 import nibabel as nib
 import matplotlib.pyplot as plt

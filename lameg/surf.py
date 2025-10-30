@@ -1043,7 +1043,8 @@ class LayerSurfaceSet:
 
     def load_head_mesh(self, mesh_type='scalp'):
         """
-        Load a head surface mesh (scalp, inner skull, or outer skull) generated during coregistration.
+        Load a head surface mesh (scalp, inner skull, or outer skull) generated during
+        coregistration.
 
         This function retrieves one of the head surface meshes stored under
         `<SUBJECTS_DIR>/<subject>/mri/`, typically produced by the coregistration step.
@@ -1092,7 +1093,8 @@ class LayerSurfaceSet:
         }
 
         if mesh_type not in mesh_map:
-            raise ValueError(f"Invalid mesh_type '{mesh_type}'. Must be 'scalp', 'iskull', or 'oskull'.")
+            raise ValueError(f"Invalid mesh_type '{mesh_type}'. Must be 'scalp', 'iskull', or "
+                             f"'oskull'.")
 
         mesh_fname = os.path.join(self.subj_dir, 'mri', mesh_map[mesh_type])
         if not os.path.exists(mesh_fname):
