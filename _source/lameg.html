@@ -695,6 +695,58 @@ is True.</p></li>
 </ul>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.viz.verify_coregistration">
+<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">verify_coregistration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fid_coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.viz.verify_coregistration" title="Permalink to this definition">#</a></dt>
+<dd><p>Visualize MEG-MRI coregistration by plotting the scalp, skull, and cortical surfaces
+along with fiducial landmarks.</p>
+<p>This function provides a 3D visualization of the subject’s head geometry and fiducial
+points (nasion, left and right preauricular) to verify whether MEG-MRI coregistration
+was successful. It loads the pial, scalp, inner skull, and outer skull surfaces from
+the subject’s directory and displays them using a <cite>k3d</cite> interactive plot.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fid_coords</strong> (<em>dict</em>) – Dictionary of fiducial coordinates in MEG headspace, e.g.:
+<code class="docutils literal notranslate"><span class="pre">{'nas':</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z],</span> <span class="pre">'lpa':</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z],</span> <span class="pre">'rpa':</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z]}</span></code>.</p></li>
+<li><p><strong>surf_set</strong> (<em>LayerSurfaceSet</em>) – Subject’s surface set containing paths and metadata for cortical and head meshes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>plot</strong> – Interactive 3D plot displaying cortical and head surfaces with fiducial markers.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>k3d.plot.Plot</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>FileNotFoundError</strong> – If one or more head surface meshes are missing, indicating that coregistration
+or segmentation has not yet been completed.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>The following meshes are required:</dt><dd><ul>
+<li><p><cite>&lt;subject&gt;/mri/origscalp_2562.surf.gii</cite></p></li>
+<li><p><cite>&lt;subject&gt;/mri/origiskull_2562.surf.gii</cite></p></li>
+<li><p><cite>&lt;subject&gt;/mri/origoskull_2562.surf.gii</cite></p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>Fiducial markers are displayed as colored spheres:</dt><dd><ul>
+<li><p>Nasion: blue</p></li>
+<li><p>LPA: red</p></li>
+<li><p>RPA: green</p></li>
+</ul>
+</dd>
+</dl>
+</li>
+<li><p>Intended as a visual diagnostic tool; does not modify or compute transformations.</p></li>
+</ul>
+</dd></dl>
+
 </section>
 <section id="module-lameg">
 <span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-lameg" title="Permalink to this heading">#</a></h2>
@@ -751,6 +803,7 @@ is True.</p></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.viz.plot_csd"><code class="docutils literal notranslate"><span class="pre">plot_csd()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.viz.rgbtoint"><code class="docutils literal notranslate"><span class="pre">rgbtoint()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.viz.show_surface"><code class="docutils literal notranslate"><span class="pre">show_surface()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.viz.verify_coregistration"><code class="docutils literal notranslate"><span class="pre">verify_coregistration()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-lameg">Module contents</a></li>
