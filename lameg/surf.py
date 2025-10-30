@@ -1041,6 +1041,68 @@ class LayerSurfaceSet:
         thickness = np.sqrt(np.sum((vert_diff) ** 2, axis=-1))
         return thickness
 
+    def load_head_mesh(self, mesh_type='scalp'):
+        """
+        Load a head surface mesh (scalp, inner skull, or outer skull) generated during coregistration.
+
+        This function retrieves one of the head surface meshes stored under
+        `<SUBJECTS_DIR>/<subject>/mri/`, typically produced by the coregistration step.
+        These meshes are used for forward modeling, visualization, and anatomical
+        distance computations.
+
+        Parameters
+        ----------
+        mesh_type : {'scalp', 'iskull', 'oskull'}, optional
+            Type of surface mesh to load.
+            - `'scalp'`: Outer scalp surface (`origscalp_2562.surf.gii`)
+            - `'iskull'`: Inner skull surface (`origiskull_2562.surf.gii`)
+            - `'oskull'`: Outer skull surface (`origoskull_2562.surf.gii`)
+            Default is `'scalp'`.
+
+        Returns
+        -------
+        mesh : nib.GiftiImage
+            Loaded surface mesh in GIFTI format.
+
+        Raises
+        ------
+        ValueError
+            If `mesh_type` is not one of `'scalp'`, `'iskull'`, or `'oskull'`.
+        FileNotFoundError
+            If the requested mesh file does not exist, indicating that segmentation
+            or coregistration has not been completed for this subject.
+
+        Notes
+        -----
+        - Expected mesh files are located in `<SUBJECTS_DIR>/<subject>/mri/`.
+        - Meshes are generated automatically by the `coregister()` step.
+        - The meshes can be used to compute distances, visualize head geometry,
+          or generate BEM models for forward computations.
+
+        Examples
+        --------
+        >>> scalp = surf_set.load_head_mesh('scalp')
+        >>> iskull = surf_set.load_head_mesh('iskull')
+        >>> oskull = surf_set.load_head_mesh('oskull')
+        """
+        mesh_map = {
+            'scalp': 'origscalp_2562.surf.gii',
+            'iskull': 'origiskull_2562.surf.gii',
+            'oskull': 'origoskull_2562.surf.gii'
+        }
+
+        if mesh_type not in mesh_map:
+            raise ValueError(f"Invalid mesh_type '{mesh_type}'. Must be 'scalp', 'iskull', or 'oskull'.")
+
+        mesh_fname = os.path.join(self.subj_dir, 'mri', mesh_map[mesh_type])
+        if not os.path.exists(mesh_fname):
+            raise FileNotFoundError(
+                f"{mesh_type.capitalize()} surface not found for subject '{self.subj_id}'. "
+                "Segmentation not completed yet ? run coregistration for this subject first."
+            )
+
+        return nib.load(mesh_fname)
+
     def get_distance_to_scalp(self, layer_name='pial', stage='ds', hemi=None):
         """
         Compute the minimum Euclidean distance from each cortical vertex to the scalp surface.
@@ -1074,8 +1136,7 @@ class LayerSurfaceSet:
         - Useful for evaluating cortical depth relative to scalp or for spatial normalization of
           MEG sensitivity profiles.
         """
-        scalp_mesh_fname = os.path.join(self.subj_dir, 'mri', 'origscalp_2562.surf.gii')
-        scalp_mesh = nib.load(scalp_mesh_fname)
+        scalp_mesh = self.load_head_mesh('scalp')
         scalp_vertices = scalp_mesh.darrays[1].data  # Vertex coordinates
 
         layer_mesh = self.load(layer_name=layer_name, stage=stage, hemi=hemi)
@@ -1125,8 +1186,7 @@ class LayerSurfaceSet:
         - Useful for assessing source sensitivity, forward-model biases, or validating
           laminar orientation models.
         """
-        scalp_mesh_fname = os.path.join(self.subj_dir, 'mri', 'origscalp_2562.surf.gii')
-        scalp_mesh = nib.load(scalp_mesh_fname)
+        scalp_mesh = self.load_head_mesh('scalp')
         scalp_vertices = scalp_mesh.darrays[1].data  # Vertex coordinates
         scalp_faces = scalp_mesh.darrays[0].data  # Face indices
 
