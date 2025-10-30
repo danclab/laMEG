@@ -227,7 +227,8 @@ plot = show_surface(
 #   :alt:
 
 # %% [markdown]
-# ## Normalize and combine predictors
+# Normalize and combine predictors
+# --------------------------------
 # To assess joint contributions of these features, we standardize (z-score) each anatomical predictor and form a composite 'anatomical score':
 
 # Z-score normalization (invert distance since smaller = closer to sensors)
