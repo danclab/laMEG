@@ -496,20 +496,44 @@ def verify_coregistration(fid_coords, surf_set):
         grid_visible=False
     )
 
-    pial_k3d_mesh = k3d.mesh(pial_vertices, pial_faces, side="double", color=rgbtoint([166, 166, 166]), opacity=1,
-                             name='cortex')
+    pial_k3d_mesh = k3d.mesh(
+        pial_vertices,
+        pial_faces,
+        side="double",
+        color=rgbtoint([166, 166, 166]),
+        opacity=1,
+        name='cortex'
+    )
     plot += pial_k3d_mesh
 
-    scalp_k3d_mesh = k3d.mesh(scalp_vertices, scalp_faces, side="double", color=rgbtoint([186, 160, 115]), opacity=0.5,
-                              name='scalp')
+    scalp_k3d_mesh = k3d.mesh(
+        scalp_vertices,
+        scalp_faces,
+        side="double",
+        color=rgbtoint([186, 160, 115]),
+        opacity=0.5,
+        name='scalp'
+    )
     plot += scalp_k3d_mesh
 
-    iskull_k3d_mesh = k3d.mesh(iskull_vertices, iskull_faces, side="double", color=rgbtoint([255, 255, 255]),
-                               opacity=0.5, name='inner skull')
+    iskull_k3d_mesh = k3d.mesh(
+        iskull_vertices,
+        iskull_faces,
+        side="double",
+        color=rgbtoint([255, 255, 255]),
+        opacity=0.5,
+        name='inner skull'
+    )
     plot += iskull_k3d_mesh
 
-    oskull_k3d_mesh = k3d.mesh(oskull_vertices, oskull_faces, side="double", color=rgbtoint([255, 255, 255]),
-                               opacity=0.5, name='outer skull')
+    oskull_k3d_mesh = k3d.mesh(
+        oskull_vertices,
+        oskull_faces,
+        side="double",
+        color=rgbtoint([255, 255, 255]),
+        opacity=0.5,
+        name='outer skull'
+    )
     plot += oskull_k3d_mesh
 
     nas_pts = k3d.points(
