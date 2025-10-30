@@ -562,6 +562,8 @@ def verify_coregistration(fid_coords, surf_set):
 
     plot.display()
 
+    return plot
+
 
 def plot_csd(csd, times, axis, colorbar=True, cmap="RdBu_r", vmin_vmax=None, n_layers=11,
              layer_boundaries=None):
