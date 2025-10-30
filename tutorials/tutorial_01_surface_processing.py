@@ -165,7 +165,7 @@ plot = show_surface(
 # The original FreeSurfer meshes contain hundreds of thousands of vertices - far too dense for efficient source inversion. We therefore downsample the mesh while preserving **vertex correspondence** across layers (see [Bonaiuto et al. 2020, Estimates of cortical column orientation improve MEG source inversion](https://doi.org/10.1016/j.neuroimage.2020.116862)).
 #
 # To achieve this:
-# - The pial surface is downsampled using VTK's `DecimatePro` algorithm, which *removes* vertices rather than creating new ones.
+# - The pial surface is downsampled using a purely reductive algorithm: it only *removes* vertices rather than modifying them or creating new ones.
 # - The same vertex indices are then removed from every other layer to maintain correspondence.
 # - The face structure from the downsampled pial surface is propagated to other layers.
 #
