@@ -55,14 +55,11 @@ def clone_and_install_spm():
 
     if not os.path.exists(clone_dir):
         logging.info("Cloning SPM repository from %s...", repo_url)
-        print(f"Cloning SPM repository from {repo_url}...")
         subprocess.check_call(['git', 'clone', repo_url, clone_dir])
     else:
         logging.info("SPM repository already exists, skipping cloning.")
-        print("SPM repository already exists, skipping cloning.")
 
     logging.info("Installing SPM package...")
-    print("Installing SPM package...")
     try:
         # Capture output from the pip install command
         result = subprocess.run([sys.executable, '-m', 'pip', 'install', '-v', clone_dir],
@@ -73,10 +70,6 @@ def clone_and_install_spm():
         logging.info(result.stdout)
         logging.error(result.stderr)  # Errors go to the error log
 
-        # Also print to console
-        print(result.stdout)
-        print(result.stderr)
-
         if result.returncode == 0:
             logging.info("SPM package installed successfully.")
         else:
@@ -84,7 +77,6 @@ def clone_and_install_spm():
             raise subprocess.CalledProcessError(result.returncode, result.args)
     except subprocess.CalledProcessError as err:
         logging.error("Failed to install SPM package. Error: %s", err)
-        print(f"Failed to install SPM package. Error: {err}")
         raise
     shutil.rmtree(clone_dir)
 
@@ -129,10 +121,10 @@ def setup_jupyter_extensions():
 
 def run_postinstall():
     """Run all laMEG post-installation setup tasks."""
-    print("Running laMEG post-installation setup...")
+    logging.info("Running laMEG post-installation setup...")
     clone_and_install_spm()
     setup_jupyter_extensions()
-    print("laMEG post-installation setup completed successfully.")
+    logging.info("laMEG post-installation setup completed successfully.")
 
     # Detect if we're running inside a conda environment
     conda_env = os.environ.get("CONDA_DEFAULT_ENV")
