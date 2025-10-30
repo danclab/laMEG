@@ -21,6 +21,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "nibabel==3.2.2",
+        "vtk==9.3.0",
         "numpy==1.21.6",
         "scipy==1.5.4",
         "matplotlib==3.3.4",
@@ -35,8 +36,7 @@ setup(
         "widgetsnbextension==3.6.6",
         "ipywidgets==7.8.1",
         "jupyterlab-widgets==1.1.7",
-        "k3d==2.14.5",
-        "numpy-stl==3.1.2"
+        "k3d==2.14.5"
     ],
     classifiers=[
         'Intended Audience :: Science/Research',

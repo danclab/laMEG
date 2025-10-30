@@ -59,6 +59,7 @@ from stl import mesh
 import h5py
 import nibabel as nib
 import matplotlib.pyplot as plt
+import vtk
 from mne.coreg import Coregistration
 from mne.io import _empty_info
 from mne.transforms import apply_trans
@@ -832,8 +833,13 @@ def coregister_3d_scan_mri(subject_id, lpa, rpa, nas, dig_face_fname, dig_units=
     nas = nas * 1e-3
 
     # Get the 3d surface of the face
-    stl_mesh = mesh.Mesh.from_file(dig_face_fname)
-    vertices = np.vstack((stl_mesh.v0, stl_mesh.v1, stl_mesh.v2))
+    reader = vtk.vtkSTLReader()  # pylint: disable=E1101
+    reader.SetFileName(dig_face_fname)
+    reader.Update()
+    polydata = reader.GetOutput()
+    points = polydata.GetPoints()
+    n_points = points.GetNumberOfPoints()
+    vertices = np.array([points.GetPoint(i) for i in range(n_points)])
     # Get all vertices as points - round
     points = np.unique(np.round(vertices, 2), axis=0)
     # Convert mm to m
