@@ -312,12 +312,13 @@ Each predictor captures a distinct anatomical constraint on laminar inference:
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 230-232
+.. GENERATED FROM PYTHON SOURCE LINES 230-233
 
-## Normalize and combine predictors
+Normalize and combine predictors
+--------------------------------
 To assess joint contributions of these features, we standardize (z-score) each anatomical predictor and form a composite 'anatomical score':
 
-.. GENERATED FROM PYTHON SOURCE LINES 232-264
+.. GENERATED FROM PYTHON SOURCE LINES 233-265
 
 .. code-block:: default
 
@@ -354,17 +355,17 @@ To assess joint contributions of these features, we standardize (z-score) each a
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 265-268
+.. GENERATED FROM PYTHON SOURCE LINES 266-269
 
 .. image:: ../_static/tutorial_07_anatomical_score.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 270-271
+.. GENERATED FROM PYTHON SOURCE LINES 271-272
 
 We can find the best vertex over the whole brain for laminar inference. It happens to be the same one we've been using in the tutorial simulations. Isn't that a coincidence!?
 
-.. GENERATED FROM PYTHON SOURCE LINES 271-276
+.. GENERATED FROM PYTHON SOURCE LINES 272-277
 
 .. code-block:: default
 
@@ -374,7 +375,7 @@ We can find the best vertex over the whole brain for laminar inference. It happe
     print(f"Highest anatomical score at vertex {best_vertex}")
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 277-285
+.. GENERATED FROM PYTHON SOURCE LINES 278-286
 
 Interpretation
 --------------
@@ -385,7 +386,7 @@ Selecting anatomical priors within a region of interest
 In practical laminar inference, it is often desirable to constrain model comparison to a subset of vertices, e.g., within an anatomical ROI or around vertices showing maximal task-related power or signal amplitude.
 Within such a region, the anatomical score can guide the choice of the most anatomically suitable prior location for laminar inference:
 
-.. GENERATED FROM PYTHON SOURCE LINES 285-290
+.. GENERATED FROM PYTHON SOURCE LINES 286-291
 
 .. code-block:: default
 
@@ -395,7 +396,7 @@ Within such a region, the anatomical score can guide the choice of the most anat
     prior_idx = roi_idx[np.argmax(candidate_anat_scores)]
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 291-296
+.. GENERATED FROM PYTHON SOURCE LINES 292-297
 
 .. code-block:: default
 

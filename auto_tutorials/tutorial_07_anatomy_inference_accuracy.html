@@ -598,8 +598,10 @@ This tutorial demonstrates how to compute vertex-wise anatomical predictors that
 </pre></div>
 </div>
 <a class="reference internal image-reference" href="../_images/tutorial_07_distance.png"><img alt="" src="../_images/tutorial_07_distance.png" style="width: 800px;" /></a>
-<p>## Normalize and combine predictors
-To assess joint contributions of these features, we standardize (z-score) each anatomical predictor and form a composite ‘anatomical score’:</p>
+</section>
+<section id="normalize-and-combine-predictors">
+<h2>Normalize and combine predictors<a class="headerlink" href="#normalize-and-combine-predictors" title="Permalink to this heading">#</a></h2>
+<p>To assess joint contributions of these features, we standardize (z-score) each anatomical predictor and form a composite ‘anatomical score’:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Z-score normalization (invert distance since smaller = closer to sensors)</span>
 <span class="n">z_thickness</span>     <span class="o">=</span> <span class="n">zscore</span><span class="p">(</span><span class="n">thickness</span><span class="p">)</span>
 <span class="n">z_lf_rms_diff</span>   <span class="o">=</span> <span class="n">zscore</span><span class="p">(</span><span class="n">lf_rms_diff</span><span class="p">)</span>
@@ -711,6 +713,7 @@ Within such a region, the anatomical score can guide the choice of the most anat
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#compute-anatomical-features">Compute anatomical features</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#normalize-and-combine-predictors">Normalize and combine predictors</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#interpretation">Interpretation</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#selecting-anatomical-priors-within-a-region-of-interest">Selecting anatomical priors within a region of interest</a></li>
 </ul>
