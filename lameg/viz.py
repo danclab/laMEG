@@ -438,6 +438,107 @@ def show_surface(
 
     return plot
 
+
+def verify_coregistration(fid_coords, surf_set):
+    """
+    Visualize MEG-MRI coregistration by plotting the scalp, skull, and cortical surfaces
+    along with fiducial landmarks.
+
+    This function provides a 3D visualization of the subject's head geometry and fiducial
+    points (nasion, left and right preauricular) to verify whether MEG-MRI coregistration
+    was successful. It loads the pial, scalp, inner skull, and outer skull surfaces from
+    the subject's directory and displays them using a `k3d` interactive plot.
+
+    Parameters
+    ----------
+    fid_coords : dict
+        Dictionary of fiducial coordinates in MEG headspace, e.g.:
+        ``{'nas': [x, y, z], 'lpa': [x, y, z], 'rpa': [x, y, z]}``.
+    surf_set : LayerSurfaceSet
+        Subject's surface set containing paths and metadata for cortical and head meshes.
+
+    Returns
+    -------
+    plot : k3d.plot.Plot
+        Interactive 3D plot displaying cortical and head surfaces with fiducial markers.
+
+    Raises
+    ------
+    FileNotFoundError
+        If one or more head surface meshes are missing, indicating that coregistration
+        or segmentation has not yet been completed.
+
+    Notes
+    -----
+    - The following meshes are required:
+        - `<subject>/mri/origscalp_2562.surf.gii`
+        - `<subject>/mri/origiskull_2562.surf.gii`
+        - `<subject>/mri/origoskull_2562.surf.gii`
+    - Fiducial markers are displayed as colored spheres:
+        - Nasion: blue
+        - LPA: red
+        - RPA: green
+    - Intended as a visual diagnostic tool; does not modify or compute transformations.
+    """
+    pial_mesh = surf_set.load(layer_name='pial', stage='combined')
+    pial_vertices, pial_faces, *_ = pial_mesh.agg_data()
+
+    scalp_mesh = surf_set.load_head_mesh('scalp')
+    scalp_faces, scalp_vertices, *_ = scalp_mesh.agg_data()
+
+    iskull_mesh = surf_set.load_head_mesh('iskull')
+    iskull_faces, iskull_vertices, *_ = iskull_mesh.agg_data()
+
+    oskull_mesh = surf_set.load_head_mesh('oskull')
+    oskull_faces, oskull_vertices, *_ = oskull_mesh.agg_data()
+
+    plot = k3d.plot(
+        grid_visible=False
+    )
+
+    pial_k3d_mesh = k3d.mesh(pial_vertices, pial_faces, side="double", color=rgbtoint([166, 166, 166]), opacity=1,
+                             name='cortex')
+    plot += pial_k3d_mesh
+
+    scalp_k3d_mesh = k3d.mesh(scalp_vertices, scalp_faces, side="double", color=rgbtoint([186, 160, 115]), opacity=0.5,
+                              name='scalp')
+    plot += scalp_k3d_mesh
+
+    iskull_k3d_mesh = k3d.mesh(iskull_vertices, iskull_faces, side="double", color=rgbtoint([255, 255, 255]),
+                               opacity=0.5, name='inner skull')
+    plot += iskull_k3d_mesh
+
+    oskull_k3d_mesh = k3d.mesh(oskull_vertices, oskull_faces, side="double", color=rgbtoint([255, 255, 255]),
+                               opacity=0.5, name='outer skull')
+    plot += oskull_k3d_mesh
+
+    nas_pts = k3d.points(
+        fid_coords['nas'],
+        point_size=5,
+        color=rgbtoint([0, 0, 255]),
+        name='nas'
+    )
+    plot += nas_pts
+
+    lpa_pts = k3d.points(
+        fid_coords['lpa'],
+        point_size=5,
+        color=rgbtoint([255, 0, 0]),
+        name='lpa'
+    )
+    plot += lpa_pts
+
+    rpa_pts = k3d.points(
+        fid_coords['rpa'],
+        point_size=5,
+        color=rgbtoint([0, 255, 0]),
+        name='rpa'
+    )
+    plot += rpa_pts
+
+    plot.display()
+
+
 def plot_csd(csd, times, axis, colorbar=True, cmap="RdBu_r", vmin_vmax=None, n_layers=11,
              layer_boundaries=None):
     """
