@@ -130,9 +130,9 @@ plt.ylabel('Amplitude (nAm)')
 # We need to pick a location (mesh vertex) to simulate at
 
 # Vertex to simulate activity at
-sim_vertex=50492
+sim_vertex=10561
 
-cam_view = [335, 9.5, 51,
+cam_view = [40, -240, 25,
             60, 37, 17,
             0, 0, 1]
 plot = show_surface(
@@ -213,9 +213,6 @@ roi[roi_idx]=1
 
 # Plot colors and camera view
 c_range = [-1, 1]
-cam_view = [335, 9.5, 51,
-            60, 37, 17,
-            0, 0, 1]
 
 # Plot change in power on each surface
 colors,_ = color_map(

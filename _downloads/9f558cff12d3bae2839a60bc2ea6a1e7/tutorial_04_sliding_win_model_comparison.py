@@ -127,9 +127,9 @@ plt.ylabel('Amplitude (nAm)')
 # We need to pick a location (mesh vertex) to simulate at
 
 # Vertex to simulate activity at
-sim_vertex=50492
+sim_vertex=10561
 
-cam_view = [335, 9.5, 51,
+cam_view = [40, -240, 25,
             60, 37, 17,
             0, 0, 1]
 plot = show_surface(
@@ -203,9 +203,6 @@ prior = np.argmax(m_layer_max)
 # Plot colors and camera view
 max_abs = np.max(np.abs(m_layer_max))
 c_range = [-max_abs, max_abs]
-cam_view = [335, 9.5, 51,
-            60, 37, 17,
-            0, 0, 1]
 
 # Plot peak
 colors,_ = color_map(
@@ -293,27 +290,6 @@ white_sim_fname = run_dipole_simulation(
     spm_instance=spm
 )
 
-# Localizer
-[_,_,MU] = invert_ebb(
-    white_sim_fname,
-    surf_set,
-    patch_size=patch_size,
-    n_temp_modes=n_temp_modes,
-    return_mu_matrix=True,
-    spm_instance=spm
-)
-
-layer_vertices = np.arange(verts_per_surf)
-layer_ts, time, _ = load_source_time_series(
-    white_sim_fname,
-    mu_matrix=MU,
-    vertices=layer_vertices
-)
-
-# Layer peak
-m_layer_max = np.max(np.mean(layer_ts,axis=-1),-1)
-prior = np.argmax(m_layer_max)
-
 # Run sliding time window model comparison between the first layer (pial) and the last layer (white matter)
 [Fs,wois] = sliding_window_model_comparison(
     prior,
@@ -365,28 +341,6 @@ for l in range(surf_set.n_layers):
         SNR,
         spm_instance=spm
     )
-
-    # Localizer
-    [_, _, MU] = invert_ebb(
-        l_sim_fname,
-        surf_set,
-        patch_size=patch_size,
-        n_temp_modes=n_temp_modes,
-        return_mu_matrix=True,
-        viz=False,
-        spm_instance=spm
-    )
-
-    layer_vertices = np.arange(verts_per_surf)
-    layer_ts, time, _ = load_source_time_series(
-        l_sim_fname,
-        mu_matrix=MU,
-        vertices=layer_vertices
-    )
-
-    # Layer peak
-    m_layer_max = np.max(np.mean(layer_ts, axis=-1), -1)
-    prior = np.argmax(m_layer_max)
 
     [Fs, wois] = sliding_window_model_comparison(
         prior,

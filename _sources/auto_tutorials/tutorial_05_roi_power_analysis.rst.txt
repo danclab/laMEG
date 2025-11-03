@@ -190,9 +190,9 @@ We need to pick a location (mesh vertex) to simulate at
 
 
     # Vertex to simulate activity at
-    sim_vertex=50492
+    sim_vertex=10561
 
-    cam_view = [335, 9.5, 51,
+    cam_view = [40, -240, 25,
                 60, 37, 17,
                 0, 0, 1]
     plot = show_surface(
@@ -275,7 +275,7 @@ Now we can run source reconstruction using a source model based on the multi-lam
 
 Now we can defined the ROI based on where the change in power from baseline exceeds some percentile threshold in either the pial or the white matter surface, then average the change in power within the ROI, and compare the magnitude of the change between layers. The t-statistic here should be positive, indicating a greater change in power from baseline in the pial surface, because we simulated activity on the pial surface
 
-.. GENERATED FROM PYTHON SOURCE LINES 200-238
+.. GENERATED FROM PYTHON SOURCE LINES 200-235
 
 .. code-block:: default
 
@@ -295,9 +295,6 @@ Now we can defined the ROI based on where the change in power from baseline exce
 
     # Plot colors and camera view
     c_range = [-1, 1]
-    cam_view = [335, 9.5, 51,
-                60, 37, 17,
-                0, 0, 1]
 
     # Plot change in power on each surface
     colors,_ = color_map(
@@ -318,19 +315,19 @@ Now we can defined the ROI based on where the change in power from baseline exce
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 239-242
+.. GENERATED FROM PYTHON SOURCE LINES 236-239
 
 .. image:: ../_static/tutorial_05_localizer.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 245-248
+.. GENERATED FROM PYTHON SOURCE LINES 242-245
 
 White matter surface simulation with pial - white matter ROI comparison
 -----------------------------------------------------------------------
 Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, there should be a greater change in power on the white matter surface.
 
-.. GENERATED FROM PYTHON SOURCE LINES 248-296
+.. GENERATED FROM PYTHON SOURCE LINES 245-293
 
 .. code-block:: default
 
@@ -383,13 +380,13 @@ Let's simulate the same pattern of activity, in the same location, but on the wh
     print(f't({df})={laminar_t_statistic}, p={laminar_p_value}')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 297-300
+.. GENERATED FROM PYTHON SOURCE LINES 294-297
 
 Simulation in each layer with ROI power analysis across layers
 --------------------------------------------------------------
 That was the ROI analysis with two surfaces: the white matter and pial surfaces. Let's now simulate on each layer, and for each simulation, look at the change in power from baseline within the ROI across all layers. We'll turn off SPM visualization here.
 
-.. GENERATED FROM PYTHON SOURCE LINES 300-391
+.. GENERATED FROM PYTHON SOURCE LINES 297-388
 
 .. code-block:: default
 
@@ -485,13 +482,13 @@ That was the ROI analysis with two surfaces: the white matter and pial surfaces.
     plt.tight_layout()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 392-395
+.. GENERATED FROM PYTHON SOURCE LINES 389-392
 
 .. image:: ../_static/tutorial_05_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 395-418
+.. GENERATED FROM PYTHON SOURCE LINES 392-415
 
 .. code-block:: default
 
@@ -519,13 +516,13 @@ That was the ROI analysis with two surfaces: the white matter and pial surfaces.
     cb.set_label('ROI mean power', fontsize=14)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 419-422
+.. GENERATED FROM PYTHON SOURCE LINES 416-419
 
 .. image:: ../_static/tutorial_05_results_matrix.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 424-429
+.. GENERATED FROM PYTHON SOURCE LINES 421-426
 
 .. code-block:: default
 

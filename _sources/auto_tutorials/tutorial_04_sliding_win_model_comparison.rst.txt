@@ -187,9 +187,9 @@ We need to pick a location (mesh vertex) to simulate at
 
 
     # Vertex to simulate activity at
-    sim_vertex=50492
+    sim_vertex=10561
 
-    cam_view = [335, 9.5, 51,
+    cam_view = [40, -240, 25,
                 60, 37, 17,
                 0, 0, 1]
     plot = show_surface(
@@ -277,7 +277,7 @@ Now we'll run a source reconstruction using the multilayer mesh, extract the sig
 
 We can see that the prior is the same as the location we simulated at
 
-.. GENERATED FROM PYTHON SOURCE LINES 202-231
+.. GENERATED FROM PYTHON SOURCE LINES 202-228
 
 .. code-block:: default
 
@@ -285,9 +285,6 @@ We can see that the prior is the same as the location we simulated at
     # Plot colors and camera view
     max_abs = np.max(np.abs(m_layer_max))
     c_range = [-max_abs, max_abs]
-    cam_view = [335, 9.5, 51,
-                60, 37, 17,
-                0, 0, 1]
 
     # Plot peak
     colors,_ = color_map(
@@ -311,19 +308,19 @@ We can see that the prior is the same as the location we simulated at
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 232-235
+.. GENERATED FROM PYTHON SOURCE LINES 229-232
 
 .. image:: ../_static/tutorial_04_localizer.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 237-240
+.. GENERATED FROM PYTHON SOURCE LINES 234-237
 
 Sliding time window model comparison (pial - white matter)
 ----------------------------------------------------------
 Now we can run sliding time window model comparison between source models based on the pial and white matter surfaces using free energy. Specifically, we'll look at the difference in free energy between the two models (pial - white matter), in sliding and overlapping windows of 16ms. The free energy difference (pial - white matter) should be positive (more model evidence for the pial surface model) because we simulated activity on the pial surface.
 
-.. GENERATED FROM PYTHON SOURCE LINES 240-263
+.. GENERATED FROM PYTHON SOURCE LINES 237-260
 
 .. code-block:: default
 
@@ -351,11 +348,11 @@ Now we can run sliding time window model comparison between source models based 
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 264-265
+.. GENERATED FROM PYTHON SOURCE LINES 261-262
 
 Plot difference in free energy over time (pial minus white) - this should be positive
 
-.. GENERATED FROM PYTHON SOURCE LINES 265-269
+.. GENERATED FROM PYTHON SOURCE LINES 262-266
 
 .. code-block:: default
 
@@ -364,19 +361,19 @@ Plot difference in free energy over time (pial minus white) - this should be pos
     plt.ylabel(r'$\Delta$F')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 270-273
+.. GENERATED FROM PYTHON SOURCE LINES 267-270
 
 .. image:: ../_static/tutorial_04_pial_sim_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 275-278
+.. GENERATED FROM PYTHON SOURCE LINES 272-275
 
 White matter surface simulation with pial - white matter sliding time window model comparison
 ---------------------------------------------------------------------------------------------
 Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, sliding time window model comparison should yield greater model evidence for the white matter surface, and therefore the difference in free energy (pial - white matter) should be negative.
 
-.. GENERATED FROM PYTHON SOURCE LINES 278-332
+.. GENERATED FROM PYTHON SOURCE LINES 275-308
 
 .. code-block:: default
 
@@ -398,27 +395,6 @@ Let's simulate the same pattern of activity, in the same location, but on the wh
         spm_instance=spm
     )
 
-    # Localizer
-    [_,_,MU] = invert_ebb(
-        white_sim_fname,
-        surf_set,
-        patch_size=patch_size,
-        n_temp_modes=n_temp_modes,
-        return_mu_matrix=True,
-        spm_instance=spm
-    )
-
-    layer_vertices = np.arange(verts_per_surf)
-    layer_ts, time, _ = load_source_time_series(
-        white_sim_fname,
-        mu_matrix=MU,
-        vertices=layer_vertices
-    )
-
-    # Layer peak
-    m_layer_max = np.max(np.mean(layer_ts,axis=-1),-1)
-    prior = np.argmax(m_layer_max)
-
     # Run sliding time window model comparison between the first layer (pial) and the last layer (white matter)
     [Fs,wois] = sliding_window_model_comparison(
         prior,
@@ -435,11 +411,11 @@ Let's simulate the same pattern of activity, in the same location, but on the wh
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 333-334
+.. GENERATED FROM PYTHON SOURCE LINES 309-310
 
 Plot difference in free energy over time (pial minus white) - this should be negative
 
-.. GENERATED FROM PYTHON SOURCE LINES 334-338
+.. GENERATED FROM PYTHON SOURCE LINES 310-314
 
 .. code-block:: default
 
@@ -448,19 +424,19 @@ Plot difference in free energy over time (pial minus white) - this should be neg
     plt.ylabel(r'$\Delta$F')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 339-342
+.. GENERATED FROM PYTHON SOURCE LINES 315-318
 
 .. image:: ../_static/tutorial_04_white_sim_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 345-348
+.. GENERATED FROM PYTHON SOURCE LINES 321-324
 
 Simulation in each layer with sliding time window model comparison across layers
 --------------------------------------------------------------------------------
 That was sliding time window model comparison with two candidate models: one based on the white matter surface, and one on the pial. Let's now simulate on each layer, and for each simulation, run sliding time window model comparison across all layers. We'll turn off SPM visualization here.
 
-.. GENERATED FROM PYTHON SOURCE LINES 348-409
+.. GENERATED FROM PYTHON SOURCE LINES 324-363
 
 .. code-block:: default
 
@@ -485,28 +461,6 @@ That was sliding time window model comparison with two candidate models: one bas
             spm_instance=spm
         )
 
-        # Localizer
-        [_, _, MU] = invert_ebb(
-            l_sim_fname,
-            surf_set,
-            patch_size=patch_size,
-            n_temp_modes=n_temp_modes,
-            return_mu_matrix=True,
-            viz=False,
-            spm_instance=spm
-        )
-
-        layer_vertices = np.arange(verts_per_surf)
-        layer_ts, time, _ = load_source_time_series(
-            l_sim_fname,
-            mu_matrix=MU,
-            vertices=layer_vertices
-        )
-
-        # Layer peak
-        m_layer_max = np.max(np.mean(layer_ts, axis=-1), -1)
-        prior = np.argmax(m_layer_max)
-
         [Fs, wois] = sliding_window_model_comparison(
             prior,
             fid_coords,
@@ -526,11 +480,11 @@ That was sliding time window model comparison with two candidate models: one bas
     all_layerF = np.squeeze(np.array(all_layerF))
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 410-411
+.. GENERATED FROM PYTHON SOURCE LINES 364-365
 
 For each simulation, we can plot the free energy for all models relative to the worst model within a central time window. The layer model with the highest free energy should correspond to the layer that the activity was simulated in.
 
-.. GENERATED FROM PYTHON SOURCE LINES 411-446
+.. GENERATED FROM PYTHON SOURCE LINES 365-400
 
 .. code-block:: default
 
@@ -570,13 +524,13 @@ For each simulation, we can plot the free energy for all models relative to the 
     plt.tight_layout()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 447-450
+.. GENERATED FROM PYTHON SOURCE LINES 401-404
 
 .. image:: ../_static/tutorial_04_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 450-471
+.. GENERATED FROM PYTHON SOURCE LINES 404-425
 
 .. code-block:: default
 
@@ -602,13 +556,13 @@ For each simulation, we can plot the free energy for all models relative to the 
     cb.set_label(r'$\Delta F$', fontsize=14)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 472-475
+.. GENERATED FROM PYTHON SOURCE LINES 426-429
 
 .. image:: ../_static/tutorial_04_results_matrix.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 477-482
+.. GENERATED FROM PYTHON SOURCE LINES 431-436
 
 .. code-block:: default
 

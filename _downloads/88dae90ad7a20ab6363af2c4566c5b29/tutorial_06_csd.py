@@ -126,9 +126,9 @@ plt.ylabel('Amplitude (nAm)')
 # We need to pick a location (mesh vertex) to simulate at
 
 # Vertex to simulate activity at
-sim_vertex=50492
+sim_vertex=10561
 
-cam_view = [335, 9.5, 51,
+cam_view = [40, -240, 25,
             60, 37, 17,
             0, 0, 1]
 plot = show_surface(
@@ -203,9 +203,6 @@ print(f'Simulated vertex={sim_vertex}, Prior vertex={peak}')
 # Plot colors and camera view
 max_abs = np.max(np.abs(m_layer_max))
 c_range = [-max_abs, max_abs]
-cam_view = [335, 9.5, 51,
-            60, 37, 17,
-            0, 0, 1]
 
 # Plot peak
 colors,_ = color_map(
@@ -237,9 +234,8 @@ plot = show_surface(
 # %% [markdown]
 # We need the indices of the vertex at each layer for this location, and the distances between them
 
-layer_verts = [surf_set.get_multilayer_vertex(l, peak) for l in range(surf_set.n_layers)]
-layer_coords = multilayer_mesh.darrays[0].data[layer_verts,:]
-layer_dists = np.sqrt(np.sum(np.diff(layer_coords,axis=0)**2,axis=1))
+layer_verts = surf_set.get_layer_vertices(peak)
+layer_dists = surf_set.get_interlayer_distance(peak)
 print(layer_dists)
 
 # %% [markdown]
@@ -311,21 +307,8 @@ white_sim_fname = run_dipole_simulation(
     spm_instance=spm
 )
 
-pial_layer_ts, time, _ = load_source_time_series(
-    white_sim_fname,
-    mu_matrix=MU,
-    vertices=pial_layer_vertices
-)
-
-# Layer peak
-m_layer_max = np.max(np.mean(pial_layer_ts, axis=-1), -1)
-peak = np.argmax(m_layer_max)
-
-print(f'Simulated vertex={sim_vertex}, Prior vertex={peak}')
-
-layer_verts = [surf_set.get_multilayer_vertex(l, peak) for l in range(surf_set.n_layers)]
-layer_coords = multilayer_mesh.darrays[0].data[layer_verts, :]
-layer_dists = np.sqrt(np.sum(np.diff(layer_coords, axis=0) ** 2, axis=1))
+layer_verts = surf_set.get_layer_vertices(peak)
+layer_dists = surf_set.get_interlayer_distance(peak)
 print(layer_dists)
 
 # Get source time series for each layer
@@ -397,21 +380,8 @@ for l in range(surf_set.n_layers):
         spm_instance=spm
     )
 
-    pial_layer_ts, time, _ = load_source_time_series(
-        l_sim_fname,
-        mu_matrix=MU,
-        vertices=pial_layer_vertices
-    )
-
-    # Layer peak
-    m_layer_max = np.max(np.mean(pial_layer_ts, axis=-1), -1)
-    peak = np.argmax(m_layer_max)
-
-    print(f'Simulated vertex={sim_vertex}, Prior vertex={peak}')
-
-    layer_verts = [surf_set.get_multilayer_vertex(l, peak) for l in range(surf_set.n_layers)]
-    layer_coords = multilayer_mesh.darrays[0].data[layer_verts, :]
-    layer_dists = np.sqrt(np.sum(np.diff(layer_coords, axis=0) ** 2, axis=1))
+    layer_verts = surf_set.get_layer_vertices(peak)
+    layer_dists = surf_set.get_interlayer_distance(peak)
     print(layer_dists)
 
     # Get source time series for each layer
@@ -520,7 +490,7 @@ for l in range(surf_set.n_layers):
 #   :alt:
 
 # %% [markdown]
-# For each simulation, we can plot a slice of the CSD through layers around a central time window. The layer model where the CSD signal crosses from negative to positive should correspond to the layer that the activity was simulated in.
+# For each simulation, we can plot a slice of the CSD through layers around a central time window. The layer model where the with the maximal CSD signal magnitude should correspond to the layer that the activity was simulated in.
 
 scale_factor=500/surf_set.n_layers
 csd_patterns = []
@@ -529,15 +499,13 @@ for layer_csd in layer_csds:
     t_idx = np.where((time>=-0.05) & (time<=0.05))[0]
     csd_pattern = np.mean(layer_csd[:,t_idx],axis=1)
     peak = np.argmax(np.abs(csd_pattern))
-    #cross_before = np.argmax(0-csd_pattern[:peak]))
     peaks.append(np.argmax(np.abs(csd_pattern))/scale_factor)
     csd_patterns.append(csd_pattern)
 
 col_r = plt.cm.cool(np.linspace(0,1, num=surf_set.n_layers))
 plt.figure(figsize=(10,4))
 
-# For each simulation, plot the CV error of each layer model relative to that of the worst
-# model for that simulation
+# For each simulation, plot the CSD slice
 plt.subplot(1,2,1)
 for l in range(surf_set.n_layers):
     plt.plot(np.arange(len(csd_patterns[l]))/scale_factor,csd_patterns[l], label=f'{l}', color=col_r[l,:])
@@ -545,7 +513,7 @@ plt.legend()
 plt.xlabel('Eval layer')
 plt.ylabel('CSD')
 
-# For each simulation, find which layer model had the lowest CV error
+# For each simulation, find which layer model had the peak CSD
 plt.subplot(1,2,2)
 plt.plot(np.arange(surf_set.n_layers),peaks)
 plt.xlim([-0.5,surf_set.n_layers-.5])
@@ -727,9 +695,8 @@ peak = np.argmax(m_layer_max)
 
 print(f'Simulated vertex={sim_vertex}, Prior vertex={peak}')
 
-layer_verts = [surf_set.get_multilayer_vertex(l, peak) for l in range(surf_set.n_layers)]
-layer_coords = multilayer_mesh.darrays[0].data[layer_verts, :]
-layer_dists = np.sqrt(np.sum(np.diff(layer_coords, axis=0) ** 2, axis=1))
+layer_verts = surf_set.get_layer_vertices(peak)
+layer_dists = surf_set.get_interlayer_distance(peak)
 print(layer_dists)
 
 # Get source time series for each layer
