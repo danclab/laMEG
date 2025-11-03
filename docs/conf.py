@@ -28,7 +28,7 @@ import lameg # noqa
 project = 'laMEG'
 copyright = '2024, DANC lab'
 author = 'DANC lab'
-release = "0.1.2"
+release = "0.1.3"
 
 # release = lameg.__release__
 
