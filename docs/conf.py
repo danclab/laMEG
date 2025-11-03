@@ -17,6 +17,8 @@ import sys
 
 # mpl.use("agg")
 
+os.environ["SPHINX_BUILD"] = "1"
+
 curdir = os.path.dirname(__file__)
 sys.path.append(os.path.abspath(os.path.join(curdir, "..")))
 sys.path.append(os.path.abspath(os.path.join(curdir, "..", "lameg")))

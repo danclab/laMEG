@@ -17,7 +17,12 @@ if not os.path.exists(_marker):
 # ----------------------------------------------------------------------
 __all__ = ["invert", "laminar", "surf", "util", "viz"]
 
-def __getattr__(name):
-    if name in __all__:
-        return importlib.import_module(f"lameg.{name}")
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+# Load all submodules eagerly when building docs
+if os.environ.get("SPHINX_BUILD") == "1":
+    for name in __all__:
+        globals()[name] = importlib.import_module(f"lameg.{name}")
+else:
+    def __getattr__(name):
+        if name in __all__:
+            return importlib.import_module(f"lameg.{name}")
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
