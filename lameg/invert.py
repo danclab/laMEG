@@ -43,6 +43,7 @@ import matlab # pylint: disable=wrong-import-order,import-error
 
 def coregister(fid_coords, data_fname, surf_set, layer_name=None, stage='ds',
                orientation='link_vector', fixed=True, fid_labels=('nas', 'lpa', 'rpa'),
+               iskull_fname=None, oskull_fname=None, scalp_fname=None,
                viz=True, spm_instance=None):
     """
     Perform MEG-MRI coregistration and compute the forward model using the Nolte single-shell
@@ -90,6 +91,13 @@ def coregister(fid_coords, data_fname, surf_set, layer_name=None, stage='ds',
     """
     mesh_fname = surf_set.get_mesh_path(layer_name=layer_name, stage=stage,
                                         orientation=orientation, fixed=fixed)
+    # scalp_fname = os.path.join(surf_set.subj_dir, "bem", "outer_skin.converted.gii")
+    if iskull_fname is None:
+        iskull_fname = ''
+    if oskull_fname is None:
+        oskull_fname = ''
+    if scalp_fname is None:
+        scalp_fname = ''
 
     # Define the structured dtype for 'specification' with nested 'type'
     spec_dtype = np.dtype([('type', 'O')])
@@ -124,13 +132,24 @@ def coregister(fid_coords, data_fname, surf_set, layer_name=None, stage='ds',
                                 "custom": {
                                     "mri": np.asarray(
                                         [f'{surf_set.mri_file},1'],
-                                        dtype="object"),
+                                        dtype="object"
+                                    ),
                                     "cortex": np.asarray(
                                         [mesh_fname],
-                                        dtype="object"),
-                                    "iskull": np.asarray([''], dtype="object"),
-                                    "oskull": np.asarray([''], dtype="object"),
-                                    "scalp": np.asarray([''], dtype="object")
+                                        dtype="object"
+                                    ),
+                                    "iskull": np.asarray(
+                                        [iskull_fname],
+                                        dtype="object"
+                                    ),
+                                    "oskull": np.asarray(
+                                        [oskull_fname],
+                                        dtype="object"
+                                    ),
+                                    "scalp": np.asarray(
+                                        [scalp_fname],
+                                        dtype="object"
+                                    )
                                 }
                             },
                             "meshres": 2
