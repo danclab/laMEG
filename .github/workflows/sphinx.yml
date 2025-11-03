@@ -23,6 +23,7 @@ jobs:
       run: |
         conda activate lameg
         pip install .
+        lameg-postinstall
         pip install -r dev_requirements.txt
       shell: bash -l {0}
 
