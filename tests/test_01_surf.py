@@ -1182,15 +1182,15 @@ def test_get_distance_to_scalp():
     subj_id = 'sub-104'
     surf_set = LayerSurfaceSet(subj_id, 2)
     distance = surf_set.get_distance_to_scalp(stage='ds')
-    expected = np.array([12.11558562, 12.49536067, 13.14079539, 12.91111269, 12.44810503])
+    expected = np.array([8.34425499, 8.52095768, 8.35171645, 8.85981816, 8.71362453])
     assert np.allclose(distance[:5], expected)
 
     distance = surf_set.get_distance_to_scalp(layer_name='white', stage='combined')
-    expected = np.array([13.5630841,  13.47294449, 13.47622333, 13.47952796, 13.7609574 ])
+    expected = np.array([7.28797584, 7.16089009, 6.99294309, 6.95941495, 7.39095096])
     assert np.allclose(distance[:5], expected)
 
     distance = surf_set.get_distance_to_scalp(stage='converted', hemi='rh')
-    expected = np.array([12.27074489, 12.23813509, 12.3212802,  12.62445071, 12.87414463])
+    expected = np.array([8.29781372, 8.2685831,  8.2657917,  8.37522146, 8.47087594])
     assert np.allclose(distance[:5], expected)
 
 def test_get_radiality_to_scalp():
@@ -1200,7 +1200,7 @@ def test_get_radiality_to_scalp():
     subj_id = 'sub-104'
     surf_set = LayerSurfaceSet(subj_id, 2)
     radiality = surf_set.get_radiality_to_scalp(layer_name='white')
-    expected = np.array([0.9701514,  0.9108665,  0.90277934, 0.9031148,  0.9678134 ])
+    expected = np.array([0.91470283, 0.895615,   0.91411227, 0.8826754,  0.9284598 ])
     assert np.allclose(radiality[:5], expected)
 
 def test_get_vertices_per_layer():

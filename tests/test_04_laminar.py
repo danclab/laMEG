@@ -66,13 +66,13 @@ def test_roi_power_comparison():
         chunk_size=2000
     )
 
-    target = -1.5906731203313937
+    target = 0.42221653422830624
     assert np.isclose(laminar_t_statistic, target, atol=1e-2)
-    target = 0.11702767729648857
+    target = 0.6744016344363659
     assert np.isclose(laminar_p_value, target, atol=1e-2)
     target = 59
     assert deg_of_freedom == target
-    target = np.array([  642,   898,  1099,  1314,  1590,  2477 , 3178, 15749, 16633, 16709])
+    target = np.array([ 1812,  7532,  7659,  7764,  8251, 15774, 33816, 33846])
     assert np.allclose(roi_idx, target)
 
     n_laminar_t_statistic, n_laminar_p_value, n_deg_of_freedom, n_roi_idx = roi_power_comparison(
@@ -150,7 +150,7 @@ def test_model_comparison(spm):
         }
     )
 
-    target = np.array([-320220.31670442, -320225.88595679])
+    target = np.array([-324943.4037271,  -324793.08568002])
     assert np.allclose(free_energy, target, atol=1e2)
 
     # Test EBB
@@ -167,7 +167,7 @@ def test_model_comparison(spm):
         }
     )
 
-    target = np.array([-323989.18386447, -327300.24963139])
+    target = np.array([-326440.3282751,  -329645.10036844])
     assert np.allclose(free_energy, target, atol=1e2)
 
     # Test default invert kwargs
@@ -180,7 +180,7 @@ def test_model_comparison(spm):
         spm_instance=spm
     )
 
-    target = np.array([-323989.18386447, -327300.24963139])
+    target = np.array([-326440.3282751,  -329645.10036844])
     assert np.allclose(free_energy, target, atol=1e2)
 
     # Test coreg kwargs
@@ -194,7 +194,7 @@ def test_model_comparison(spm):
         spm_instance=spm
     )
 
-    target = np.array([-323989.18386447, -327300.24963139])
+    target = np.array([-326440.3282751,  -329645.10036844])
     assert np.allclose(free_energy, target, atol=1e2)
 
 
@@ -276,12 +276,12 @@ def test_sliding_window_model_comparison(spm):
         }
     )
 
-    target = np.array([[-67060.26163232, -67060.26163232, -67050.00091443, -67144.38628684,
-                        -67144.38628684, -67116.56497337, -67058.40529612, -67058.40529612,
-                        -67113.2308259,  -67127.41494127],
-                       [-67060.26151429, -67060.26151429, -67050.0008686,  -67144.38609995,
-                        -67144.38609995, -67116.56484414, -67058.40527912, -67058.40527912,
-                        -67113.23082627, -67127.41498325]])
+    target = np.array([[-68059.04922785, -68059.04922785, -68048.99507591, -68143.55647346,
+                        -68143.55647346, -68115.73685644, -68057.80325197, -68057.80325197,
+                        -68112.46273718, -68126.32968561],
+                       [-68059.04922609, -68059.04922609, -68048.99518892, -68143.55644193,
+                        -68143.55644193, -68115.73694478, -68057.80313494, -68057.80313494,
+                        -68112.46268201, -68126.3299026 ]])
     assert np.allclose(free_energy[:, :10], target, atol=1e2)
 
     target = np.array([[-100., -75.],
@@ -306,12 +306,12 @@ def test_sliding_window_model_comparison(spm):
         spm_instance=spm
     )
 
-    target = np.array([[-67060.26163232, -67060.26163232, -67050.00091443, -67144.38628684,
-                        -67144.38628684, -67116.56497337, -67058.40529612, -67058.40529612,
-                        -67113.2308259,  -67127.41494127],
-                       [-67060.26151429, -67060.26151429, -67050.0008686,  -67144.38609995,
-                        -67144.38609995, -67116.56484414, -67058.40527912, -67058.40527912,
-                        -67113.23082627, -67127.41498325]])
+    target = np.array([[-68059.04922785, -68059.04922785, -68048.99507591, -68143.55647346,
+                        -68143.55647346, -68115.73685644, -68057.80325197, -68057.80325197,
+                        -68112.46273718, -68126.32968561],
+                       [-68059.04922609, -68059.04922609, -68048.99518892, -68143.55644193,
+                        -68143.55644193, -68115.73694478, -68057.80313494, -68057.80313494,
+                        -68112.46268201, -68126.3299026 ]])
     assert np.allclose(free_energy[:, :10], target, atol=1e2)
 
 

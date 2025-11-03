@@ -42,7 +42,7 @@ jobs:
       run: |
         set +e
         conda activate lameg
-        wget -q -c https://osf.io/hbm8x/download -O "${{ github.workspace }}/test_data.tar.gz"
+        wget -q -c https://osf.io/hbrga/download -O "${{ github.workspace }}/test_data.tar.gz"
         tar -xzf ${{ github.workspace }}/test_data.tar.gz -C ${{ github.workspace }}
         rm ${{ github.workspace }}/test_data.tar.gz
         stdbuf -oL -eL pytest -v -s --color=yes --cov=lameg --cov-report=xml

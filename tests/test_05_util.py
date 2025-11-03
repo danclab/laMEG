@@ -571,9 +571,9 @@ def test_get_fiducial_coords():
     assert fid_coords is None, ("Should return None if the subject ID is not found")
 
     fid_coords = get_fiducial_coords('sub-104', './test_data/participants.tsv')
-    nas_target = np.array([0.9662503311032098, 108.83514306876269, 1.6712361927090313])
-    lpa_target = np.array([-74.28671169006893, 20.15061014698176, -29.849056272705948])
-    rpa_target = np.array([76.02110531729883, 18.9467849625573, -25.779407159603114])
+    nas_target = np.array([-2.448184, 117.891385, 8.210301])
+    lpa_target = np.array([-74.534153, 24.382267, -15.896578])
+    rpa_target = np.array([75.167465, 33.04979, -27.065764])
 
     assert np.sum(np.abs(fid_coords['nas'] - nas_target)) < 1e-6
     assert np.sum(np.abs(fid_coords['lpa'] - lpa_target)) < 1e-6
