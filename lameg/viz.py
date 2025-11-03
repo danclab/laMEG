@@ -484,7 +484,7 @@ def verify_coregistration(fid_coords, surf_set):
     pial_vertices, pial_faces, *_ = pial_mesh.agg_data()
 
     scalp_mesh = surf_set.load_head_mesh('scalp')
-    scalp_faces, scalp_vertices, *_ = scalp_mesh.agg_data()
+    scalp_vertices, scalp_faces, *_ = scalp_mesh.agg_data()
 
     iskull_mesh = surf_set.load_head_mesh('iskull')
     iskull_faces, iskull_vertices, *_ = iskull_mesh.agg_data()

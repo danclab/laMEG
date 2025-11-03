@@ -68,16 +68,16 @@ import os
 import sys
 import copy
 import re
+
+import mne
 import numpy as np
 import nibabel as nib
 
-from lameg.surf import LayerSurfaceSet
-
-
-# pylint: disable=R0912,R0915
+from lameg.surf import LayerSurfaceSet, _fix_surface_holes, _create_surf_gifti
 from lameg.util import check_freesurfer_setup
 
 
+# pylint: disable=R0912,R0915,R0801
 def run(subj_id, old_lameg_surf_path, multilayer_n_layers=(2,11,15), fs_subjects_dir=None):
     """
     Convert and modernize laminar surface files from older laMEG directory structures.
@@ -206,6 +206,14 @@ def run(subj_id, old_lameg_surf_path, multilayer_n_layers=(2,11,15), fs_subjects
         return np.array([float(x) for x in out]).reshape(4, 4)
     t_orig = _mat('--vox2ras-tkr')  # vox -> tkRAS (mm)
     n_orig = _mat('--vox2ras')  # vox -> scanner RAS (mm)
+    inv_t_orig = np.linalg.inv(t_orig)
+
+    def tkras_to_scanner_ras(coords_mm):
+        # coords_mm: (N,3) tkRAS
+        xyz1 = np.c_[coords_mm, np.ones((coords_mm.shape[0], 1))]
+        out = (n_orig @ (inv_t_orig @ xyz1.T)).T[:, :3]
+        return out
+
     meta = {
         't_orig': t_orig.tolist(),
         'n_orig': n_orig.tolist()
@@ -308,7 +316,7 @@ def run(subj_id, old_lameg_surf_path, multilayer_n_layers=(2,11,15), fs_subjects
                 # Create meta data
                 # Determine which vertices were removed
                 combined_surf = nib.load(os.path.join(out_dir, f'{surface_name}.combined.gii'))
-                ds_surf = nib.load(os.path.join(out_dir, f'{surface_name}.ds.gii'))
+                ds_surf = nib.load(new_name)
                 combined_vertices = combined_surf.darrays[0].data
                 ds_vertices = ds_surf.darrays[0].data
 
@@ -324,6 +332,13 @@ def run(subj_id, old_lameg_surf_path, multilayer_n_layers=(2,11,15), fs_subjects
                                  if tuple(v) not in ds_set]
                 ds_factor = ds_vertices.shape[0]/combined_vertices.shape[0]
                 meta['ds_factor'] = ds_factor
+
+                # Fix holes in downsampled inflated surface
+                if surface_name=='inflated':
+                    ds_faces = ds_surf.darrays[1].data
+                    ds_faces = _fix_surface_holes(ds_vertices, ds_faces, hole_size=10.0)
+                    ds_surf = _create_surf_gifti(ds_vertices, ds_faces)
+                    nib.save(ds_surf, new_name)
 
                 combined_meta_path = os.path.join(out_dir, f'{surface_name}.combined.json')
                 with open(combined_meta_path, 'r', encoding='utf-8') as file:
@@ -433,6 +448,26 @@ def run(subj_id, old_lameg_surf_path, multilayer_n_layers=(2,11,15), fs_subjects
             surf_set = LayerSurfaceSet(subj_id, n_layers)
             surf_set.validate(['raw', 'converted', 'nodeep', 'combined', 'ds'], hemis=('lh', 'rh'),
                               orientations=[orientation], fixed=fixed_flag=='fixed')
+
+    # Make scalp surfaces
+    mne.bem.make_scalp_surfaces(
+        subj_id,
+        subjects_dir=fs_subjects_dir,
+        force=True,
+        overwrite=True,
+        no_decimate=True
+    )
+    scalp_surf = mne.read_bem_surfaces(
+        os.path.join(fs_subject_dir, "bem", f"{subj_id}-head-dense.fif")
+    )[0]
+    scalp_vertices = scalp_surf['rr'] * 1000
+    scalp_faces = scalp_surf['tris']
+    scalp_surf = _create_surf_gifti(scalp_vertices, scalp_faces)
+    nib.save(scalp_surf, os.path.join(fs_subject_dir, "bem", "outer_skin.raw.gii"))
+
+    scalp_vertices = tkras_to_scanner_ras(scalp_vertices)
+    scalp_surf = _create_surf_gifti(scalp_vertices, scalp_faces)
+    nib.save(scalp_surf, os.path.join(fs_subject_dir, "bem", "outer_skin.converted.gii"))
 
     all_fwhm_files = [f for f in os.listdir(old_lameg_surf_path) if f.startswith('FWHM')]
     for fwhm_file in all_fwhm_files:

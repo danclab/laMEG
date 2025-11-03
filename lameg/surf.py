@@ -34,16 +34,19 @@ import subprocess
 from collections import defaultdict
 from datetime import datetime
 
+import mne
 import nibabel as nib
 import numpy as np
 from joblib import Parallel, delayed
 from scipy.sparse import csr_matrix
 from scipy.spatial import cKDTree  # pylint: disable=E0611
+import vtk
+from vtkmodules.util import numpy_support
 
 from lameg.util import spm_context, big_brain_proportional_layer_boundaries, check_freesurfer_setup
 import matlab # pylint: disable=wrong-import-order,import-error
 
-# pylint: disable=R0902
+# pylint: disable=R0902,R0904
 class LayerSurfaceSet:
     """
     Object-oriented interface for managing subject-specific laminar cortical surfaces.
@@ -405,6 +408,84 @@ class LayerSurfaceSet:
             layer_idx = self.get_layer_names().index(layer)
         n_vertices_per_layer = self.get_vertices_per_layer(orientation=orientation, fixed=fixed)
         return layer_idx * n_vertices_per_layer + layer_vertex
+
+    def get_layer_vertices(self, vertex, orientation='link_vector', fixed=True):
+        """
+        Retrieve the vertex indices corresponding to a single cortical column across all layers.
+
+        This function maps a vertex index from the superficial (reference) layer to its
+        corresponding vertices in deeper layers, ensuring layer-wise alignment according to the
+        mesh organization defined by `orientation` and `fixed` parameters.
+
+        Parameters
+        ----------
+        vertex : int
+            Vertex index on the reference (superficial) layer for which layer correspondences are
+            desired.
+        orientation : {'link_vector', 'normal_vector'}, optional
+            Orientation model defining how dipole orientations are computed. Default is
+            `'link_vector'`.
+        fixed : bool, optional
+            Whether to use fixed dipole orientations across layers (default: True).
+
+        Returns
+        -------
+        layer_verts : ndarray of int, shape (n_layers,)
+            Array of vertex indices corresponding to the same cortical column across all layers,
+            ordered from superficial to deep.
+
+        Notes
+        -----
+        - This function uses `get_multilayer_vertex()` to compute per-layer indices.
+        - The mapping assumes consistent vertex ordering across layers within the `LayerSurfaceSet`.
+        """
+        layer_verts = np.array(
+            [
+                self.get_multilayer_vertex(
+                    l,
+                    vertex,
+                    orientation=orientation,
+                    fixed=fixed
+                ) for l in range(self.n_layers)
+            ]
+        )
+        return layer_verts
+
+    def get_interlayer_distance(self, vertex, orientation='link_vector', fixed=True):
+        """
+        Compute Euclidean distances between corresponding vertices across cortical layers.
+
+        This function calculates the physical (3D) distances between adjacent layer surfaces
+        for a given cortical column, providing an estimate of local cortical thickness and its
+        distribution across layers.
+
+        Parameters
+        ----------
+        vertex : int
+            Vertex index on the reference (superficial) layer for which interlayer distances are
+            computed.
+        orientation : {'link_vector', 'normal_vector'}, optional
+            Orientation model defining how dipole orientations are computed. Default is
+            `'link_vector'`.
+        fixed : bool, optional
+            Whether to use fixed dipole orientations across layers (default: True).
+
+        Returns
+        -------
+        layer_dists : ndarray of float, shape (n_layers - 1,)
+            Euclidean distances (in millimeters) between consecutive layers along the specified
+            cortical column.
+
+        Notes
+        -----
+        - Distances are computed from the downsampled (`'ds'`) multilayer mesh.
+        - The result reflects local layer spacing and may vary across cortical regions.
+        """
+        multilayer_mesh = self.load(stage='ds', orientation=orientation, fixed=fixed)
+        layer_verts = self.get_layer_vertices(vertex, orientation=orientation, fixed=fixed)
+        layer_coords = multilayer_mesh.darrays[0].data[layer_verts, :]
+        layer_dists = np.sqrt(np.sum(np.diff(layer_coords, axis=0) ** 2, axis=1))
+        return layer_dists
 
     def load(self, layer_name=None, stage='raw', hemi=None, orientation=None, fixed=None):
         """
@@ -910,10 +991,10 @@ class LayerSurfaceSet:
 
     def downsample(self, ds_factor, spm_instance=None):
         """
-        Downsample all combined cortical surface meshes using the VTK decimation algorithm.
+        Downsample all combined cortical surface meshes
 
         This function applies geometric mesh reduction to each combined surface (including all
-        laminar layers and the inflated mesh) using the `vtkDecimatePro` algorithm. The first
+        laminar layers and the inflated mesh) using Matlan's `reducepatch` algorithm. The first
         surface in the sequence defines the downsampling vertex mapping, which is then applied to
         all other surfaces to ensure topological and vertex-wise correspondence across layers.
 
@@ -999,9 +1080,11 @@ class LayerSurfaceSet:
 
             surf_verts = surf.darrays[0].data[orig_vert_idx, :]
 
-            nonmani_vertices, nonmani_faces = _fix_non_manifold_edges(surf_verts, reduced_faces)
+            surf_verts, reduced_faces = _fix_non_manifold_edges(surf_verts, reduced_faces)
+            if surfaces_to_process[i] == 'inflated':
+                reduced_faces = _fix_surface_holes(surf_verts, reduced_faces, hole_size=10.0)
 
-            ds_surf = _create_surf_gifti(nonmani_vertices, nonmani_faces, normals=reduced_normals)
+            ds_surf = _create_surf_gifti(surf_verts, reduced_faces, normals=reduced_normals)
 
             self.save(ds_surf, surfaces_to_process[i], stage='ds', meta=surf_meta)
 
@@ -1086,22 +1169,26 @@ class LayerSurfaceSet:
         >>> iskull = surf_set.load_head_mesh('iskull')
         >>> oskull = surf_set.load_head_mesh('oskull')
         """
-        mesh_map = {
-            'scalp': 'origscalp_2562.surf.gii',
-            'iskull': 'origiskull_2562.surf.gii',
-            'oskull': 'origoskull_2562.surf.gii'
-        }
 
-        if mesh_type not in mesh_map:
-            raise ValueError(f"Invalid mesh_type '{mesh_type}'. Must be 'scalp', 'iskull', or "
-                             f"'oskull'.")
+        if mesh_type=='scalp':
+            mesh_fname = os.path.join(self.subj_dir, "bem", "outer_skin.converted.gii")
+        else:
+            mesh_map = {
+                'scalp': 'origscalp_2562.surf.gii',
+                'iskull': 'origiskull_2562.surf.gii',
+                'oskull': 'origoskull_2562.surf.gii'
+            }
 
-        mesh_fname = os.path.join(self.subj_dir, 'mri', mesh_map[mesh_type])
-        if not os.path.exists(mesh_fname):
-            raise FileNotFoundError(
-                f"{mesh_type.capitalize()} surface not found for subject '{self.subj_id}'. "
-                "Segmentation not completed yet ? run coregistration for this subject first."
-            )
+            if mesh_type not in mesh_map:
+                raise ValueError(f"Invalid mesh_type '{mesh_type}'. Must be 'scalp', 'iskull', or "
+                                 f"'oskull'.")
+
+            mesh_fname = os.path.join(self.subj_dir, 'mri', mesh_map[mesh_type])
+            if not os.path.exists(mesh_fname):
+                raise FileNotFoundError(
+                    f"{mesh_type.capitalize()} surface not found for subject '{self.subj_id}'. "
+                    "Segmentation not completed yet - run coregistration for this subject first."
+                )
 
         return nib.load(mesh_fname)
 
@@ -1139,7 +1226,7 @@ class LayerSurfaceSet:
           MEG sensitivity profiles.
         """
         scalp_mesh = self.load_head_mesh('scalp')
-        scalp_vertices = scalp_mesh.darrays[1].data  # Vertex coordinates
+        scalp_vertices = scalp_mesh.darrays[0].data  # Vertex coordinates
 
         layer_mesh = self.load(layer_name=layer_name, stage=stage, hemi=hemi)
         pial_ds_vertices = layer_mesh.darrays[0].data  # Vertex coordinates
@@ -1189,8 +1276,8 @@ class LayerSurfaceSet:
           laminar orientation models.
         """
         scalp_mesh = self.load_head_mesh('scalp')
-        scalp_vertices = scalp_mesh.darrays[1].data  # Vertex coordinates
-        scalp_faces = scalp_mesh.darrays[0].data  # Face indices
+        scalp_vertices = scalp_mesh.darrays[0].data  # Vertex coordinates
+        scalp_faces = scalp_mesh.darrays[1].data  # Face indices
 
         layer_mesh = self.load(
             layer_name=layer_name,
@@ -1585,6 +1672,26 @@ class LayerSurfaceSet:
             fixed=fix_orientation
         )
 
+        # Make scalp surfaces
+        mne.bem.make_scalp_surfaces(
+            self.subj_id,
+            subjects_dir=self.subjects_dir,
+            force=True,
+            overwrite=True,
+            no_decimate=True
+        )
+        scalp_surf = mne.read_bem_surfaces(
+            os.path.join(self.subj_dir, "bem", f"{self.subj_id}-head-dense.fif")
+        )[0]
+        scalp_vertices = scalp_surf['rr'] * 1000
+        scalp_faces = scalp_surf['tris']
+        scalp_surf = _create_surf_gifti(scalp_vertices, scalp_faces)
+        nib.save(scalp_surf, os.path.join(self.subj_dir, "bem", "outer_skin.raw.gii"))
+
+        scalp_vertices = tkras_to_scanner_ras(scalp_vertices)
+        scalp_surf = _create_surf_gifti(scalp_vertices, scalp_faces)
+        nib.save(scalp_surf, os.path.join(self.subj_dir, "bem", "outer_skin.converted.gii"))
+
 
 def convert_fsaverage_to_native(surf_set, layer_name, hemi, vert_idx=None):
     """
@@ -1882,6 +1989,74 @@ def interpolate_data(original_mesh, downsampled_mesh, downsampled_data, adjacenc
 # -------------------------------------------------------------------------
 # Internal mesh utilities
 # -------------------------------------------------------------------------
+
+
+def _fix_surface_holes(vertices, faces, hole_size=5.0):
+    """
+    Fix small topological holes in a triangulated cortical surface mesh using VTK.
+
+    This function applies VTK's `vtkFillHolesFilter` to close small gaps in the mesh while
+    keeping the original vertex coordinates intact. Only the face connectivity is modified.
+
+    Parameters
+    ----------
+    vertices : ndarray, shape (n_vertices, 3)
+        Array of vertex coordinates (in millimeters).
+    faces : ndarray, shape (n_faces, 3)
+        Array of triangular face indices.
+    hole_size : float, optional
+        Maximum diameter of holes to fill (in millimeters). Larger openings are ignored.
+        Default is 5.0.
+
+    Returns
+    -------
+    faces_out : ndarray, shape (n_faces_fixed, 3)
+        Updated triangular face indices after hole filling. Vertex coordinates remain unchanged.
+
+    Notes
+    -----
+    - This function does **not** alter the vertex array.
+    - For safety, only new triangular faces are retained (non-triangular polygons are ignored).
+    """
+    vertices = np.asarray(vertices, dtype=np.float32)
+    faces = np.asarray(faces, dtype=np.int32)
+
+    # Create VTK points
+    vtk_points = vtk.vtkPoints() # pylint: disable=E1101
+    vtk_points.SetData(numpy_support.numpy_to_vtk(vertices))
+
+    # Create VTK faces
+    vtk_faces = vtk.vtkCellArray() # pylint: disable=E1101
+    for face in faces:
+        vtk_faces.InsertNextCell(3)
+        vtk_faces.InsertCellPoint(int(face[0]))
+        vtk_faces.InsertCellPoint(int(face[1]))
+        vtk_faces.InsertCellPoint(int(face[2]))
+
+    polydata = vtk.vtkPolyData() # pylint: disable=E1101
+    polydata.SetPoints(vtk_points)
+    polydata.SetPolys(vtk_faces)
+
+    # Apply VTK hole-filling filter
+    fill_filter = vtk.vtkFillHolesFilter() # pylint: disable=E1101
+    fill_filter.SetInputData(polydata)
+    fill_filter.SetHoleSize(hole_size)
+    fill_filter.Update()
+
+    filled_polydata = fill_filter.GetOutput()
+    vtk_faces_out = filled_polydata.GetPolys()
+
+    # Convert faces back to numpy
+    vtk_faces_out.InitTraversal()
+    id_list = vtk.vtkIdList() # pylint: disable=E1101
+    faces_out = []
+    while vtk_faces_out.GetNextCell(id_list):
+        if id_list.GetNumberOfIds() == 3:  # keep triangles only
+            faces_out.append([id_list.GetId(0), id_list.GetId(1), id_list.GetId(2)])
+    faces_out = np.asarray(faces_out, dtype=np.int32)
+
+    return faces_out
+
 
 def _split_connected_components(faces, vertices):
     """
@@ -2403,10 +2578,10 @@ def _fix_non_manifold_edges(vertices, faces):
 
 def _downsample_single_surface(gifti_surf, ds_factor=0.1, spm_instance=None):
     """
-    Downsample a GIFTI surface using VTK mesh decimation.
+    Downsample a GIFTI surface using mesh decimation.
 
     This function reduces the number of vertices and faces in a GIFTI surface using
-    VTK's `vtkDecimatePro` algorithm. The resulting surface preserves the overall
+    Matlab's `reducepatch` algorithm. The resulting surface preserves the overall
     geometry while simplifying mesh complexity according to the specified reduction
     factor.
 
@@ -2433,7 +2608,6 @@ def _downsample_single_surface(gifti_surf, ds_factor=0.1, spm_instance=None):
     - If vertex normals are present, they are mapped from the original vertices
       to the nearest downsampled vertices.
     - The original `gifti_surf` is not modified; a new `GiftiImage` is returned.
-    - This function requires a working VTK installation.
 
     Examples
     --------
