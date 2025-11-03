@@ -19,8 +19,8 @@ __all__ = ["invert", "laminar", "surf", "util", "viz"]
 
 # Load all submodules eagerly when building docs
 if os.environ.get("SPHINX_BUILD") == "1":
-    for name in __all__:
-        globals()[name] = importlib.import_module(f"lameg.{name}")
+    for mod_name in __all__:
+        globals()[mod_name] = importlib.import_module(f"lameg.{mod_name}")
 else:
     def __getattr__(name):
         if name in __all__:
