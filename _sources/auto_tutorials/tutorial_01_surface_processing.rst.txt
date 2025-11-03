@@ -347,16 +347,16 @@ Putting it all together
 
 All the above steps - surface inflation, deep vertex removal, hemisphere merging, downsampling, and orientation computation - can be performed automatically using:
 
-```python
-from lameg.surf import LayerSurfaceSet
+.. code-block:: python
 
-surf_set = LayerSurfaceSet('sub-104', n_layers=11)
-surf_set.create(
-    ds_factor=0.1,
-    orientation='link_vector',
-    fixed=True
-)
-```
+    from lameg.surf import LayerSurfaceSet
+
+    surf_set = LayerSurfaceSet('sub-104', n_layers=11)
+    surf_set.create(
+        ds_factor=0.1,
+        orientation='link_vector',
+        fixed=True
+    )
 
 This function allows flexible specification of the number of intermediate layers, downsampling ratio, and dipole orientation model.
 
