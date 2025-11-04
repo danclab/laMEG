@@ -1126,22 +1126,12 @@ class LayerSurfaceSet:
 
     def load_head_mesh(self, mesh_type='scalp'):
         """
-        Load a head surface mesh (scalp, inner skull, or outer skull) generated during
-        coregistration.
-
-        This function retrieves one of the head surface meshes stored under
-        `<SUBJECTS_DIR>/<subject>/mri/`, typically produced by the coregistration step.
-        These meshes are used for forward modeling, visualization, and anatomical
-        distance computations.
+        Load a head-related surface mesh (scalp, inner skull, or outer skull).
 
         Parameters
         ----------
-        mesh_type : {'scalp', 'iskull', 'oskull'}, optional
-            Type of surface mesh to load.
-            - `'scalp'`: Outer scalp surface (`origscalp_2562.surf.gii`)
-            - `'iskull'`: Inner skull surface (`origiskull_2562.surf.gii`)
-            - `'oskull'`: Outer skull surface (`origoskull_2562.surf.gii`)
-            Default is `'scalp'`.
+        mesh_type : {'scalp', 'iskull', 'oskull'}
+            Type of head surface to load.
 
         Returns
         -------
@@ -1153,42 +1143,44 @@ class LayerSurfaceSet:
         ValueError
             If `mesh_type` is not one of `'scalp'`, `'iskull'`, or `'oskull'`.
         FileNotFoundError
-            If the requested mesh file does not exist, indicating that segmentation
-            or coregistration has not been completed for this subject.
-
-        Notes
-        -----
-        - Expected mesh files are located in `<SUBJECTS_DIR>/<subject>/mri/`.
-        - Meshes are generated automatically by the `coregister()` step.
-        - The meshes can be used to compute distances, visualize head geometry,
-          or generate BEM models for forward computations.
-
-        Examples
-        --------
-        >>> scalp = surf_set.load_head_mesh('scalp')
-        >>> iskull = surf_set.load_head_mesh('iskull')
-        >>> oskull = surf_set.load_head_mesh('oskull')
+            If the requested mesh is not found and prerequisite processing steps
+            (e.g., scalp generation or SPM segmentation) have not been completed.
         """
+        mesh_type = mesh_type.lower()
 
-        if mesh_type=='scalp':
-            mesh_fname = os.path.join(self.subj_dir, "bem", "outer_skin.converted.gii")
+        if mesh_type == 'scalp':
+            # Prefer MNE-generated scalp surface
+            candidates = [
+                os.path.join(self.subj_dir, "bem", "outer_skin.converted.gii"),
+                os.path.join(self.subj_dir, "mri", "origscalp_2562.surf.gii")
+            ]
+            for mesh_fname in candidates:
+                if os.path.exists(mesh_fname):
+                    scalp_mesh = nib.load(mesh_fname)
+                    scalp_faces, scalp_vertices, *scalp_normals = scalp_mesh.agg_data()
+                    scalp_mesh = _create_surf_gifti(scalp_vertices, scalp_faces, scalp_normals)
+                    return scalp_mesh
+
+            raise FileNotFoundError(
+                f"Scalp surface not found for subject '{self.subj_id}'. "
+                "Neither MNE-generated (outer_skin.converted.gii) nor SPM-segmented "
+                "(origscalp_2562.surf.gii) meshes are available. "
+                "Run MEG-MRI coregistration or SPM segmentation first."
+            )
+
+        if mesh_type == 'iskull':
+            mesh_fname = os.path.join(self.subj_dir, 'mri', 'origiskull_2562.surf.gii')
+        elif mesh_type == 'oskull':
+            mesh_fname = os.path.join(self.subj_dir, 'mri', 'origoskull_2562.surf.gii')
         else:
-            mesh_map = {
-                'scalp': 'origscalp_2562.surf.gii',
-                'iskull': 'origiskull_2562.surf.gii',
-                'oskull': 'origoskull_2562.surf.gii'
-            }
+            raise ValueError(f"Invalid mesh_type '{mesh_type}'. Must be 'scalp', 'iskull', or "
+                             f"'oskull'.")
 
-            if mesh_type not in mesh_map:
-                raise ValueError(f"Invalid mesh_type '{mesh_type}'. Must be 'scalp', 'iskull', or "
-                                 f"'oskull'.")
-
-            mesh_fname = os.path.join(self.subj_dir, 'mri', mesh_map[mesh_type])
-            if not os.path.exists(mesh_fname):
-                raise FileNotFoundError(
-                    f"{mesh_type.capitalize()} surface not found for subject '{self.subj_id}'. "
-                    "Segmentation not completed yet - run coregistration for this subject first."
-                )
+        if not os.path.exists(mesh_fname):
+            raise FileNotFoundError(
+                f"{mesh_type.capitalize()} surface not found for subject '{self.subj_id}'. "
+                "SPM segmentation not completed yet ? run coregistration for this subject first."
+            )
 
         return nib.load(mesh_fname)
 
@@ -1446,7 +1438,7 @@ class LayerSurfaceSet:
 
     # pylint: disable=R0912,R0915
     def create(self, ds_factor=0.1, orientation='link_vector', fix_orientation=True, n_jobs=-1,
-               spm_instance=None):
+               spm_instance=None, **scalp_kwargs):
         """
         Postprocess and combine FreeSurfer cortical surface meshes for laminar analysis.
 
@@ -1478,6 +1470,19 @@ class LayerSurfaceSet:
         spm_instance : spm_standalone, optional
             Active standalone SPM instance. If None, a temporary instance is created and closed
             after execution.
+        **scalp_kwargs : optional
+            Additional keyword arguments passed to :func:`mne.bem.make_scalp_surfaces`.
+            Commonly used options include:
+            - ``threshold`` (int): Intensity threshold for scalp segmentation (default: 20).
+            - ``mri`` (str): MRI volume to use (default: 'T1.mgz').
+
+            Examples
+            --------
+            To adjust scalp generation parameters:
+            >>> surf_set.create(threshold=30, mri='brain.mgz')
+
+            To use default settings:
+            >>> surf_set.create()
 
         Raises
         ------
@@ -1497,6 +1502,11 @@ class LayerSurfaceSet:
           downsampling ratios, and orientation method parameters.
         - Downsampling and orientation computation are applied identically across all layers
           to preserve laminar alignment.
+        - In some cases, ``mne.make_scalp_surfaces()`` may fail if the MRI lacks sufficient
+          contrast between scalp and background (e.g., overly skull-stripped images). When this
+          occurs, a warning is printed and execution continues without creating a scalp surface.
+        - To improve robustness, try:
+          >>> surf_set.create(threshold=15, mri='orig.mgz')
         """
 
         # --- Check that required FreeSurfer binaries are available ---
@@ -1673,24 +1683,30 @@ class LayerSurfaceSet:
         )
 
         # Make scalp surfaces
-        mne.bem.make_scalp_surfaces(
-            self.subj_id,
-            subjects_dir=self.subjects_dir,
-            force=True,
-            overwrite=True,
-            no_decimate=True
-        )
-        scalp_surf = mne.read_bem_surfaces(
-            os.path.join(self.subj_dir, "bem", f"{self.subj_id}-head-dense.fif")
-        )[0]
-        scalp_vertices = scalp_surf['rr'] * 1000
-        scalp_faces = scalp_surf['tris']
-        scalp_surf = _create_surf_gifti(scalp_vertices, scalp_faces)
-        nib.save(scalp_surf, os.path.join(self.subj_dir, "bem", "outer_skin.raw.gii"))
+        try:
+            mne.bem.make_scalp_surfaces(
+                self.subj_id,
+                subjects_dir=self.subjects_dir,
+                force=True,
+                overwrite=True,
+                no_decimate=True,
+                **scalp_kwargs
+            )
+            scalp_surf = mne.read_bem_surfaces(
+                os.path.join(self.subj_dir, "bem", f"{self.subj_id}-head-dense.fif")
+            )[0]
+            scalp_vertices = scalp_surf['rr'] * 1000
+            scalp_faces = scalp_surf['tris']
+            scalp_surf = _create_surf_gifti(scalp_vertices, scalp_faces)
+            nib.save(scalp_surf, os.path.join(self.subj_dir, "bem", "outer_skin.raw.gii"))
 
-        scalp_vertices = tkras_to_scanner_ras(scalp_vertices)
-        scalp_surf = _create_surf_gifti(scalp_vertices, scalp_faces)
-        nib.save(scalp_surf, os.path.join(self.subj_dir, "bem", "outer_skin.converted.gii"))
+            scalp_vertices = tkras_to_scanner_ras(scalp_vertices)
+            scalp_surf = _create_surf_gifti(scalp_vertices, scalp_faces)
+            nib.save(scalp_surf, os.path.join(self.subj_dir, "bem", "outer_skin.converted.gii"))
+        except RuntimeError as err:
+            print(f"[WARNING] Scalp surface creation failed for {self.subj_id}: {err}")
+            print("Hint: Try adjusting 'threshold' or 'mri' in scalp_kwargs (e.g., threshold=15, "
+                  "mri='orig.mgz').")
 
 
 def convert_fsaverage_to_native(surf_set, layer_name, hemi, vert_idx=None):
