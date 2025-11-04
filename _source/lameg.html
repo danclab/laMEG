@@ -1424,7 +1424,7 @@ nearest-neighbour search.</p></li>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="lameg.surf.LayerSurfaceSet.create">
-<span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.LayerSurfaceSet.create" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">create</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">ds_factor</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fix_orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">-1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">scalp_kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.LayerSurfaceSet.create" title="Permalink to this definition">#</a></dt>
 <dd><p>Postprocess and combine FreeSurfer cortical surface meshes for laminar analysis.</p>
 <p>This function reconstructs a complete laminar surface hierarchy for a given FreeSurfer
 subject. It generates intermediate cortical layers between the pial and white matter
@@ -1454,6 +1454,16 @@ to all other layers (default: True).</p></li>
 cores).</p></li>
 <li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Active standalone SPM instance. If None, a temporary instance is created and closed
 after execution.</p></li>
+<li><p><strong>**scalp_kwargs</strong> (<em>optional</em>) – <p>Additional keyword arguments passed to <code class="xref py py-func docutils literal notranslate"><span class="pre">mne.bem.make_scalp_surfaces()</span></code>.
+Commonly used options include:
+- <code class="docutils literal notranslate"><span class="pre">threshold</span></code> (int): Intensity threshold for scalp segmentation (default: 20).
+- <code class="docutils literal notranslate"><span class="pre">mri</span></code> (str): MRI volume to use (default: ‘T1.mgz’).</p>
+<p class="rubric">Examples</p>
+<p>To adjust scalp generation parameters:
+&gt;&gt;&gt; surf_set.create(threshold=30, mri=’brain.mgz’)</p>
+<p>To use default settings:
+&gt;&gt;&gt; surf_set.create()</p>
+</p></li>
 </ul>
 </dd>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
@@ -1473,6 +1483,11 @@ are not found in the system PATH.</p></li>
 downsampling ratios, and orientation method parameters.</p></li>
 <li><p>Downsampling and orientation computation are applied identically across all layers
 to preserve laminar alignment.</p></li>
+<li><p>In some cases, <code class="docutils literal notranslate"><span class="pre">mne.make_scalp_surfaces()</span></code> may fail if the MRI lacks sufficient
+contrast between scalp and background (e.g., overly skull-stripped images). When this
+occurs, a warning is printed and execution continues without creating a scalp surface.</p></li>
+<li><p>To improve robustness, try:
+&gt;&gt;&gt; surf_set.create(threshold=15, mri=’orig.mgz’)</p></li>
 </ul>
 </dd></dl>
 
@@ -1908,19 +1923,10 @@ Default is ‘raw’.</p></li>
 <dl class="py method">
 <dt class="sig sig-object py" id="lameg.surf.LayerSurfaceSet.load_head_mesh">
 <span class="sig-name descname"><span class="pre">load_head_mesh</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mesh_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'scalp'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.LayerSurfaceSet.load_head_mesh" title="Permalink to this definition">#</a></dt>
-<dd><p>Load a head surface mesh (scalp, inner skull, or outer skull) generated during
-coregistration.</p>
-<p>This function retrieves one of the head surface meshes stored under
-<cite>&lt;SUBJECTS_DIR&gt;/&lt;subject&gt;/mri/</cite>, typically produced by the coregistration step.
-These meshes are used for forward modeling, visualization, and anatomical
-distance computations.</p>
+<dd><p>Load a head-related surface mesh (scalp, inner skull, or outer skull).</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>mesh_type</strong> (<em>{'scalp'</em><em>, </em><em>'iskull'</em><em>, </em><em>'oskull'}</em><em>, </em><em>optional</em>) – Type of surface mesh to load.
-- <cite>‘scalp’</cite>: Outer scalp surface (<cite>origscalp_2562.surf.gii</cite>)
-- <cite>‘iskull’</cite>: Inner skull surface (<cite>origiskull_2562.surf.gii</cite>)
-- <cite>‘oskull’</cite>: Outer skull surface (<cite>origoskull_2562.surf.gii</cite>)
-Default is <cite>‘scalp’</cite>.</p>
+<dd class="field-odd"><p><strong>mesh_type</strong> (<em>{'scalp'</em><em>, </em><em>'iskull'</em><em>, </em><em>'oskull'}</em>) – Type of head surface to load.</p>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><p><strong>mesh</strong> – Loaded surface mesh in GIFTI format.</p>
@@ -1931,24 +1937,11 @@ Default is <cite>‘scalp’</cite>.</p>
 <dt class="field-even">Raises<span class="colon">:</span></dt>
 <dd class="field-even"><ul class="simple">
 <li><p><strong>ValueError</strong> – If <cite>mesh_type</cite> is not one of <cite>‘scalp’</cite>, <cite>‘iskull’</cite>, or <cite>‘oskull’</cite>.</p></li>
-<li><p><strong>FileNotFoundError</strong> – If the requested mesh file does not exist, indicating that segmentation
-or coregistration has not been completed for this subject.</p></li>
+<li><p><strong>FileNotFoundError</strong> – If the requested mesh is not found and prerequisite processing steps
+(e.g., scalp generation or SPM segmentation) have not been completed.</p></li>
 </ul>
 </dd>
 </dl>
-<p class="rubric">Notes</p>
-<ul class="simple">
-<li><p>Expected mesh files are located in <cite>&lt;SUBJECTS_DIR&gt;/&lt;subject&gt;/mri/</cite>.</p></li>
-<li><p>Meshes are generated automatically by the <cite>coregister()</cite> step.</p></li>
-<li><p>The meshes can be used to compute distances, visualize head geometry,
-or generate BEM models for forward computations.</p></li>
-</ul>
-<p class="rubric">Examples</p>
-<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">scalp</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">load_head_mesh</span><span class="p">(</span><span class="s1">&#39;scalp&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">iskull</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">load_head_mesh</span><span class="p">(</span><span class="s1">&#39;iskull&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">oskull</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">load_head_mesh</span><span class="p">(</span><span class="s1">&#39;oskull&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
 </dd></dl>
 
 <dl class="py method">
