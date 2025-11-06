@@ -1150,16 +1150,14 @@ class LayerSurfaceSet:
 
         if mesh_type == 'scalp':
             # Prefer MNE-generated scalp surface
-            candidates = [
-                os.path.join(self.subj_dir, "bem", "outer_skin.converted.gii"),
-                os.path.join(self.subj_dir, "mri", "origscalp_2562.surf.gii")
-            ]
-            for mesh_fname in candidates:
-                if os.path.exists(mesh_fname):
-                    scalp_mesh = nib.load(mesh_fname)
-                    scalp_faces, scalp_vertices, *scalp_normals = scalp_mesh.agg_data()
-                    scalp_mesh = _create_surf_gifti(scalp_vertices, scalp_faces, scalp_normals)
-                    return scalp_mesh
+            mne_scalp_fname = os.path.join(self.subj_dir, "bem", "outer_skin.converted.gii")
+            spm_scalp_fname = os.path.join(self.subj_dir, "mri", "origscalp_2562.surf.gii")
+            if os.path.exists(mne_scalp_fname):
+                return nib.load(mne_scalp_fname)
+            if os.path.exists(spm_scalp_fname):
+                scalp_mesh = nib.load(spm_scalp_fname)
+                scalp_faces, scalp_vertices, *scalp_normals = scalp_mesh.agg_data()
+                return _create_surf_gifti(scalp_vertices, scalp_faces, scalp_normals)
 
             raise FileNotFoundError(
                 f"Scalp surface not found for subject '{self.subj_id}'. "
