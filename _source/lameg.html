@@ -1183,6 +1183,65 @@ performance, and evaluating laminar sensitivity under controlled SNR conditions.
 </ul>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.simulate.setup_opm_simulation">
+<span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">setup_opm_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wholehead</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_spacing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">35</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">density_checks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_positions_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iskull_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oskull_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalp_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.setup_opm_simulation" title="Permalink to this definition">#</a></dt>
+<dd><p>Configure and setup an SPM OPM (Optically Pumped Magnetometer) data file.</p>
+<p>This function wraps the MATLAB routine <code class="xref py py-func docutils literal notranslate"><span class="pre">spm_opm_sim()</span></code> to generate synthetic MEG data
+using user-specified anatomical meshes, sensor geometry, and simulation parameters.
+It prepares the required input structure, and executes the SPM simulation within the
+provided SPM standalone context.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_file</strong> (<em>str</em>) – Path to the intended output data file (used to determine simulation name and destination).</p></li>
+<li><p><strong>surf_set</strong> (<a class="reference internal" href="#lameg.surf.LayerSurfaceSet" title="lameg.surf.LayerSurfaceSet"><em>LayerSurfaceSet</em></a>) – Surface set object providing the cortical mesh and MRI reference.
+The pial surface from <code class="docutils literal notranslate"><span class="pre">surf_set</span></code> is used as the cortical source model.</p></li>
+<li><p><strong>s_rate</strong> (<em>int</em><em>, </em><em>optional</em>) – Sampling frequency in Hz (default: 1000).</p></li>
+<li><p><strong>wholehead</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, sensor array covers the entire scalp; otherwise, sensors are restricted
+to the upper hemisphere (default: True).</p></li>
+<li><p><strong>sensor_spacing</strong> (<em>float</em><em>, </em><em>optional</em>) – Inter-sensor spacing in millimeters (default: 35 mm).</p></li>
+<li><p><strong>sensor_offset</strong> (<em>float</em><em>, </em><em>optional</em>) – Distance between scalp and sensor array in millimeters (default: 6.5 mm).</p></li>
+<li><p><strong>n_samples</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of time samples per trial (default: 1000).</p></li>
+<li><p><strong>n_trials</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of trials to simulate (default: 1).</p></li>
+<li><p><strong>density_checks</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of density optimization iterations for sensor packing (default: 40).</p></li>
+<li><p><strong>axes</strong> (<em>{1</em><em>, </em><em>2</em><em>, </em><em>3}</em><em>, </em><em>optional</em>) – Number of orthogonal measurement axes per sensor (default: 1).</p></li>
+<li><p><strong>sensor_positions_file</strong> (<em>str</em><em>, </em><em>optional</em>) – Path to a <cite>.tsv</cite> file containing custom sensor positions and orientations.
+If None, sensors are automatically generated on the scalp surface.</p></li>
+<li><p><strong>iskull_fname</strong> (<em>str</em><em>, </em><em>optional</em>) – Optional custom inner skull, outer skull, and scalp surface files (GIFTI format).
+If omitted, default meshes from SPM segmentation are used.</p></li>
+<li><p><strong>oskull_fname</strong> (<em>str</em><em>, </em><em>optional</em>) – Optional custom inner skull, outer skull, and scalp surface files (GIFTI format).
+If omitted, default meshes from SPM segmentation are used.</p></li>
+<li><p><strong>scalp_fname</strong> (<em>str</em><em>, </em><em>optional</em>) – Optional custom inner skull, outer skull, and scalp surface files (GIFTI format).
+If omitted, default meshes from SPM segmentation are used.</p></li>
+<li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Active SPM standalone context for calling <code class="xref py py-func docutils literal notranslate"><span class="pre">spm_opm_sim()</span></code>. If None, a temporary
+instance is created and destroyed automatically.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Absolute path to the generated SPM MEEG <cite>.mat</cite> file containing the simulated dataset.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The simulation generates <cite>.mat</cite> and <cite>.dat</cite> files containing a valid SPM MEEG object.</p></li>
+<li><p>Meshes must be in scanner RAS coordinates and compatible with the subject’s MRI.</p></li>
+</ul>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">sim_file</span> <span class="o">=</span> <span class="n">setup_opm_simulation</span><span class="p">(</span>
+<span class="gp">... </span>    <span class="n">data_file</span><span class="o">=</span><span class="s1">&#39;/home/user/sim/test_sim.mat&#39;</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">surf_set</span><span class="o">=</span><span class="n">surf_set</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">srate</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">sensor_spacing</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+<span class="gp">... </span>    <span class="n">wholehead</span><span class="o">=</span><span class="kc">False</span>
+<span class="gp">... </span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
 </section>
 <section id="module-lameg.surf">
 <span id="lameg-surf-module"></span><h2>lameg.surf module<a class="headerlink" href="#module-lameg.surf" title="Permalink to this heading">#</a></h2>
@@ -3201,6 +3260,7 @@ or segmentation has not yet been completed.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id1">Key functionalities</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.simulate.run_current_density_simulation"><code class="docutils literal notranslate"><span class="pre">run_current_density_simulation()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.simulate.run_dipole_simulation"><code class="docutils literal notranslate"><span class="pre">run_dipole_simulation()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.simulate.setup_opm_simulation"><code class="docutils literal notranslate"><span class="pre">setup_opm_simulation()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-lameg.surf">lameg.surf module</a><ul class="nav section-nav flex-column">
