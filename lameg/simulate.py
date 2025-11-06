@@ -29,6 +29,7 @@ Notes
 """
 
 import os
+import shutil
 import tempfile
 
 import numpy as np
@@ -303,3 +304,110 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
             sim_fname = os.path.join(data_dir, f'm{prefix}{data_fname}.mat')
 
     return sim_fname
+
+
+def setup_opm_simulation(data_file, surf_set, s_rate=1000, wholehead=True, sensor_spacing=35,
+                         sensor_offset=6.5, n_samples=1000, n_trials=1, density_checks=40, axes=1,
+                         sensor_positions_file=None, iskull_fname=None, oskull_fname=None,
+                         scalp_fname=None, spm_instance=None):
+    """
+    Configure and setup an SPM OPM (Optically Pumped Magnetometer) data file.
+
+    This function wraps the MATLAB routine :func:`spm_opm_sim` to generate synthetic MEG data
+    using user-specified anatomical meshes, sensor geometry, and simulation parameters.
+    It prepares the required input structure, and executes the SPM simulation within the
+    provided SPM standalone context.
+
+    Parameters
+    ----------
+    data_file : str
+        Path to the intended output data file (used to determine simulation name and destination).
+    surf_set : LayerSurfaceSet
+        Surface set object providing the cortical mesh and MRI reference.
+        The pial surface from ``surf_set`` is used as the cortical source model.
+    s_rate : int, optional
+        Sampling frequency in Hz (default: 1000).
+    wholehead : bool, optional
+        If True, sensor array covers the entire scalp; otherwise, sensors are restricted
+        to the upper hemisphere (default: True).
+    sensor_spacing : float, optional
+        Inter-sensor spacing in millimeters (default: 35 mm).
+    sensor_offset : float, optional
+        Distance between scalp and sensor array in millimeters (default: 6.5 mm).
+    n_samples : int, optional
+        Number of time samples per trial (default: 1000).
+    n_trials : int, optional
+        Number of trials to simulate (default: 1).
+    density_checks : int, optional
+        Number of density optimization iterations for sensor packing (default: 40).
+    axes : {1, 2, 3}, optional
+        Number of orthogonal measurement axes per sensor (default: 1).
+    sensor_positions_file : str, optional
+        Path to a `.tsv` file containing custom sensor positions and orientations.
+        If None, sensors are automatically generated on the scalp surface.
+    iskull_fname, oskull_fname, scalp_fname : str, optional
+        Optional custom inner skull, outer skull, and scalp surface files (GIFTI format).
+        If omitted, default meshes from SPM segmentation are used.
+    spm_instance : spm_standalone, optional
+        Active SPM standalone context for calling :func:`spm_opm_sim`. If None, a temporary
+        instance is created and destroyed automatically.
+
+    Returns
+    -------
+    str
+        Absolute path to the generated SPM MEEG `.mat` file containing the simulated dataset.
+
+    Notes
+    -----
+    - The simulation generates `.mat` and `.dat` files containing a valid SPM MEEG object.
+    - Meshes must be in scanner RAS coordinates and compatible with the subject's MRI.
+
+    Examples
+    --------
+    >>> sim_file = setup_opm_simulation(
+    ...     data_file='/home/user/sim/test_sim.mat',
+    ...     surf_set=surf_set,
+    ...     srate=1000,
+    ...     sensor_spacing=30,
+    ...     wholehead=False
+    ... )
+    """
+    data_dir = os.path.dirname(data_file)
+    data_fname = os.path.split(os.path.splitext(data_file)[0])[1]
+
+    config = {
+        'space': float(sensor_spacing),
+        'lead': float(0),
+        'wholehead': float(1 if wholehead else 0),
+        'offset': float(sensor_offset),
+        'axis': float(axes),
+        'nTrials': float(n_trials),
+        'fs': float(s_rate),
+        'nSamples': float(n_samples),
+        'cortex': surf_set.get_mesh_path(layer_name='pial', stage='ds'),
+        'sMRI': surf_set.mri_file,
+        'fname': data_fname,
+        'Dens': float(density_checks),
+        'data': matlab.double(np.random.randn(1,n_samples,n_trials).tolist())
+    }
+    if sensor_positions_file is not None:
+        config['positions'] = sensor_positions_file
+    if scalp_fname is not None:
+        config['scalp'] = scalp_fname
+    if oskull_fname is not None:
+        config['oskull'] = oskull_fname
+    if iskull_fname is not None:
+        config['iskull'] = iskull_fname
+
+    with spm_context(spm_instance) as spm:
+        spm.spm_opm_sim(config, nargout=0)
+
+    shutil.move(
+        os.path.join(f'{data_fname}.mat'),
+        os.path.join(data_dir, f'{data_fname}.mat'),
+    )
+    shutil.move(
+        os.path.join(f'{data_fname}.dat'),
+        os.path.join(data_dir, f'{data_fname}.dat'),
+    )
+    return os.path.join(data_dir, f'{data_fname}.mat')

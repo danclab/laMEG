@@ -45,6 +45,7 @@ html-noplot:
 	cp _static/tutorial_05_results_thumb.png ${BUILDDIR}/html/_images/sphx_glr_tutorial_05_roi_power_analysis_thumb.png
 	cp _static/tutorial_06_3_sim_results_thumb.png ${BUILDDIR}/html/_images/sphx_glr_tutorial_06_csd_thumb.png
 	cp _static/tutorial_07_anatomical_score_thumb.png ${BUILDDIR}/html/_images/sphx_glr_tutorial_07_anatomy_inference_accuracy_thumb.png
+	cp _static/tutorial_08_opm_montage_thumb.png ${BUILDDIR}/html/_images/sphx_glr_tutorial_08_opm_data_thumb.png
 	@echo
 	@echo "Build finished. The HTML pages are in $(BUILDDIR)/html."
 
