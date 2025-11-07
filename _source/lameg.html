@@ -816,32 +816,35 @@ reconstruction.</p></li>
 </section>
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.laminar.compute_csd">
-<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">compute_csd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sfreq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smoothing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.laminar.compute_csd" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">compute_csd</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">signal</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">thickness</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sfreq</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'KCSD1D'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">smoothing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.laminar.compute_csd" title="Permalink to this definition">#</a></dt>
 <dd><p>Compute laminar current source density (CSD) from multi-layer neural signals.</p>
-<p>This function estimates the CSD profile across cortical depth using the <strong>Standard CSD</strong>
-method from the <em>elephant</em> library. It takes a laminar time series (layers × time) and the
-cortical thickness, producing a layer-resolved CSD estimate. An optional interpolation step
-provides smooth CSD profiles across layers.</p>
+<p>This function estimates the CSD profile across cortical depth using methods from the
+<cite>elephant.current_source_density</cite> module (typically StandardCSD or KCSD1D). The input
+should be a laminar time series (layers × time) spanning a known cortical thickness.
+Optionally, a smoothed, interpolated CSD can be computed across layers.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>signal</strong> (<em>numpy.ndarray</em><em>, </em><em>shape</em><em> (</em><em>n_layers</em><em>, </em><em>n_times</em><em>)</em>) – Laminar neural signal (e.g., field potential or current) with layers along the first axis
-and time along the second.</p></li>
+<li><p><strong>signal</strong> (<em>ndarray</em><em>, </em><em>shape</em><em> (</em><em>n_layers</em><em>, </em><em>n_times</em><em>)</em>) – Laminar signal (e.g., LFP or current) with layers along the first axis and time along the
+second.</p></li>
 <li><p><strong>thickness</strong> (<em>float</em>) – Cortical thickness in millimeters.</p></li>
 <li><p><strong>sfreq</strong> (<em>float</em>) – Sampling frequency of the signal in Hertz.</p></li>
-<li><p><strong>smoothing</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Interpolation method for layer-wise smoothing (e.g., ‘linear’, ‘cubic’, ‘quadratic’).
-If None, no smoothing is applied. Default is None.</p></li>
+<li><p><strong>method</strong> (<em>{'StandardCSD'</em><em>, </em><em>'KCSD1D'}</em><em>, </em><em>optional</em>) – The method used for CSD estimation. Default is ‘KCSD1D’.</p></li>
+<li><p><strong>smoothing</strong> (<em>{'linear'</em><em>, </em><em>'cubic'</em><em>, </em><em>'quadratic'}</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Interpolation method for across-layer smoothing. If None, no smoothing is applied. Only
+applies to StandardCSD</p></li>
+<li><p><strong>**kwargs</strong> – Additional arguments passed to the underlying CSD method (e.g., <cite>lambdas</cite>, <cite>Rs</cite> for
+KCSD1D).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><p><strong>ret_vals</strong> – A list containing:
-- <cite>csd</cite> : ndarray</p>
+<dd class="field-even"><p><p><strong>ret_vals</strong> – Contains one or two elements:
+- csd : ndarray, shape (n_layers, n_times)</p>
 <blockquote>
-<div><p>The computed current source density (layers × time).</p>
+<div><p>The estimated current source density.</p>
 </div></blockquote>
 <ul class="simple">
 <li><dl class="simple">
-<dt><cite>smoothed_csd</cite><span class="classifier">ndarray, optional</span></dt><dd><p>Smoothed CSD (500 interpolated layers × time), returned if <cite>smoothing</cite> is specified.</p>
+<dt>smoothed_csd<span class="classifier">ndarray, shape (500, n_times), optional</span></dt><dd><p>Layer-interpolated CSD if <cite>smoothing</cite> is specified (StandardCSD only).</p>
 </dd>
 </dl>
 </li>
@@ -854,12 +857,9 @@ If None, no smoothing is applied. Default is None.</p></li>
 </dl>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>CSD is estimated using <cite>elephant.current_source_density.estimate_csd</cite> with the
-<em>StandardCSD</em> method.</p></li>
-<li><p>The top and bottom two layers are zeroed to reduce boundary artifacts.</p></li>
-<li><p>Smoothing is performed independently across layers for each time point using
-<cite>scipy.interpolate.interp1d</cite>.</p></li>
-<li><p>Input signals should be continuous and aligned across layers (no missing samples).</p></li>
+<li><p>Smoothing uses <cite>scipy.interpolate.interp1d</cite> independently at each time point.</p></li>
+<li><p>For <cite>KCSD1D</cite>, the signal is internally converted to microvolts before CSD estimation.</p></li>
+<li><p>Ensure signals are continuous and layer-aligned with uniform spacing.</p></li>
 </ul>
 </dd></dl>
 

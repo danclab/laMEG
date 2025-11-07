@@ -15,10 +15,12 @@ import numpy as np
 import k3d
 import matplotlib.pyplot as plt
 import tempfile
+from IPython.display import Image
+import base64
 
 from lameg.invert import invert_ebb, coregister, load_source_time_series
 from lameg.laminar import compute_csd
-from lameg.simulate import run_dipole_simulation
+from lameg.simulate import run_current_density_simulation
 from lameg.surf import LayerSurfaceSet
 from lameg.util import get_fiducial_coords
 from lameg.viz import show_surface, color_map, plot_csd, rgbtoint
@@ -148,8 +150,6 @@ plot = show_surface(
 
 # Simulate at a vertex on the pial surface
 pial_vertex = surf_set.get_multilayer_vertex('pial', sim_vertex)
-multilayer_mesh = surf_set.load(stage='ds', orientation='link_vector', fixed=True)
-sim_unit_norm = multilayer_mesh.darrays[2].data[pial_vertex,:]
 prefix = f'sim_{sim_vertex}_pial_'
 
 # Size of simulated patch of activity (mm)
@@ -158,17 +158,16 @@ sim_patch_size = 5
 SNR = -5
 
 # Generate simulated data
-pial_sim_fname = run_dipole_simulation(
-    base_fname, 
-    prefix, 
-    pial_vertex, 
-    sim_signal, 
-    sim_unit_norm, 
-    dipole_moment, 
-    sim_patch_size, 
+pial_sim_fname = run_current_density_simulation(
+    base_fname,
+    prefix,
+    pial_vertex,
+    sim_signal,
+    dipole_moment,
+    sim_patch_size,
     SNR,
     spm_instance=spm
-) 
+)
 
 # %% [markdown]
 # Inversion
@@ -246,7 +245,7 @@ layer_ts, time, _ = load_source_time_series(pial_sim_fname, vertices=layer_verts
 
 # Average over trials and compute CSD and smoothed CSD
 mean_layer_ts = np.mean(layer_ts, axis=-1)
-[csd, smooth_csd] = compute_csd(mean_layer_ts, np.sum(layer_dists), s_rate, smoothing='cubic')
+csd = compute_csd(mean_layer_ts, np.sum(layer_dists), s_rate, method='KCSD1D')
 
 col_r = plt.cm.cool(np.linspace(0, 1, num=surf_set.n_layers))
 plt.figure(figsize=(15, 4))
@@ -258,14 +257,14 @@ plt.xlabel('Time (ms)')
 plt.ylabel('Source (nAm)')
 
 plt.subplot(1, 3, 2)
-for l in range(surf_set.n_layers):
-    plt.plot(time, csd[l, :], label=f'{l}', color=col_r[l, :])
-plt.legend(loc='upper left')
+col_r = plt.cm.cool(np.linspace(0, 1, num=csd.shape[0]))
+for l in range(csd.shape[0]):
+    plt.plot(time, csd[l, :], color=col_r[l, :])
 plt.xlabel('Time (ms)')
 plt.ylabel('CSD')
 
 ax = plt.subplot(1, 3, 3)
-plot_csd(smooth_csd, time, ax, n_layers=surf_set.n_layers)
+plot_csd(csd, time, ax, n_layers=surf_set.n_layers)
 plt.xlabel('Time (ms)')
 plt.ylabel('Layer')
 plt.tight_layout()
@@ -286,12 +285,11 @@ white_vertex = surf_set.get_multilayer_vertex('white', sim_vertex)
 prefix = f'sim_{sim_vertex}_white_'
 
 # Generate simulated data
-white_sim_fname = run_dipole_simulation(
+white_sim_fname = run_current_density_simulation(
     base_fname,
     prefix,
     white_vertex,
     sim_signal,
-    sim_unit_norm,
     dipole_moment,
     sim_patch_size,
     SNR,
@@ -316,7 +314,7 @@ layer_ts, time, _ = load_source_time_series(white_sim_fname, mu_matrix=MU, verti
 
 # Average over trials and compute CSD and smoothed CSD
 mean_layer_ts = np.mean(layer_ts, axis=-1)
-[csd, smooth_csd] = compute_csd(mean_layer_ts, np.sum(layer_dists), s_rate, smoothing='cubic')
+csd = compute_csd(mean_layer_ts, np.sum(layer_dists), s_rate, method='KCSD1D')
 
 col_r = plt.cm.cool(np.linspace(0, 1, num=surf_set.n_layers))
 plt.figure(figsize=(15, 4))
@@ -328,14 +326,14 @@ plt.xlabel('Time (ms)')
 plt.ylabel('Source (nAm)')
 
 plt.subplot(1, 3, 2)
-for l in range(surf_set.n_layers):
-    plt.plot(time, csd[l, :], label=f'{l}', color=col_r[l, :])
-plt.legend(loc='upper left')
+col_r = plt.cm.cool(np.linspace(0, 1, num=csd.shape[0]))
+for l in range(csd.shape[0]):
+    plt.plot(time, csd[l, :], color=col_r[l, :])
 plt.xlabel('Time (ms)')
 plt.ylabel('CSD')
 
 ax = plt.subplot(1, 3, 3)
-plot_csd(smooth_csd, time, ax, n_layers=surf_set.n_layers)
+plot_csd(csd, time, ax, n_layers=surf_set.n_layers)
 plt.xlabel('Time (ms)')
 plt.ylabel('Layer')
 plt.tight_layout()
@@ -358,12 +356,11 @@ for l in range(surf_set.n_layers):
     prefix = f'sim_{sim_vertex}_{l}_'
     l_vertex = surf_set.get_multilayer_vertex(l, sim_vertex)
 
-    l_sim_fname = run_dipole_simulation(
+    l_sim_fname = run_current_density_simulation(
         base_fname,
         prefix,
         l_vertex,
         sim_signal,
-        sim_unit_norm,
         dipole_moment,
         sim_patch_size,
         SNR,
@@ -382,13 +379,12 @@ for l in range(surf_set.n_layers):
 
     layer_verts = surf_set.get_layer_vertices(peak)
     layer_dists = surf_set.get_interlayer_distance(peak)
-    print(layer_dists)
 
     # Get source time series for each layer
     layer_ts, time, _ = load_source_time_series(l_sim_fname, mu_matrix=MU, vertices=layer_verts)
 
     mean_layer_ts = np.mean(layer_ts, axis=-1)
-    [csd, smooth_csd] = compute_csd(mean_layer_ts, np.sum(layer_dists), 600, smoothing='cubic')
+    csd = compute_csd(mean_layer_ts, np.sum(layer_dists), s_rate, method='KCSD1D')
 
     col_r = plt.cm.cool(np.linspace(0, 1, num=surf_set.n_layers))
     plt.figure(figsize=(15, 4))
@@ -400,19 +396,19 @@ for l in range(surf_set.n_layers):
     plt.ylabel('Source (nAm)')
 
     plt.subplot(1, 3, 2)
-    for l_idx in range(surf_set.n_layers):
-        plt.plot(time, csd[l_idx, :], label=f'{l_idx}', color=col_r[l_idx, :])
-    plt.legend(loc='upper left')
+    col_r = plt.cm.cool(np.linspace(0, 1, num=csd.shape[0]))
+    for l_idx in range(csd.shape[0]):
+        plt.plot(time, csd[l_idx, :], color=col_r[l_idx, :])
     plt.xlabel('Time (ms)')
     plt.ylabel('CSD')
 
     ax = plt.subplot(1, 3, 3)
-    plot_csd(smooth_csd, time, ax, n_layers=surf_set.n_layers)
+    plot_csd(csd, time, ax, n_layers=surf_set.n_layers)
     plt.xlabel('Time (ms)')
     plt.ylabel('Layer')
     plt.tight_layout()
 
-    layer_csds.append(smooth_csd)
+    layer_csds.append(csd)
 
 # %%
 #.. image:: ../_static/tutorial_06_pial_sim_results.png
@@ -492,7 +488,7 @@ for l in range(surf_set.n_layers):
 # %% [markdown]
 # For each simulation, we can plot a slice of the CSD through layers around a central time window. The layer model where the with the maximal CSD signal magnitude should correspond to the layer that the activity was simulated in.
 
-scale_factor=500/surf_set.n_layers
+scale_factor=layer_csds[0].shape[0]/surf_set.n_layers
 csd_patterns = []
 peaks = []
 for layer_csd in layer_csds:
@@ -584,13 +580,14 @@ plt.ylabel('Amplitude (nAm)')
 #   :alt:
 
 # %% [markdown]
-# We need to pick a location (mesh vertex) to simulate at. The superficial signal will be simulated as a dipole at the corresponding vertex on the pial surface, and the deep signal on the white matter surface. The dipole orientations will be in opposite directions (with the superficial one pointing toward the deep one, and vice versa). This will yield a cumulative dipole moment with a beta burst-like shape
+# We need to pick a location (mesh vertex) to simulate at. The superficial signal will be simulated as a patch of activity at the corresponding vertex on the pial surface, and the deep signal on the white matter surface. The signals will have opposite polarity (with the superficial one pointing toward the deep one, and vice versa). This will yield a cumulative dipole moment with a beta burst-like shape
 
 # Location to simulate activity at
-sim_vertex=24581
+sim_vertex=50492
 # Corresponding pial and white matter vertices
-pial_vertex = sim_vertex
-white_vertex = (surf_set.n_layers-1)*int(verts_per_surf)+sim_vertex
+pial_vertex = surf_set.get_multilayer_vertex('pial', sim_vertex)
+white_vertex = surf_set.get_multilayer_vertex('white', sim_vertex)
+multilayer_mesh = surf_set.load(stage='ds', orientation='link_vector', fixed=True)
 pial_coord = multilayer_mesh.darrays[0].data[pial_vertex,:]
 white_coord = multilayer_mesh.darrays[0].data[white_vertex,:]
 
@@ -658,12 +655,11 @@ sim_dipfwhm=[5, 5] # mm
 SNR=-10
 
 # Generate simulated data
-burst_sim_fname=run_dipole_simulation(
-    base_fname, 
-    prefix, 
+burst_sim_fname = run_current_density_simulation(
+    base_fname,
+    prefix,
     [pial_vertex, white_vertex],
-    np.vstack([superficial_signal, deep_signal]),
-    np.vstack([pial_ori, white_ori]),
+    np.vstack([superficial_signal, -deep_signal]),
     dipole_moment, 
     sim_dipfwhm, 
     SNR,
@@ -704,7 +700,7 @@ layer_ts, time, _ = load_source_time_series(burst_sim_fname, mu_matrix=MU, verti
 
 # Average over trials and compute CSD and smoothed CSD
 mean_layer_ts = np.mean(layer_ts, axis=-1)
-[csd, smooth_csd] = compute_csd(mean_layer_ts, np.sum(layer_dists), s_rate, smoothing='cubic')
+csd = compute_csd(mean_layer_ts, np.sum(layer_dists), s_rate, method='KCSD1D')
 
 col_r = plt.cm.cool(np.linspace(0, 1, num=surf_set.n_layers))
 plt.figure(figsize=(15, 4))
@@ -715,15 +711,15 @@ plt.legend(loc='upper left')
 plt.xlabel('Time (ms)')
 plt.ylabel('Source (nAm)')
 
+col_r = plt.cm.cool(np.linspace(0, 1, num=csd.shape[0]))
 plt.subplot(1, 3, 2)
-for l in range(surf_set.n_layers):
-    plt.plot(csd[l, :], label=f'{l}', color=col_r[l, :])
-plt.legend(loc='upper left')
+for l in range(csd.shape[0]):
+    plt.plot(csd[l, :], color=col_r[l, :])
 plt.xlabel('Time (ms)')
 plt.ylabel('CSD')
 
 ax = plt.subplot(1, 3, 3)
-plot_csd(smooth_csd, time, ax)
+plot_csd(csd, time, ax)
 plt.xlabel('Time (ms)')
 plt.ylabel('Layer')
 plt.tight_layout()
