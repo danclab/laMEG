@@ -330,7 +330,7 @@ def compute_csd(signal, thickness, sfreq, method='KCSD1D', smoothing=None, **kwa
 
     elif method == 'KCSD1D':
         lambdas = kwargs.get('lambdas', None)
-        Rs = kwargs.get('Rs', None)
+        r_vals = kwargs.get('Rs', None)
         # create the AnalogSignal with units in microvolts
         signal = neo.core.AnalogSignal(
             signal.T * 1e6, units="uV",  # Use microvolts (µV) as the unit
@@ -342,7 +342,7 @@ def compute_csd(signal, thickness, sfreq, method='KCSD1D', smoothing=None, **kwa
             coords,
             method=method,
             lambdas=lambdas,
-            Rs=Rs
+            Rs=r_vals
         ).as_array().T
 
         ret_vals=kcsd
