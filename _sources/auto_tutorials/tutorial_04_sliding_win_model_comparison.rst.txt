@@ -44,7 +44,7 @@ Simulations are based on an existing dataset, which is used to define the sampli
 
     from lameg.invert import coregister, invert_ebb, load_source_time_series
     from lameg.laminar import sliding_window_model_comparison
-    from lameg.simulate import run_dipole_simulation
+    from lameg.simulate import run_current_density_simulation
     from lameg.surf import LayerSurfaceSet
     from lameg.util import get_fiducial_coords
     from lameg.viz import show_surface, color_map
@@ -210,16 +210,13 @@ We need to pick a location (mesh vertex) to simulate at
 
 We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-.. GENERATED FROM PYTHON SOURCE LINES 149-175
+.. GENERATED FROM PYTHON SOURCE LINES 149-171
 
 .. code-block:: default
 
 
     # Simulate at a vertex on the pial surface
     pial_vertex = surf_set.get_multilayer_vertex('pial', sim_vertex)
-    # Orientation of the simulated dipole
-    multilayer_mesh = surf_set.load(stage='ds', orientation='link_vector', fixed=True)
-    pial_unit_norm = multilayer_mesh.darrays[2].data[pial_vertex,:]
     prefix = f'sim_{sim_vertex}_pial_'
 
     # Size of simulated patch of activity (mm)
@@ -228,26 +225,25 @@ We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The d
     SNR = -10
 
     # Generate simulated data
-    pial_sim_fname = run_dipole_simulation(
-        base_fname, 
-        prefix, 
-        pial_vertex, 
-        sim_signal, 
-        pial_unit_norm, 
-        dipole_moment, 
-        sim_patch_size, 
+    pial_sim_fname = run_current_density_simulation(
+        base_fname,
+        prefix,
+        pial_vertex,
+        sim_signal,
+        dipole_moment,
+        sim_patch_size,
         SNR,
         spm_instance=spm
-    ) 
+    )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 176-179
+.. GENERATED FROM PYTHON SOURCE LINES 172-175
 
 Localizer inversion
 -------------------
 Now we'll run a source reconstruction using the multilayer mesh, extract the signal in the pial layer, and select a prior based on the peak.
 
-.. GENERATED FROM PYTHON SOURCE LINES 179-200
+.. GENERATED FROM PYTHON SOURCE LINES 175-196
 
 .. code-block:: default
 
@@ -273,11 +269,11 @@ Now we'll run a source reconstruction using the multilayer mesh, extract the sig
     prior = np.argmax(m_layer_max)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 201-202
+.. GENERATED FROM PYTHON SOURCE LINES 197-198
 
 We can see that the prior is the same as the location we simulated at
 
-.. GENERATED FROM PYTHON SOURCE LINES 202-228
+.. GENERATED FROM PYTHON SOURCE LINES 198-224
 
 .. code-block:: default
 
@@ -308,19 +304,19 @@ We can see that the prior is the same as the location we simulated at
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 229-232
+.. GENERATED FROM PYTHON SOURCE LINES 225-228
 
 .. image:: ../_static/tutorial_04_localizer.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 234-237
+.. GENERATED FROM PYTHON SOURCE LINES 230-233
 
 Sliding time window model comparison (pial - white matter)
 ----------------------------------------------------------
 Now we can run sliding time window model comparison between source models based on the pial and white matter surfaces using free energy. Specifically, we'll look at the difference in free energy between the two models (pial - white matter), in sliding and overlapping windows of 16ms. The free energy difference (pial - white matter) should be positive (more model evidence for the pial surface model) because we simulated activity on the pial surface.
 
-.. GENERATED FROM PYTHON SOURCE LINES 237-260
+.. GENERATED FROM PYTHON SOURCE LINES 233-256
 
 .. code-block:: default
 
@@ -348,11 +344,11 @@ Now we can run sliding time window model comparison between source models based 
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 261-262
+.. GENERATED FROM PYTHON SOURCE LINES 257-258
 
 Plot difference in free energy over time (pial minus white) - this should be positive
 
-.. GENERATED FROM PYTHON SOURCE LINES 262-266
+.. GENERATED FROM PYTHON SOURCE LINES 258-262
 
 .. code-block:: default
 
@@ -361,19 +357,19 @@ Plot difference in free energy over time (pial minus white) - this should be pos
     plt.ylabel(r'$\Delta$F')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 267-270
+.. GENERATED FROM PYTHON SOURCE LINES 263-266
 
 .. image:: ../_static/tutorial_04_pial_sim_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 272-275
+.. GENERATED FROM PYTHON SOURCE LINES 268-271
 
 White matter surface simulation with pial - white matter sliding time window model comparison
 ---------------------------------------------------------------------------------------------
 Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, sliding time window model comparison should yield greater model evidence for the white matter surface, and therefore the difference in free energy (pial - white matter) should be negative.
 
-.. GENERATED FROM PYTHON SOURCE LINES 275-308
+.. GENERATED FROM PYTHON SOURCE LINES 271-303
 
 .. code-block:: default
 
@@ -383,12 +379,11 @@ Let's simulate the same pattern of activity, in the same location, but on the wh
     prefix = f'sim_{sim_vertex}_white_'
 
     # Generate simulated data
-    white_sim_fname = run_dipole_simulation(
+    white_sim_fname = run_current_density_simulation(
         base_fname,
         prefix,
         white_vertex,
         sim_signal,
-        pial_unit_norm,
         dipole_moment,
         sim_patch_size,
         SNR,
@@ -411,11 +406,11 @@ Let's simulate the same pattern of activity, in the same location, but on the wh
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 309-310
+.. GENERATED FROM PYTHON SOURCE LINES 304-305
 
 Plot difference in free energy over time (pial minus white) - this should be negative
 
-.. GENERATED FROM PYTHON SOURCE LINES 310-314
+.. GENERATED FROM PYTHON SOURCE LINES 305-309
 
 .. code-block:: default
 
@@ -424,19 +419,19 @@ Plot difference in free energy over time (pial minus white) - this should be neg
     plt.ylabel(r'$\Delta$F')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 315-318
+.. GENERATED FROM PYTHON SOURCE LINES 310-313
 
 .. image:: ../_static/tutorial_04_white_sim_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 321-324
+.. GENERATED FROM PYTHON SOURCE LINES 316-319
 
 Simulation in each layer with sliding time window model comparison across layers
 --------------------------------------------------------------------------------
 That was sliding time window model comparison with two candidate models: one based on the white matter surface, and one on the pial. Let's now simulate on each layer, and for each simulation, run sliding time window model comparison across all layers. We'll turn off SPM visualization here.
 
-.. GENERATED FROM PYTHON SOURCE LINES 324-363
+.. GENERATED FROM PYTHON SOURCE LINES 319-357
 
 .. code-block:: default
 
@@ -449,12 +444,11 @@ That was sliding time window model comparison with two candidate models: one bas
         l_vertex = surf_set.get_multilayer_vertex(l, sim_vertex)
         prefix = f'sim_{sim_vertex}{l}_'
 
-        l_sim_fname = run_dipole_simulation(
+        l_sim_fname = run_current_density_simulation(
             base_fname,
             prefix,
             l_vertex,
             sim_signal,
-            pial_unit_norm,
             dipole_moment,
             sim_patch_size,
             SNR,
@@ -480,11 +474,11 @@ That was sliding time window model comparison with two candidate models: one bas
     all_layerF = np.squeeze(np.array(all_layerF))
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 364-365
+.. GENERATED FROM PYTHON SOURCE LINES 358-359
 
 For each simulation, we can plot the free energy for all models relative to the worst model within a central time window. The layer model with the highest free energy should correspond to the layer that the activity was simulated in.
 
-.. GENERATED FROM PYTHON SOURCE LINES 365-400
+.. GENERATED FROM PYTHON SOURCE LINES 359-394
 
 .. code-block:: default
 
@@ -524,13 +518,13 @@ For each simulation, we can plot the free energy for all models relative to the 
     plt.tight_layout()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 401-404
+.. GENERATED FROM PYTHON SOURCE LINES 395-398
 
 .. image:: ../_static/tutorial_04_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 404-425
+.. GENERATED FROM PYTHON SOURCE LINES 398-419
 
 .. code-block:: default
 
@@ -556,13 +550,13 @@ For each simulation, we can plot the free energy for all models relative to the 
     cb.set_label(r'$\Delta F$', fontsize=14)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 426-429
+.. GENERATED FROM PYTHON SOURCE LINES 420-423
 
 .. image:: ../_static/tutorial_04_results_matrix.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 431-436
+.. GENERATED FROM PYTHON SOURCE LINES 425-430
 
 .. code-block:: default
 

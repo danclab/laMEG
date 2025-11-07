@@ -418,7 +418,7 @@ to download the full example code</p>
 
 <span class="kn">from</span> <span class="nn">lameg.invert</span> <span class="kn">import</span> <span class="n">coregister</span><span class="p">,</span> <span class="n">invert_ebb</span><span class="p">,</span> <span class="n">load_source_time_series</span>
 <span class="kn">from</span> <span class="nn">lameg.laminar</span> <span class="kn">import</span> <span class="n">sliding_window_model_comparison</span>
-<span class="kn">from</span> <span class="nn">lameg.simulate</span> <span class="kn">import</span> <span class="n">run_dipole_simulation</span>
+<span class="kn">from</span> <span class="nn">lameg.simulate</span> <span class="kn">import</span> <span class="n">run_current_density_simulation</span>
 <span class="kn">from</span> <span class="nn">lameg.surf</span> <span class="kn">import</span> <span class="n">LayerSurfaceSet</span>
 <span class="kn">from</span> <span class="nn">lameg.util</span> <span class="kn">import</span> <span class="n">get_fiducial_coords</span>
 <span class="kn">from</span> <span class="nn">lameg.viz</span> <span class="kn">import</span> <span class="n">show_surface</span><span class="p">,</span> <span class="n">color_map</span>
@@ -534,9 +534,6 @@ to download the full example code</p>
 <p>We’ll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Simulate at a vertex on the pial surface</span>
 <span class="n">pial_vertex</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">get_multilayer_vertex</span><span class="p">(</span><span class="s1">&#39;pial&#39;</span><span class="p">,</span> <span class="n">sim_vertex</span><span class="p">)</span>
-<span class="c1"># Orientation of the simulated dipole</span>
-<span class="n">multilayer_mesh</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">stage</span><span class="o">=</span><span class="s1">&#39;ds&#39;</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;link_vector&#39;</span><span class="p">,</span> <span class="n">fixed</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">pial_unit_norm</span> <span class="o">=</span> <span class="n">multilayer_mesh</span><span class="o">.</span><span class="n">darrays</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">[</span><span class="n">pial_vertex</span><span class="p">,:]</span>
 <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_pial_&#39;</span>
 
 <span class="c1"># Size of simulated patch of activity (mm)</span>
@@ -545,12 +542,11 @@ to download the full example code</p>
 <span class="n">SNR</span> <span class="o">=</span> <span class="o">-</span><span class="mi">10</span>
 
 <span class="c1"># Generate simulated data</span>
-<span class="n">pial_sim_fname</span> <span class="o">=</span> <span class="n">run_dipole_simulation</span><span class="p">(</span>
+<span class="n">pial_sim_fname</span> <span class="o">=</span> <span class="n">run_current_density_simulation</span><span class="p">(</span>
     <span class="n">base_fname</span><span class="p">,</span>
     <span class="n">prefix</span><span class="p">,</span>
     <span class="n">pial_vertex</span><span class="p">,</span>
     <span class="n">sim_signal</span><span class="p">,</span>
-    <span class="n">pial_unit_norm</span><span class="p">,</span>
     <span class="n">dipole_moment</span><span class="p">,</span>
     <span class="n">sim_patch_size</span><span class="p">,</span>
     <span class="n">SNR</span><span class="p">,</span>
@@ -654,12 +650,11 @@ to download the full example code</p>
 <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}</span><span class="s1">_white_&#39;</span>
 
 <span class="c1"># Generate simulated data</span>
-<span class="n">white_sim_fname</span> <span class="o">=</span> <span class="n">run_dipole_simulation</span><span class="p">(</span>
+<span class="n">white_sim_fname</span> <span class="o">=</span> <span class="n">run_current_density_simulation</span><span class="p">(</span>
     <span class="n">base_fname</span><span class="p">,</span>
     <span class="n">prefix</span><span class="p">,</span>
     <span class="n">white_vertex</span><span class="p">,</span>
     <span class="n">sim_signal</span><span class="p">,</span>
-    <span class="n">pial_unit_norm</span><span class="p">,</span>
     <span class="n">dipole_moment</span><span class="p">,</span>
     <span class="n">sim_patch_size</span><span class="p">,</span>
     <span class="n">SNR</span><span class="p">,</span>
@@ -701,12 +696,11 @@ to download the full example code</p>
     <span class="n">l_vertex</span> <span class="o">=</span> <span class="n">surf_set</span><span class="o">.</span><span class="n">get_multilayer_vertex</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">sim_vertex</span><span class="p">)</span>
     <span class="n">prefix</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;sim_</span><span class="si">{</span><span class="n">sim_vertex</span><span class="si">}{</span><span class="n">l</span><span class="si">}</span><span class="s1">_&#39;</span>
 
-    <span class="n">l_sim_fname</span> <span class="o">=</span> <span class="n">run_dipole_simulation</span><span class="p">(</span>
+    <span class="n">l_sim_fname</span> <span class="o">=</span> <span class="n">run_current_density_simulation</span><span class="p">(</span>
         <span class="n">base_fname</span><span class="p">,</span>
         <span class="n">prefix</span><span class="p">,</span>
         <span class="n">l_vertex</span><span class="p">,</span>
         <span class="n">sim_signal</span><span class="p">,</span>
-        <span class="n">pial_unit_norm</span><span class="p">,</span>
         <span class="n">dipole_moment</span><span class="p">,</span>
         <span class="n">sim_patch_size</span><span class="p">,</span>
         <span class="n">SNR</span><span class="p">,</span>

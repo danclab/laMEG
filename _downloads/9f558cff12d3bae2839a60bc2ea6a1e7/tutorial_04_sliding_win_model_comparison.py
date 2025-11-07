@@ -20,7 +20,7 @@ import tempfile
 
 from lameg.invert import coregister, invert_ebb, load_source_time_series
 from lameg.laminar import sliding_window_model_comparison
-from lameg.simulate import run_dipole_simulation
+from lameg.simulate import run_current_density_simulation
 from lameg.surf import LayerSurfaceSet
 from lameg.util import get_fiducial_coords
 from lameg.viz import show_surface, color_map
@@ -149,9 +149,6 @@ plot = show_surface(
 
 # Simulate at a vertex on the pial surface
 pial_vertex = surf_set.get_multilayer_vertex('pial', sim_vertex)
-# Orientation of the simulated dipole
-multilayer_mesh = surf_set.load(stage='ds', orientation='link_vector', fixed=True)
-pial_unit_norm = multilayer_mesh.darrays[2].data[pial_vertex,:]
 prefix = f'sim_{sim_vertex}_pial_'
 
 # Size of simulated patch of activity (mm)
@@ -160,17 +157,16 @@ sim_patch_size = 5
 SNR = -10
 
 # Generate simulated data
-pial_sim_fname = run_dipole_simulation(
-    base_fname, 
-    prefix, 
-    pial_vertex, 
-    sim_signal, 
-    pial_unit_norm, 
-    dipole_moment, 
-    sim_patch_size, 
+pial_sim_fname = run_current_density_simulation(
+    base_fname,
+    prefix,
+    pial_vertex,
+    sim_signal,
+    dipole_moment,
+    sim_patch_size,
     SNR,
     spm_instance=spm
-) 
+)
 
 # %% [markdown]
 # Localizer inversion
@@ -278,12 +274,11 @@ white_vertex = surf_set.get_multilayer_vertex('white', sim_vertex)
 prefix = f'sim_{sim_vertex}_white_'
 
 # Generate simulated data
-white_sim_fname = run_dipole_simulation(
+white_sim_fname = run_current_density_simulation(
     base_fname,
     prefix,
     white_vertex,
     sim_signal,
-    pial_unit_norm,
     dipole_moment,
     sim_patch_size,
     SNR,
@@ -330,12 +325,11 @@ for l in range(surf_set.n_layers):
     l_vertex = surf_set.get_multilayer_vertex(l, sim_vertex)
     prefix = f'sim_{sim_vertex}{l}_'
 
-    l_sim_fname = run_dipole_simulation(
+    l_sim_fname = run_current_density_simulation(
         base_fname,
         prefix,
         l_vertex,
         sim_signal,
-        pial_unit_norm,
         dipole_moment,
         sim_patch_size,
         SNR,
