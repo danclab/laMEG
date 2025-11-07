@@ -255,72 +255,97 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
     return f_vals, wois
 
 
-def compute_csd(signal, thickness, sfreq, smoothing=None):
+def compute_csd(signal, thickness, sfreq, method='KCSD1D', smoothing=None, **kwargs):
     """
     Compute laminar current source density (CSD) from multi-layer neural signals.
 
-    This function estimates the CSD profile across cortical depth using the **Standard CSD**
-    method from the *elephant* library. It takes a laminar time series (layers × time) and the
-    cortical thickness, producing a layer-resolved CSD estimate. An optional interpolation step
-    provides smooth CSD profiles across layers.
+    This function estimates the CSD profile across cortical depth using methods from the
+    `elephant.current_source_density` module (typically StandardCSD or KCSD1D). The input
+    should be a laminar time series (layers × time) spanning a known cortical thickness.
+    Optionally, a smoothed, interpolated CSD can be computed across layers.
 
     Parameters
     ----------
-    signal : numpy.ndarray, shape (n_layers, n_times)
-        Laminar neural signal (e.g., field potential or current) with layers along the first axis
-        and time along the second.
+    signal : ndarray, shape (n_layers, n_times)
+        Laminar signal (e.g., LFP or current) with layers along the first axis and time along the
+        second.
     thickness : float
         Cortical thickness in millimeters.
     sfreq : float
         Sampling frequency of the signal in Hertz.
-    smoothing : str or None, optional
-        Interpolation method for layer-wise smoothing (e.g., 'linear', 'cubic', 'quadratic').
-        If None, no smoothing is applied. Default is None.
+    method : {'StandardCSD', 'KCSD1D'}, optional
+        The method used for CSD estimation. Default is 'KCSD1D'.
+    smoothing : {'linear', 'cubic', 'quadratic'} or None, optional
+        Interpolation method for across-layer smoothing. If None, no smoothing is applied. Only
+        applies to StandardCSD
+    **kwargs
+        Additional arguments passed to the underlying CSD method (e.g., `lambdas`, `Rs` for
+        KCSD1D).
 
     Returns
     -------
     ret_vals : list
-        A list containing:
-        - `csd` : ndarray
-            The computed current source density (layers × time).
-        - `smoothed_csd` : ndarray, optional
-            Smoothed CSD (500 interpolated layers × time), returned if `smoothing` is specified.
+        Contains one or two elements:
+        - csd : ndarray, shape (n_layers, n_times)
+            The estimated current source density.
+        - smoothed_csd : ndarray, shape (500, n_times), optional
+            Layer-interpolated CSD if `smoothing` is specified (StandardCSD only).
 
     Notes
     -----
-    - CSD is estimated using `elephant.current_source_density.estimate_csd` with the
-      *StandardCSD* method.
-    - The top and bottom two layers are zeroed to reduce boundary artifacts.
-    - Smoothing is performed independently across layers for each time point using
-      `scipy.interpolate.interp1d`.
-    - Input signals should be continuous and aligned across layers (no missing samples).
+    - Smoothing uses `scipy.interpolate.interp1d` independently at each time point.
+    - For `KCSD1D`, the signal is internally converted to microvolts before CSD estimation.
+    - Ensure signals are continuous and layer-aligned with uniform spacing.
     """
 
-    signal = neo.core.AnalogSignal(
-        signal.T, units="T", sampling_rate=sfreq*pq.Hz
-    )
-    coords = pq.Quantity(np.linspace(0, thickness, num=signal.shape[1]).reshape(-1,1)) * pq.mm
+    coords = pq.Quantity(np.linspace(0, thickness, num=signal.shape[0]).reshape(-1,1)) * pq.mm
 
-    csd = elephant.current_source_density.estimate_csd(
-        signal, coords,
-        method = "StandardCSD"
-    ).as_array().T
-    csd[:2,:]=0
-    csd[-2:,:]=0
+    ret_vals = None
 
-    ret_vals=[csd]
+    if method == 'StandardCSD':
+        signal = neo.core.AnalogSignal(
+            signal.T, units="T", sampling_rate=sfreq * pq.Hz
+        )
+        csd = elephant.current_source_density.estimate_csd(
+            signal,
+            coords,
+            method = method
+        ).as_array().T
+        csd[:2,:]=0
+        csd[-2:,:]=0
 
-    if smoothing is not None:
-        layers, time = csd.shape
-        smoothed = []
-        layer_x = np.linspace(0, 1, num=layers)
-        smooth_x = np.linspace(0, 1, num=500)
-        for t_idx in range(time):
-            interp_function = interp1d(layer_x, csd[:, t_idx], kind=smoothing)
-            interp_y = interp_function(smooth_x)
-            smoothed.append(interp_y)
-        smoothed = np.array(smoothed).T
-        ret_vals.append(smoothed)
+        ret_vals=csd
+
+        if smoothing is not None:
+            layers, time = csd.shape
+            smoothed = []
+            layer_x = np.linspace(0, 1, num=layers)
+            smooth_x = np.linspace(0, 1, num=500)
+            for t_idx in range(time):
+                interp_function = interp1d(layer_x, csd[:, t_idx], kind=smoothing)
+                interp_y = interp_function(smooth_x)
+                smoothed.append(interp_y)
+            smoothed = np.array(smoothed).T
+            ret_vals = (csd, smoothed)
+
+    elif method == 'KCSD1D':
+        lambdas = kwargs.get('lambdas', None)
+        Rs = kwargs.get('Rs', None)
+        # create the AnalogSignal with units in microvolts
+        signal = neo.core.AnalogSignal(
+            signal.T * 1e6, units="uV",  # Use microvolts (µV) as the unit
+            sampling_rate=sfreq * pq.Hz
+        )
+
+        kcsd = elephant.current_source_density.estimate_csd(
+            signal,
+            coords,
+            method=method,
+            lambdas=lambdas,
+            Rs=Rs
+        ).as_array().T
+
+        ret_vals=kcsd
 
     return ret_vals
 
