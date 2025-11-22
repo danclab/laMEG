@@ -44,7 +44,7 @@ import matlab # pylint: disable=wrong-import-order,import-error
 def coregister(fid_coords, data_fname, surf_set, layer_name=None, stage='ds',
                orientation='link_vector', fixed=True, fid_labels=('nas', 'lpa', 'rpa'),
                iskull_fname=None, oskull_fname=None, scalp_fname=None,
-               viz=True, spm_instance=None):
+               forward_model_type='Single Shell', viz=True, spm_instance=None):
     """
     Perform MEG-MRI coregistration and compute the forward model using the Nolte single-shell
     method.
@@ -52,7 +52,8 @@ def coregister(fid_coords, data_fname, surf_set, layer_name=None, stage='ds',
     This function uses SPM's standalone interface to coregister MEG sensor data to the subject's
     anatomy. It constructs a forward model based on a specified laminar surface mesh (from a
     LayerSurfaceSet) and fiducial-based alignment between headshape and MRI coordinates. The
-    laminar surface is selected by layer name, processing stage, and orientation parameters.
+    laminar surface is selected by layer name, processing stage, and orientation parameters. The
+    forward model type can be chosen from several SPM-compatible MEG models.
 
     Parameters
     ----------
@@ -75,6 +76,15 @@ def coregister(fid_coords, data_fname, surf_set, layer_name=None, stage='ds',
         Whether to use fixed dipole orientations across layers (default: True).
     fid_labels : sequence of str, optional
         Labels for fiducial points, typically ('nas', 'lpa', 'rpa').
+    iskull_fname : str or None, optional
+        Path to the inner-skull surface. If None, an empty string is passed to SPM.
+    oskull_fname : str or None, optional
+        Path to the outer-skull surface. If None, an empty string is passed to SPM.
+    scalp_fname : str or None, optional
+        Path to the scalp/outer-skin surface. If None, an empty string is passed to SPM.
+    forward_model_type : {'Single Sphere', 'MEG Local Spheres', 'Single Shell',
+    'MEG OpenMEEG BEM'}, optional
+        MEG forward model to use. Defaults to 'Single Shell'.
     viz : bool, optional
         Whether to display SPM's coregistration and forward model visualization (default: True).
     spm_instance : spm_standalone, optional
@@ -162,7 +172,7 @@ def coregister(fid_coords, data_fname, surf_set, layer_name=None, stage='ds',
                         },
                         "forward": {
                             "eeg": 'EEG BEM',
-                            "meg": 'Single Shell'
+                            "meg": forward_model_type
                         }
                     }
                 }
