@@ -670,7 +670,16 @@ def invert_sliding_window(prior, data_fname, surf_set, layer_name=None, stage='d
     _, time, _ = load_meg_sensor_data(data_fname)
 
     time_step = time[1] - time[0]  # Compute the difference in time between steps
+    fs = 1000.0 / time_step
     win_steps = int(round(win_size / time_step))  # Calculate the number of steps in each window
+
+    if (win_steps / n_temp_modes) < 2:
+        raise ValueError(
+            f"win_size={win_size} ms yields only {win_steps} samples "
+            f"({fs:.2f} Hz sampling). With n_temp_modes={n_temp_modes}, "
+            f"the ratio win_samples / n_temp_modes = {win_steps / n_temp_modes:.2f} < 2. "
+            "Increase win_size or reduce n_temp_modes."
+        )
 
     wois = []
     if win_overlap:
