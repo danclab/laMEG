@@ -585,7 +585,7 @@ def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
 
 def invert_sliding_window(prior, data_fname, surf_set, layer_name=None, stage='ds',
                           orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=1,
-                          n_spatial_modes=None, win_size=50, win_overlap=True, foi=None,
+                          n_spatial_modes=None, wois=None, win_size=50, win_overlap=True, foi=None,
                           hann_windowing=True, viz=True, spm_instance=None):
     """
     Perform Multiple Sparse Priors (MSP) source inversion over sliding time windows.
@@ -619,6 +619,9 @@ def invert_sliding_window(prior, data_fname, surf_set, layer_name=None, stage='d
         Number of temporal modes for dimensionality reduction (default: 1).
     n_spatial_modes : int or None, optional
         Number of spatial modes for data reduction. If None, all channels are used.
+    wois : list of float, optional
+        List of time windows of interest [start, end] pairs in ms (default: None). 
+        If None, wois are generated on the full epoch, based on win_size and win_overlap (parameters ignored otherwise).
     win_size : float, optional
         Duration of each sliding window in milliseconds (default: 50).
     win_overlap : bool, optional
@@ -667,31 +670,33 @@ def invert_sliding_window(prior, data_fname, surf_set, layer_name=None, stage='d
 
     prior = prior + 1.0
 
-    _, time, _ = load_meg_sensor_data(data_fname)
+    if wois is None: 
+        _, time, _ = load_meg_sensor_data(data_fname)
 
-    time_step = time[1] - time[0]  # Compute the difference in time between steps
-    sampling_rate = 1000.0 / time_step
-    win_steps = int(round(win_size / time_step))  # Calculate the number of steps in each window
+        time_step = time[1] - time[0]  # Compute the difference in time between steps
+        sampling_rate = 1000.0 / time_step
+        win_steps = int(round(win_size / time_step))  # Calculate the number of steps in each window
 
-    if (win_steps / n_temp_modes) < 2:
-        raise ValueError(
-            f"win_size={win_size} ms yields only {win_steps} samples "
-            f"({sampling_rate:.2f} Hz sampling). With n_temp_modes={n_temp_modes}, "
-            f"the ratio win_samples / n_temp_modes = {win_steps / n_temp_modes:.2f} < 2. "
-            "Increase win_size or reduce n_temp_modes."
-        )
+        if (win_steps / n_temp_modes) < 2:
+            raise ValueError(
+                f"win_size={win_size} ms yields only {win_steps} samples "
+                f"({sampling_rate:.2f} Hz sampling). With n_temp_modes={n_temp_modes}, "
+                f"the ratio win_samples / n_temp_modes = {win_steps / n_temp_modes:.2f} < 2. "
+                "Increase win_size or reduce n_temp_modes."
+            )
 
-    wois = []
-    if win_overlap:
-        for t_idx in range(len(time)):
-            win_l = max(0, int(np.ceil(t_idx - win_steps / 2)))
-            win_r = min(len(time) - 1, int(np.floor(t_idx + win_steps / 2)))
-            woi = [time[win_l], time[win_r]]
-            wois.append(woi)
-    else:
-        time_steps = np.linspace(time[0], time[-1], int((time[-1] - time[0]) / win_size + 1))
-        for i in range(1, len(time_steps)):
-            wois.append([time_steps[i - 1], time_steps[i]])
+        wois = []
+        if win_overlap:
+            for t_idx in range(len(time)):
+                win_l = max(0, int(np.ceil(t_idx - win_steps / 2)))
+                win_r = min(len(time) - 1, int(np.floor(t_idx + win_steps / 2)))
+                woi = [time[win_l], time[win_r]]
+                wois.append(woi)
+        else:
+            time_steps = np.linspace(time[0], time[-1], int((time[-1] - time[0]) / win_size + 1))
+            for i in range(1, len(time_steps)):
+                wois.append([time_steps[i - 1], time_steps[i]])
+
     wois = np.array(wois, dtype=float)
 
     # Extract directory name and file name without extension
