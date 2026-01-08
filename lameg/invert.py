@@ -44,7 +44,7 @@ import matlab # pylint: disable=wrong-import-order,import-error
 def coregister(fid_coords, data_fname, surf_set, layer_name=None, stage='ds',
                orientation='link_vector', fixed=True, fid_labels=('nas', 'lpa', 'rpa'),
                iskull_fname=None, oskull_fname=None, scalp_fname=None,
-               forward_model_type='Single Shell', viz=True, spm_instance=None):
+               forward_model_type='Single Shell', inversion_idx=0, viz=True, spm_instance=None):
     """
     Perform MEG-MRI coregistration and compute the forward model using the Nolte single-shell
     method.
@@ -85,6 +85,8 @@ def coregister(fid_coords, data_fname, surf_set, layer_name=None, stage='ds',
     forward_model_type : {'Single Sphere', 'MEG Local Spheres', 'Single Shell',
     'MEG OpenMEEG BEM'}, optional
         MEG forward model to use. Defaults to 'Single Shell'.
+    inversion_idx: int, optional
+        Index of the forward model to create within the SPM data object (default: 0).
     viz : bool, optional
         Whether to display SPM's coregistration and forward model visualization (default: True).
     spm_instance : spm_standalone, optional
@@ -101,7 +103,7 @@ def coregister(fid_coords, data_fname, surf_set, layer_name=None, stage='ds',
     """
     mesh_fname = surf_set.get_mesh_path(layer_name=layer_name, stage=stage,
                                         orientation=orientation, fixed=fixed)
-    # scalp_fname = os.path.join(surf_set.subj_dir, "bem", "outer_skin.converted.gii")
+
     if iskull_fname is None:
         iskull_fname = ''
     if oskull_fname is None:
@@ -135,7 +137,7 @@ def coregister(fid_coords, data_fname, surf_set, layer_name=None, stage='ds',
                     "headmodel": {
                         "D": np.asarray([data_fname],
                                         dtype="object"),
-                        "val": 1,
+                        "val": (float(inversion_idx) + 1),
                         "comment": "",
                         "meshing": {
                             "meshes": {
@@ -186,7 +188,8 @@ def coregister(fid_coords, data_fname, surf_set, layer_name=None, stage='ds',
 def invert_ebb(data_fname, surf_set, layer_name=None, stage='ds',
                orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=4,
                n_spatial_modes=None, foi=None, woi=None, hann_windowing=False, n_folds=1,
-               ideal_pc_test=0, viz=True, return_mu_matrix=False, spm_instance=None):
+               ideal_pc_test=0, inversion_idx=0, viz=True, return_mu_matrix=False,
+               spm_instance=None):
     """
     Perform Empirical Bayesian Beamformer (EBB) source inversion on MEG data.
 
@@ -227,6 +230,8 @@ def invert_ebb(data_fname, surf_set, layer_name=None, stage='ds',
         Number of cross-validation folds for spatial mode testing (default: 1).
     ideal_pc_test : float, optional
         Fraction of channels to leave out during cross-validation (default: 0).
+    inversion_idx: int, optional
+        Index of the inversion to create within the SPM data object (default: 0).
     viz : bool, optional
         Whether to display SPM's inversion progress and diagnostic plots (default: True).
     return_mu_matrix : bool, optional
@@ -301,7 +306,7 @@ def invert_ebb(data_fname, surf_set, layer_name=None, stage='ds',
                 "source": {
                     "invertiter": {
                         "D": np.asarray([data_fname], dtype="object"),
-                        "val": 1,
+                        "val": (float(inversion_idx) + 1),
                         "whatconditions": {
                             "all": 1
                         },
@@ -340,7 +345,7 @@ def invert_ebb(data_fname, surf_set, layer_name=None, stage='ds',
     batch(cfg, viz=viz, spm_instance=spm_instance)
 
     with h5py.File(data_fname, 'r') as file:
-        inverse_struct = file[file['D']['other']['inv'][0][0]]['inverse']
+        inverse_struct = file[file['D']['other']['inv'][inversion_idx][0]]['inverse']
 
         free_energy = np.squeeze(inverse_struct['crossF'][()])
         cv_err = np.squeeze(inverse_struct['crosserr'][()])
@@ -376,7 +381,8 @@ def invert_ebb(data_fname, surf_set, layer_name=None, stage='ds',
 def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
                orientation='link_vector', fixed=True, priors=None, patch_size=5, n_temp_modes=4,
                n_spatial_modes=None, foi=None, woi=None, hann_windowing=False, n_folds=1,
-               ideal_pc_test=0, viz=True, return_mu_matrix=False, spm_instance=None):
+               ideal_pc_test=0, inversion_idx=0, viz=True, return_mu_matrix=False,
+               spm_instance=None):
     """
     Perform Multiple Sparse Priors (MSP) source inversion on MEG data.
 
@@ -420,6 +426,8 @@ def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
         Number of cross-validation folds for spatial mode testing (default: 1).
     ideal_pc_test : float, optional
         Fraction of channels to leave out during cross-validation (default: 0).
+    inversion_idx: int, optional
+        Index of the inversion to create within the SPM data object (default: 0).
     viz : bool, optional
         Whether to display SPM's inversion progress and diagnostic plots (default: True).
     return_mu_matrix : bool, optional
@@ -500,7 +508,7 @@ def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
                 "source": {
                     "invertiter": {
                         "D": np.asarray([data_fname], dtype="object"),
-                        "val": 1,
+                        "val": (float(inversion_idx) + 1),
                         "whatconditions": {
                             "all": 1
                         },
@@ -551,7 +559,7 @@ def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
     batch(cfg, viz=viz, spm_instance=spm_instance)
 
     with h5py.File(data_fname, 'r') as file:
-        inverse_struct = file[file['D']['other']['inv'][0][0]]['inverse']
+        inverse_struct = file[file['D']['other']['inv'][inversion_idx][0]]['inverse']
 
         free_energy = np.squeeze(inverse_struct['crossF'][()])
         cv_err = np.squeeze(inverse_struct['crosserr'][()])
@@ -586,7 +594,7 @@ def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
 def invert_sliding_window(prior, data_fname, surf_set, layer_name=None, stage='ds',
                           orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=1,
                           n_spatial_modes=None, wois=None, win_size=50, win_overlap=True, foi=None,
-                          hann_windowing=True, viz=True, spm_instance=None):
+                          hann_windowing=True, inversion_idx=0, viz=True, spm_instance=None):
     """
     Perform Multiple Sparse Priors (MSP) source inversion over sliding time windows.
 
@@ -630,6 +638,8 @@ def invert_sliding_window(prior, data_fname, surf_set, layer_name=None, stage='d
         Frequency range of interest [low, high] in Hz (default: [0, 256]).
     hann_windowing : bool, optional
         Whether to apply Hann windowing to each window before inversion (default: True).
+    inversion_idx: int, optional
+        Index of the inversion to create within the SPM data object (default: 0).
     viz : bool, optional
         Whether to display SPM's inversion progress and diagnostic plots (default: True).
     spm_instance : spm_standalone, optional
@@ -732,7 +742,7 @@ def invert_sliding_window(prior, data_fname, surf_set, layer_name=None, stage='d
                 "source": {
                     "invertiter": {
                         "D": np.asarray([data_fname], dtype="object"),
-                        "val": 1,
+                        "val": (float(inversion_idx) + 1),
                         "whatconditions": {
                             "all": 1
                         },
@@ -772,13 +782,15 @@ def invert_sliding_window(prior, data_fname, surf_set, layer_name=None, stage='d
     batch(cfg, viz=viz, spm_instance=spm_instance)
 
     with h5py.File(data_fname, 'r') as file:
-        free_energy = np.squeeze(file[file['D']['other']['inv'][0][0]]['inverse']['crossF'][()])
+        inv_struct = file[file['D']['other']['inv'][inversion_idx][0]]
+        free_energy = np.squeeze(inv_struct['inverse']['crossF'][()])
 
     return [free_energy, wois]
 
 
 # pylint: disable=R0912
-def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices=None):
+def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices=None,
+                            inversion_idx=0):
     """
     Load or compute source-space time series from MEG data.
 
@@ -799,6 +811,8 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
         within `data_fname` is used. Default is None.
     vertices : list of int, optional
         List of vertex indices to extract source time series from. If None, all vertices are used.
+    inversion_idx: int, optional
+        Index of the inversion to use within the SPM data object (default: 0).
 
     Returns
     -------
@@ -822,12 +836,12 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
     if mu_matrix is None:
         if inv_fname is None:
             inv_fname = data_fname
-        check_inversion_exists(inv_fname)
+        check_inversion_exists(inv_fname, inversion_idx=inversion_idx)
 
         try:
             # HDF5 case
             with h5py.File(inv_fname, "r") as file:
-                inv = file[file["D"]["other"]["inv"][0][0]]["inverse"]
+                inv = file[file["D"]["other"]["inv"][inversion_idx][0]]["inverse"]
 
                 # Load M (MAP projector)
                 m_data = inv["M"]["data"][()]
@@ -857,7 +871,7 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
         except OSError:
             # MATLAB .mat case
             mat = loadmat(inv_fname, simplify_cells=True)
-            inv = mat["D"]["other"]
+            inv = mat["D"]["other"]['inv'][inversion_idx]
             m_mat = csc_matrix(inv["M"]) if not issparse(inv["M"]) else inv["M"]
 
             u_mat_ = inv["U"][0] if isinstance(inv["U"], (list, tuple, np.ndarray)) else inv["U"]
@@ -932,7 +946,7 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
     return source_ts, time, mu_matrix
 
 
-def check_inversion_exists(data_file):
+def check_inversion_exists(data_file, inversion_idx=0):
     """
     Verify the presence of source inversion data within an SPM M/EEG dataset file.
 
@@ -944,6 +958,8 @@ def check_inversion_exists(data_file):
     ----------
     data_file : str
         Path to the SPM M/EEG `.mat` file.
+    inversion_idx: int, optional
+        Index of the inversion to use within the SPM data object (default: 0).
 
     Returns
     -------
@@ -963,16 +979,17 @@ def check_inversion_exists(data_file):
     """
     try:
         with h5py.File(data_file, 'r') as file:
-            if 'inv' not in file['D']['other']:
+            if 'inv' not in file['D']['other'] or len(file['D']['other']['inv'])<=inversion_idx:
                 raise KeyError('Error: source inversion has not been run on this dataset')
     except OSError:
         mat_contents = loadmat(data_file)
-        if 'inv' not in [x[0] for x in mat_contents['D'][0][0]['other'][0][0].dtype.descr]:
+        if 'inv' not in [x[0] for x in mat_contents['D'][0][0]['other'][0][0].dtype.descr] or \
+                len(mat_contents['D'][0][0]['other'][0][0]['inv'])<=inversion_idx:
             raise KeyError('Error: source inversion has not been run on this dataset') # pylint: disable=raise-missing-from
     return True
 
 
-def load_forward_model_vertices(data_file):
+def load_forward_model_vertices(data_file, inversion_idx=0):
     """
     Load the vertex coordinates from the forward model stored in an SPM M/EEG dataset.
 
@@ -984,6 +1001,8 @@ def load_forward_model_vertices(data_file):
     ----------
     data_file : str
         Path to the SPM M/EEG `.mat` file containing the forward model.
+    inversion_idx: int, optional
+        Index of the forward model to load within the SPM data object (default: 0).
 
     Returns
     -------
@@ -1007,19 +1026,19 @@ def load_forward_model_vertices(data_file):
     """
     try:
         with h5py.File(data_file, 'r') as file:
-            mesh_path = file[file['D']['other']['inv'][0][0]]
+            mesh_path = file[file['D']['other']['inv'][inversion_idx][0]]
             verts = mesh_path['mesh']['tess_mni']['vert'][()].T
     except (OSError, KeyError, TypeError):
         try:
             mat_contents = loadmat(data_file, struct_as_record=False, squeeze_me=True)
-            verts = mat_contents['D'].other.inv.mesh.tess_mni.vert
+            verts = mat_contents['D'].other.inv[inversion_idx].mesh.tess_mni.vert
             verts = np.asarray(verts)
         except Exception as exc:
             raise KeyError("Could not load vertex data from the file.") from exc
     return verts
 
 
-def get_lead_field_rms_diff(data_file, surf_set):
+def get_lead_field_rms_diff(data_file, surf_set, inversion_idx=0):
     """
     Compute vertex-wise RMS difference of lead field vectors across cortical depths
     relative to the superficial (pial) layer.
@@ -1039,6 +1058,8 @@ def get_lead_field_rms_diff(data_file, surf_set):
     surf_set : LayerSurfaceSet
         The subject's laminar surface set used for forward modeling. Provides the
         number of layers and vertices per layer.
+    inversion_idx: int, optional
+        Index of the forward model to load within the SPM data object (default: 0).
 
     Returns
     -------
@@ -1056,12 +1077,12 @@ def get_lead_field_rms_diff(data_file, surf_set):
     - Useful for assessing layer-wise forward model sensitivity and laminar
       discriminability.
     """
-    check_inversion_exists(data_file)
+    check_inversion_exists(data_file, inversion_idx=inversion_idx)
 
     data_path, data_file_name = os.path.split(data_file)
     data_base = os.path.splitext(data_file_name)[0]
 
-    gainmat_fname = os.path.join(data_path, f'SPMgainmatrix_{data_base}_1.mat')
+    gainmat_fname = os.path.join(data_path, f'SPMgainmatrix_{data_base}_{inversion_idx+1}.mat')
     with h5py.File(gainmat_fname, 'r') as file:
         lf_mat = np.array(file['G'][()])
 

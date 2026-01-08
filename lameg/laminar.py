@@ -88,6 +88,7 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
     Notes
     -----
     - The function iterates over all layer surfaces defined in `surf_set`.
+    - A forward model is created for each layer surface within the SPM data object
     - Free energy serves as a quantitative parametric model comparison metric, with higher values
       indicating better model evidence.
     - Cross-validation serves as a quantitative nonparameteric model comparison metric, with lower
@@ -106,7 +107,7 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
     cv_errs = []
     layer_names = surf_set.get_layer_names()
 
-    for layer_name in layer_names:
+    for l_idx, layer_name in enumerate(layer_names):
         coregister(
             fid_coords,
             data_fname,
@@ -115,6 +116,7 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
             stage=stage,
             orientation=orientation,
             fixed=fixed,
+            inversion_idx=l_idx,
             viz=viz,
             spm_instance=spm_instance,
             **coregister_kwargs
@@ -130,6 +132,7 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
                 stage=stage,
                 orientation=orientation,
                 fixed=fixed,
+                inversion_idx=l_idx,
                 viz=viz,
                 spm_instance=spm_instance,
                 **invert_kwargs
@@ -142,6 +145,7 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
                 stage=stage,
                 orientation=orientation,
                 fixed=fixed,
+                inversion_idx=l_idx,
                 viz=viz,
                 spm_instance=spm_instance,
                 **invert_kwargs
@@ -206,6 +210,7 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
     -----
     - This function applies the **Multiple Sparse Priors (MSP)** algorithm within sliding time
       windows, providing dynamic estimates of model evidence.
+    - A forward model is created for each layer surface within the SPM data object
     - Free energy serves as a model comparison metric across both depth and time; higher values
       indicate better model evidence.
     - The `prior` index is internally adjusted to match MATLAB's 1-based indexing convention.
@@ -222,7 +227,7 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
     wois = []
     layer_names = surf_set.get_layer_names()
 
-    for layer_name in layer_names:
+    for l_idx, layer_name in enumerate(layer_names):
         coregister(
             fid_coords,
             data_fname,
@@ -231,6 +236,7 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
             stage=stage,
             orientation=orientation,
             fixed=fixed,
+            inversion_idx=l_idx,
             viz=viz,
             spm_instance=spm_instance,
             **coregister_kwargs
@@ -244,6 +250,7 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
             stage=stage,
             orientation=orientation,
             fixed=fixed,
+            inversion_idx=l_idx,
             viz=viz,
             spm_instance=spm_instance,
             **invert_kwargs
