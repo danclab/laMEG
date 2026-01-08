@@ -777,7 +777,8 @@ def invert_sliding_window(prior, data_fname, surf_set, layer_name=None, stage='d
     batch(cfg, viz=viz, spm_instance=spm_instance)
 
     with h5py.File(data_fname, 'r') as file:
-        free_energy = np.squeeze(file[file['D']['other']['inv'][inversion_idx][0]]['inverse']['crossF'][()])
+        inv_struct = file[file['D']['other']['inv'][inversion_idx][0]]
+        free_energy = np.squeeze(inv_struct['inverse']['crossF'][()])
 
     return [free_energy, wois]
 

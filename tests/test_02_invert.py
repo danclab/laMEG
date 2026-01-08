@@ -533,7 +533,11 @@ def test_invert_ebb(spm):
     assert np.isclose(free_energy[()], target, atol=100)
     assert np.allclose(cv_err, [1, 0])
 
-    time_series, time, mu_matrix = load_source_time_series(base_fname, vertices=[47507], inversion_idx=1)
+    time_series, time, mu_matrix = load_source_time_series(
+        base_fname,
+        vertices=[47507],
+        inversion_idx=1
+    )
 
     target = np.array([-0.0014113,  -0.00139351, -0.00135825, -0.00130611, -0.00123797, -0.00115497,
                        -0.00105845, -0.00094994, -0.00083107, -0.00070359])
