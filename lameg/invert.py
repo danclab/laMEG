@@ -593,8 +593,9 @@ def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
 
 def invert_sliding_window_msp(prior, data_fname, surf_set, layer_name=None, stage='ds',
                               orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=1,
-                              n_spatial_modes=None, wois=None, win_size=50, win_overlap=True, foi=None,
-                              hann_windowing=True, inversion_idx=0, viz=True, spm_instance=None):
+                              n_spatial_modes=None, wois=None, win_size=50, win_overlap=True,
+                              foi=None, hann_windowing=True, inversion_idx=0, viz=True,
+                              spm_instance=None):
     """
     Perform Multiple Sparse Priors (MSP) source inversion over sliding time windows.
 
