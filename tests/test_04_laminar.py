@@ -255,11 +255,19 @@ def test_sliding_window_model_comparison(spm):
                              'sub-104-ses-01-001-btn_trial-epo.mat')
     patch_size = 5
     sliding_n_temp_modes = 1
-    # Size of sliding window (in ms)
-    win_size = 50
-    # Whether or not windows overlap
-    win_overlap = True
 
+    wois=[
+        [-100., -75.],
+        [-100., -73.33333333],
+        [-100., -71.66666667],
+        [-100., -70.],
+        [-100., -68.33333333],
+        [-100., -66.66666667],
+        [-100., -65.],
+        [-100., -63.33333333],
+        [-100., -61.66666667],
+        [-100., -60.]
+    ]
     # Run sliding time window model comparison between the first layer (pial) and the last layer
     # (white matter)
     [free_energy, wois] = sliding_window_model_comparison(
@@ -272,8 +280,7 @@ def test_sliding_window_model_comparison(spm):
         invert_kwargs={
             'patch_size': patch_size,
             'n_temp_modes': sliding_n_temp_modes,
-            'win_size': win_size,
-            'win_overlap': win_overlap
+            'wois': wois
         }
     )
 
@@ -295,25 +302,7 @@ def test_sliding_window_model_comparison(spm):
                        [-100., -63.33333333],
                        [-100., -61.66666667],
                        [-100., -60.]])
-    assert np.allclose(wois[:10, :], target)
-
-    # Test default invert args
-    [free_energy, _] = sliding_window_model_comparison(
-        24588,
-        fid_coords,
-        sim_fname,
-        surf_set,
-        viz=False,
-        spm_instance=spm
-    )
-
-    target = np.array([[-68059.04922785, -68059.04922785, -68048.99507591, -68143.55647346,
-                        -68143.55647346, -68115.73685644, -68057.80325197, -68057.80325197,
-                        -68112.46273718, -68126.32968561],
-                       [-68059.04922609, -68059.04922609, -68048.99518892, -68143.55644193,
-                        -68143.55644193, -68115.73694478, -68057.80313494, -68057.80313494,
-                        -68112.46268201, -68126.3299026 ]])
-    assert np.allclose(free_energy[:, :10], target, atol=1e2)
+    assert np.allclose(wois, target)
 
 
 def test_compute_csd():

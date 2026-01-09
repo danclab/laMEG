@@ -591,10 +591,10 @@ def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
     return [free_energy, cv_err, mu_matrix]
 
 
-def invert_sliding_window(prior, data_fname, surf_set, layer_name=None, stage='ds',
-                          orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=1,
-                          n_spatial_modes=None, wois=None, win_size=50, win_overlap=True, foi=None,
-                          hann_windowing=True, inversion_idx=0, viz=True, spm_instance=None):
+def invert_sliding_window_msp(prior, data_fname, surf_set, layer_name=None, stage='ds',
+                              orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=1,
+                              n_spatial_modes=None, wois=None, win_size=50, win_overlap=True, foi=None,
+                              hann_windowing=True, inversion_idx=0, viz=True, spm_instance=None):
     """
     Perform Multiple Sparse Priors (MSP) source inversion over sliding time windows.
 
@@ -758,6 +758,195 @@ def invert_sliding_window(prior, data_fname, surf_set, layer_name=None, stage='d
                                     "fixedpatch": {
                                         "fixedfile": np.asarray([patchfilename], dtype=object),
                                         "fixedrows": np.array([1, np.inf], dtype=float)
+                                    }
+                                },
+                                "patchfwhm": -float(patch_size),
+                                "mselect": float(0),
+                                "nsmodes": float(nmodes),
+                                "umodes": np.asarray([spatialmodename], dtype="object"),
+                                "ntmodes": float(n_temp_modes),
+                                "priors": {
+                                    "priorsmask": np.asarray([''], dtype="object"),
+                                    "space": 0
+                                },
+                                "outinv": '',
+                            }
+                        },
+                        "modality": np.asarray(['All'], dtype="object"),
+                        "crossval": np.asarray([0, 1], dtype=float)
+                    }
+                }
+            }
+        }
+    }
+
+    batch(cfg, viz=viz, spm_instance=spm_instance)
+
+    with h5py.File(data_fname, 'r') as file:
+        inv_struct = file[file['D']['other']['inv'][inversion_idx][0]]
+        free_energy = np.squeeze(inv_struct['inverse']['crossF'][()])
+
+    return [free_energy, wois]
+
+
+def invert_sliding_window_ebb(data_fname, surf_set, layer_name=None, stage='ds',
+                              orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=1,
+                              n_spatial_modes=None, wois=None, win_size=50, win_overlap=True,
+                              foi=None, hann_windowing=True, inversion_idx=0,
+                              viz=True, spm_instance=None):
+    """
+    Perform Empirical Bayesian Beamformer (EBB) source inversion over sliding time windows.
+
+    This function applies SPM's EBB source reconstruction algorithm within successive overlapping
+    or non-overlapping time windows, enabling time-resolved estimation of source model evidence
+    (free energy). It smooths the surface mesh, prepares spatial modes, and repeatedly inverts the
+    MEG data across windows. The MEG dataset must already be coregistered with the surface mesh.
+
+    Parameters
+    ----------
+    data_fname : str
+        Path to the MEG dataset (SPM-compatible .mat file).
+    surf_set : LayerSurfaceSet
+        The subject's surface set containing laminar meshes.
+    layer_name : str or None, optional
+        Surface layer to use for inversion (e.g., 'pial', 'white', or a fractional layer).
+        If None, the full multilayer surface is used.
+    stage : str, optional
+        Processing stage of the surface mesh (default: 'ds').
+    orientation : str, optional
+        Orientation model used for dipoles (default: 'link_vector').
+    fixed : bool, optional
+        Whether to use fixed dipole orientations across layers (default: True).
+    patch_size : float, optional
+        Full-width at half-maximum (FWHM) of cortical patch smoothing in millimeters (default: 5).
+    n_temp_modes : int, optional
+        Number of temporal modes for dimensionality reduction (default: 1).
+    n_spatial_modes : int or None, optional
+        Number of spatial modes for data reduction. If None, all channels are used.
+    wois : list of float, optional
+        List of time windows of interest [start, end] pairs in ms (default: None).
+        If None, wois are generated on the full epoch, based on win_size and win_overlap
+        (parameters ignored otherwise).
+    win_size : float, optional
+        Duration of each sliding window in milliseconds (default: 50).
+    win_overlap : bool, optional
+        Whether consecutive windows overlap (default: True).
+    foi : list of float, optional
+        Frequency range of interest [low, high] in Hz (default: [0, 256]).
+    hann_windowing : bool, optional
+        Whether to apply Hann windowing to each window before inversion (default: True).
+    inversion_idx: int, optional
+        Index of the inversion to create within the SPM data object (default: 0).
+    viz : bool, optional
+        Whether to display SPM's inversion progress and diagnostic plots (default: True).
+    spm_instance : spm_standalone, optional
+        Active standalone SPM instance. If None, a temporary instance is created and closed after
+        execution.
+
+    Returns
+    -------
+    results : list
+        A list containing:
+        - free_energy : ndarray
+            Array of model evidence (free energy) values across time windows.
+        - wois : ndarray, shape (n_windows, 2)
+            Time windows of interest in milliseconds.
+    Notes
+    -----
+    - The forward model must be precomputed via `coregister()` before calling this function.
+    - Mesh smoothing uses `spm_eeg_smoothmesh_multilayer_mm`.
+    - Spatial mode preparation uses `spm_eeg_inv_prep_modes_xval`.
+    - Each windowed inversion uses the **Empirical Bayesian Beamformer (EBB)** algorithm in SPM.
+    """
+
+    mesh_fname = surf_set.get_mesh_path(layer_name=layer_name, stage=stage,
+                                        orientation=orientation, fixed=fixed)
+    n_layers = 1
+    if layer_name is None:
+        n_layers = surf_set.n_layers
+
+    if foi is None:
+        foi = [0, 256]
+
+    if n_spatial_modes is None:
+        n_spatial_modes = matlab.double([])
+    else:
+        n_spatial_modes = float(n_spatial_modes)
+
+    if wois is None:
+        _, time, _ = load_meg_sensor_data(data_fname)
+
+        time_step = time[1] - time[0]  # Compute the difference in time between steps
+        sampling_rate = 1000.0 / time_step
+        win_steps = int(round(win_size / time_step))  # Calculate the number of steps in each window
+
+        if (win_steps / n_temp_modes) < 2:
+            raise ValueError(
+                f"win_size={win_size} ms yields only {win_steps} samples "
+                f"({sampling_rate:.2f} Hz sampling). With n_temp_modes={n_temp_modes}, "
+                f"the ratio win_samples / n_temp_modes = {win_steps / n_temp_modes:.2f} < 2. "
+                "Increase win_size or reduce n_temp_modes."
+            )
+
+        wois = []
+        if win_overlap:
+            for t_idx in range(len(time)):
+                win_l = max(0, int(np.ceil(t_idx - win_steps / 2)))
+                win_r = min(len(time) - 1, int(np.floor(t_idx + win_steps / 2)))
+                woi = [time[win_l], time[win_r]]
+                wois.append(woi)
+        else:
+            time_steps = np.linspace(time[0], time[-1], int((time[-1] - time[0]) / win_size + 1))
+            for i in range(1, len(time_steps)):
+                wois.append([time_steps[i - 1], time_steps[i]])
+
+    wois = np.array(wois, dtype=float)
+
+    # Extract directory name and file name without extension
+    data_dir, fname_with_ext = os.path.split(data_fname)
+    fname, _ = os.path.splitext(fname_with_ext)
+
+    with spm_context(spm_instance) as spm:
+        print(f'Smoothing {mesh_fname}')
+        _ = spm.spm_eeg_smoothmesh_multilayer_mm(
+            mesh_fname,
+            float(patch_size),
+            float(n_layers),
+            nargout=1
+        )
+
+        # Construct new file name with added '_testmodes.mat'
+        spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
+        spatialmodename, nmodes, _ = spm.spm_eeg_inv_prep_modes_xval(
+            data_fname,
+            n_spatial_modes,
+            spatialmodesname,
+            1,
+            0,
+            nargout=3
+        )
+
+    cfg = {
+        "spm": {
+            "meeg": {
+                "source": {
+                    "invertiter": {
+                        "D": np.asarray([data_fname], dtype="object"),
+                        "val": (float(inversion_idx) + 1),
+                        "whatconditions": {
+                            "all": 1
+                        },
+                        "isstandard": {
+                            "custom": {
+                                "invfunc": 'Classic',
+                                "invtype": 'EBB',
+                                "woi": wois,
+                                "foi": np.array(foi, dtype=float),
+                                "hanning": float(hann_windowing),
+                                "isfixedpatch": {
+                                    "randpatch": {
+                                        "npatches": float(512),
+                                        "niter": float(1)
                                     }
                                 },
                                 "patchfwhm": -float(patch_size),

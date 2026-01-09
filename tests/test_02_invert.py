@@ -10,7 +10,7 @@ import numpy as np
 import pytest
 
 from lameg.invert import (coregister, invert_ebb, invert_msp, load_source_time_series,
-                          invert_sliding_window, get_lead_field_rms_diff)
+                          invert_sliding_window_msp, get_lead_field_rms_diff)
 from lameg.surf import LayerSurfaceSet
 from lameg.util import get_fiducial_coords, make_directory
 
@@ -276,9 +276,9 @@ def test_load_source_time_series():
 
 
 @pytest.mark.dependency(depends=["test_load_source_time_series"])
-def test_invert_sliding_window(spm):
+def test_invert_sliding_window_msp(spm):
     """
-    Tests the `invert_sliding_window` function to ensure it accurately performs time-resolved
+    Tests the `invert_sliding_window_msp` function to ensure it accurately performs time-resolved
     source localization by computing free energy and windows of interest (WOIs) for specified
     vertex indices.
 
@@ -292,7 +292,7 @@ def test_invert_sliding_window(spm):
     Steps executed in the test:
     - Load essential paths and file names for necessary data and mesh files from a preconfigured
       directory.
-    - Execute the `invert_sliding_window` function using a vertex index, a pial surface mesh for
+    - Execute the `invert_sliding_window_msp` function using a vertex index, a pial surface mesh for
       the forward model,
       and a base filename of preprocessed MEG data.
     - Validate the outputs, both free energy and WOIs, against predefined target arrays.
@@ -356,7 +356,7 @@ def test_invert_sliding_window(spm):
     )
 
     # test n spatial modes
-    [free_energy, wois] = invert_sliding_window(
+    [free_energy, wois] = invert_sliding_window_msp(
         47507,
         base_fname,
         surf_set,
@@ -378,7 +378,7 @@ def test_invert_sliding_window(spm):
                        -100., -98.33333333, -96.66666667, -95., -93.33333333])
     assert np.allclose(wois[:10, 0], target)
 
-    [free_energy, wois] = invert_sliding_window(
+    [free_energy, wois] = invert_sliding_window_msp(
         47507,
         base_fname,
         surf_set,
@@ -399,7 +399,7 @@ def test_invert_sliding_window(spm):
                        -100., -98.33333333, -96.66666667, -95., -93.33333333])
     assert np.allclose(wois[:10, 0], target)
 
-    [free_energy, wois] = invert_sliding_window(
+    [free_energy, wois] = invert_sliding_window_msp(
         47507,
         base_fname,
         surf_set,
@@ -422,7 +422,7 @@ def test_invert_sliding_window(spm):
     assert np.allclose(wois[:10, 0], target)
 
 
-@pytest.mark.dependency(depends=["test_invert_sliding_window"])
+@pytest.mark.dependency(depends=["test_invert_sliding_window_msp"])
 def test_invert_ebb(spm):
     """
     Test the `invert_ebb` function to ensure it performs correctly with specified parameters and

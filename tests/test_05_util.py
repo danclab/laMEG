@@ -232,6 +232,9 @@ def test_fif_spm_conversion():
     assert np.allclose(raw_data[100,:]*1e15, spm_data[spm_idx,:])
 
     assert np.allclose(raw.times, time/1000)
+    data_fname_base = os.path.split(os.path.splitext(out_fname)[0])[1]
+    os.remove(os.path.join(output_path, f'{data_fname_base}.mat'))
+    os.remove(os.path.join(output_path, f'{data_fname_base}.dat'))
 
 
 def test_check_many():

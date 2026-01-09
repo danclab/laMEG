@@ -1,6 +1,8 @@
 """
 This module contains the unit tests for the `simulate` module from the `lameg` package.
 """
+import os
+
 import numpy as np
 import pytest
 
@@ -9,7 +11,7 @@ from lameg.surf import LayerSurfaceSet
 from lameg.util import load_meg_sensor_data
 
 
-@pytest.mark.dependency(depends=["tests/test_02_invert.py::test_invert_sliding_window"],
+@pytest.mark.dependency(depends=["tests/test_02_invert.py::test_invert_sliding_window_msp"],
                         scope='session')
 def test_run_dipole_simulation(spm):
     """
@@ -101,6 +103,10 @@ def test_run_dipole_simulation(spm):
     assert np.allclose(time[:10], target)
 
     assert ch_names[0] == 'MLC11'
+
+    sim_fname_base = os.path.split(os.path.splitext(sim_fname)[0])[1]
+    os.remove(os.path.join('output', f'{sim_fname_base}.mat'))
+    os.remove(os.path.join('output', f'{sim_fname_base}.dat'))
 
 
 @pytest.mark.dependency(depends=["tests/test_02_invert.py::test_invert_ebb"],
@@ -216,3 +222,7 @@ def test_run_current_density_simulation(spm):
     assert np.allclose(time[:10], target)
 
     assert ch_names[0] == 'MLC11'
+
+    data_fname_base = os.path.split(os.path.splitext(base_fname)[0])[1]
+    os.remove(os.path.join('output', f'{data_fname_base}.mat'))
+    os.remove(os.path.join('output', f'{data_fname_base}.dat'))

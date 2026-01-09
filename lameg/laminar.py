@@ -32,7 +32,7 @@ import neo
 import quantities as pq
 
 from lameg.invert import (invert_ebb, coregister, load_source_time_series, invert_msp,
-                          invert_sliding_window)
+                          invert_sliding_window_msp)
 from lameg.util import ttest_rel_corrected
 
 
@@ -197,7 +197,7 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
     coregister_kwargs : dict, optional
         Additional keyword arguments passed to the `coregister()` function.
     invert_kwargs : dict, optional
-        Additional keyword arguments passed to the `invert_sliding_window()` function.
+        Additional keyword arguments passed to the `invert_sliding_window_msp()` function.
 
     Returns
     -------
@@ -242,7 +242,7 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
             **coregister_kwargs
         )
 
-        [mesh_fvals, wois] = invert_sliding_window(
+        [mesh_fvals, wois] = invert_sliding_window_msp(
             prior,
             data_fname,
             surf_set,
