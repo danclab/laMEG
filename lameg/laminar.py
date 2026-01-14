@@ -250,7 +250,6 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
             stage=stage,
             orientation=orientation,
             fixed=fixed,
-            inversion_idx=l_idx,
             viz=viz,
             spm_instance=spm_instance,
             **invert_kwargs
