@@ -132,7 +132,6 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
                 stage=stage,
                 orientation=orientation,
                 fixed=fixed,
-                inversion_idx=l_idx,
                 viz=viz,
                 spm_instance=spm_instance,
                 **invert_kwargs
@@ -145,7 +144,6 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
                 stage=stage,
                 orientation=orientation,
                 fixed=fixed,
-                inversion_idx=l_idx,
                 viz=viz,
                 spm_instance=spm_instance,
                 **invert_kwargs
