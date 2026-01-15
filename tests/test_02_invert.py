@@ -520,7 +520,6 @@ def test_invert_ebb(spm):
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
         return_mu_matrix=False,
-        inversion_idx=1,
         viz=False,
         spm_instance=spm
     )
@@ -535,8 +534,7 @@ def test_invert_ebb(spm):
 
     time_series, time, mu_matrix = load_source_time_series(
         base_fname,
-        vertices=[47507],
-        inversion_idx=1
+        vertices=[47507]
     )
 
     target = np.array([-0.0014113,  -0.00139351, -0.00135825, -0.00130611, -0.00123797, -0.00115497,
