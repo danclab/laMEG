@@ -107,7 +107,7 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
     cv_errs = []
     layer_names = surf_set.get_layer_names()
 
-    for l_idx, layer_name in enumerate(layer_names):
+    for layer_name in layer_names:
         coregister(
             fid_coords,
             data_fname,
@@ -224,7 +224,7 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
     wois = []
     layer_names = surf_set.get_layer_names()
 
-    for l_idx, layer_name in enumerate(layer_names):
+    for layer_name in layer_names:
         coregister(
             fid_coords,
             data_fname,
