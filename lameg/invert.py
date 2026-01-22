@@ -979,9 +979,156 @@ def invert_sliding_window_ebb(data_fname, surf_set, layer_name=None, stage='ds',
     return [free_energy, wois]
 
 
-# pylint: disable=R0912
-def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices=None,
-                            inversion_idx=0):
+def _h5_ref(file, ref):
+    return file[ref]
+
+
+def _h5_to_csc(group):
+    data = group["data"][()]
+    ir_vals = group["ir"][()]
+    jc_vals = group["jc"][()]
+    n_rows = int(ir_vals.max()) + 1 if ir_vals.size else 0
+    n_cols = len(jc_vals) - 1
+    return csc_matrix((data, ir_vals, jc_vals), shape=(n_rows, n_cols))
+
+
+def _mat_to_csc(mat):
+    return mat if issparse(mat) else csc_matrix(mat)
+
+
+# pylint: disable=too-many-branches
+def _load_inverse_components(inv_fname, inversion_idx=0):
+    """
+    Returns dict with keys:
+      - "U"  (csc or dense)
+      - "TT" (dense; temporal_projector @ temporal_projector.T)
+      - either "M" or ("M_win" and "woi")
+    """
+    try:
+        with h5py.File(inv_fname, "r") as file:
+            inv_root = file[file["D"]["other"]["inv"][inversion_idx][0]]["inverse"]
+
+            # U
+            u_ref = inv_root["U"][0][0]
+            u_obj = file[u_ref]
+            if isinstance(u_obj, h5py.Group):
+                u_matrix = _h5_to_csc(u_obj)
+            else:
+                u_matrix = np.array(u_obj)
+
+            # TT
+            temporal_projector = inv_root["T"][()].T
+            temp_projector_mat = temporal_projector @ temporal_projector.T
+
+            out = {"U": u_matrix, "TT": temp_projector_mat}
+
+            # M_win (cell array) or M
+            if "M_win" in inv_root:
+                mwin_refs = np.asarray(inv_root["M_win"][()]).squeeze()
+                if mwin_refs.ndim == 0:
+                    mwin_refs = np.array([mwin_refs])
+
+                m_win = []
+                for ref in mwin_refs:
+                    m_obj = _h5_ref(file, ref)
+                    if isinstance(m_obj, h5py.Group) and \
+                            all(k in m_obj for k in ("data", "ir", "jc")):
+                        m_win.append(_h5_to_csc(m_obj))
+                    else:
+                        m_win.append(np.array(m_obj))
+                out["M_win"] = m_win
+
+                if "woi" not in inv_root:
+                    raise ValueError("Found `M_win` but no `woi` field in the inverse.")
+                out["woi"] = np.asarray(inv_root["woi"][()]).T
+
+            else:
+                out["M"] = _h5_to_csc(inv_root["M"])
+
+            return out
+
+    except OSError:
+        mat = loadmat(inv_fname, simplify_cells=True)
+        inv = mat["D"]["other"]["inv"][inversion_idx]
+
+        # U
+        u_raw = inv["U"][0] if isinstance(inv["U"], (list, tuple, np.ndarray)) else inv["U"]
+        u_matrix = u_raw if issparse(u_raw) else csc_matrix(u_raw)
+
+        # TT
+        temporal_projector = inv["T"].T
+        temp_projector_mat = temporal_projector @ temporal_projector.T
+
+        out = {"U": u_matrix, "TT": temp_projector_mat}
+
+        if "M_win" in inv and inv["M_win"] is not None:
+            m_win_raw = inv["M_win"]
+            if not isinstance(m_win_raw, (list, tuple, np.ndarray)):
+                m_win_raw = [m_win_raw]
+            out["M_win"] = [m if issparse(m) else csc_matrix(m) for m in list(m_win_raw)]
+
+            if "woi" not in inv or inv["woi"] is None:
+                raise ValueError("Found `M_win` but no `woi` field in the inverse.") # pylint: disable=raise-missing-from
+            out["woi"] = np.asarray(inv["woi"]).T
+        else:
+            out["M"] = _mat_to_csc(inv["M"])
+
+        return out
+
+
+def _indices_for_woi(time_ms, woi_row):
+    """Indices where time is within [start, end] (inclusive)."""
+    time_0, time_1 = float(woi_row[0]), float(woi_row[1])
+    lo_idx, hi_idx = (time_0, time_1) if time_0 <= time_1 else (time_1, time_0)
+    return np.where((time_ms >= lo_idx) & (time_ms <= hi_idx))[0]
+
+
+def _pad_or_trim_sensor_to_temp_projector(sensor_data, temp_projector_mat):
+    """Pad/trim sensor_data time dimension to match temp_projector_mat.shape[0]
+     if off by 1 sample."""
+    n_time = sensor_data.shape[1]
+    if temp_projector_mat.shape[0] == n_time:
+        return sensor_data, n_time
+
+    diff = temp_projector_mat.shape[0] - n_time
+    if abs(diff) != 1:
+        raise ValueError(
+            f"Temporal projector ({temp_projector_mat.shape}) and sensor data "
+            f"({sensor_data.shape}) differ by >1 sample."
+        )
+
+    if sensor_data.ndim == 2:
+        if diff > 0:
+            sensor_data = np.pad(sensor_data, ((0, 0), (0, diff)), mode="constant")
+        else:
+            sensor_data = sensor_data[:, :temp_projector_mat.shape[0]]
+    else:
+        if diff > 0:
+            sensor_data = np.pad(sensor_data, ((0, 0), (0, diff), (0, 0)), mode="constant")
+        else:
+            sensor_data = sensor_data[:, :temp_projector_mat.shape[0], :]
+
+    return sensor_data, n_time  # return original n_time for later restoration
+
+
+def _restore_time_length(time_series, orig_n_time):
+    """Ensure time_series has exactly orig_n_time along axis=1 (pad with zeros or trim)."""
+    cur = time_series.shape[1]
+    if cur == orig_n_time:
+        return time_series
+    if cur < orig_n_time:
+        return np.pad(time_series, ((0, 0), (0, orig_n_time - cur)), mode="constant")
+    return time_series[:, :orig_n_time]
+
+
+# pylint: disable=too-many-branches
+def load_source_time_series(
+    data_fname,
+    mu_matrix=None,
+    inv_fname=None,
+    vertices=None,
+    inversion_idx=0,
+):
     """
     Load or compute source-space time series from MEG data.
 
@@ -1020,121 +1167,161 @@ def load_source_time_series(data_fname, mu_matrix=None, inv_fname=None, vertices
       solution embedded in `data_fname`.
     - When `vertices` is specified, only the corresponding subset of the inverse matrix is used.
     - Supports both single-trial and multi-trial MEG data structures.
+
+    Multi-woi behavior (when inverse has M_win and woi):
+      - For each window i, compute mu_i = M_win[i] @ U (optionally vertex-subsetted),
+        apply it to sensor data for the time indices in woi[i].
+      - If windows overlap, average source estimates at overlapping time points
+        (per source, per trial) using a per-timepoint contribution count.
+      - Output has the SAME time axis as the sensor data (sources x time x trial).
     """
 
-    sensor_data, time, _ = load_meg_sensor_data(data_fname)
+    sensor_data, time_ms, _ = load_meg_sensor_data(data_fname)
 
-    if mu_matrix is None:
-        if inv_fname is None:
-            inv_fname = data_fname
-        check_inversion_exists(inv_fname, inversion_idx=inversion_idx)
-
-        try:
-            # HDF5 case
-            with h5py.File(inv_fname, "r") as file:
-                inv = file[file["D"]["other"]["inv"][inversion_idx][0]]["inverse"]
-
-                # Load M (MAP projector)
-                m_data = inv["M"]["data"][()]
-                m_ir = inv["M"]["ir"][()]
-                m_jc = inv["M"]["jc"][()]
-                m_mat = csc_matrix((m_data, m_ir, m_jc),
-                               shape=(int(m_ir.max()) + 1, len(m_jc) - 1))
-
-                # Load U (spatial projector, may be dense or sparse)
-                u_ref = inv["U"][0][0]
-                if isinstance(file[u_ref], h5py.Group):  # sparse storage
-                    dr_group = file[u_ref]
-                    dr_data = dr_group["data"][()]
-                    dr_ir = dr_group["ir"][()]
-                    dr_jc = dr_group["jc"][()]
-                    n_rows = int(max(dr_ir)) + 1
-                    n_cols = len(dr_jc) - 1
-                    u_mat = csc_matrix((dr_data, dr_ir, dr_jc),
-                                   shape=(n_rows, n_cols))
-                else:  # dense storage
-                    u_mat = np.array(file[u_ref])
-
-                # Temporal projector T
-                temporal_projector = inv["T"][()].T
-                tt_mat = temporal_projector @ temporal_projector.T
-
-        except OSError:
-            # MATLAB .mat case
-            mat = loadmat(inv_fname, simplify_cells=True)
-            inv = mat["D"]["other"]['inv'][inversion_idx]
-            m_mat = csc_matrix(inv["M"]) if not issparse(inv["M"]) else inv["M"]
-
-            u_mat_ = inv["U"][0] if isinstance(inv["U"], (list, tuple, np.ndarray)) else inv["U"]
-            u_mat = csc_matrix(u_mat_) if not issparse(u_mat_) else u_mat_
-
-            temporal_projector = inv["T"].T
-            tt_mat = temporal_projector @ temporal_projector.T
-
-        # Select vertices
-        if vertices is not None:
-            m_mat = m_mat[vertices, :]
-
-        # Compose mu_matrix = M @ U
-        mu_matrix = (m_mat @ u_mat) if issparse(u_mat) or issparse(m_mat) else m_mat @ u_mat
-
-    else:
+    # ---- Provided mu_matrix: original full-time behavior ----
+    if mu_matrix is not None:
         if vertices is not None:
             mu_matrix = mu_matrix[vertices, :]
-        tt_mat = np.eye(sensor_data.shape[1])
+        temp_projector_mat = np.eye(sensor_data.shape[1], dtype=float)
 
-    # Keep track of original time length
-    orig_n_time = sensor_data.shape[1]
-
-    # Match sensor_data to tt_mat (for projection only)
-    if tt_mat.shape[0] != orig_n_time:
-        diff = tt_mat.shape[0] - orig_n_time
-        if abs(diff) == 1:
-            if diff > 0:
-                # tt_mat expects one more time sample - pad zeros temporarily
-                sensor_data = np.pad(sensor_data, ((0, 0), (0, diff)), mode='constant')
-            else:
-                # tt_mat expects one fewer - trim one time bin
-                sensor_data = sensor_data[:, :tt_mat.shape[0]]
-        else:
-            raise ValueError(
-                f"Temporal projector ({tt_mat.shape}) and sensor data ({sensor_data.shape}) "
-                f"differ by more than one sample."
-            )
-
-    # Reconstruct source time series
-    if sensor_data.ndim == 3:
-        n_trials = sensor_data.shape[2]
-        n_sources = mu_matrix.shape[0]
-        source_ts = np.zeros((n_sources, orig_n_time, n_trials))
-        for trial_idx in range(n_trials):
-            y_mat = sensor_data[:, :, trial_idx] @ tt_mat  # apply temporal projection
-            yv_mat = mu_matrix @ y_mat
-            yv_full_mat = np.asarray(yv_mat)
-            # Restore to original time length (pad/trim if needed)
-            if yv_full_mat.shape[1] < orig_n_time:
-                yv_full_mat = np.pad(
-                    yv_full_mat,
-                    ((0, 0), (0, orig_n_time - yv_full_mat.shape[1])),
-                    mode='constant'
+        orig_n_time = sensor_data.shape[1]
+        if sensor_data.ndim == 3:
+            n_trials = sensor_data.shape[2]
+            n_sources = mu_matrix.shape[0]
+            source_ts = np.zeros((n_sources, orig_n_time, n_trials), dtype=float)
+            for trial_idx in range(n_trials):
+                yproj = sensor_data[:, :, trial_idx] @ temp_projector_mat
+                source_ts[:, :, trial_idx] = _restore_time_length(
+                    np.asarray(mu_matrix @ yproj),
+                    orig_n_time
                 )
-            elif yv_full_mat.shape[1] > orig_n_time:
-                yv_full_mat = yv_full_mat[:, :orig_n_time]
-            source_ts[:, :, trial_idx] = yv_full_mat
-    else:
-        y_mat = sensor_data @ tt_mat
-        yv_full_mat = np.asarray(mu_matrix @ y_mat)
-        if yv_full_mat.shape[1] < orig_n_time:
-            yv_full_mat = np.pad(
-                yv_full_mat,
-                ((0, 0), (0, orig_n_time - yv_full_mat.shape[1])),
-                mode='constant'
-            )
-        elif yv_full_mat.shape[1] > orig_n_time:
-            yv_full_mat = yv_full_mat[:, :orig_n_time]
-        source_ts = yv_full_mat
+        else:
+            yproj = sensor_data @ temp_projector_mat
+            source_ts = _restore_time_length(np.asarray(mu_matrix @ yproj), orig_n_time)
 
-    return source_ts, time, mu_matrix
+        return source_ts, time_ms, mu_matrix
+
+    # ---- Load inverse components ----
+    if inv_fname is None:
+        inv_fname = data_fname
+    check_inversion_exists(inv_fname, inversion_idx=inversion_idx)
+    invc = _load_inverse_components(inv_fname, inversion_idx=inversion_idx)
+
+    u_matrix = invc["U"]
+    temp_projector_mat = invc["TT"]
+
+    # ---- Multi-woi path ----
+    if "M_win" in invc:
+        m_win = invc["M_win"]
+        woi = np.asarray(invc["woi"])
+        if len(m_win) != woi.shape[0]:
+            raise ValueError(f"`M_win` has {len(m_win)} entries but `woi` has {woi.shape[0]} rows.")
+
+        # Vertex selection at M level
+        if vertices is not None:
+            m_win = [(m[vertices, :] if issparse(m) else m[vertices, :]) for m in m_win]
+
+        # Precompute time indices per window
+        win_indices = [_indices_for_woi(time_ms, w) for w in woi]
+
+        # Determine n_sources from first window
+        mu0 = m_win[0] @ u_matrix
+        n_sources = mu0.shape[0]
+
+        # Accumulate sums and counts on aligned time axis, then restore to orig_n_time
+        n_time = sensor_data.shape[1]
+        n_trials = sensor_data.shape[2]
+        if sensor_data.ndim == 3:
+            source_sum = np.zeros((n_sources, n_time, n_trials), dtype=float)
+            count = np.zeros((n_time,), dtype=np.int32)
+
+            for i, idx in enumerate(win_indices):
+                if idx.size == 0:
+                    continue
+                mu_i = m_win[i] @ u_matrix
+                for trial_idx in range(n_trials):
+                    # sources x |idx|
+                    src_seg = np.asarray(mu_i @ sensor_data[:, idx, trial_idx])
+                    source_sum[:, idx, trial_idx] += src_seg
+                count[idx] += 1
+
+            # Avoid divide-by-zero; leave zeros where count==0
+            nz_idx = count > 0
+            source_ts = np.zeros_like(source_sum)
+            source_ts[:, nz_idx, :] = source_sum[:, nz_idx, :] / count[nz_idx][None, :, None]
+        else:
+            source_sum = np.zeros((n_sources, n_time), dtype=float)
+            count = np.zeros((n_time,), dtype=np.int32)
+
+            for i, idx in enumerate(win_indices):
+                if idx.size == 0:
+                    continue
+                mu_i = (m_win[i] @ u_matrix) \
+                    if (issparse(m_win[i]) or issparse(u_matrix)) \
+                    else (m_win[i] @ u_matrix)
+                src_seg = np.asarray(mu_i @ sensor_data[:, idx])  # sources x |idx|
+                source_sum[:, idx] += src_seg
+                count[idx] += 1
+
+            nz_idx = count > 0
+            source_ts = np.zeros_like(source_sum)
+            source_ts[:, nz_idx] = source_sum[:, nz_idx] / count[nz_idx][None, :]
+
+        # In multi-woi there is no single mu_matrix to return
+        return source_ts, time_ms, None
+
+    # ---- Single inversion path (original full-time behavior) ----
+    m_matrix = invc["M"]
+    if vertices is not None:
+        m_matrix = m_matrix[vertices, :]
+    mu_matrix = (m_matrix @ u_matrix) \
+        if (issparse(m_matrix) or issparse(u_matrix)) \
+        else (m_matrix @ u_matrix)
+
+    # Align sensor_data with TT for projection
+    sensor_data_aligned, orig_n_time = _pad_or_trim_sensor_to_temp_projector(
+        sensor_data,
+        temp_projector_mat
+    )
+
+    # Temporal projection (done once)
+    if sensor_data_aligned.ndim == 3:
+        n_trials = sensor_data_aligned.shape[2]
+        yproj = np.empty_like(sensor_data_aligned, dtype=float)
+        for trial_idx in range(n_trials):
+            yproj[:, :, trial_idx] = sensor_data_aligned[:, :, trial_idx] @ temp_projector_mat
+    else:
+        yproj = sensor_data_aligned @ temp_projector_mat  # sensors x time'
+
+    if sensor_data_aligned.ndim == 3:
+        n_trials = sensor_data_aligned.shape[2]
+        n_sources = mu_matrix.shape[0]
+        source_ts = np.zeros((n_sources, orig_n_time, n_trials), dtype=float)
+        for trial_idx in range(n_trials):
+            trial_ts = sensor_data_aligned[:, :, trial_idx] @ temp_projector_mat
+            trial_ts = np.asarray(mu_matrix @ trial_ts)
+            # restore original sensor time length
+            if trial_ts.shape[1] < orig_n_time:
+                trial_ts = np.pad(
+                    trial_ts,
+                    ((0, 0), (0, orig_n_time - trial_ts.shape[1])),
+                    mode="constant"
+                )
+            elif trial_ts.shape[1] > orig_n_time:
+                trial_ts = trial_ts[:, :orig_n_time]
+            source_ts[:, :, trial_idx] = trial_ts
+    else:
+        source_ts = np.asarray(mu_matrix @ yproj)
+        if source_ts.shape[1] < orig_n_time:
+            source_ts = np.pad(
+                source_ts,
+                ((0, 0), (0, orig_n_time - source_ts.shape[1])),
+                mode="constant"
+            )
+        elif source_ts.shape[1] > orig_n_time:
+            source_ts = source_ts[:, :orig_n_time]
+
+    return source_ts, time_ms, mu_matrix
 
 
 def check_inversion_exists(data_file, inversion_idx=0):
