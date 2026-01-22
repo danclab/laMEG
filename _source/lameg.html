@@ -868,6 +868,16 @@ solution embedded in <cite>data_fname</cite>.</p></li>
 <li><p>When <cite>vertices</cite> is specified, only the corresponding subset of the inverse matrix is used.</p></li>
 <li><p>Supports both single-trial and multi-trial MEG data structures.</p></li>
 </ul>
+<dl class="simple">
+<dt>Multi-woi behavior (when inverse has M_win and woi):</dt><dd><ul class="simple">
+<li><p>For each window i, compute mu_i = M_win[i] &#64; U (optionally vertex-subsetted),
+apply it to sensor data for the time indices in woi[i].</p></li>
+<li><p>If windows overlap, average source estimates at overlapping time points
+(per source, per trial) using a per-timepoint contribution count.</p></li>
+<li><p>Output has the SAME time axis as the sensor data (sources x time x trial).</p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </section>
