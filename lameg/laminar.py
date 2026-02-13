@@ -324,7 +324,7 @@ def compute_csd(signal, thickness, sfreq, method='KCSD1D', smoothing=None, **kwa
             return smoothed
         return csd
 
-    elif method == 'KCSD1D':
+    if method == 'KCSD1D':
         lambdas = kwargs.get('lambdas', None)
         r_vals = kwargs.get('Rs', None)
         # create the AnalogSignal with units in microvolts
@@ -343,8 +343,7 @@ def compute_csd(signal, thickness, sfreq, method='KCSD1D', smoothing=None, **kwa
 
         return kcsd
 
-    else:
-        raise ValueError('method must be either StandardCSD or KCSD1D')
+    raise ValueError('method must be either StandardCSD or KCSD1D')
 
 
 def roi_power_comparison(data_fname, woi, baseline_woi, perc_thresh, surf_set, stage='ds',
