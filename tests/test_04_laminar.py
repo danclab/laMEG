@@ -379,13 +379,14 @@ def test_compute_csd():
                                -6.12312968e-04]])
 
     # pylint: disable=W0632
-    [csd, smooth_csd] = compute_csd(mean_layer_ts, thickness, s_rate, method='StandardCSD',
-                                    smoothing='cubic')
+    csd = compute_csd(mean_layer_ts, thickness, s_rate, method='StandardCSD', smoothing=None)
 
     target = np.array([ 0.00986531, -0.07117795,  0.02145686, -0.0356993 , -0.02422255,
                         0.0993618 ,  0.01780521, -0.01642674, -0.00256466, -0.05318114])
     assert np.allclose(csd[5, :10], target)
 
+    smooth_csd = compute_csd(mean_layer_ts, thickness, s_rate, method='StandardCSD',
+                             smoothing='cubic')
     target = np.array([ 0.01145994,  0.00207419, -0.00875817, -0.00167645,  0.00080345,
                         -0.00754003, -0.01884328, -0.00144315,  0.00474964,  0.01824842])
     assert np.allclose(smooth_csd[5, :10], target)

@@ -286,12 +286,9 @@ def compute_csd(signal, thickness, sfreq, method='KCSD1D', smoothing=None, **kwa
 
     Returns
     -------
-    ret_vals : list
-        Contains one or two elements:
-        - csd : ndarray, shape (n_layers, n_times)
-            The estimated current source density.
-        - smoothed_csd : ndarray, shape (500, n_times), optional
-            Layer-interpolated CSD if `smoothing` is specified (StandardCSD only).
+    csd : ndarray, shape (n_layers, n_times) if smoothing is None, otherwise (500, n_times)
+        The estimated current source density.  Layer-interpolated CSD if `smoothing` is specified
+        (StandardCSD only).
 
     Notes
     -----
@@ -301,8 +298,6 @@ def compute_csd(signal, thickness, sfreq, method='KCSD1D', smoothing=None, **kwa
     """
 
     coords = pq.Quantity(np.linspace(0, thickness, num=signal.shape[0]).reshape(-1,1)) * pq.mm
-
-    ret_vals = None
 
     if method == 'StandardCSD':
         signal = neo.core.AnalogSignal(
@@ -316,8 +311,6 @@ def compute_csd(signal, thickness, sfreq, method='KCSD1D', smoothing=None, **kwa
         csd[:2,:]=0
         csd[-2:,:]=0
 
-        ret_vals=csd
-
         if smoothing is not None:
             layers, time = csd.shape
             smoothed = []
@@ -328,7 +321,8 @@ def compute_csd(signal, thickness, sfreq, method='KCSD1D', smoothing=None, **kwa
                 interp_y = interp_function(smooth_x)
                 smoothed.append(interp_y)
             smoothed = np.array(smoothed).T
-            ret_vals = (csd, smoothed)
+            return smoothed
+        return csd
 
     elif method == 'KCSD1D':
         lambdas = kwargs.get('lambdas', None)
@@ -347,9 +341,10 @@ def compute_csd(signal, thickness, sfreq, method='KCSD1D', smoothing=None, **kwa
             Rs=r_vals
         ).as_array().T
 
-        ret_vals=kcsd
+        return kcsd
 
-    return ret_vals
+    else:
+        raise ValueError('method must be either StandardCSD or KCSD1D')
 
 
 def roi_power_comparison(data_fname, woi, baseline_woi, perc_thresh, surf_set, stage='ds',
