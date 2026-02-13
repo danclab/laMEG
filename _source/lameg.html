@@ -931,22 +931,11 @@ KCSD1D).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><p><strong>ret_vals</strong> – Contains one or two elements:
-- csd : ndarray, shape (n_layers, n_times)</p>
-<blockquote>
-<div><p>The estimated current source density.</p>
-</div></blockquote>
-<ul class="simple">
-<li><dl class="simple">
-<dt>smoothed_csd<span class="classifier">ndarray, shape (500, n_times), optional</span></dt><dd><p>Layer-interpolated CSD if <cite>smoothing</cite> is specified (StandardCSD only).</p>
-</dd>
-</dl>
-</li>
-</ul>
-</p>
+<dd class="field-even"><p><strong>csd</strong> – The estimated current source density.  Layer-interpolated CSD if <cite>smoothing</cite> is specified
+(StandardCSD only).</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>list</p>
+<dd class="field-odd"><p>ndarray, shape (n_layers, n_times) if smoothing is None, otherwise (500, n_times)</p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
