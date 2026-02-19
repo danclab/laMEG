@@ -1230,8 +1230,8 @@ def load_source_time_series(
 
         # Accumulate sums and counts on aligned time axis, then restore to orig_n_time
         n_time = sensor_data.shape[1]
-        n_trials = sensor_data.shape[2]
         if sensor_data.ndim == 3:
+            n_trials = sensor_data.shape[2]
             source_sum = np.zeros((n_sources, n_time, n_trials), dtype=float)
             count = np.zeros((n_time,), dtype=np.int32)
 
