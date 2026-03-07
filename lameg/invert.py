@@ -257,127 +257,155 @@ def invert_ebb(data_fname, surf_set, layer_name=None, stage='ds',
     - Mesh smoothing uses `spm_eeg_smoothmesh_multilayer_mm`.
     - Spatial mode preparation and cross-validation use `spm_eeg_inv_prep_modes_xval`.
     """
-    mesh_fname = surf_set.get_mesh_path(layer_name=layer_name, stage=stage,
-                                        orientation=orientation, fixed=fixed)
-    n_layers = 1
-    if layer_name is None:
-        n_layers=surf_set.n_layers
-
-    if foi is None:
-        foi = [0, 256]
-
-    if woi is None:
-        woi = [-np.inf, np.inf]
-    elif isinstance(woi, np.ndarray):
-        woi = woi.tolist()
-
-    if n_spatial_modes is None:
-        n_spatial_modes = matlab.double([])
-    else:
-        n_spatial_modes = float(n_spatial_modes)
-
-    # Extract directory name and file name without extension
-    data_dir, fname_with_ext = os.path.split(data_fname)
-    fname, _ = os.path.splitext(fname_with_ext)
-
-    with spm_context(spm_instance) as spm:
-        print(f'Smoothing {mesh_fname}')
-        _ = spm.spm_eeg_smoothmesh_multilayer_mm(
-            mesh_fname,
-            float(patch_size),
-            float(n_layers),
-            nargout=1
-        )
-
-        # Construct new file name with added '_testmodes.mat'
-        spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
-        spatialmodename, nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(
-            data_fname,
-            n_spatial_modes,
-            spatialmodesname,
-            float(n_folds),
-            float(ideal_pc_test),
-            nargout=3
-        )
-
-    cfg = {
-        "spm": {
-            "meeg": {
-                "source": {
-                    "invertiter": {
-                        "D": np.asarray([data_fname], dtype="object"),
-                        "val": (float(inversion_idx) + 1),
-                        "whatconditions": {
-                            "all": 1
-                        },
-                        "isstandard": {
-                            "custom": {
-                                "invfunc": 'Classic',
-                                "invtype": 'EBB',
-                                "woi": np.array(woi, dtype=float),
-                                "foi": np.array(foi, dtype=float),
-                                "hanning": float(hann_windowing),
-                                "isfixedpatch": {
-                                    "randpatch": {
-                                        "npatches": float(512),
-                                        "niter": float(1)
-                                    }
-                                },
-                                "patchfwhm": -float(patch_size),
-                                "mselect": float(0),
-                                "nsmodes": float(nmodes),
-                                "umodes": np.asarray([spatialmodename], dtype="object"),
-                                "ntmodes": float(n_temp_modes),
-                                "priors": {
-                                    "priorsmask": np.asarray([''], dtype="object"),
-                                    "space": 0
-                                },
-                                "outinv": '',
-                            }
-                        },
-                        "modality": np.asarray(['All'], dtype="object"),
-                        "crossval": np.asarray([pctest, n_folds], dtype=float)
-                    }
-                }
-            }
-        }
-    }
-    batch(cfg, viz=viz, spm_instance=spm_instance)
-
-    with h5py.File(data_fname, 'r') as file:
-        inverse_struct = file[file['D']['other']['inv'][inversion_idx][0]]['inverse']
-
-        free_energy = np.squeeze(inverse_struct['crossF'][()])
-        cv_err = np.squeeze(inverse_struct['crosserr'][()])
-
-        m_data = inverse_struct['M']['data'][()]
-        m_ir = inverse_struct['M']['ir'][()]
-        m_jc = inverse_struct['M']['jc'][()]
-        try:
-            data_reduction_mat = file[inverse_struct['U'][0][0]][()]
-        except AttributeError:
-            dr_data = file[inverse_struct['U'][0][0]]['data'][()]
-            dr_ir = file[inverse_struct['U'][0][0]]['ir'][()]
-            dr_jc = file[inverse_struct['U'][0][0]]['jc'][()]
-            num_rows = int(max(dr_ir)) + 1
-            num_cols = len(dr_jc) - 1
-            data_reduction_mat = csc_matrix(
-                (dr_data, dr_ir, dr_jc),
-                shape=(num_rows, num_cols)
-            )
-
-    if not return_mu_matrix:
-        return [free_energy, cv_err]
-
-    # Reconstruct the sparse matrix
-    num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
-    num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
-    weighting_mat = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
-    mu_matrix = weighting_mat @ data_reduction_mat
-    return [free_energy, cv_err, mu_matrix]
+    return _invert_ebb_base(
+        data_fname=data_fname,
+        surf_set=surf_set,
+        layer_name=layer_name,
+        stage=stage,
+        orientation=orientation,
+        fixed=fixed,
+        patch_size=patch_size,
+        n_temp_modes=n_temp_modes,
+        n_spatial_modes=n_spatial_modes,
+        foi=foi,
+        woi=woi,
+        hann_windowing=hann_windowing,
+        n_folds=n_folds,
+        ideal_pc_test=ideal_pc_test,
+        inversion_idx=inversion_idx,
+        viz=viz,
+        return_mu_matrix=return_mu_matrix,
+        spm_instance=spm_instance,
+        layerwise=False
+    )
 
 
-# pylint: disable=R0915
+def invert_ebb_layer(data_fname, surf_set, layer_name=None, stage='ds',
+                     orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=4,
+                     n_spatial_modes=None, foi=None, woi=None, hann_windowing=False, n_folds=1,
+                     ideal_pc_test=0, inversion_idx=0, viz=True, return_mu_matrix=False,
+                     spm_instance=None):
+    """
+    Perform laminar Empirical Bayesian Beamformer (EBBlayer) source inversion on MEG data.
+
+    This function runs a laminar extension of the Empirical Bayesian Beamformer (EBB)
+    implemented in SPM. The method operates on either a single cortical surface or a
+    multilayer mesh representing cortical depth. When a multilayer surface is used,
+    the inversion employs a modified EBB formulation ("EBBlayer") that models potential
+    correlated activity across layers within the same cortical column.
+
+    The EBBlayer model introduces multiple spatial source priors that are combined and
+    weighted using Restricted Maximum Likelihood (ReML):
+
+    1. Independent prior (classic EBB)
+       A standard EBB variance map computed from smoothed lead fields.
+
+    2. Correlated sum prior
+       Constructed from pairwise combinations of sources across layers
+       (q+ = l_a + l_b), capturing activity that is shared across laminar levels.
+
+    3. Correlated difference prior
+       Constructed from pairwise differences across layers
+       (q- = l_a - l_b), emphasising laminar contrast and helping separate nearby
+       sources located at different cortical depths.
+
+    ReML estimates hyperparameters that determine the contribution of each prior
+    component. This allows the inversion to adaptively balance independent,
+    co-activation, and depth-contrast structure in the data.
+
+    Prior to inversion, the cortical mesh is geodesically smoothed using
+    `spm_eeg_smoothmesh_multilayer_mm`, which creates spatial patches along each
+    surface while preserving independence between layers.
+
+    Parameters
+    ----------
+    data_fname : str
+        Path to the MEG dataset (SPM-compatible `.mat` file).
+    surf_set : LayerSurfaceSet
+        Subject-specific surface set containing laminar meshes.
+    layer_name : str or None, optional
+        Surface layer to use for inversion (e.g., 'pial', 'white', or a fractional
+        layer). If None, the full multilayer surface is used.
+    stage : str, optional
+        Processing stage of the surface mesh (default: 'ds').
+    orientation : str, optional
+        Dipole orientation model (default: 'link_vector').
+    fixed : bool, optional
+        Whether dipole orientations are fixed relative to the cortical surface
+        (default: True).
+    patch_size : float, optional
+        Full-width at half-maximum (FWHM) of geodesic smoothing applied to the mesh
+        in millimetres (default: 5).
+    n_temp_modes : int, optional
+        Number of temporal modes used for dimensionality reduction (default: 4).
+    n_spatial_modes : int or None, optional
+        Number of spatial modes for dimensionality reduction. If None, all sensor
+        channels are used.
+    foi : list of float, optional
+        Frequency range of interest [low, high] in Hz (default: [0, 256]).
+    woi : list of float, optional
+        Time window of interest [start, end] in ms (default: full epoch).
+    hann_windowing : bool, optional
+        Apply Hann windowing to the data prior to inversion (default: False).
+    n_folds : int, optional
+        Number of cross-validation folds used for spatial mode testing (default: 1).
+    ideal_pc_test : float, optional
+        Fraction of channels left out during cross-validation (default: 0).
+    inversion_idx : int, optional
+        Index of the inversion within the SPM data object (default: 0).
+    viz : bool, optional
+        Display SPM inversion progress and diagnostic plots (default: True).
+    return_mu_matrix : bool, optional
+        If True, return the full source reconstruction (projection) matrix
+        mapping sensor data to sources (default: False).
+    spm_instance : spm_standalone, optional
+        Active standalone SPM instance. If None, a temporary instance is created
+        and closed after execution.
+
+    Returns
+    -------
+    results : list
+        List containing:
+        free_energy : float
+            Variational free energy (model evidence) from the inversion.
+        cv_err : float
+            Cross-validation error across spatial-mode folds.
+        mu_matrix : scipy.sparse.csc_matrix, optional
+            Source reconstruction matrix mapping sensor data to source activity
+            (returned only if `return_mu_matrix=True`).
+
+    Notes
+    -----
+    - The forward model must be computed beforehand using `coregister()`.
+    - Mesh smoothing is performed with `spm_eeg_smoothmesh_multilayer_mm`.
+    - Spatial modes and cross-validation are computed using
+      `spm_eeg_inv_prep_modes_xval`.
+    - When multilayer meshes are used, correlated source priors are formed by
+      pairing vertices at the same cortical location across layers.
+    """
+    return _invert_ebb_base(
+        data_fname=data_fname,
+        surf_set=surf_set,
+        layer_name=layer_name,
+        stage=stage,
+        orientation=orientation,
+        fixed=fixed,
+        patch_size=patch_size,
+        n_temp_modes=n_temp_modes,
+        n_spatial_modes=n_spatial_modes,
+        foi=foi,
+        woi=woi,
+        hann_windowing=hann_windowing,
+        n_folds=n_folds,
+        ideal_pc_test=ideal_pc_test,
+        inversion_idx=inversion_idx,
+        viz=viz,
+        return_mu_matrix=return_mu_matrix,
+        spm_instance=spm_instance,
+        layerwise=True
+    )
+
+
 def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
                orientation='link_vector', fixed=True, priors=None, patch_size=5, n_temp_modes=4,
                n_spatial_modes=None, foi=None, woi=None, hann_windowing=False, n_folds=1,
@@ -460,334 +488,52 @@ def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
     if layer_name is None:
         n_layers = surf_set.n_layers
 
-    if foi is None:
-        foi = [0, 256]
+    norm = _normalize_inversion_inputs(
+        foi=foi,
+        woi=woi,
+        n_spatial_modes=n_spatial_modes,
+        priors=priors
+    )
 
-    if priors is None:
-        priors = []
+    spatialmodename, nmodes, pctest = _prepare_spatial_modes(
+        data_fname,
+        mesh_fname,
+        n_layers,
+        patch_size,
+        norm['n_spatial_modes'],
+        n_folds=n_folds,
+        ideal_pc_test=ideal_pc_test,
+        spm_instance=spm_instance
+    )
 
-    if woi is None:
-        woi = [-np.inf, np.inf]
-    elif isinstance(woi, np.ndarray):
-        woi = woi.tolist()
+    patchfilename = None
+    if len(norm['priors']) > 0:
+        data_dir = os.path.dirname(data_fname)
+        patchfilename = os.path.join(data_dir, f'patch_{inversion_idx}.mat')
+        savemat(patchfilename, {'Ip': norm['priors']})
 
-    if n_spatial_modes is None:
-        n_spatial_modes = matlab.double([])
-    else:
-        n_spatial_modes = float(n_spatial_modes)
-
-    priors = [x + 1 for x in priors]
-
-    # Extract directory name and file name without extension
-    data_dir, fname_with_ext = os.path.split(data_fname)
-    fname, _ = os.path.splitext(fname_with_ext)
-
-    with spm_context(spm_instance) as spm:
-        print(f'Smoothing {mesh_fname}')
-        _ = spm.spm_eeg_smoothmesh_multilayer_mm(
-            mesh_fname,
-            float(patch_size),
-            float(n_layers),
-            nargout=1
-        )
-
-        # Construct new file name with added '_testmodes.mat'
-        spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
-        spatialmodename, nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(
-            data_fname,
-            n_spatial_modes,
-            spatialmodesname,
-            float(n_folds),
-            float(ideal_pc_test),
-            nargout=3
-        )
-
-    cfg = {
-        "spm": {
-            "meeg": {
-                "source": {
-                    "invertiter": {
-                        "D": np.asarray([data_fname], dtype="object"),
-                        "val": (float(inversion_idx) + 1),
-                        "whatconditions": {
-                            "all": 1
-                        },
-                        "isstandard": {
-                            "custom": {
-                                "invfunc": 'Classic',
-                                "invtype": 'MSP',
-                                "woi": np.array(woi, dtype=float),
-                                "foi": np.array(foi, dtype=float),
-                                "hanning": float(hann_windowing),
-                                "patchfwhm": -float(patch_size),
-                                "mselect": float(0),
-                                "nsmodes": float(nmodes),
-                                "umodes": np.asarray([spatialmodename], dtype="object"),
-                                "ntmodes": float(n_temp_modes),
-                                "priors": {
-                                    "priorsmask": np.asarray([''], dtype="object"),
-                                    "space": 0
-                                },
-                                "outinv": '',
-                            }
-                        },
-                        "modality": np.asarray(['All'], dtype="object"),
-                        "crossval": np.asarray([pctest, n_folds], dtype=float)
-                    }
-                }
-            }
-        }
-    }
-    if len(priors) > 0:
-        patchfilename = os.path.join(data_dir, 'patch.mat')
-        savemat(patchfilename, {'Ip': priors})
-
-        cfg['spm']['meeg']['source']['invertiter']['isstandard']['custom']['isfixedpatch'] = {
-            "fixedpatch": {
-                "fixedfile": np.asarray([patchfilename], dtype="object"),
-                "fixedrows": np.array([1, np.inf], dtype=float)
-            }
-        }
-    else:
-        cfg['spm']['meeg']['source']['invertiter']['isstandard']['custom']['isfixedpatch'] = {
-            "randpatch": {
-                "npatches": float(512),
-                "niter": float(1)
-            }
-        }
-
+    cfg = _build_invertiter_cfg(
+        data_fname=data_fname,
+        inversion_idx=inversion_idx,
+        invtype='MSP',
+        woi=norm['woi'],
+        foi=norm['foi'],
+        nsmodes=nmodes,
+        spatialmodename=spatialmodename,
+        n_temp_modes=n_temp_modes,
+        patch_size=patch_size,
+        hann_windowing=hann_windowing,
+        pctest=pctest,
+        n_folds=n_folds,
+        patchfilename=patchfilename
+    )
     batch(cfg, viz=viz, spm_instance=spm_instance)
 
-    with h5py.File(data_fname, 'r') as file:
-        inverse_struct = file[file['D']['other']['inv'][inversion_idx][0]]['inverse']
-
-        free_energy = np.squeeze(inverse_struct['crossF'][()])
-        cv_err = np.squeeze(inverse_struct['crosserr'][()])
-
-        m_data = inverse_struct['M']['data'][()]
-        m_ir = inverse_struct['M']['ir'][()]
-        m_jc = inverse_struct['M']['jc'][()]
-        try:
-            data_reduction_mat = file[inverse_struct['U'][0][0]][()]
-        except AttributeError:
-            dr_data = file[inverse_struct['U'][0][0]]['data'][()]
-            dr_ir = file[inverse_struct['U'][0][0]]['ir'][()]
-            dr_jc = file[inverse_struct['U'][0][0]]['jc'][()]
-            num_rows = int(max(dr_ir)) + 1
-            num_cols = len(dr_jc) - 1
-            data_reduction_mat = csc_matrix(
-                (dr_data, dr_ir, dr_jc),
-                shape=(num_rows, num_cols)
-            )
-
-    if not return_mu_matrix:
-        return [free_energy, cv_err]
-
-    # Reconstruct the sparse matrix
-    num_rows = int(max(m_ir)) + 1  # Assuming 0-based indexing in Python
-    num_cols = len(m_jc) - 1  # The number of columns is one less than the length of jc
-    weighting_mat = csc_matrix((m_data, m_ir, m_jc), shape=(num_rows, num_cols))
-    mu_matrix = weighting_mat @ data_reduction_mat
-    return [free_energy, cv_err, mu_matrix]
-
-
-def invert_sliding_window_msp(prior, data_fname, surf_set, layer_name=None, stage='ds',
-                              orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=1,
-                              n_spatial_modes=None, wois=None, win_size=50, win_overlap=True,
-                              foi=None, hann_windowing=True, inversion_idx=0, viz=True,
-                              spm_instance=None):
-    """
-    Perform Multiple Sparse Priors (MSP) source inversion over sliding time windows.
-
-    This function applies SPM's MSP source reconstruction algorithm within successive overlapping
-    or non-overlapping time windows, enabling time-resolved estimation of source model evidence
-    (free energy). It smooths the surface mesh, prepares spatial modes, and repeatedly inverts the
-    MEG data across windows using a fixed spatial prior centered on a specified vertex. The MEG
-    dataset must already be coregistered with the surface mesh.
-
-    Parameters
-    ----------
-    prior : int
-        Index of the vertex to be used as the MSP prior (0-based Python indexing).
-    data_fname : str
-        Path to the MEG dataset (SPM-compatible .mat file).
-    surf_set : LayerSurfaceSet
-        The subject's surface set containing laminar meshes.
-    layer_name : str or None, optional
-        Surface layer to use for inversion (e.g., 'pial', 'white', or a fractional layer).
-        If None, the full multilayer surface is used.
-    stage : str, optional
-        Processing stage of the surface mesh (default: 'ds').
-    orientation : str, optional
-        Orientation model used for dipoles (default: 'link_vector').
-    fixed : bool, optional
-        Whether to use fixed dipole orientations across layers (default: True).
-    patch_size : float, optional
-        Full-width at half-maximum (FWHM) of cortical patch smoothing in millimeters (default: 5).
-    n_temp_modes : int, optional
-        Number of temporal modes for dimensionality reduction (default: 1).
-    n_spatial_modes : int or None, optional
-        Number of spatial modes for data reduction. If None, all channels are used.
-    wois : list of float, optional
-        List of time windows of interest [start, end] pairs in ms (default: None). 
-        If None, wois are generated on the full epoch, based on win_size and win_overlap
-        (parameters ignored otherwise).
-    win_size : float, optional
-        Duration of each sliding window in milliseconds (default: 50).
-    win_overlap : bool, optional
-        Whether consecutive windows overlap (default: True).
-    foi : list of float, optional
-        Frequency range of interest [low, high] in Hz (default: [0, 256]).
-    hann_windowing : bool, optional
-        Whether to apply Hann windowing to each window before inversion (default: True).
-    inversion_idx: int, optional
-        Index of the inversion to create within the SPM data object (default: 0).
-    viz : bool, optional
-        Whether to display SPM's inversion progress and diagnostic plots (default: True).
-    spm_instance : spm_standalone, optional
-        Active standalone SPM instance. If None, a temporary instance is created and closed after
-        execution.
-
-    Returns
-    -------
-    results : list
-        A list containing:
-        - free_energy : ndarray
-            Array of model evidence (free energy) values across time windows.
-        - wois : ndarray, shape (n_windows, 2)
-            Time windows of interest in milliseconds.
-
-    Notes
-    -----
-    - The forward model must be precomputed via `coregister()` before calling this function.
-    - The `prior` index is internally converted to 1-based indexing for MATLAB compatibility.
-    - Mesh smoothing uses `spm_eeg_smoothmesh_multilayer_mm`.
-    - Spatial mode preparation uses `spm_eeg_inv_prep_modes_xval`.
-    - Each windowed inversion uses the **Multiple Sparse Priors (MSP)** algorithm in SPM.
-    """
-
-    mesh_fname = surf_set.get_mesh_path(layer_name=layer_name, stage=stage,
-                                        orientation=orientation, fixed=fixed)
-    n_layers = 1
-    if layer_name is None:
-        n_layers = surf_set.n_layers
-
-    if foi is None:
-        foi = [0, 256]
-
-    if n_spatial_modes is None:
-        n_spatial_modes = matlab.double([])
-    else:
-        n_spatial_modes = float(n_spatial_modes)
-
-    prior = prior + 1.0
-
-    if wois is None:
-        _, time, _ = load_meg_sensor_data(data_fname)
-
-        time_step = time[1] - time[0]  # Compute the difference in time between steps
-        sampling_rate = 1000.0 / time_step
-        win_steps = int(round(win_size / time_step))  # Calculate the number of steps in each window
-
-        if (win_steps / n_temp_modes) < 2:
-            raise ValueError(
-                f"win_size={win_size} ms yields only {win_steps} samples "
-                f"({sampling_rate:.2f} Hz sampling). With n_temp_modes={n_temp_modes}, "
-                f"the ratio win_samples / n_temp_modes = {win_steps / n_temp_modes:.2f} < 2. "
-                "Increase win_size or reduce n_temp_modes."
-            )
-
-        wois = []
-        if win_overlap:
-            for t_idx in range(len(time)):
-                win_l = max(0, int(np.ceil(t_idx - win_steps / 2)))
-                win_r = min(len(time) - 1, int(np.floor(t_idx + win_steps / 2)))
-                woi = [time[win_l], time[win_r]]
-                wois.append(woi)
-        else:
-            time_steps = np.linspace(time[0], time[-1], int((time[-1] - time[0]) / win_size + 1))
-            for i in range(1, len(time_steps)):
-                wois.append([time_steps[i - 1], time_steps[i]])
-
-    wois = np.array(wois, dtype=float)
-
-    # Extract directory name and file name without extension
-    data_dir, fname_with_ext = os.path.split(data_fname)
-    fname, _ = os.path.splitext(fname_with_ext)
-
-    with spm_context(spm_instance) as spm:
-        print(f'Smoothing {mesh_fname}')
-        _ = spm.spm_eeg_smoothmesh_multilayer_mm(
-            mesh_fname,
-            float(patch_size),
-            float(n_layers),
-            nargout=1
-        )
-
-        # Construct new file name with added '_testmodes.mat'
-        spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
-        spatialmodename, nmodes, _ = spm.spm_eeg_inv_prep_modes_xval(
-            data_fname,
-            n_spatial_modes,
-            spatialmodesname,
-            1,
-            0,
-            nargout=3
-        )
-
-    patchfilename = os.path.join(data_dir, 'patch.mat')
-    savemat(patchfilename, {'Ip': np.array([prior], dtype=float)})
-
-    cfg = {
-        "spm": {
-            "meeg": {
-                "source": {
-                    "invertiter": {
-                        "D": np.asarray([data_fname], dtype="object"),
-                        "val": (float(inversion_idx) + 1),
-                        "whatconditions": {
-                            "all": 1
-                        },
-                        "isstandard": {
-                            "custom": {
-                                "invfunc": 'Classic',
-                                "invtype": 'MSP',
-                                "woi": wois,
-                                "foi": np.array(foi, dtype=float),
-                                "hanning": float(hann_windowing),
-                                "isfixedpatch": {
-                                    "fixedpatch": {
-                                        "fixedfile": np.asarray([patchfilename], dtype=object),
-                                        "fixedrows": np.array([1, np.inf], dtype=float)
-                                    }
-                                },
-                                "patchfwhm": -float(patch_size),
-                                "mselect": float(0),
-                                "nsmodes": float(nmodes),
-                                "umodes": np.asarray([spatialmodename], dtype="object"),
-                                "ntmodes": float(n_temp_modes),
-                                "priors": {
-                                    "priorsmask": np.asarray([''], dtype="object"),
-                                    "space": 0
-                                },
-                                "outinv": '',
-                            }
-                        },
-                        "modality": np.asarray(['All'], dtype="object"),
-                        "crossval": np.asarray([0, 1], dtype=float)
-                    }
-                }
-            }
-        }
-    }
-
-    batch(cfg, viz=viz, spm_instance=spm_instance)
-
-    with h5py.File(data_fname, 'r') as file:
-        inv_struct = file[file['D']['other']['inv'][inversion_idx][0]]
-        free_energy = np.squeeze(inv_struct['inverse']['crossF'][()])
-
-    return [free_energy, wois]
+    return _read_inversion_results(
+        data_fname,
+        inversion_idx=inversion_idx,
+        return_mu_matrix=return_mu_matrix
+    )
 
 
 def invert_sliding_window_ebb(data_fname, surf_set, layer_name=None, stage='ds',
@@ -860,72 +606,547 @@ def invert_sliding_window_ebb(data_fname, surf_set, layer_name=None, stage='ds',
     - Each windowed inversion uses the **Empirical Bayesian Beamformer (EBB)** algorithm in SPM.
     """
 
+    return _invert_sliding_window_ebb_base(
+        data_fname=data_fname,
+        surf_set=surf_set,
+        layer_name=layer_name,
+        stage=stage,
+        orientation=orientation,
+        fixed=fixed,
+        patch_size=patch_size,
+        n_temp_modes=n_temp_modes,
+        win_size=win_size,
+        win_overlap=win_overlap,
+        n_spatial_modes=n_spatial_modes,
+        foi=foi,
+        wois=wois,
+        hann_windowing=hann_windowing,
+        inversion_idx=inversion_idx,
+        viz=viz,
+        spm_instance=spm_instance,
+        layerwise=False
+    )
+
+
+def invert_sliding_window_ebb_layer(data_fname, surf_set, layer_name=None, stage='ds',
+                                    orientation='link_vector', fixed=True, patch_size=5,
+                                    n_temp_modes=1, n_spatial_modes=None, wois=None, win_size=50,
+                                    win_overlap=True, foi=None, hann_windowing=True,
+                                    inversion_idx=0, viz=True, spm_instance=None):
+    """
+    Perform sliding-window laminar Empirical Bayesian Beamformer (EBBlayer) source inversion.
+
+    This function applies a laminar extension of the Empirical Bayesian Beamformer (EBB)
+    within successive time windows, enabling time-resolved source inversion on either a
+    single cortical surface or a multilayer mesh. When a multilayer surface is used,
+    the inversion employs the EBBlayer model, which augments classic EBB with additional
+    spatial priors that capture correlated activity across cortical layers within the
+    same cortical column.
+
+    For multilayer meshes, the source prior includes three components:
+
+    1. Independent prior (classic EBB)
+       A standard EBB variance map computed from smoothed lead fields.
+
+    2. Correlated sum prior
+       Built from pairwise combinations of sources across layers
+       (q+ = l_a + l_b), favouring laminar co-activation.
+
+    3. Correlated difference prior
+       Built from pairwise differences across layers
+       (q- = l_a - l_b), favouring laminar contrast and improving separation
+       of nearby sources across depth.
+
+    Restricted Maximum Likelihood (ReML) estimates the contribution of these prior
+    components separately within each time window. Running the inversion in a sliding-
+    window manner is useful for laminar inference because temporally adjacent sources
+    in different layers may otherwise be merged when a single inversion is performed
+    over a broad time interval.
+
+    Before inversion, the source mesh is geodesically smoothed using
+    `spm_eeg_smoothmesh_multilayer_mm`, which smooths within layers while preserving
+    independence between layers.
+
+    Parameters
+    ----------
+    data_fname : str
+        Path to the MEG dataset (SPM-compatible `.mat` file).
+    surf_set : LayerSurfaceSet
+        Subject-specific surface set containing laminar meshes.
+    layer_name : str or None, optional
+        Surface layer to use for inversion (e.g., 'pial', 'white', or a fractional
+        layer). If None, the full multilayer surface is used.
+    stage : str, optional
+        Processing stage of the surface mesh (default: 'ds').
+    orientation : str, optional
+        Dipole orientation model (default: 'link_vector').
+    fixed : bool, optional
+        Whether dipole orientations are fixed relative to the cortical surface
+        (default: True).
+    patch_size : float, optional
+        Full-width at half-maximum (FWHM) of geodesic smoothing applied to the mesh
+        in millimetres (default: 5).
+    n_temp_modes : int, optional
+        Number of temporal modes used for dimensionality reduction within each time
+        window (default: 1).
+    n_spatial_modes : int or None, optional
+        Number of spatial modes used for dimensionality reduction. If None, all sensor
+        channels are used.
+    wois : list of float, optional
+        List of time windows of interest as [start, end] pairs in milliseconds.
+        If None, windows are generated automatically over the full epoch using
+        `win_size` and `win_overlap`.
+    win_size : float, optional
+        Duration of each sliding window in milliseconds (default: 50).
+    win_overlap : bool, optional
+        Whether consecutive windows overlap (default: True).
+    foi : list of float, optional
+        Frequency range of interest [low, high] in Hz (default: [0, 256]).
+    hann_windowing : bool, optional
+        Whether to apply Hann windowing to each time window before inversion
+        (default: True).
+    inversion_idx : int, optional
+        Index of the inversion within the SPM data object (default: 0).
+    viz : bool, optional
+        Display SPM inversion progress and diagnostic plots (default: True).
+    spm_instance : spm_standalone, optional
+        Active standalone SPM instance. If None, a temporary instance is created
+        and closed after execution.
+
+    Returns
+    -------
+    results : list
+        List containing:
+        free_energy : ndarray
+            Model evidence (variational free energy) for each time window.
+        wois : ndarray, shape (n_windows, 2)
+            Time windows of interest in milliseconds.
+
+    Notes
+    -----
+    - The forward model must be computed beforehand using `coregister()`.
+    - Mesh smoothing is performed with `spm_eeg_smoothmesh_multilayer_mm`.
+    - Spatial modes are prepared using `spm_eeg_inv_prep_modes_xval`.
+    - Each windowed inversion uses EBBlayer when a multilayer mesh is provided,
+      and classic EBB when a single surface is provided.
+    - Sliding-window inversion is recommended for laminar inference when sources
+      may change cortical depth over time.
+    """
+
+    return _invert_sliding_window_ebb_base(
+        data_fname=data_fname,
+        surf_set=surf_set,
+        layer_name=layer_name,
+        stage=stage,
+        orientation=orientation,
+        fixed=fixed,
+        patch_size=patch_size,
+        n_temp_modes=n_temp_modes,
+        win_size=win_size,
+        win_overlap=win_overlap,
+        n_spatial_modes=n_spatial_modes,
+        foi=foi,
+        wois=wois,
+        hann_windowing=hann_windowing,
+        inversion_idx=inversion_idx,
+        viz=viz,
+        spm_instance=spm_instance,
+        layerwise=True
+    )
+
+
+def invert_sliding_window_msp(prior, data_fname, surf_set, layer_name=None, stage='ds',
+                              orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=1,
+                              n_spatial_modes=None, wois=None, win_size=50, win_overlap=True,
+                              foi=None, hann_windowing=True, inversion_idx=0, viz=True,
+                              spm_instance=None):
+    """
+    Perform Multiple Sparse Priors (MSP) source inversion over sliding time windows.
+
+    This function applies SPM's MSP source reconstruction algorithm within successive overlapping
+    or non-overlapping time windows, enabling time-resolved estimation of source model evidence
+    (free energy). It smooths the surface mesh, prepares spatial modes, and repeatedly inverts the
+    MEG data across windows using a fixed spatial prior centered on a specified vertex. The MEG
+    dataset must already be coregistered with the surface mesh.
+
+    Parameters
+    ----------
+    prior : int
+        Index of the vertex to be used as the MSP prior (0-based Python indexing).
+    data_fname : str
+        Path to the MEG dataset (SPM-compatible .mat file).
+    surf_set : LayerSurfaceSet
+        The subject's surface set containing laminar meshes.
+    layer_name : str or None, optional
+        Surface layer to use for inversion (e.g., 'pial', 'white', or a fractional layer).
+        If None, the full multilayer surface is used.
+    stage : str, optional
+        Processing stage of the surface mesh (default: 'ds').
+    orientation : str, optional
+        Orientation model used for dipoles (default: 'link_vector').
+    fixed : bool, optional
+        Whether to use fixed dipole orientations across layers (default: True).
+    patch_size : float, optional
+        Full-width at half-maximum (FWHM) of cortical patch smoothing in millimeters (default: 5).
+    n_temp_modes : int, optional
+        Number of temporal modes for dimensionality reduction (default: 1).
+    n_spatial_modes : int or None, optional
+        Number of spatial modes for data reduction. If None, all channels are used.
+    wois : list of float, optional
+        List of time windows of interest [start, end] pairs in ms (default: None).
+        If None, wois are generated on the full epoch, based on win_size and win_overlap
+        (parameters ignored otherwise).
+    win_size : float, optional
+        Duration of each sliding window in milliseconds (default: 50).
+    win_overlap : bool, optional
+        Whether consecutive windows overlap (default: True).
+    foi : list of float, optional
+        Frequency range of interest [low, high] in Hz (default: [0, 256]).
+    hann_windowing : bool, optional
+        Whether to apply Hann windowing to each window before inversion (default: True).
+    inversion_idx: int, optional
+        Index of the inversion to create within the SPM data object (default: 0).
+    viz : bool, optional
+        Whether to display SPM's inversion progress and diagnostic plots (default: True).
+    spm_instance : spm_standalone, optional
+        Active standalone SPM instance. If None, a temporary instance is created and closed after
+        execution.
+
+    Returns
+    -------
+    results : list
+        A list containing:
+        - free_energy : ndarray
+            Array of model evidence (free energy) values across time windows.
+        - wois : ndarray, shape (n_windows, 2)
+            Time windows of interest in milliseconds.
+
+    Notes
+    -----
+    - The forward model must be precomputed via `coregister()` before calling this function.
+    - The `prior` index is internally converted to 1-based indexing for MATLAB compatibility.
+    - Mesh smoothing uses `spm_eeg_smoothmesh_multilayer_mm`.
+    - Spatial mode preparation uses `spm_eeg_inv_prep_modes_xval`.
+    - Each windowed inversion uses the **Multiple Sparse Priors (MSP)** algorithm in SPM.
+    """
+
     mesh_fname = surf_set.get_mesh_path(layer_name=layer_name, stage=stage,
                                         orientation=orientation, fixed=fixed)
     n_layers = 1
     if layer_name is None:
         n_layers = surf_set.n_layers
 
+    wois = _compute_wois(
+        data_fname=data_fname,
+        wois=wois,
+        win_size=win_size,
+        win_overlap=win_overlap,
+        n_temp_modes=n_temp_modes
+    )
+
+    norm = _normalize_inversion_inputs(
+        foi=foi,
+        wois=wois,
+        n_spatial_modes=n_spatial_modes,
+        priors=[prior]
+    )
+
+    spatialmodename, nmodes, _ = _prepare_spatial_modes(
+        data_fname,
+        mesh_fname,
+        n_layers,
+        patch_size,
+        norm['n_spatial_modes'],
+        spm_instance=spm_instance
+    )
+
+    data_dir = os.path.dirname(data_fname)
+    patchfilename = os.path.join(data_dir, f'patch_{inversion_idx}.mat')
+    savemat(patchfilename, {'Ip': norm['priors']})
+
+    cfg = _build_invertiter_cfg(
+        data_fname=data_fname,
+        inversion_idx=inversion_idx,
+        invtype='MSP',
+        wois=norm['wois'],
+        foi=norm['foi'],
+        nsmodes=nmodes,
+        spatialmodename=spatialmodename,
+        n_temp_modes=n_temp_modes,
+        patch_size=patch_size,
+        hann_windowing=hann_windowing,
+        pctest=0,
+        n_folds=1,
+        patchfilename=patchfilename
+    )
+
+    batch(cfg, viz=viz, spm_instance=spm_instance)
+
+    free_energy = _read_sliding_window_free_energy(
+        data_fname,
+        inversion_idx=inversion_idx
+    )
+
+    return [free_energy, norm['wois']]
+
+
+# pylint: disable=R0912
+def _normalize_inversion_inputs(foi=None, woi=None, wois=None,
+                                n_spatial_modes=None, priors=None):
+    """
+    Normalize common inversion inputs for SPM source inversion.
+
+    Parameters
+    ----------
+    foi : sequence length 2 or None
+        Frequency range of interest. Defaults to [0, 256].
+    woi : sequence length 2 or None
+        Single time window of interest (ms).
+    wois : array-like shape (n_windows, 2) or None
+        Multiple windows of interest (ms).
+    n_spatial_modes : int or None
+        Number of spatial modes. If None, returns matlab.double([]).
+    priors : sequence of int or None
+        Python 0-based vertex indices.
+
+    Returns
+    -------
+    dict
+        Keys: 'foi', 'woi', 'wois', 'n_spatial_modes', 'priors'
+    """
+
+    if woi is not None and wois is not None:
+        raise ValueError("Specify only one of `woi` or `wois`.")
+
+    # ---- foi ----
     if foi is None:
-        foi = [0, 256]
-
-    if n_spatial_modes is None:
-        n_spatial_modes = matlab.double([])
+        foi_arr = np.array([0.0, 256.0])
     else:
-        n_spatial_modes = float(n_spatial_modes)
+        foi_arr = np.asarray(foi).astype(float).squeeze()
+        if foi_arr.shape != (2,):
+            raise ValueError("`foi` must have shape (2,)")
 
+    # ---- woi ----
+    woi_arr = None
     if wois is None:
-        _, time, _ = load_meg_sensor_data(data_fname)
-
-        time_step = time[1] - time[0]  # Compute the difference in time between steps
-        sampling_rate = 1000.0 / time_step
-        win_steps = int(round(win_size / time_step))  # Calculate the number of steps in each window
-
-        if (win_steps / n_temp_modes) < 2:
-            raise ValueError(
-                f"win_size={win_size} ms yields only {win_steps} samples "
-                f"({sampling_rate:.2f} Hz sampling). With n_temp_modes={n_temp_modes}, "
-                f"the ratio win_samples / n_temp_modes = {win_steps / n_temp_modes:.2f} < 2. "
-                "Increase win_size or reduce n_temp_modes."
-            )
-
-        wois = []
-        if win_overlap:
-            for t_idx in range(len(time)):
-                win_l = max(0, int(np.ceil(t_idx - win_steps / 2)))
-                win_r = min(len(time) - 1, int(np.floor(t_idx + win_steps / 2)))
-                woi = [time[win_l], time[win_r]]
-                wois.append(woi)
+        if woi is None:
+            woi_arr = np.array([-np.inf, np.inf])
         else:
-            time_steps = np.linspace(time[0], time[-1], int((time[-1] - time[0]) / win_size + 1))
-            for i in range(1, len(time_steps)):
-                wois.append([time_steps[i - 1], time_steps[i]])
+            woi_arr = np.asarray(woi).astype(float).squeeze()
+            if woi_arr.shape != (2,):
+                raise ValueError("`woi` must have shape (2,)")
 
-    wois = np.array(wois, dtype=float)
+    # ---- wois ----
+    wois_arr = None
+    if wois is not None:
+        wois_arr = np.asarray(wois).astype(float)
+        if wois_arr.ndim != 2 or wois_arr.shape[1] != 2:
+            raise ValueError("`wois` must have shape (n_windows, 2)")
 
-    # Extract directory name and file name without extension
+    # ---- spatial modes ----
+    if n_spatial_modes is None:
+        n_spatial_modes_norm = matlab.double([])
+    else:
+        n_spatial_modes_norm = float(n_spatial_modes)
+        if n_spatial_modes_norm <= 0:
+            raise ValueError("`n_spatial_modes` must be > 0")
+
+    # ---- priors ----
+    if priors is None:
+        priors_norm = []
+    else:
+        priors_arr = np.asarray(priors)
+
+        if not np.issubdtype(priors_arr.dtype, np.integer):
+            if not np.all(priors_arr == np.floor(priors_arr)):
+                raise TypeError("`priors` must contain integer indices")
+            priors_arr = priors_arr.astype(int)
+
+        if np.any(priors_arr < 0):
+            raise ValueError("`priors` must be non-negative")
+
+        # convert Python (0-based) ? MATLAB (1-based)
+        priors_norm = (priors_arr + 1).tolist()
+
+    return {
+        'foi': foi_arr,
+        'woi': woi_arr,
+        'wois': wois_arr,
+        'n_spatial_modes': n_spatial_modes_norm,
+        'priors': priors_norm
+    }
+
+
+def _prepare_spatial_modes(data_fname, mesh_fname, n_layers, patch_size,
+                           n_spatial_modes, n_folds=1, ideal_pc_test=0,
+                           spm_instance=None):
+    """
+    Prepare spatial modes for SPM source inversion.
+
+    This function performs the standard preprocessing required before running
+    an SPM source inversion. It first smooths the cortical mesh to enforce the
+    desired spatial patch size, then computes spatial modes using SPM?s
+    cross-validation routine (`spm_eeg_inv_prep_modes_xval`). These spatial
+    modes reduce the dimensionality of the sensor data and determine the
+    projection used during inversion.
+
+    The resulting spatial mode file is saved alongside the input MEEG file and
+    is reused by the inversion step.
+
+    Parameters
+    ----------
+    data_fname : str
+        Path to the SPM MEEG `.mat` dataset used for inversion.
+    mesh_fname : str
+        Path to the multilayer cortical mesh file used by SPM.
+    n_layers : int
+        Number of cortical layers in the mesh.
+    patch_size : float
+        Spatial smoothing kernel size in millimetres applied to the mesh
+        before inversion.
+    n_spatial_modes : int or matlab.double([])
+        Number of spatial modes to retain. If `matlab.double([])` is provided,
+        SPM determines the number of modes automatically.
+    n_folds : int, optional
+        Number of folds used for cross-validation when estimating spatial
+        modes (default: 1)
+    ideal_pc_test : float, optional
+        Target percentage of variance explained in the cross-validation test
+        set used by SPM when determining spatial modes (default: 0).
+    spm_instance : matlab.engine.MatlabEngine or None, optional
+        Existing MATLAB engine running SPM. If None, a new SPM context is
+        created internally.
+
+    Returns
+    -------
+    spatialmodename : str
+        Path to the `.mat` file containing the computed spatial modes.
+    nmodes : float
+        Number of spatial modes retained by SPM.
+    pctest : float
+        Percentage of variance explained in the cross-validation test set.
+
+    Notes
+    -----
+    The spatial modes are computed using
+    `spm_eeg_inv_prep_modes_xval`, which performs dimensionality reduction
+    using sensor covariance structure and cross-validation. The mesh smoothing
+    step uses `spm_eeg_smoothmesh_multilayer_mm` to enforce the desired patch
+    size on the cortical surface before inversion.
+    """
     data_dir, fname_with_ext = os.path.split(data_fname)
     fname, _ = os.path.splitext(fname_with_ext)
+    spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
 
     with spm_context(spm_instance) as spm:
         print(f'Smoothing {mesh_fname}')
-        _ = spm.spm_eeg_smoothmesh_multilayer_mm(
+        spm.spm_eeg_smoothmesh_multilayer_mm(
             mesh_fname,
             float(patch_size),
             float(n_layers),
             nargout=1
         )
 
-        # Construct new file name with added '_testmodes.mat'
-        spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
-        spatialmodename, nmodes, _ = spm.spm_eeg_inv_prep_modes_xval(
+        spatialmodename, nmodes, pctest = spm.spm_eeg_inv_prep_modes_xval(
             data_fname,
             n_spatial_modes,
             spatialmodesname,
-            1,
-            0,
+            float(n_folds),
+            float(ideal_pc_test),
             nargout=3
         )
+
+    return spatialmodename, nmodes, pctest
+
+
+def _build_invertiter_cfg(data_fname, inversion_idx, invtype,
+                          foi, nsmodes, spatialmodename, n_temp_modes,
+                          patch_size, hann_windowing,
+                          woi=None, wois=None,
+                          pctest=0, n_folds=1,
+                          n_layers=None,
+                          patchfilename=None):
+    """
+    Build the common SPM invertiter batch configuration.
+
+    Parameters
+    ----------
+    data_fname : str
+        Path to the SPM MEEG .mat file.
+    inversion_idx : int
+        Zero-based inversion index in Python. Converted internally to
+        MATLAB-style 1-based indexing.
+    invtype : str
+        SPM inversion type, e.g. 'EBB', 'EBBlayer', or 'MSP'.
+    foi : array-like, shape (2,)
+        Frequency range of interest.
+    nsmodes : int or float
+        Number of spatial modes retained.
+    spatialmodename : str
+        Path to the spatial modes .mat file.
+    n_temp_modes : int or float
+        Number of temporal modes.
+    patch_size : float
+        Patch FWHM in mm. Stored as negative value to match current code.
+    hann_windowing : bool or int
+        Whether to apply Hanning windowing.
+    woi : array-like, shape (2,), optional
+        Single time window of interest.
+    wois : array-like, shape (n_windows, 2), optional
+        Multiple time windows of interest.
+    pctest : float, optional
+        Cross-validation test percentage.
+    n_folds : int or float, optional
+        Number of cross-validation folds.
+    n_layers : int or float or None, optional
+        Number of cortical layers. Added only for layer-wise inversions.
+    patchfilename : str or None, optional
+        If provided, configures a fixed patch using this file. If None,
+        a random patch configuration is used.
+
+    Returns
+    -------
+    cfg : dict
+        SPM batch configuration dictionary for source inversion.
+    """
+    if (woi is None) == (wois is None):
+        raise ValueError('Specify exactly one of `woi` or `wois`.')
+
+    custom_cfg = {
+        "invfunc": 'Classic',
+        "invtype": invtype,
+        "woi": woi if woi is not None else wois,
+        "foi": np.asarray(foi, dtype=float),
+        "hanning": float(hann_windowing),
+        "patchfwhm": -float(patch_size),
+        "mselect": float(0),
+        "nsmodes": float(nsmodes),
+        "umodes": np.asarray([spatialmodename], dtype="object"),
+        "ntmodes": float(n_temp_modes),
+        "priors": {
+            "priorsmask": np.asarray([''], dtype="object"),
+            "space": 0
+        },
+        "outinv": '',
+    }
+
+    if n_layers is not None:
+        custom_cfg["nlayers"] = float(n_layers)
+
+    if patchfilename is not None:
+        custom_cfg["isfixedpatch"] = {
+            "fixedpatch": {
+                "fixedfile": np.asarray([patchfilename], dtype="object"),
+                "fixedrows": np.array([1, np.inf], dtype=float)
+            }
+        }
+    else:
+        custom_cfg["isfixedpatch"] = {
+            "randpatch": {
+                "npatches": float(512),
+                "niter": float(1)
+            }
+        }
 
     cfg = {
         "spm": {
@@ -933,195 +1154,356 @@ def invert_sliding_window_ebb(data_fname, surf_set, layer_name=None, stage='ds',
                 "source": {
                     "invertiter": {
                         "D": np.asarray([data_fname], dtype="object"),
-                        "val": (float(inversion_idx) + 1),
+                        "val": float(inversion_idx) + 1,
                         "whatconditions": {
                             "all": 1
                         },
                         "isstandard": {
-                            "custom": {
-                                "invfunc": 'Classic',
-                                "invtype": 'EBB',
-                                "woi": wois,
-                                "foi": np.array(foi, dtype=float),
-                                "hanning": float(hann_windowing),
-                                "isfixedpatch": {
-                                    "randpatch": {
-                                        "npatches": float(512),
-                                        "niter": float(1)
-                                    }
-                                },
-                                "patchfwhm": -float(patch_size),
-                                "mselect": float(0),
-                                "nsmodes": float(nmodes),
-                                "umodes": np.asarray([spatialmodename], dtype="object"),
-                                "ntmodes": float(n_temp_modes),
-                                "priors": {
-                                    "priorsmask": np.asarray([''], dtype="object"),
-                                    "space": 0
-                                },
-                                "outinv": '',
-                            }
+                            "custom": custom_cfg
                         },
                         "modality": np.asarray(['All'], dtype="object"),
-                        "crossval": np.asarray([0, 1], dtype=float)
+                        "crossval": np.asarray([pctest, n_folds], dtype=float)
                     }
                 }
             }
         }
     }
 
-    batch(cfg, viz=viz, spm_instance=spm_instance)
-
-    with h5py.File(data_fname, 'r') as file:
-        inv_struct = file[file['D']['other']['inv'][inversion_idx][0]]
-        free_energy = np.squeeze(inv_struct['inverse']['crossF'][()])
-
-    return [free_energy, wois]
+    return cfg
 
 
-def _h5_ref(file, ref):
-    return file[ref]
-
-
-def _h5_to_csc(group):
-    data = group["data"][()]
-    ir_vals = group["ir"][()]
-    jc_vals = group["jc"][()]
-    n_rows = int(ir_vals.max()) + 1 if ir_vals.size else 0
-    n_cols = len(jc_vals) - 1
-    return csc_matrix((data, ir_vals, jc_vals), shape=(n_rows, n_cols))
-
-
-def _mat_to_csc(mat):
-    return mat if issparse(mat) else csc_matrix(mat)
-
-
-# pylint: disable=too-many-branches
-def _load_inverse_components(inv_fname, inversion_idx=0):
+def _compute_wois(data_fname, wois=None, win_size=50, win_overlap=True,
+                  n_temp_modes=1):
     """
-    Returns dict with keys:
-      - "U"  (csc or dense)
-      - "TT" (dense; temporal_projector @ temporal_projector.T)
-      - either "M" or ("M_win" and "woi")
+    Return validated or generated time windows of interest.
+
+    Parameters
+    ----------
+    data_fname : str
+        Path to the SPM MEEG .mat file.
+    wois : array-like or None, optional
+        Predefined windows of interest, shape (n_windows, 2). If None,
+        windows are generated from the dataset time axis.
+    win_size : float, optional
+        Window duration in milliseconds when generating windows.
+    win_overlap : bool, optional
+        If True, generate overlapping windows centered on each time sample.
+        If False, generate consecutive non-overlapping windows.
+    n_temp_modes : int, optional
+        Number of temporal modes. Used to validate that each window has
+        enough samples for inversion.
+
+    Returns
+    -------
+    wois : numpy.ndarray
+        Array of shape (n_windows, 2) containing window start and end times
+        in milliseconds.
     """
-    try:
-        with h5py.File(inv_fname, "r") as file:
-            inv_root = file[file["D"]["other"]["inv"][inversion_idx][0]]["inverse"]
+    if wois is not None:
+        wois = np.asarray(wois).astype(float)
+        if wois.ndim != 2 or wois.shape[1] != 2:
+            raise ValueError("`wois` must have shape (n_windows, 2)")
+        return wois
 
-            # U
-            u_ref = inv_root["U"][0][0]
-            u_obj = file[u_ref]
-            if isinstance(u_obj, h5py.Group):
-                u_matrix = _h5_to_csc(u_obj)
-            else:
-                u_matrix = np.array(u_obj)
+    _, time, _ = load_meg_sensor_data(data_fname)
+    time = np.asarray(time).astype(float).squeeze()
 
-            # TT
-            temporal_projector = inv_root["T"][()].T
-            temp_projector_mat = temporal_projector @ temporal_projector.T
+    if time.ndim != 1 or len(time) < 2:
+        raise ValueError("Time vector must be one-dimensional with at least 2 samples.")
 
-            out = {"U": u_matrix, "TT": temp_projector_mat}
+    if n_temp_modes <= 0:
+        raise ValueError("`n_temp_modes` must be > 0.")
 
-            # M_win (cell array) or M
-            if "M_win" in inv_root:
-                mwin_refs = np.asarray(inv_root["M_win"][()]).squeeze()
-                if mwin_refs.ndim == 0:
-                    mwin_refs = np.array([mwin_refs])
+    time_step = time[1] - time[0]
+    if time_step <= 0:
+        raise ValueError("Time vector must be strictly increasing.")
 
-                m_win = []
-                for ref in mwin_refs:
-                    m_obj = _h5_ref(file, ref)
-                    if isinstance(m_obj, h5py.Group) and \
-                            all(k in m_obj for k in ("data", "ir", "jc")):
-                        m_win.append(_h5_to_csc(m_obj))
-                    else:
-                        m_win.append(np.array(m_obj))
-                out["M_win"] = m_win
+    sampling_rate = 1000.0 / time_step
+    win_steps = int(round(float(win_size) / time_step))
 
-                if "woi" not in inv_root:
-                    raise ValueError("Found `M_win` but no `woi` field in the inverse.")
-                out["woi"] = np.asarray(inv_root["woi"][()]).T
+    if win_steps < 1:
+        raise ValueError("`win_size` is too small for the dataset sampling interval.")
 
-            else:
-                out["M"] = _h5_to_csc(inv_root["M"])
-
-            return out
-
-    except OSError:
-        mat = loadmat(inv_fname, simplify_cells=True)
-        inv = mat["D"]["other"]["inv"][inversion_idx]
-
-        # U
-        u_raw = inv["U"][0] if isinstance(inv["U"], (list, tuple, np.ndarray)) else inv["U"]
-        u_matrix = u_raw if issparse(u_raw) else csc_matrix(u_raw)
-
-        # TT
-        temporal_projector = inv["T"].T
-        temp_projector_mat = temporal_projector @ temporal_projector.T
-
-        out = {"U": u_matrix, "TT": temp_projector_mat}
-
-        if "M_win" in inv and inv["M_win"] is not None:
-            m_win_raw = inv["M_win"]
-            if not isinstance(m_win_raw, (list, tuple, np.ndarray)):
-                m_win_raw = [m_win_raw]
-            out["M_win"] = [m if issparse(m) else csc_matrix(m) for m in list(m_win_raw)]
-
-            if "woi" not in inv or inv["woi"] is None:
-                raise ValueError("Found `M_win` but no `woi` field in the inverse.") # pylint: disable=raise-missing-from
-            out["woi"] = np.asarray(inv["woi"]).T
-        else:
-            out["M"] = _mat_to_csc(inv["M"])
-
-        return out
-
-
-def _indices_for_woi(time_ms, woi_row):
-    """Indices where time is within [start, end] (inclusive)."""
-    time_0, time_1 = float(woi_row[0]), float(woi_row[1])
-    lo_idx, hi_idx = (time_0, time_1) if time_0 <= time_1 else (time_1, time_0)
-    return np.where((time_ms >= lo_idx) & (time_ms <= hi_idx))[0]
-
-
-def _pad_or_trim_sensor_to_temp_projector(sensor_data, temp_projector_mat):
-    """Pad/trim sensor_data time dimension to match temp_projector_mat.shape[0]
-     if off by 1 sample."""
-    n_time = sensor_data.shape[1]
-    if temp_projector_mat.shape[0] == n_time:
-        return sensor_data, n_time
-
-    diff = temp_projector_mat.shape[0] - n_time
-    if abs(diff) != 1:
+    if (float(win_steps) / float(n_temp_modes)) < 2.0:
         raise ValueError(
-            f"Temporal projector ({temp_projector_mat.shape}) and sensor data "
-            f"({sensor_data.shape}) differ by >1 sample."
+            f"win_size={win_size} ms yields only {win_steps} samples ({sampling_rate:.2f} Hz "
+            f"sampling). With n_temp_modes={n_temp_modes}, the ratio win_samples / n_temp_modes = "
+            f"{win_steps / n_temp_modes:.2f} < 2. Increase win_size or reduce n_temp_modes."
         )
 
-    if sensor_data.ndim == 2:
-        if diff > 0:
-            sensor_data = np.pad(sensor_data, ((0, 0), (0, diff)), mode="constant")
-        else:
-            sensor_data = sensor_data[:, :temp_projector_mat.shape[0]]
+    out_wois = []
+
+    if win_overlap:
+        half_win = win_steps / 2.0
+        for t_idx in range(len(time)):
+            win_l = max(0, int(np.ceil(t_idx - half_win)))
+            win_r = min(len(time) - 1, int(np.floor(t_idx + half_win)))
+            out_wois.append([time[win_l], time[win_r]])
     else:
-        if diff > 0:
-            sensor_data = np.pad(sensor_data, ((0, 0), (0, diff), (0, 0)), mode="constant")
-        else:
-            sensor_data = sensor_data[:, :temp_projector_mat.shape[0], :]
+        time_steps = np.linspace(
+            time[0],
+            time[-1],
+            int((time[-1] - time[0]) / float(win_size) + 1)
+        )
+        for i in range(1, len(time_steps)):
+            out_wois.append([time_steps[i - 1], time_steps[i]])
 
-    return sensor_data, n_time  # return original n_time for later restoration
-
-
-def _restore_time_length(time_series, orig_n_time):
-    """Ensure time_series has exactly orig_n_time along axis=1 (pad with zeros or trim)."""
-    cur = time_series.shape[1]
-    if cur == orig_n_time:
-        return time_series
-    if cur < orig_n_time:
-        return np.pad(time_series, ((0, 0), (0, orig_n_time - cur)), mode="constant")
-    return time_series[:, :orig_n_time]
+    return np.asarray(out_wois).astype(float)
 
 
-# pylint: disable=too-many-branches
+def _read_inversion_results(data_fname, inversion_idx=0, return_mu_matrix=False):
+    """
+    Read inversion outputs from an SPM MEEG file.
+
+    Parameters
+    ----------
+    data_fname : str
+        Path to the SPM MEEG .mat file.
+    inversion_idx : int, optional
+        Index of the inversion to read (default: 0).
+    return_mu_matrix : bool, optional
+        If True, also reconstruct and return the source reconstruction
+        matrix M @ U (default: False).
+
+    Returns
+    -------
+    results : list
+        If return_mu_matrix is False:
+            [free_energy, cv_err]
+        If return_mu_matrix is True:
+            [free_energy, cv_err, mu_matrix]
+    """
+    try:
+        with h5py.File(data_fname, 'r') as file:
+            inv_struct = file[file['D']['other']['inv'][inversion_idx][0]]['inverse']
+
+            free_energy = np.squeeze(inv_struct['crossF'][()])
+            cv_err = np.squeeze(inv_struct['crosserr'][()])
+
+            if not return_mu_matrix:
+                return [free_energy, cv_err]
+
+            weighting_mat = _h5_to_csc(inv_struct['M'])
+
+            u_ref = inv_struct['U'][0][0]
+            u_obj = file[u_ref]
+
+            if isinstance(u_obj, h5py.Group) and \
+                    all(k in u_obj for k in ('data', 'ir', 'jc')):
+                data_reduction_mat = _h5_to_csc(u_obj)
+            else:
+                data_reduction_mat = np.array(u_obj)
+
+            mu_matrix = weighting_mat.dot(data_reduction_mat)
+            return [free_energy, cv_err, mu_matrix]
+
+    except OSError:
+        mat = loadmat(data_fname, simplify_cells=True)
+        inv_struct = mat['D']['other']['inv'][inversion_idx]
+
+        # Be tolerant to whether simplify_cells keeps or removes the 'inverse' level
+        if isinstance(inv_struct, dict) and 'inverse' in inv_struct:
+            inv_struct = inv_struct['inverse']
+
+        free_energy = np.squeeze(inv_struct['crossF'])
+        cv_err = np.squeeze(inv_struct['crosserr'])
+
+        if not return_mu_matrix:
+            return [free_energy, cv_err]
+
+        weighting_mat = _mat_to_csc(inv_struct['M'])
+
+        u_matrix = inv_struct['U']
+        if isinstance(u_matrix, (list, tuple, np.ndarray)):
+            if len(np.shape(u_matrix)) > 0 and np.shape(u_matrix)[0] == 1:
+                u_matrix = u_matrix[0]
+        data_reduction_mat = _mat_to_csc(u_matrix)
+
+        mu_matrix = weighting_mat.dot(data_reduction_mat)
+        return [free_energy, cv_err, mu_matrix]
+
+
+def _read_sliding_window_free_energy(data_fname, inversion_idx=0):
+    """
+    Read sliding-window free energy from an SPM MEEG file.
+
+    Parameters
+    ----------
+    data_fname : str
+        Path to the SPM MEEG .mat file.
+    inversion_idx : int, optional
+        Index of the inversion to read (default: 0).
+
+    Returns
+    -------
+    free_energy : numpy.ndarray or float
+        Free energy values for each sliding window.
+    """
+    try:
+        with h5py.File(data_fname, 'r') as file:
+            inv_struct = file[file['D']['other']['inv'][inversion_idx][0]]['inverse']
+            free_energy = np.squeeze(inv_struct['crossF'][()])
+            return free_energy
+
+    except OSError:
+        mat = loadmat(data_fname, simplify_cells=True)
+        inv_struct = mat['D']['other']['inv'][inversion_idx]
+
+        if isinstance(inv_struct, dict) and 'inverse' in inv_struct:
+            inv_struct = inv_struct['inverse']
+
+        free_energy = np.squeeze(inv_struct['crossF'])
+        return free_energy
+
+
+def _invert_ebb_base(data_fname, surf_set, layer_name=None, stage='ds',
+                     orientation='link_vector', fixed=True, patch_size=5,
+                     n_temp_modes=4, n_spatial_modes=None, foi=None, woi=None,
+                     hann_windowing=False, n_folds=1, ideal_pc_test=0,
+                     inversion_idx=0, viz=True, return_mu_matrix=False,
+                     spm_instance=None, layerwise=False):
+    """
+    Internal implementation for EBB inversion.
+
+    Parameters
+    ----------
+    layerwise : bool, optional
+        If True, use SPM's layer-wise EBB inversion ('EBBlayer') and include
+        the number of layers in the inversion config. If False, use standard
+        EBB ('EBB').
+    """
+    mesh_fname = surf_set.get_mesh_path(layer_name=layer_name, stage=stage,
+                                        orientation=orientation, fixed=fixed)
+
+    n_layers = 1
+    if layer_name is None:
+        n_layers = surf_set.n_layers
+
+    norm = _normalize_inversion_inputs(
+        foi=foi,
+        woi=woi,
+        n_spatial_modes=n_spatial_modes
+    )
+
+    spatialmodename, nmodes, pctest = _prepare_spatial_modes(
+        data_fname,
+        mesh_fname,
+        n_layers,
+        patch_size,
+        norm['n_spatial_modes'],
+        n_folds=n_folds,
+        ideal_pc_test=ideal_pc_test,
+        spm_instance=spm_instance
+    )
+
+    cfg = _build_invertiter_cfg(
+        data_fname=data_fname,
+        inversion_idx=inversion_idx,
+        invtype='EBBlayer' if layerwise else 'EBB',
+        woi=norm['woi'],
+        foi=norm['foi'],
+        nsmodes=nmodes,
+        spatialmodename=spatialmodename,
+        n_temp_modes=n_temp_modes,
+        patch_size=patch_size,
+        hann_windowing=hann_windowing,
+        pctest=pctest,
+        n_folds=n_folds,
+        n_layers=n_layers if layerwise else None
+    )
+
+    batch(cfg, viz=viz, spm_instance=spm_instance)
+
+    return _read_inversion_results(
+        data_fname,
+        inversion_idx=inversion_idx,
+        return_mu_matrix=return_mu_matrix
+    )
+
+
+def _invert_sliding_window_ebb_base(
+        data_fname, surf_set, layer_name=None, stage='ds',
+        orientation='link_vector', fixed=True, patch_size=5,
+        n_temp_modes=1, win_size=50, win_overlap=True,
+        n_spatial_modes=None, foi=None, wois=None,
+        hann_windowing=False, inversion_idx=0, viz=True,
+        spm_instance=None, layerwise=False):
+    """
+    Internal implementation for sliding-window EBB inversion.
+
+    Parameters
+    ----------
+    layerwise : bool, optional
+        If True, use SPM's layer-wise EBB inversion ('EBBlayer') and include
+        the number of layers in the inversion config. If False, use standard
+        EBB ('EBB').
+
+    Returns
+    -------
+    results : list
+        [free_energy, wois]
+    """
+    mesh_fname = surf_set.get_mesh_path(
+        layer_name=layer_name,
+        stage=stage,
+        orientation=orientation,
+        fixed=fixed
+    )
+
+    n_layers = 1
+    if layer_name is None:
+        n_layers = surf_set.n_layers
+
+    wois = _compute_wois(
+        data_fname=data_fname,
+        wois=wois,
+        win_size=win_size,
+        win_overlap=win_overlap,
+        n_temp_modes=n_temp_modes
+    )
+
+    norm = _normalize_inversion_inputs(
+        foi=foi,
+        wois=wois,
+        n_spatial_modes=n_spatial_modes
+    )
+
+    spatialmodename, nmodes, _ = _prepare_spatial_modes(
+        data_fname,
+        mesh_fname,
+        n_layers,
+        patch_size,
+        norm['n_spatial_modes'],
+        spm_instance=spm_instance
+    )
+
+    cfg = _build_invertiter_cfg(
+        data_fname=data_fname,
+        inversion_idx=inversion_idx,
+        invtype='EBBlayer' if layerwise else 'EBB',
+        wois=norm['wois'],
+        foi=norm['foi'],
+        nsmodes=nmodes,
+        spatialmodename=spatialmodename,
+        n_temp_modes=n_temp_modes,
+        patch_size=patch_size,
+        hann_windowing=hann_windowing,
+        pctest=0,
+        n_folds=1,
+        n_layers=n_layers if layerwise else None
+    )
+
+    batch(cfg, viz=viz, spm_instance=spm_instance)
+
+    free_energy = _read_sliding_window_free_energy(
+        data_fname,
+        inversion_idx=inversion_idx
+    )
+
+    return [free_energy, norm['wois']]
+
+
+# pylint: disable=too-many-branches, R0915
 def load_source_time_series(
     data_fname,
     mu_matrix=None,
@@ -1474,3 +1856,145 @@ def get_lead_field_rms_diff(data_file, surf_set, inversion_idx=0):
             lf_diff = layer_lf_mat[j, i, :] - layer_lf_mat[j, 0, :]
             diff_layer_lf_mat[j, i] = np.sqrt(np.mean((lf_diff) ** 2))
     return diff_layer_lf_mat[:, -1]
+
+
+def _h5_ref(file, ref):
+    return file[ref]
+
+
+def _h5_to_csc(group):
+    data = group["data"][()]
+    ir_vals = group["ir"][()]
+    jc_vals = group["jc"][()]
+    n_rows = int(ir_vals.max()) + 1 if ir_vals.size else 0
+    n_cols = len(jc_vals) - 1
+    return csc_matrix((data, ir_vals, jc_vals), shape=(n_rows, n_cols))
+
+
+def _mat_to_csc(mat):
+    return mat if issparse(mat) else csc_matrix(mat)
+
+
+# pylint: disable=too-many-branches
+def _load_inverse_components(inv_fname, inversion_idx=0):
+    """
+    Returns dict with keys:
+      - "U"  (csc or dense)
+      - "TT" (dense; temporal_projector @ temporal_projector.T)
+      - either "M" or ("M_win" and "woi")
+    """
+    try:
+        with h5py.File(inv_fname, "r") as file:
+            inv_root = file[file["D"]["other"]["inv"][inversion_idx][0]]["inverse"]
+
+            # U
+            u_ref = inv_root["U"][0][0]
+            u_obj = file[u_ref]
+            if isinstance(u_obj, h5py.Group):
+                u_matrix = _h5_to_csc(u_obj)
+            else:
+                u_matrix = np.array(u_obj)
+
+            # TT
+            temporal_projector = inv_root["T"][()].T
+            temp_projector_mat = temporal_projector @ temporal_projector.T
+
+            out = {"U": u_matrix, "TT": temp_projector_mat}
+
+            # M_win (cell array) or M
+            if "M_win" in inv_root:
+                mwin_refs = np.asarray(inv_root["M_win"][()]).squeeze()
+                if mwin_refs.ndim == 0:
+                    mwin_refs = np.array([mwin_refs])
+
+                m_win = []
+                for ref in mwin_refs:
+                    m_obj = _h5_ref(file, ref)
+                    if isinstance(m_obj, h5py.Group) and \
+                            all(k in m_obj for k in ("data", "ir", "jc")):
+                        m_win.append(_h5_to_csc(m_obj))
+                    else:
+                        m_win.append(np.array(m_obj))
+                out["M_win"] = m_win
+
+                if "woi" not in inv_root:
+                    raise ValueError("Found `M_win` but no `woi` field in the inverse.")
+                out["woi"] = np.asarray(inv_root["woi"][()]).T
+
+            else:
+                out["M"] = _h5_to_csc(inv_root["M"])
+
+            return out
+
+    except OSError:
+        mat = loadmat(inv_fname, simplify_cells=True)
+        inv = mat["D"]["other"]["inv"][inversion_idx]
+
+        # U
+        u_raw = inv["U"][0] if isinstance(inv["U"], (list, tuple, np.ndarray)) else inv["U"]
+        u_matrix = u_raw if issparse(u_raw) else csc_matrix(u_raw)
+
+        # TT
+        temporal_projector = inv["T"].T
+        temp_projector_mat = temporal_projector @ temporal_projector.T
+
+        out = {"U": u_matrix, "TT": temp_projector_mat}
+
+        if "M_win" in inv and inv["M_win"] is not None:
+            m_win_raw = inv["M_win"]
+            if not isinstance(m_win_raw, (list, tuple, np.ndarray)):
+                m_win_raw = [m_win_raw]
+            out["M_win"] = [m if issparse(m) else csc_matrix(m) for m in list(m_win_raw)]
+
+            if "woi" not in inv or inv["woi"] is None:
+                raise ValueError("Found `M_win` but no `woi` field in the inverse.") # pylint: disable=raise-missing-from
+            out["woi"] = np.asarray(inv["woi"]).T
+        else:
+            out["M"] = _mat_to_csc(inv["M"])
+
+        return out
+
+
+def _indices_for_woi(time_ms, woi_row):
+    """Indices where time is within [start, end] (inclusive)."""
+    time_0, time_1 = float(woi_row[0]), float(woi_row[1])
+    lo_idx, hi_idx = (time_0, time_1) if time_0 <= time_1 else (time_1, time_0)
+    return np.where((time_ms >= lo_idx) & (time_ms <= hi_idx))[0]
+
+
+def _pad_or_trim_sensor_to_temp_projector(sensor_data, temp_projector_mat):
+    """Pad/trim sensor_data time dimension to match temp_projector_mat.shape[0]
+     if off by 1 sample."""
+    n_time = sensor_data.shape[1]
+    if temp_projector_mat.shape[0] == n_time:
+        return sensor_data, n_time
+
+    diff = temp_projector_mat.shape[0] - n_time
+    if abs(diff) != 1:
+        raise ValueError(
+            f"Temporal projector ({temp_projector_mat.shape}) and sensor data "
+            f"({sensor_data.shape}) differ by >1 sample."
+        )
+
+    if sensor_data.ndim == 2:
+        if diff > 0:
+            sensor_data = np.pad(sensor_data, ((0, 0), (0, diff)), mode="constant")
+        else:
+            sensor_data = sensor_data[:, :temp_projector_mat.shape[0]]
+    else:
+        if diff > 0:
+            sensor_data = np.pad(sensor_data, ((0, 0), (0, diff), (0, 0)), mode="constant")
+        else:
+            sensor_data = sensor_data[:, :temp_projector_mat.shape[0], :]
+
+    return sensor_data, n_time  # return original n_time for later restoration
+
+
+def _restore_time_length(time_series, orig_n_time):
+    """Ensure time_series has exactly orig_n_time along axis=1 (pad with zeros or trim)."""
+    cur = time_series.shape[1]
+    if cur == orig_n_time:
+        return time_series
+    if cur < orig_n_time:
+        return np.pad(time_series, ((0, 0), (0, orig_n_time - cur)), mode="constant")
+    return time_series[:, :orig_n_time]
