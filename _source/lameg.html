@@ -600,6 +600,93 @@ execution.</p></li>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="lameg.invert.invert_ebb_layer">
+<span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">invert_ebb_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ds'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_temp_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_spatial_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">foi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hann_windowing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_folds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ideal_pc_test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inversion_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.invert.invert_ebb_layer" title="Permalink to this definition">#</a></dt>
+<dd><p>Perform laminar Empirical Bayesian Beamformer (EBBlayer) source inversion on MEG data.</p>
+<p>This function runs a laminar extension of the Empirical Bayesian Beamformer (EBB)
+implemented in SPM. The method operates on either a single cortical surface or a
+multilayer mesh representing cortical depth. When a multilayer surface is used,
+the inversion employs a modified EBB formulation (“EBBlayer”) that models potential
+correlated activity across layers within the same cortical column.</p>
+<p>The EBBlayer model introduces multiple spatial source priors that are combined and
+weighted using Restricted Maximum Likelihood (ReML):</p>
+<ol class="arabic simple">
+<li><p>Independent prior (classic EBB)
+A standard EBB variance map computed from smoothed lead fields.</p></li>
+<li><p>Correlated sum prior
+Constructed from pairwise combinations of sources across layers
+(q+ = l_a + l_b), capturing activity that is shared across laminar levels.</p></li>
+<li><p>Correlated difference prior
+Constructed from pairwise differences across layers
+(q- = l_a - l_b), emphasising laminar contrast and helping separate nearby
+sources located at different cortical depths.</p></li>
+</ol>
+<p>ReML estimates hyperparameters that determine the contribution of each prior
+component. This allows the inversion to adaptively balance independent,
+co-activation, and depth-contrast structure in the data.</p>
+<p>Prior to inversion, the cortical mesh is geodesically smoothed using
+<cite>spm_eeg_smoothmesh_multilayer_mm</cite>, which creates spatial patches along each
+surface while preserving independence between layers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_fname</strong> (<em>str</em>) – Path to the MEG dataset (SPM-compatible <cite>.mat</cite> file).</p></li>
+<li><p><strong>surf_set</strong> (<a class="reference internal" href="#lameg.surf.LayerSurfaceSet" title="lameg.surf.LayerSurfaceSet"><em>LayerSurfaceSet</em></a>) – Subject-specific surface set containing laminar meshes.</p></li>
+<li><p><strong>layer_name</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Surface layer to use for inversion (e.g., ‘pial’, ‘white’, or a fractional
+layer). If None, the full multilayer surface is used.</p></li>
+<li><p><strong>stage</strong> (<em>str</em><em>, </em><em>optional</em>) – Processing stage of the surface mesh (default: ‘ds’).</p></li>
+<li><p><strong>orientation</strong> (<em>str</em><em>, </em><em>optional</em>) – Dipole orientation model (default: ‘link_vector’).</p></li>
+<li><p><strong>fixed</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether dipole orientations are fixed relative to the cortical surface
+(default: True).</p></li>
+<li><p><strong>patch_size</strong> (<em>float</em><em>, </em><em>optional</em>) – Full-width at half-maximum (FWHM) of geodesic smoothing applied to the mesh
+in millimetres (default: 5).</p></li>
+<li><p><strong>n_temp_modes</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of temporal modes used for dimensionality reduction (default: 4).</p></li>
+<li><p><strong>n_spatial_modes</strong> (<em>int</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Number of spatial modes for dimensionality reduction. If None, all sensor
+channels are used.</p></li>
+<li><p><strong>foi</strong> (<em>list</em><em> of </em><em>float</em><em>, </em><em>optional</em>) – Frequency range of interest [low, high] in Hz (default: [0, 256]).</p></li>
+<li><p><strong>woi</strong> (<em>list</em><em> of </em><em>float</em><em>, </em><em>optional</em>) – Time window of interest [start, end] in ms (default: full epoch).</p></li>
+<li><p><strong>hann_windowing</strong> (<em>bool</em><em>, </em><em>optional</em>) – Apply Hann windowing to the data prior to inversion (default: False).</p></li>
+<li><p><strong>n_folds</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of cross-validation folds used for spatial mode testing (default: 1).</p></li>
+<li><p><strong>ideal_pc_test</strong> (<em>float</em><em>, </em><em>optional</em>) – Fraction of channels left out during cross-validation (default: 0).</p></li>
+<li><p><strong>inversion_idx</strong> (<em>int</em><em>, </em><em>optional</em>) – Index of the inversion within the SPM data object (default: 0).</p></li>
+<li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Display SPM inversion progress and diagnostic plots (default: True).</p></li>
+<li><p><strong>return_mu_matrix</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, return the full source reconstruction (projection) matrix
+mapping sensor data to sources (default: False).</p></li>
+<li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Active standalone SPM instance. If None, a temporary instance is created
+and closed after execution.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p><strong>results</strong> – List containing:
+free_energy : float</p>
+<blockquote>
+<div><p>Variational free energy (model evidence) from the inversion.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>cv_err<span class="classifier">float</span></dt><dd><p>Cross-validation error across spatial-mode folds.</p>
+</dd>
+<dt>mu_matrix<span class="classifier">scipy.sparse.csc_matrix, optional</span></dt><dd><p>Source reconstruction matrix mapping sensor data to source activity
+(returned only if <cite>return_mu_matrix=True</cite>).</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The forward model must be computed beforehand using <cite>coregister()</cite>.</p></li>
+<li><p>Mesh smoothing is performed with <cite>spm_eeg_smoothmesh_multilayer_mm</cite>.</p></li>
+<li><p>Spatial modes and cross-validation are computed using
+<cite>spm_eeg_inv_prep_modes_xval</cite>.</p></li>
+<li><p>When multilayer meshes are used, correlated source priors are formed by
+pairing vertices at the same cortical location across layers.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="lameg.invert.invert_msp">
 <span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">invert_msp</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ds'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">priors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_temp_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_spatial_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">foi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">woi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hann_windowing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_folds</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ideal_pc_test</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inversion_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">return_mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.invert.invert_msp" title="Permalink to this definition">#</a></dt>
 <dd><p>Perform Multiple Sparse Priors (MSP) source inversion on MEG data.</p>
@@ -727,6 +814,95 @@ execution.</p></li>
 <li><p>Mesh smoothing uses <cite>spm_eeg_smoothmesh_multilayer_mm</cite>.</p></li>
 <li><p>Spatial mode preparation uses <cite>spm_eeg_inv_prep_modes_xval</cite>.</p></li>
 <li><p>Each windowed inversion uses the <strong>Empirical Bayesian Beamformer (EBB)</strong> algorithm in SPM.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.invert.invert_sliding_window_ebb_layer">
+<span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">invert_sliding_window_ebb_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ds'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">patch_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_temp_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_spatial_modes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wois</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">win_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">50</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">win_overlap</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">foi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hann_windowing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inversion_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.invert.invert_sliding_window_ebb_layer" title="Permalink to this definition">#</a></dt>
+<dd><p>Perform sliding-window laminar Empirical Bayesian Beamformer (EBBlayer) source inversion.</p>
+<p>This function applies a laminar extension of the Empirical Bayesian Beamformer (EBB)
+within successive time windows, enabling time-resolved source inversion on either a
+single cortical surface or a multilayer mesh. When a multilayer surface is used,
+the inversion employs the EBBlayer model, which augments classic EBB with additional
+spatial priors that capture correlated activity across cortical layers within the
+same cortical column.</p>
+<p>For multilayer meshes, the source prior includes three components:</p>
+<ol class="arabic simple">
+<li><p>Independent prior (classic EBB)
+A standard EBB variance map computed from smoothed lead fields.</p></li>
+<li><p>Correlated sum prior
+Built from pairwise combinations of sources across layers
+(q+ = l_a + l_b), favouring laminar co-activation.</p></li>
+<li><p>Correlated difference prior
+Built from pairwise differences across layers
+(q- = l_a - l_b), favouring laminar contrast and improving separation
+of nearby sources across depth.</p></li>
+</ol>
+<p>Restricted Maximum Likelihood (ReML) estimates the contribution of these prior
+components separately within each time window. Running the inversion in a sliding-
+window manner is useful for laminar inference because temporally adjacent sources
+in different layers may otherwise be merged when a single inversion is performed
+over a broad time interval.</p>
+<p>Before inversion, the source mesh is geodesically smoothed using
+<cite>spm_eeg_smoothmesh_multilayer_mm</cite>, which smooths within layers while preserving
+independence between layers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_fname</strong> (<em>str</em>) – Path to the MEG dataset (SPM-compatible <cite>.mat</cite> file).</p></li>
+<li><p><strong>surf_set</strong> (<a class="reference internal" href="#lameg.surf.LayerSurfaceSet" title="lameg.surf.LayerSurfaceSet"><em>LayerSurfaceSet</em></a>) – Subject-specific surface set containing laminar meshes.</p></li>
+<li><p><strong>layer_name</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Surface layer to use for inversion (e.g., ‘pial’, ‘white’, or a fractional
+layer). If None, the full multilayer surface is used.</p></li>
+<li><p><strong>stage</strong> (<em>str</em><em>, </em><em>optional</em>) – Processing stage of the surface mesh (default: ‘ds’).</p></li>
+<li><p><strong>orientation</strong> (<em>str</em><em>, </em><em>optional</em>) – Dipole orientation model (default: ‘link_vector’).</p></li>
+<li><p><strong>fixed</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether dipole orientations are fixed relative to the cortical surface
+(default: True).</p></li>
+<li><p><strong>patch_size</strong> (<em>float</em><em>, </em><em>optional</em>) – Full-width at half-maximum (FWHM) of geodesic smoothing applied to the mesh
+in millimetres (default: 5).</p></li>
+<li><p><strong>n_temp_modes</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of temporal modes used for dimensionality reduction within each time
+window (default: 1).</p></li>
+<li><p><strong>n_spatial_modes</strong> (<em>int</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Number of spatial modes used for dimensionality reduction. If None, all sensor
+channels are used.</p></li>
+<li><p><strong>wois</strong> (<em>list</em><em> of </em><em>float</em><em>, </em><em>optional</em>) – List of time windows of interest as [start, end] pairs in milliseconds.
+If None, windows are generated automatically over the full epoch using
+<cite>win_size</cite> and <cite>win_overlap</cite>.</p></li>
+<li><p><strong>win_size</strong> (<em>float</em><em>, </em><em>optional</em>) – Duration of each sliding window in milliseconds (default: 50).</p></li>
+<li><p><strong>win_overlap</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether consecutive windows overlap (default: True).</p></li>
+<li><p><strong>foi</strong> (<em>list</em><em> of </em><em>float</em><em>, </em><em>optional</em>) – Frequency range of interest [low, high] in Hz (default: [0, 256]).</p></li>
+<li><p><strong>hann_windowing</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to apply Hann windowing to each time window before inversion
+(default: True).</p></li>
+<li><p><strong>inversion_idx</strong> (<em>int</em><em>, </em><em>optional</em>) – Index of the inversion within the SPM data object (default: 0).</p></li>
+<li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Display SPM inversion progress and diagnostic plots (default: True).</p></li>
+<li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Active standalone SPM instance. If None, a temporary instance is created
+and closed after execution.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><p><strong>results</strong> – List containing:
+free_energy : ndarray</p>
+<blockquote>
+<div><p>Model evidence (variational free energy) for each time window.</p>
+</div></blockquote>
+<dl class="simple">
+<dt>wois<span class="classifier">ndarray, shape (n_windows, 2)</span></dt><dd><p>Time windows of interest in milliseconds.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>list</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>The forward model must be computed beforehand using <cite>coregister()</cite>.</p></li>
+<li><p>Mesh smoothing is performed with <cite>spm_eeg_smoothmesh_multilayer_mm</cite>.</p></li>
+<li><p>Spatial modes are prepared using <cite>spm_eeg_inv_prep_modes_xval</cite>.</p></li>
+<li><p>Each windowed inversion uses EBBlayer when a multilayer mesh is provided,
+and classic EBB when a single surface is provided.</p></li>
+<li><p>Sliding-window inversion is recommended for laminar inference when sources
+may change cortical depth over time.</p></li>
 </ul>
 </dd></dl>
 
@@ -3320,8 +3496,10 @@ or segmentation has not yet been completed.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.coregister"><code class="docutils literal notranslate"><span class="pre">coregister()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.get_lead_field_rms_diff"><code class="docutils literal notranslate"><span class="pre">get_lead_field_rms_diff()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.invert_ebb"><code class="docutils literal notranslate"><span class="pre">invert_ebb()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.invert_ebb_layer"><code class="docutils literal notranslate"><span class="pre">invert_ebb_layer()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.invert_msp"><code class="docutils literal notranslate"><span class="pre">invert_msp()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.invert_sliding_window_ebb"><code class="docutils literal notranslate"><span class="pre">invert_sliding_window_ebb()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.invert_sliding_window_ebb_layer"><code class="docutils literal notranslate"><span class="pre">invert_sliding_window_ebb_layer()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.invert_sliding_window_msp"><code class="docutils literal notranslate"><span class="pre">invert_sliding_window_msp()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.load_forward_model_vertices"><code class="docutils literal notranslate"><span class="pre">load_forward_model_vertices()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.load_source_time_series"><code class="docutils literal notranslate"><span class="pre">load_source_time_series()</span></code></a></li>
