@@ -66,14 +66,14 @@ def test_roi_power_comparison():
         chunk_size=2000
     )
 
-    target = -1.4511824186445874
+    target = 4.030857662565229
     assert np.isclose(laminar_t_statistic, target, atol=1e-2)
-    target = 0.152025595647325
+    target = 0.00016150691956953863
     assert np.isclose(laminar_p_value, target, atol=1e-2)
     target = 59
     assert deg_of_freedom == target
-    target = np.array([ [ 3262,  4021, 10598, 17900, 34054, 35200, 35245, 35915, 44898, 45818,
-                          47059, 47879]])
+    target = np.array([ 2230,  2724,  3253,  3271, 14447, 14773, 15338, 33534, 33846,
+                        34031, 46877])
     assert np.allclose(roi_idx, target)
 
     n_laminar_t_statistic, n_laminar_p_value, n_deg_of_freedom, n_roi_idx = roi_power_comparison(

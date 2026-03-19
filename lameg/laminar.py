@@ -27,6 +27,7 @@ Notes
 
 import numpy as np
 from scipy.interpolate import interp1d
+from scipy.signal import hilbert
 import elephant
 import neo
 import quantities as pq
@@ -131,6 +132,7 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
                 stage=stage,
                 orientation=orientation,
                 fixed=fixed,
+                n_spatial_modes='all',
                 viz=viz,
                 spm_instance=spm_instance,
                 **invert_kwargs
@@ -143,6 +145,7 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
                 stage=stage,
                 orientation=orientation,
                 fixed=fixed,
+                n_spatial_modes='all',
                 viz=viz,
                 spm_instance=spm_instance,
                 **invert_kwargs
@@ -246,6 +249,7 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
             stage=stage,
             orientation=orientation,
             fixed=fixed,
+            n_spatial_modes='all',
             viz=viz,
             spm_instance=spm_instance,
             **invert_kwargs
@@ -438,12 +442,14 @@ def roi_power_comparison(data_fname, woi, baseline_woi, perc_thresh, surf_set, s
             ts_chunk, _, _ = load_source_time_series(
                 data_fname, vertices=vertex_slice, mu_matrix=mu_matrix
             )
-            # Compute variance directly on loaded chunk
-            base_power_chunk = np.var(ts_chunk[:, base_t_idx, :], axis=1)
+            envelope = np.abs(hilbert(ts_chunk, axis=1))
+
+            base_power_chunk = np.squeeze(np.mean(envelope[:, base_t_idx, :],axis=1))
             base_incremental_power[start:end,:] = base_power_chunk
-            exp_power_chunk = np.var(ts_chunk[:, exp_t_idx, :], axis=1)
+
+            exp_power_chunk = np.squeeze(np.mean(envelope[:, exp_t_idx, :],axis=1))
             exp_incremental_power[start:end, :] = exp_power_chunk
-            del ts_chunk  # Free up memory
+            del ts_chunk, envelope  # Free up memory
         return base_incremental_power, exp_incremental_power
 
     if roi_idx is None:
@@ -459,17 +465,8 @@ def roi_power_comparison(data_fname, woi, baseline_woi, perc_thresh, surf_set, s
             chunk_size
         )
 
-        with np.errstate(divide='ignore', invalid='ignore'):
-            pial_power_change = np.where(
-                pial_base_power != 0,
-                (pial_exp_power - pial_base_power) / pial_base_power,
-                0
-            )
-            white_power_change = np.where(
-                white_base_power != 0,
-                (white_exp_power - white_base_power) / white_base_power,
-                0
-            )
+        pial_power_change = pial_exp_power - pial_base_power
+        white_power_change = white_exp_power - white_base_power
 
         # Define ROI
         pial_t_statistic, _, _ = ttest_rel_corrected(
@@ -502,17 +499,8 @@ def roi_power_comparison(data_fname, woi, baseline_woi, perc_thresh, surf_set, s
             len(white_roi_idx)
         )
 
-        with np.errstate(divide='ignore', invalid='ignore'):
-            pial_power_change = np.where(
-                pial_base_power != 0,
-                (pial_exp_power - pial_base_power) / pial_base_power,
-                0
-            )
-            white_power_change = np.where(
-                white_base_power != 0,
-                (white_exp_power - white_base_power) / white_base_power,
-                0
-            )
+        pial_power_change = pial_exp_power - pial_base_power
+        white_power_change = white_exp_power - white_base_power
 
         pial_roi_power_change = np.mean(pial_power_change, axis=0)
         white_roi_power_change = np.mean(white_power_change, axis=0)
