@@ -1,32 +1,44 @@
 """
-Laminar source inversion and MEG-MRI coregistration tools using SPM.
+Laminar source inversion, sliding-window inference, and MEG-MRI coregistration tools using SPM.
 
-This module provides a high-level Python interface for performing source reconstruction
-and forward modeling of MEG data via the SPM standalone engine. It supports both
-Empirical Bayesian Beamformer (EBB) and Multiple Sparse Priors (MSP) algorithms,
-as well as utilities for working with inversion outputs.
+This module provides a high-level Python interface for MEG source reconstruction and
+forward modeling via the SPM standalone engine. It supports classic Empirical Bayesian
+Beamformer (EBB), a laminar extension of EBB ("EBBlayer"), and Multiple Sparse Priors
+(MSP), together with utilities for reading inversion outputs and assessing forward-model
+sensitivity across cortical depth.
 
 Main functionalities
 --------------------
-- **Coregistration**: Aligns MEG sensor data with anatomical MRI and surface meshes,
-  and constructs a forward model using the Nolte single-shell approximation.
-- **Empirical Bayesian Beamformer (EBB)**: Performs source inversion using empirical Bayesian
-  beamforming with cross-validation.
+- **Coregistration**: Aligns MEG sensor data with anatomical MRI and cortical surface meshes,
+  and constructs a forward model using an SPM-compatible head model (typically the Nolte
+  single-shell approximation).
+- **Empirical Bayesian Beamformer (EBB)**: Performs source inversion using classic EBB with
+  optional cross-validation and source reconstruction matrix export.
+- **Laminar EBB (EBBlayer)**: Performs multilayer source inversion using a laminar extension
+  of EBB that combines multiple source priors, including independent, correlated-sum, and
+  correlated-difference laminar source families.
 - **Multiple Sparse Priors (MSP)**: Performs sparse Bayesian inversion with optional
   vertex-level priors to constrain source localization.
-- **Sliding-window inversion**: Applies MSP within time windows to obtain time-resolved
-  estimates of free energy (model evidence).
-- **Reconstruction utilities**:
-  - Load source-space time series from precomputed inversions or lead field matrices.
+- **Sliding-window inversion**:
+  - Classic EBB over successive time windows for time-resolved free energy estimation.
+  - EBBlayer over successive time windows for time-resolved laminar inference.
+  - MSP over successive time windows with a fixed prior vertex.
+- **Reconstruction and inspection utilities**:
+  - Load source-space time series from stored inversions or a provided reconstruction matrix.
   - Verify the existence of inversion structures in SPM data files.
   - Extract cortical mesh vertex coordinates from forward models.
+  - Quantify vertex-wise lead-field differences across cortical depth.
 
 Notes
 -----
-- All inversion and coregistration routines depend on a valid SPM standalone
-  installation accessible via the `spm_context` interface.
-- Meshes must be provided through a `LayerSurfaceSet` object, typically containing
-  pial, white, and intermediate laminar surfaces.
+- All inversion and coregistration routines depend on a valid SPM standalone installation
+  accessible through the `spm_context` interface.
+- Meshes are provided through a `LayerSurfaceSet` object, typically containing pial, white,
+  and intermediate laminar surfaces.
+- For multilayer inversions, mesh smoothing is performed geodesically within layers using
+  `spm_eeg_smoothmesh_multilayer_mm`.
+- EBBlayer is intended for laminar inference on multilayer meshes and is used automatically
+  by the layer-wise inversion wrappers in this module.
 - This module supports both MATLAB v7.3+ (HDF5) and pre-v7.3 file formats for SPM data.
 """
 
@@ -60,7 +72,7 @@ def coregister(fid_coords, data_fname, surf_set, layer_name=None, stage='ds',
     fid_coords : dict
         Dictionary of fiducial landmark coordinates, e.g.:
         ``{'nas': [x, y, z], 'lpa': [x, y, z], 'rpa': [x, y, z]}``
-        Values must be expressed in MEG headspace coordinates (millimeters).
+        Values must be expressed in native MRI coordinates (millimeters).
     data_fname : str
         Path to the MEG dataset (SPM-compatible format).
     surf_set : LayerSurfaceSet
@@ -187,7 +199,7 @@ def coregister(fid_coords, data_fname, surf_set, layer_name=None, stage='ds',
 
 def invert_ebb(data_fname, surf_set, layer_name=None, stage='ds',
                orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=4,
-               n_spatial_modes=None, foi=None, woi=None, hann_windowing=False, n_folds=1,
+               n_spatial_modes='auto', foi=None, woi=None, hann_windowing=False, n_folds=1,
                ideal_pc_test=0, inversion_idx=0, viz=True, return_mu_matrix=False,
                spm_instance=None):
     """
@@ -218,8 +230,10 @@ def invert_ebb(data_fname, surf_set, layer_name=None, stage='ds',
         Full-width at half-maximum (FWHM) of cortical patch smoothing in millimeters (default: 5).
     n_temp_modes : int, optional
         Number of temporal modes for dimensionality reduction (default: 4).
-    n_spatial_modes : int or None, optional
-        Number of spatial modes for data reduction. If None, all channels are used.
+    n_spatial_modes : int, 'auto', or 'all' (default: 'auto')
+        Number of spatial modes for data reduction. If 'all', the maximal amount, corresponding to
+        the number of channels, is used. If 'auto', the amount will be based on the rank of the
+        lead field covariance
     foi : list of float, optional
         Frequency range of interest [low, high] in Hz (default: [0, 256]).
     woi : list of float, optional
@@ -282,7 +296,7 @@ def invert_ebb(data_fname, surf_set, layer_name=None, stage='ds',
 
 def invert_ebb_layer(data_fname, surf_set, layer_name=None, stage='ds',
                      orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=4,
-                     n_spatial_modes=None, foi=None, woi=None, hann_windowing=False, n_folds=1,
+                     n_spatial_modes='auto', foi=None, woi=None, hann_windowing=False, n_folds=1,
                      ideal_pc_test=0, inversion_idx=0, viz=True, return_mu_matrix=False,
                      spm_instance=None):
     """
@@ -338,9 +352,10 @@ def invert_ebb_layer(data_fname, surf_set, layer_name=None, stage='ds',
         in millimetres (default: 5).
     n_temp_modes : int, optional
         Number of temporal modes used for dimensionality reduction (default: 4).
-    n_spatial_modes : int or None, optional
-        Number of spatial modes for dimensionality reduction. If None, all sensor
-        channels are used.
+    n_spatial_modes : int, 'auto', or 'all' (default: 'auto')
+        Number of spatial modes for data reduction. If 'all', the maximal amount, corresponding to
+        the number of channels, is used. If 'auto', the amount will be based on the rank of the
+        lead field covariance
     foi : list of float, optional
         Frequency range of interest [low, high] in Hz (default: [0, 256]).
     woi : list of float, optional
@@ -408,7 +423,7 @@ def invert_ebb_layer(data_fname, surf_set, layer_name=None, stage='ds',
 
 def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
                orientation='link_vector', fixed=True, priors=None, patch_size=5, n_temp_modes=4,
-               n_spatial_modes=None, foi=None, woi=None, hann_windowing=False, n_folds=1,
+               n_spatial_modes='auto', foi=None, woi=None, hann_windowing=False, n_folds=1,
                ideal_pc_test=0, inversion_idx=0, viz=True, return_mu_matrix=False,
                spm_instance=None):
     """
@@ -442,8 +457,10 @@ def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
         Full-width at half-maximum (FWHM) of cortical patch smoothing in millimeters (default: 5).
     n_temp_modes : int, optional
         Number of temporal modes for dimensionality reduction (default: 4).
-    n_spatial_modes : int or None, optional
-        Number of spatial modes for data reduction. If None, all channels are used.
+    n_spatial_modes : int, 'auto', or 'all' (default: 'auto')
+        Number of spatial modes for data reduction. If 'all', the maximal amount, corresponding to
+        the number of channels, is used. If 'auto', the amount will be based on the rank of the
+        lead field covariance
     foi : list of float, optional
         Frequency range of interest [low, high] in Hz (default: [0, 256]).
     woi : list of float, optional
@@ -905,7 +922,7 @@ def _normalize_inversion_inputs(foi=None, woi=None, wois=None,
     wois : array-like shape (n_windows, 2) or None
         Multiple windows of interest (ms).
     n_spatial_modes : int or None
-        Number of spatial modes. If None, returns matlab.double([]).
+        Number of spatial modes. If 'all', returns matlab.double([]). If 'auto', returns 0
     priors : sequence of int or None
         Python 0-based vertex indices.
 
@@ -944,8 +961,10 @@ def _normalize_inversion_inputs(foi=None, woi=None, wois=None,
             raise ValueError("`wois` must have shape (n_windows, 2)")
 
     # ---- spatial modes ----
-    if n_spatial_modes is None:
+    if n_spatial_modes=='all':
         n_spatial_modes_norm = matlab.double([])
+    elif n_spatial_modes=='auto':
+        n_spatial_modes_norm = float(0)
     else:
         n_spatial_modes_norm = float(n_spatial_modes)
         if n_spatial_modes_norm <= 0:
@@ -965,7 +984,7 @@ def _normalize_inversion_inputs(foi=None, woi=None, wois=None,
         if np.any(priors_arr < 0):
             raise ValueError("`priors` must be non-negative")
 
-        # convert Python (0-based) ? MATLAB (1-based)
+        # convert Python (0-based) -> MATLAB (1-based)
         priors_norm = (priors_arr + 1).tolist()
 
     return {
@@ -985,7 +1004,7 @@ def _prepare_spatial_modes(data_fname, mesh_fname, n_layers, patch_size,
 
     This function performs the standard preprocessing required before running
     an SPM source inversion. It first smooths the cortical mesh to enforce the
-    desired spatial patch size, then computes spatial modes using SPM?s
+    desired spatial patch size, then computes spatial modes using SPM's
     cross-validation routine (`spm_eeg_inv_prep_modes_xval`). These spatial
     modes reduce the dimensionality of the sensor data and determine the
     projection used during inversion.
@@ -1560,30 +1579,6 @@ def load_source_time_series(
 
     sensor_data, time_ms, _ = load_meg_sensor_data(data_fname)
 
-    # ---- Provided mu_matrix: original full-time behavior ----
-    if mu_matrix is not None:
-        if vertices is not None:
-            mu_matrix = mu_matrix[vertices, :]
-        temp_projector_mat = np.eye(sensor_data.shape[1], dtype=float)
-
-        orig_n_time = sensor_data.shape[1]
-        if sensor_data.ndim == 3:
-            n_trials = sensor_data.shape[2]
-            n_sources = mu_matrix.shape[0]
-            source_ts = np.zeros((n_sources, orig_n_time, n_trials), dtype=float)
-            for trial_idx in range(n_trials):
-                yproj = sensor_data[:, :, trial_idx] @ temp_projector_mat
-                source_ts[:, :, trial_idx] = _restore_time_length(
-                    np.asarray(mu_matrix @ yproj),
-                    orig_n_time
-                )
-        else:
-            yproj = sensor_data @ temp_projector_mat
-            source_ts = _restore_time_length(np.asarray(mu_matrix @ yproj), orig_n_time)
-
-        return source_ts, time_ms, mu_matrix
-
-    # ---- Load inverse components ----
     if inv_fname is None:
         inv_fname = data_fname
     check_inversion_exists(inv_fname, inversion_idx=inversion_idx)
@@ -1592,42 +1587,61 @@ def load_source_time_series(
     u_matrix = invc["U"]
     temp_projector_mat = invc["TT"]
 
-    # ---- Multi-woi path ----
-    if "M_win" in invc:
+    # Align sensor data to TT dimensions and apply temporal projector once
+    sensor_data_aligned, orig_n_time = _pad_or_trim_sensor_to_temp_projector(
+        sensor_data,
+        temp_projector_mat
+    )
+
+    n_trials = 1
+    if sensor_data_aligned.ndim == 3:
+        n_trials = sensor_data_aligned.shape[2]
+        yproj = np.empty(
+            (sensor_data_aligned.shape[0], temp_projector_mat.shape[1], n_trials),
+            dtype=float
+        )
+        for trial_idx in range(n_trials):
+            yproj[:, :, trial_idx] = sensor_data_aligned[:, :, trial_idx] @ temp_projector_mat
+    else:
+        yproj = sensor_data_aligned @ temp_projector_mat
+
+    # ------------------------------------------------------------------
+    # Multi-woi path: use TT-projected data
+    # ------------------------------------------------------------------
+    if mu_matrix is None and "M_win" in invc:
         m_win = invc["M_win"]
         woi = np.asarray(invc["woi"])
-        if len(m_win) != woi.shape[0]:
-            raise ValueError(f"`M_win` has {len(m_win)} entries but `woi` has {woi.shape[0]} rows.")
 
-        # Vertex selection at M level
+        if len(m_win) != woi.shape[0]:
+            raise ValueError(
+                f"`M_win` has {len(m_win)} entries but `woi` has {woi.shape[0]} rows."
+            )
+
         if vertices is not None:
             m_win = [(m[vertices, :] if issparse(m) else m[vertices, :]) for m in m_win]
 
-        # Precompute time indices per window
         win_indices = [_indices_for_woi(time_ms, w) for w in woi]
 
-        # Determine n_sources from first window
         mu0 = m_win[0] @ u_matrix
         n_sources = mu0.shape[0]
+        n_time = orig_n_time
 
-        # Accumulate sums and counts on aligned time axis, then restore to orig_n_time
-        n_time = sensor_data.shape[1]
-        if sensor_data.ndim == 3:
-            n_trials = sensor_data.shape[2]
+        if yproj.ndim == 3:
             source_sum = np.zeros((n_sources, n_time, n_trials), dtype=float)
             count = np.zeros((n_time,), dtype=np.int32)
 
             for i, idx in enumerate(win_indices):
                 if idx.size == 0:
                     continue
+
                 mu_i = m_win[i] @ u_matrix
+
                 for trial_idx in range(n_trials):
-                    # sources x |idx|
-                    src_seg = np.asarray(mu_i @ sensor_data[:, idx, trial_idx])
+                    src_seg = np.asarray(mu_i @ yproj[:, idx, trial_idx])
                     source_sum[:, idx, trial_idx] += src_seg
+
                 count[idx] += 1
 
-            # Avoid divide-by-zero; leave zeros where count==0
             nz_idx = count > 0
             source_ts = np.zeros_like(source_sum)
             source_ts[:, nz_idx, :] = source_sum[:, nz_idx, :] / count[nz_idx][None, :, None]
@@ -1638,10 +1652,10 @@ def load_source_time_series(
             for i, idx in enumerate(win_indices):
                 if idx.size == 0:
                     continue
-                mu_i = (m_win[i] @ u_matrix) \
-                    if (issparse(m_win[i]) or issparse(u_matrix)) \
-                    else (m_win[i] @ u_matrix)
-                src_seg = np.asarray(mu_i @ sensor_data[:, idx])  # sources x |idx|
+
+                mu_i = (m_win[i] @ u_matrix) if (issparse(m_win[i]) or issparse(u_matrix)) else (
+                            m_win[i] @ u_matrix)
+                src_seg = np.asarray(mu_i @ yproj[:, idx])
                 source_sum[:, idx] += src_seg
                 count[idx] += 1
 
@@ -1649,59 +1663,36 @@ def load_source_time_series(
             source_ts = np.zeros_like(source_sum)
             source_ts[:, nz_idx] = source_sum[:, nz_idx] / count[nz_idx][None, :]
 
-        # In multi-woi there is no single mu_matrix to return
+        # There is no single MU matrix to return
         return source_ts, time_ms, None
 
-    # ---- Single inversion path (original full-time behavior) ----
-    m_matrix = invc["M"]
-    if vertices is not None:
-        m_matrix = m_matrix[vertices, :]
-    mu_matrix = (m_matrix @ u_matrix) \
-        if (issparse(m_matrix) or issparse(u_matrix)) \
-        else (m_matrix @ u_matrix)
-
-    # Align sensor_data with TT for projection
-    sensor_data_aligned, orig_n_time = _pad_or_trim_sensor_to_temp_projector(
-        sensor_data,
-        temp_projector_mat
-    )
-
-    # Temporal projection (done once)
-    if sensor_data_aligned.ndim == 3:
-        n_trials = sensor_data_aligned.shape[2]
-        yproj = np.empty_like(sensor_data_aligned, dtype=float)
-        for trial_idx in range(n_trials):
-            yproj[:, :, trial_idx] = sensor_data_aligned[:, :, trial_idx] @ temp_projector_mat
+    # ------------------------------------------------------------------
+    # Resolve single mu_matrix for both:
+    #   1) provided mu_matrix
+    #   2) single-inversion path
+    # ------------------------------------------------------------------
+    if mu_matrix is not None:
+        if vertices is not None:
+            mu_matrix = mu_matrix[vertices, :]
     else:
-        yproj = sensor_data_aligned @ temp_projector_mat  # sensors x time'
+        m_matrix = invc["M"]
+        if vertices is not None:
+            m_matrix = m_matrix[vertices, :]
+        mu_matrix = m_matrix @ u_matrix
 
-    if sensor_data_aligned.ndim == 3:
-        n_trials = sensor_data_aligned.shape[2]
+    # ------------------------------------------------------------------
+    # Shared single-matrix reconstruction path using TT-projected data
+    # ------------------------------------------------------------------
+    if yproj.ndim == 3:
         n_sources = mu_matrix.shape[0]
         source_ts = np.zeros((n_sources, orig_n_time, n_trials), dtype=float)
+
         for trial_idx in range(n_trials):
-            trial_ts = sensor_data_aligned[:, :, trial_idx] @ temp_projector_mat
-            trial_ts = np.asarray(mu_matrix @ trial_ts)
-            # restore original sensor time length
-            if trial_ts.shape[1] < orig_n_time:
-                trial_ts = np.pad(
-                    trial_ts,
-                    ((0, 0), (0, orig_n_time - trial_ts.shape[1])),
-                    mode="constant"
-                )
-            elif trial_ts.shape[1] > orig_n_time:
-                trial_ts = trial_ts[:, :orig_n_time]
-            source_ts[:, :, trial_idx] = trial_ts
+            trial_ts = np.asarray(mu_matrix @ yproj[:, :, trial_idx])
+            source_ts[:, :, trial_idx] = _restore_time_length(trial_ts, orig_n_time)
     else:
         source_ts = np.asarray(mu_matrix @ yproj)
-        if source_ts.shape[1] < orig_n_time:
-            source_ts = np.pad(
-                source_ts,
-                ((0, 0), (0, orig_n_time - source_ts.shape[1])),
-                mode="constant"
-            )
-        elif source_ts.shape[1] > orig_n_time:
-            source_ts = source_ts[:, :orig_n_time]
+        source_ts = _restore_time_length(source_ts, orig_n_time)
 
     return source_ts, time_ms, mu_matrix
 

@@ -174,6 +174,7 @@ def test_invert_msp(spm):
         orientation='link_vector',
         fixed=True,
         patch_size=patch_size,
+        n_spatial_modes='all',
         n_temp_modes=n_temp_modes,
         viz=False,
         spm_instance=spm
@@ -193,6 +194,7 @@ def test_invert_msp(spm):
         fixed=True,
         priors=[47507],
         patch_size=patch_size,
+        n_spatial_modes='all',
         n_temp_modes=n_temp_modes,
         return_mu_matrix=True,
         viz=False,
@@ -386,6 +388,7 @@ def test_invert_sliding_window_msp(spm):
         stage='ds',
         orientation='link_vector',
         fixed=True,
+        n_spatial_modes='all',
         win_size=16,
         spm_instance=spm
     )
@@ -406,6 +409,7 @@ def test_invert_sliding_window_msp(spm):
         stage='ds',
         orientation='link_vector',
         fixed=True,
+        n_spatial_modes='all',
         win_size=16,
         win_overlap=False,
         spm_instance=spm
@@ -494,6 +498,7 @@ def test_invert_ebb(spm):
         orientation='link_vector',
         fixed=True,
         patch_size=patch_size,
+        n_spatial_modes='all',
         n_temp_modes=n_temp_modes,
         return_mu_matrix=True,
         viz=False,
@@ -518,6 +523,7 @@ def test_invert_ebb(spm):
         fixed=True,
         foi=[10,20],
         patch_size=patch_size,
+        n_spatial_modes='all',
         n_temp_modes=n_temp_modes,
         return_mu_matrix=False,
         viz=False,
