@@ -555,7 +555,7 @@ def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
 
 def invert_sliding_window_ebb(data_fname, surf_set, layer_name=None, stage='ds',
                               orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=1,
-                              n_spatial_modes=None, wois=None, win_size=50, win_overlap=True,
+                              n_spatial_modes='auto', wois=None, win_size=50, win_overlap=True,
                               foi=None, hann_windowing=True, inversion_idx=0,
                               viz=True, spm_instance=None):
     """
@@ -585,8 +585,10 @@ def invert_sliding_window_ebb(data_fname, surf_set, layer_name=None, stage='ds',
         Full-width at half-maximum (FWHM) of cortical patch smoothing in millimeters (default: 5).
     n_temp_modes : int, optional
         Number of temporal modes for dimensionality reduction (default: 1).
-    n_spatial_modes : int or None, optional
-        Number of spatial modes for data reduction. If None, all channels are used.
+    n_spatial_modes : int, 'auto', or 'all' (default: 'auto')
+        Number of spatial modes for data reduction. If 'all', the maximal amount, corresponding to
+        the number of channels, is used. If 'auto', the amount will be based on the rank of the
+        lead field covariance
     wois : list of float, optional
         List of time windows of interest [start, end] pairs in ms (default: None).
         If None, wois are generated on the full epoch, based on win_size and win_overlap
@@ -647,7 +649,7 @@ def invert_sliding_window_ebb(data_fname, surf_set, layer_name=None, stage='ds',
 
 def invert_sliding_window_ebb_layer(data_fname, surf_set, layer_name=None, stage='ds',
                                     orientation='link_vector', fixed=True, patch_size=5,
-                                    n_temp_modes=1, n_spatial_modes=None, wois=None, win_size=50,
+                                    n_temp_modes=1, n_spatial_modes='auto', wois=None, win_size=50,
                                     win_overlap=True, foi=None, hann_windowing=True,
                                     inversion_idx=0, viz=True, spm_instance=None):
     """
@@ -706,9 +708,10 @@ def invert_sliding_window_ebb_layer(data_fname, surf_set, layer_name=None, stage
     n_temp_modes : int, optional
         Number of temporal modes used for dimensionality reduction within each time
         window (default: 1).
-    n_spatial_modes : int or None, optional
-        Number of spatial modes used for dimensionality reduction. If None, all sensor
-        channels are used.
+    n_spatial_modes : int, 'auto', or 'all' (default: 'auto')
+        Number of spatial modes for data reduction. If 'all', the maximal amount, corresponding to
+        the number of channels, is used. If 'auto', the amount will be based on the rank of the
+        lead field covariance
     wois : list of float, optional
         List of time windows of interest as [start, end] pairs in milliseconds.
         If None, windows are generated automatically over the full epoch using
@@ -774,7 +777,7 @@ def invert_sliding_window_ebb_layer(data_fname, surf_set, layer_name=None, stage
 
 def invert_sliding_window_msp(prior, data_fname, surf_set, layer_name=None, stage='ds',
                               orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=1,
-                              n_spatial_modes=None, wois=None, win_size=50, win_overlap=True,
+                              n_spatial_modes='auto', wois=None, win_size=50, win_overlap=True,
                               foi=None, hann_windowing=True, inversion_idx=0, viz=True,
                               spm_instance=None):
     """
@@ -807,8 +810,10 @@ def invert_sliding_window_msp(prior, data_fname, surf_set, layer_name=None, stag
         Full-width at half-maximum (FWHM) of cortical patch smoothing in millimeters (default: 5).
     n_temp_modes : int, optional
         Number of temporal modes for dimensionality reduction (default: 1).
-    n_spatial_modes : int or None, optional
-        Number of spatial modes for data reduction. If None, all channels are used.
+    n_spatial_modes : int, 'auto', or 'all' (default: 'auto')
+        Number of spatial modes for data reduction. If 'all', the maximal amount, corresponding to
+        the number of channels, is used. If 'auto', the amount will be based on the rank of the
+        lead field covariance
     wois : list of float, optional
         List of time windows of interest [start, end] pairs in ms (default: None).
         If None, wois are generated on the full epoch, based on win_size and win_overlap
