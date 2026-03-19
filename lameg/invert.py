@@ -1590,25 +1590,11 @@ def load_source_time_series(
     invc = _load_inverse_components(inv_fname, inversion_idx=inversion_idx)
 
     u_matrix = invc["U"]
-    temp_projector_mat = invc["TT"]
 
-    # Align sensor data to TT dimensions and apply temporal projector once
-    sensor_data_aligned, orig_n_time = _pad_or_trim_sensor_to_temp_projector(
-        sensor_data,
-        temp_projector_mat
-    )
-
+    n_time = sensor_data.shape[1]
     n_trials = 1
-    if sensor_data_aligned.ndim == 3:
-        n_trials = sensor_data_aligned.shape[2]
-        yproj = np.empty(
-            (sensor_data_aligned.shape[0], temp_projector_mat.shape[1], n_trials),
-            dtype=float
-        )
-        for trial_idx in range(n_trials):
-            yproj[:, :, trial_idx] = sensor_data_aligned[:, :, trial_idx] @ temp_projector_mat
-    else:
-        yproj = sensor_data_aligned @ temp_projector_mat
+    if sensor_data.ndim == 3:
+        n_trials = sensor_data.shape[2]
 
     # ------------------------------------------------------------------
     # Multi-woi path: use TT-projected data
@@ -1629,9 +1615,8 @@ def load_source_time_series(
 
         mu0 = m_win[0] @ u_matrix
         n_sources = mu0.shape[0]
-        n_time = orig_n_time
 
-        if yproj.ndim == 3:
+        if sensor_data.ndim == 3:
             source_sum = np.zeros((n_sources, n_time, n_trials), dtype=float)
             count = np.zeros((n_time,), dtype=np.int32)
 
@@ -1642,7 +1627,7 @@ def load_source_time_series(
                 mu_i = m_win[i] @ u_matrix
 
                 for trial_idx in range(n_trials):
-                    src_seg = np.asarray(mu_i @ yproj[:, idx, trial_idx])
+                    src_seg = np.asarray(mu_i @ sensor_data[:, idx, trial_idx])
                     source_sum[:, idx, trial_idx] += src_seg
 
                 count[idx] += 1
@@ -1660,7 +1645,7 @@ def load_source_time_series(
 
                 mu_i = (m_win[i] @ u_matrix) if (issparse(m_win[i]) or issparse(u_matrix)) else (
                             m_win[i] @ u_matrix)
-                src_seg = np.asarray(mu_i @ yproj[:, idx])
+                src_seg = np.asarray(mu_i @ sensor_data[:, idx])
                 source_sum[:, idx] += src_seg
                 count[idx] += 1
 
@@ -1670,6 +1655,24 @@ def load_source_time_series(
 
         # There is no single MU matrix to return
         return source_ts, time_ms, None
+
+    temp_projector_mat = invc["TT"]
+
+    # Align sensor data to TT dimensions and apply temporal projector once
+    sensor_data_aligned, orig_n_time = _pad_or_trim_sensor_to_temp_projector(
+        sensor_data,
+        temp_projector_mat
+    )
+
+    if sensor_data_aligned.ndim == 3:
+        yproj = np.empty(
+            (sensor_data_aligned.shape[0], temp_projector_mat.shape[1], n_trials),
+            dtype=float
+        )
+        for trial_idx in range(n_trials):
+            yproj[:, :, trial_idx] = sensor_data_aligned[:, :, trial_idx] @ temp_projector_mat
+    else:
+        yproj = sensor_data_aligned @ temp_projector_mat
 
     # ------------------------------------------------------------------
     # Resolve single mu_matrix for both:
