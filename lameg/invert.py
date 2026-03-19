@@ -1597,7 +1597,7 @@ def load_source_time_series(
         n_trials = sensor_data.shape[2]
 
     # ------------------------------------------------------------------
-    # Multi-woi path: use TT-projected data
+    # Multi-woi path
     # ------------------------------------------------------------------
     if mu_matrix is None and "M_win" in invc:
         m_win = invc["M_win"]
