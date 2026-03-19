@@ -413,8 +413,11 @@ to download the full example code</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">shutil</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.signal</span> <span class="kn">import</span> <span class="n">hilbert</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">from</span> <span class="nn">IPython.display</span> <span class="kn">import</span> <span class="n">Image</span>
+<span class="kn">import</span> <span class="nn">base64</span>
 
 <span class="kn">from</span> <span class="nn">lameg.invert</span> <span class="kn">import</span> <span class="n">invert_ebb</span><span class="p">,</span> <span class="n">coregister</span><span class="p">,</span> <span class="n">load_source_time_series</span>
 <span class="kn">from</span> <span class="nn">lameg.laminar</span> <span class="kn">import</span> <span class="n">roi_power_comparison</span>
@@ -572,7 +575,7 @@ to download the full example code</p>
 <span class="p">[</span><span class="n">_</span><span class="p">,</span><span class="n">_</span><span class="p">,</span><span class="n">MU</span><span class="p">]</span> <span class="o">=</span> <span class="n">invert_ebb</span><span class="p">(</span>
     <span class="n">pial_sim_fname</span><span class="p">,</span>
     <span class="n">surf_set_bilam</span><span class="p">,</span>
-    <span class="n">foi</span><span class="o">=</span><span class="p">[</span><span class="n">freq</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="n">freq</span><span class="o">+</span><span class="mi">10</span><span class="p">],</span>
+    <span class="n">foi</span><span class="o">=</span><span class="p">[</span><span class="n">freq</span><span class="o">-</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">freq</span><span class="o">+</span><span class="mf">2.5</span><span class="p">],</span>
     <span class="n">patch_size</span><span class="o">=</span><span class="n">patch_size</span><span class="p">,</span>
     <span class="n">n_temp_modes</span><span class="o">=</span><span class="n">n_temp_modes</span><span class="p">,</span>
     <span class="n">return_mu_matrix</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -649,7 +652,7 @@ to download the full example code</p>
 <span class="p">[</span><span class="n">_</span><span class="p">,</span><span class="n">_</span><span class="p">,</span><span class="n">MU</span><span class="p">]</span> <span class="o">=</span> <span class="n">invert_ebb</span><span class="p">(</span>
     <span class="n">white_sim_fname</span><span class="p">,</span>
     <span class="n">surf_set_bilam</span><span class="p">,</span>
-    <span class="n">foi</span><span class="o">=</span><span class="p">[</span><span class="n">freq</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="n">freq</span><span class="o">+</span><span class="mi">10</span><span class="p">],</span>
+    <span class="n">foi</span><span class="o">=</span><span class="p">[</span><span class="n">freq</span><span class="o">-</span><span class="mf">2.5</span><span class="p">,</span> <span class="n">freq</span><span class="o">+</span><span class="mf">2.5</span><span class="p">],</span>
     <span class="n">patch_size</span><span class="o">=</span><span class="n">patch_size</span><span class="p">,</span>
     <span class="n">n_temp_modes</span><span class="o">=</span><span class="n">n_temp_modes</span><span class="p">,</span>
     <span class="n">return_mu_matrix</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -704,7 +707,7 @@ to download the full example code</p>
     <span class="p">[</span><span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">MU</span><span class="p">]</span> <span class="o">=</span> <span class="n">invert_ebb</span><span class="p">(</span>
         <span class="n">l_sim_fname</span><span class="p">,</span>
         <span class="n">surf_set</span><span class="p">,</span>
-        <span class="n">foi</span><span class="o">=</span><span class="p">[</span><span class="n">freq</span> <span class="o">-</span> <span class="mi">10</span><span class="p">,</span> <span class="n">freq</span> <span class="o">+</span> <span class="mi">10</span><span class="p">],</span>
+        <span class="n">foi</span><span class="o">=</span><span class="p">[</span><span class="n">freq</span> <span class="o">-</span> <span class="mf">2.5</span><span class="p">,</span> <span class="n">freq</span> <span class="o">+</span> <span class="mf">2.5</span><span class="p">],</span>
         <span class="n">patch_size</span><span class="o">=</span><span class="n">patch_size</span><span class="p">,</span>
         <span class="n">n_temp_modes</span><span class="o">=</span><span class="n">n_temp_modes</span><span class="p">,</span>
         <span class="n">return_mu_matrix</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -724,10 +727,14 @@ to download the full example code</p>
         <span class="n">base_t_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">time</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">exp_t_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">time</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
-        <span class="n">layer_base_power</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">layer_ts</span><span class="p">[:,</span> <span class="n">base_t_idx</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
-        <span class="n">layer_exp_power</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">layer_ts</span><span class="p">[:,</span> <span class="n">exp_t_idx</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
-        <span class="n">layer_power_change</span> <span class="o">=</span> <span class="p">(</span><span class="n">layer_exp_power</span> <span class="o">-</span> <span class="n">layer_base_power</span><span class="p">)</span> <span class="o">/</span> <span class="n">layer_base_power</span>
+        <span class="n">envelope</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">hilbert</span><span class="p">(</span><span class="n">layer_ts</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
 
+        <span class="c1"># Average over time window</span>
+        <span class="n">layer_base_power</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">envelope</span><span class="p">[:,</span> <span class="n">base_t_idx</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">layer_exp_power</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">envelope</span><span class="p">[:,</span> <span class="n">exp_t_idx</span><span class="p">,</span> <span class="p">:],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span>
+        <span class="n">layer_power_change</span> <span class="o">=</span> <span class="n">layer_exp_power</span> <span class="o">-</span> <span class="n">layer_base_power</span>
+
+        <span class="c1"># Average over ROI</span>
         <span class="n">roi_pow</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">layer_power_change</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)))</span>
 
     <span class="n">all_layerPow</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">roi_pow</span><span class="p">)</span>

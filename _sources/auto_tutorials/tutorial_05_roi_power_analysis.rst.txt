@@ -29,7 +29,7 @@ Setting up the simulations
 
 Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.
 
-.. GENERATED FROM PYTHON SOURCE LINES 12-46
+.. GENERATED FROM PYTHON SOURCE LINES 12-49
 
 .. code-block:: default
 
@@ -38,8 +38,11 @@ Simulations are based on an existing dataset, which is used to define the sampli
     import os
     import shutil
     import numpy as np
+    from scipy.signal import hilbert
     import matplotlib.pyplot as plt
     import tempfile
+    from IPython.display import Image
+    import base64
 
     from lameg.invert import invert_ebb, coregister, load_source_time_series
     from lameg.laminar import roi_power_comparison
@@ -68,11 +71,11 @@ Simulations are based on an existing dataset, which is used to define the sampli
     spm = spm_standalone.initialize()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 47-48
+.. GENERATED FROM PYTHON SOURCE LINES 50-51
 
 For source reconstructions, we need an MRI and a surface mesh. The simulations and source reconstructions will be based on a forward model using the multilayer mesh
 
-.. GENERATED FROM PYTHON SOURCE LINES 48-54
+.. GENERATED FROM PYTHON SOURCE LINES 51-57
 
 .. code-block:: default
 
@@ -83,11 +86,11 @@ For source reconstructions, we need an MRI and a surface mesh. The simulations a
     verts_per_surf = surf_set.get_vertices_per_layer()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 55-56
+.. GENERATED FROM PYTHON SOURCE LINES 58-59
 
 We're going to copy the data file to a temporary directory and direct all output there.
 
-.. GENERATED FROM PYTHON SOURCE LINES 56-77
+.. GENERATED FROM PYTHON SOURCE LINES 59-80
 
 .. code-block:: default
 
@@ -113,11 +116,11 @@ We're going to copy the data file to a temporary directory and direct all output
     base_fname = os.path.join(tmp_dir, f'{data_base}.mat')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 78-79
+.. GENERATED FROM PYTHON SOURCE LINES 81-82
 
 Invert the subject's data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations
 
-.. GENERATED FROM PYTHON SOURCE LINES 79-102
+.. GENERATED FROM PYTHON SOURCE LINES 82-105
 
 .. code-block:: default
 
@@ -145,13 +148,13 @@ Invert the subject's data using the multilayer mesh. This step only has to be do
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 103-106
+.. GENERATED FROM PYTHON SOURCE LINES 106-109
 
 Simulating a signal on the pial surface
 ---------------------------------------
 We're going to simulate 1s of signal with a 20Hz sine wave that starts at 0.5s with a dipole moment of 10nAm
 
-.. GENERATED FROM PYTHON SOURCE LINES 106-124
+.. GENERATED FROM PYTHON SOURCE LINES 109-127
 
 .. code-block:: default
 
@@ -174,17 +177,17 @@ We're going to simulate 1s of signal with a 20Hz sine wave that starts at 0.5s w
     plt.ylabel('Amplitude (nAm)')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 125-128
+.. GENERATED FROM PYTHON SOURCE LINES 128-131
 
 .. image:: ../_static/tutorial_05_sim_signal.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 130-131
+.. GENERATED FROM PYTHON SOURCE LINES 133-134
 
 We need to pick a location (mesh vertex) to simulate at
 
-.. GENERATED FROM PYTHON SOURCE LINES 131-145
+.. GENERATED FROM PYTHON SOURCE LINES 134-148
 
 .. code-block:: default
 
@@ -203,17 +206,17 @@ We need to pick a location (mesh vertex) to simulate at
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 146-149
+.. GENERATED FROM PYTHON SOURCE LINES 149-152
 
 .. image:: ../_static/tutorial_05_sim_location.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 151-152
+.. GENERATED FROM PYTHON SOURCE LINES 154-155
 
 We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-.. GENERATED FROM PYTHON SOURCE LINES 152-174
+.. GENERATED FROM PYTHON SOURCE LINES 155-177
 
 .. code-block:: default
 
@@ -240,13 +243,13 @@ We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The d
     )   
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 175-178
+.. GENERATED FROM PYTHON SOURCE LINES 178-181
 
 Laminar comparison (pial - white matter)
 
 Now we can run source reconstruction using a source model based on the multi-laminar surface, define an ROI based on the change in power from a baseline time period, and then compare the change in power between the pial and white matter surfaces. First we'll run the inversion.
 
-.. GENERATED FROM PYTHON SOURCE LINES 178-198
+.. GENERATED FROM PYTHON SOURCE LINES 181-201
 
 .. code-block:: default
 
@@ -263,7 +266,7 @@ Now we can run source reconstruction using a source model based on the multi-lam
     [_,_,MU] = invert_ebb(
         pial_sim_fname,
         surf_set_bilam,
-        foi=[freq-10, freq+10],
+        foi=[freq-2.5, freq+2.5],
         patch_size=patch_size, 
         n_temp_modes=n_temp_modes,
         return_mu_matrix=True,
@@ -271,11 +274,11 @@ Now we can run source reconstruction using a source model based on the multi-lam
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 199-200
+.. GENERATED FROM PYTHON SOURCE LINES 202-203
 
 Now we can defined the ROI based on where the change in power from baseline exceeds some percentile threshold in either the pial or the white matter surface, then average the change in power within the ROI, and compare the magnitude of the change between layers. The t-statistic here should be positive, indicating a greater change in power from baseline in the pial surface, because we simulated activity on the pial surface
 
-.. GENERATED FROM PYTHON SOURCE LINES 200-235
+.. GENERATED FROM PYTHON SOURCE LINES 203-238
 
 .. code-block:: default
 
@@ -315,19 +318,19 @@ Now we can defined the ROI based on where the change in power from baseline exce
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 236-239
+.. GENERATED FROM PYTHON SOURCE LINES 239-242
 
 .. image:: ../_static/tutorial_05_localizer.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 242-245
+.. GENERATED FROM PYTHON SOURCE LINES 245-248
 
 White matter surface simulation with pial - white matter ROI comparison
 -----------------------------------------------------------------------
 Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, there should be a greater change in power on the white matter surface.
 
-.. GENERATED FROM PYTHON SOURCE LINES 245-293
+.. GENERATED FROM PYTHON SOURCE LINES 248-296
 
 .. code-block:: default
 
@@ -360,7 +363,7 @@ Let's simulate the same pattern of activity, in the same location, but on the wh
     [_,_,MU] = invert_ebb(
         white_sim_fname,
         surf_set_bilam,
-        foi=[freq-10, freq+10],
+        foi=[freq-2.5, freq+2.5],
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
         return_mu_matrix=True,
@@ -380,13 +383,13 @@ Let's simulate the same pattern of activity, in the same location, but on the wh
     print(f't({df})={laminar_t_statistic}, p={laminar_p_value}')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 294-297
+.. GENERATED FROM PYTHON SOURCE LINES 297-300
 
 Simulation in each layer with ROI power analysis across layers
 --------------------------------------------------------------
 That was the ROI analysis with two surfaces: the white matter and pial surfaces. Let's now simulate on each layer, and for each simulation, look at the change in power from baseline within the ROI across all layers. We'll turn off SPM visualization here.
 
-.. GENERATED FROM PYTHON SOURCE LINES 297-388
+.. GENERATED FROM PYTHON SOURCE LINES 300-395
 
 .. code-block:: default
 
@@ -422,7 +425,7 @@ That was the ROI analysis with two surfaces: the white matter and pial surfaces.
         [_, _, MU] = invert_ebb(
             l_sim_fname,
             surf_set,
-            foi=[freq - 10, freq + 10],
+            foi=[freq - 2.5, freq + 2.5],
             patch_size=patch_size,
             n_temp_modes=n_temp_modes,
             return_mu_matrix=True,
@@ -442,10 +445,14 @@ That was the ROI analysis with two surfaces: the white matter and pial surfaces.
             base_t_idx = np.where(time < 0)[0]
             exp_t_idx = np.where(time >= 0)[0]
 
-            layer_base_power = np.squeeze(np.var(layer_ts[:, base_t_idx, :], axis=1))
-            layer_exp_power = np.squeeze(np.var(layer_ts[:, exp_t_idx, :], axis=1))
-            layer_power_change = (layer_exp_power - layer_base_power) / layer_base_power
+            envelope = np.abs(hilbert(layer_ts, axis=1))
 
+            # Average over time window
+            layer_base_power = np.squeeze(np.mean(envelope[:, base_t_idx, :], axis=1))
+            layer_exp_power = np.squeeze(np.mean(envelope[:, exp_t_idx, :], axis=1))
+            layer_power_change = layer_exp_power - layer_base_power
+
+            # Average over ROI
             roi_pow.append(np.abs(np.mean(layer_power_change, axis=0)))
 
         all_layerPow.append(roi_pow)
@@ -482,13 +489,13 @@ That was the ROI analysis with two surfaces: the white matter and pial surfaces.
     plt.tight_layout()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 389-392
+.. GENERATED FROM PYTHON SOURCE LINES 396-399
 
 .. image:: ../_static/tutorial_05_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 392-415
+.. GENERATED FROM PYTHON SOURCE LINES 399-422
 
 .. code-block:: default
 
@@ -516,13 +523,13 @@ That was the ROI analysis with two surfaces: the white matter and pial surfaces.
     cb.set_label('ROI mean power', fontsize=14)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 416-419
+.. GENERATED FROM PYTHON SOURCE LINES 423-426
 
 .. image:: ../_static/tutorial_05_results_matrix.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 421-426
+.. GENERATED FROM PYTHON SOURCE LINES 428-433
 
 .. code-block:: default
 

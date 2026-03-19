@@ -14,8 +14,11 @@ This tutorial demonstrates how to perform laminar inference using an ROI analysi
 import os
 import shutil
 import numpy as np
+from scipy.signal import hilbert
 import matplotlib.pyplot as plt
 import tempfile
+from IPython.display import Image
+import base64
 
 from lameg.invert import invert_ebb, coregister, load_source_time_series
 from lameg.laminar import roi_power_comparison
@@ -188,7 +191,7 @@ coregister(
 [_,_,MU] = invert_ebb(
     pial_sim_fname,
     surf_set_bilam,
-    foi=[freq-10, freq+10],
+    foi=[freq-2.5, freq+2.5],
     patch_size=patch_size, 
     n_temp_modes=n_temp_modes,
     return_mu_matrix=True,
@@ -271,7 +274,7 @@ coregister(
 [_,_,MU] = invert_ebb(
     white_sim_fname,
     surf_set_bilam,
-    foi=[freq-10, freq+10],
+    foi=[freq-2.5, freq+2.5],
     patch_size=patch_size,
     n_temp_modes=n_temp_modes,
     return_mu_matrix=True,
@@ -326,7 +329,7 @@ for sl in range(surf_set.n_layers):
     [_, _, MU] = invert_ebb(
         l_sim_fname,
         surf_set,
-        foi=[freq - 10, freq + 10],
+        foi=[freq - 2.5, freq + 2.5],
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
         return_mu_matrix=True,
@@ -346,10 +349,14 @@ for sl in range(surf_set.n_layers):
         base_t_idx = np.where(time < 0)[0]
         exp_t_idx = np.where(time >= 0)[0]
 
-        layer_base_power = np.squeeze(np.var(layer_ts[:, base_t_idx, :], axis=1))
-        layer_exp_power = np.squeeze(np.var(layer_ts[:, exp_t_idx, :], axis=1))
-        layer_power_change = (layer_exp_power - layer_base_power) / layer_base_power
+        envelope = np.abs(hilbert(layer_ts, axis=1))
 
+        # Average over time window
+        layer_base_power = np.squeeze(np.mean(envelope[:, base_t_idx, :], axis=1))
+        layer_exp_power = np.squeeze(np.mean(envelope[:, exp_t_idx, :], axis=1))
+        layer_power_change = layer_exp_power - layer_base_power
+
+        # Average over ROI
         roi_pow.append(np.abs(np.mean(layer_power_change, axis=0)))
 
     all_layerPow.append(roi_pow)
