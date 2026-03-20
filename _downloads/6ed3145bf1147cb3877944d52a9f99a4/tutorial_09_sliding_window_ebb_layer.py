@@ -416,7 +416,7 @@ load_and_plot_csd(sim_fname_2, surf_set, layer_verts, layer_dists)
 load_and_plot_csd(sim_fname_2, surf_set, layer_verts, layer_dists)
 
 # %%
-#.. image:: ../_static/tutorial_09_simult_sliding_ebb_layer_csd.png')
+#.. image:: ../_static/tutorial_09_simult_sliding_ebb_layer_csd.png
 #   :width: 800
 #   :alt:
 

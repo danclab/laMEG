@@ -558,7 +558,7 @@ For this 3 spatial source priors will be used:
 
 .. GENERATED FROM PYTHON SOURCE LINES 419-422
 
-.. image:: ../_static/tutorial_09_simult_sliding_ebb_layer_csd.png')
+.. image:: ../_static/tutorial_09_simult_sliding_ebb_layer_csd.png
    :width: 800
    :alt:
 
