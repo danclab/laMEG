@@ -153,6 +153,23 @@ The examples can be browsed directly on `Github <https://github.com/danclab/laME
 
 .. raw:: html
 
+    <div class="sphx-glr-thumbcontainer" tooltip="This tutorial demonstrates the need for a sliding window, layer-specific version of EBB reconst...">
+
+.. only:: html
+
+  .. image:: /auto_tutorials/images/thumb/sphx_glr_tutorial_09_sliding_window_ebb_layer_thumb.png
+    :alt:
+
+  :ref:`sphx_glr_auto_tutorials_tutorial_09_sliding_window_ebb_layer.py`
+
+.. raw:: html
+
+      <div class="sphx-glr-thumbnail-title">Sliding time window EBBlayer</div>
+    </div>
+
+
+.. raw:: html
+
     </div>
 
 
@@ -167,6 +184,7 @@ The examples can be browsed directly on `Github <https://github.com/danclab/laME
    /auto_tutorials/tutorial_06_csd
    /auto_tutorials/tutorial_07_anatomy_inference_accuracy
    /auto_tutorials/tutorial_08_opm_data
+   /auto_tutorials/tutorial_09_sliding_window_ebb_layer
 
 
 .. only:: html
