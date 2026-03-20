@@ -97,8 +97,6 @@ def spm_context(spm=None, n_jobs=4):
       `n_jobs`, and both are terminated automatically upon exit.
     - If an existing `spm` instance is provided, it is reused and not terminated at the end of the
       context.
-    - The default setting (`n_jobs=4`) is suitable for standard workstations; higher values may
-      be beneficial on high-performance computing (HPC) systems.
     - Ensures robustness against MATLAB errors when initializing or closing `parpool`.
     """
 
@@ -106,16 +104,7 @@ def spm_context(spm=None, n_jobs=4):
     close_spm = False
     if spm is None:
         spm = spm_standalone.initialize()
-        spm.spm_standalone(
-            "eval",
-            f"""
-            try
-                parpool({n_jobs});
-            catch ME
-            end
-            """,
-            nargout=0
-        )
+        init_spm_parallel_pool(spm, n_workers=n_jobs)
         close_spm = True
     try:
         yield spm
@@ -129,6 +118,35 @@ def spm_context(spm=None, n_jobs=4):
             )
             spm.terminate()
             del spm
+
+
+def init_spm_parallel_pool(spm, n_workers):
+    """
+    Initialize the MATLAB parallel pool with a particular number of wokers
+
+    Parameters
+    ----------
+    spm : spm_standalone, optional
+        Existing SPM standalone instance. If None, a new instance is launched and automatically
+        terminated upon context exit (default: None).
+    n_workers : int
+        Number of MATLAB parallel workers to initialize via `parpool`.
+
+    Notes
+    -----
+    - Designed for use when spm is intialized without using the spm_context context manager
+    - Ensures robustness against MATLAB errors when initializing `parpool`.
+    """
+    spm.spm_standalone(
+        "eval",
+        f"""
+            try
+                parpool({n_workers});
+            catch ME
+            end
+        """,
+        nargout=0
+    )
 
 
 def batch(cfg, viz=True, spm_instance=None) -> None:
