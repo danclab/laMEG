@@ -788,7 +788,7 @@ def get_fiducial_coords(subj_id, fname, col_delimiter='\t', subject_column='subj
     return None  # Return None if no matching subj_id is found
 
 
-# pylint: disable=R0915
+# pylint: disable=R0915, R0912
 def coregister_3d_scan_mri(subject_id, lpa, rpa, nas, dig_face_fname, dig_units='mm',
                            out_dir=None):
     """
@@ -843,25 +843,57 @@ def coregister_3d_scan_mri(subject_id, lpa, rpa, nas, dig_face_fname, dig_units=
     """
 
     fs_subjects_dir = os.getenv('SUBJECTS_DIR')
+    if fs_subjects_dir is None:
+        raise RuntimeError('SUBJECTS_DIR is not set.')
 
-    # Convert fiducials to meters
-    lpa = lpa * 1e-3
-    rpa = rpa * 1e-3
-    nas = nas * 1e-3
+    surf_dir = os.path.join(fs_subjects_dir, subject_id, 'surf')
+    if not os.path.isdir(surf_dir):
+        raise RuntimeError(f'FreeSurfer surf directory not found: {surf_dir}')
 
-    # Get the 3d surface of the face
+    # Convert fiducials to arrays then to meters
+    lpa = np.asarray(lpa, dtype=float) * 1e-3
+    rpa = np.asarray(rpa, dtype=float) * 1e-3
+    nas = np.asarray(nas, dtype=float) * 1e-3
+
+    # Read the 3D facial surface
     reader = vtk.vtkSTLReader()  # pylint: disable=E1101
-    reader.SetFileName(dig_face_fname)
+    reader.SetFileName(str(dig_face_fname))
     reader.Update()
     polydata = reader.GetOutput()
-    points = polydata.GetPoints()
-    n_points = points.GetNumberOfPoints()
-    vertices = np.array([points.GetPoint(i) for i in range(n_points)])
-    # Get all vertices as points - round
+
+    vtk_points = polydata.GetPoints()
+    n_points = vtk_points.GetNumberOfPoints()
+    vertices = np.array([vtk_points.GetPoint(i) for i in range(n_points)], dtype=float)
+
+    vtk_polys = polydata.GetPolys()
+    vtk_polys.InitTraversal()
+    id_list = vtk.vtkIdList()  # pylint: disable=E1101
+    face_faces = []
+    while vtk_polys.GetNextCell(id_list):
+        n_ids = id_list.GetNumberOfIds()
+        if n_ids == 3:
+            face_faces.append([id_list.GetId(0), id_list.GetId(1), id_list.GetId(2)])
+        elif n_ids > 3:
+            first = id_list.GetId(0)
+            for i in range(1, n_ids - 1):
+                face_faces.append([first, id_list.GetId(i), id_list.GetId(i + 1)])
+
+    face_faces = np.asarray(face_faces, dtype=np.int32)
+    if face_faces.size == 0:
+        raise RuntimeError(f'No valid faces found in mesh: {dig_face_fname}')
+
+    # Use rounded unique vertices as headshape points for coregistration
     points = np.unique(np.round(vertices, 2), axis=0)
-    # Convert mm to m
-    if dig_units=='mm':
+
+    # Convert scan coordinates to meters if needed
+    if dig_units == 'mm':
         points = points * 1e-3
+        vertices_m = vertices * 1e-3
+    elif dig_units == 'm':
+        vertices_m = vertices.copy()
+    else:
+        raise ValueError("dig_units must be either 'mm' or 'm'.")
+
     dig = mne.channels.make_dig_montage(
         hsp=points,
         lpa=lpa,
@@ -870,32 +902,36 @@ def coregister_3d_scan_mri(subject_id, lpa, rpa, nas, dig_face_fname, dig_units=
         coord_frame='head'
     )
 
-    # Create a fake info object for the digital montage
+    # Create info in a way that works across old/new MNE versions
     info = _empty_info(1)
-    info["dig"] = dig
-    info._unlocked = False # pylint:disable=W0212
+    try:
+        info['dig'] = dig.dig
+    except AttributeError:
+        info['dig'] = dig
+    info._unlocked = False  # pylint:disable=W0212
 
-    # Plotting options
     plot_kwargs = {
         'subject': subject_id,
         'subjects_dir': fs_subjects_dir,
-        'surfaces': "head-dense",
+        'surfaces': 'head-dense',
         'dig': True,
         'eeg': [],
         'meg': [],
         'show_axes': True,
-        'coord_frame': "mri"
+        'coord_frame': 'mri'
     }
 
-    # Create a coregistration
     coreg = Coregistration(
         info,
         subject_id,
         fs_subjects_dir,
         fiducials='auto',
-        on_defects="ignore"
+        on_defects='ignore'
     )
-    coreg._setup_digs() # pylint:disable=W0212
+
+    # Compatibility: only call _setup_digs if needed
+    if not hasattr(coreg, '_dig_dict') or coreg._dig_dict is None:  # pylint:disable=W0212
+        coreg._setup_digs()  # pylint:disable=W0212
 
     # Visualize initial alignment
     align_fig = mne.viz.plot_alignment(info, trans=coreg.trans, **plot_kwargs)
@@ -903,62 +939,107 @@ def coregister_3d_scan_mri(subject_id, lpa, rpa, nas, dig_face_fname, dig_units=
         screenshot = align_fig.plotter.screenshot()
         fig, axis = plt.subplots(figsize=(10, 10))
         axis.imshow(screenshot, origin='upper')
-        axis.set_axis_off()  # Disable axis labels and ticks
+        axis.set_axis_off()
         fig.tight_layout()
         fig.savefig(os.path.join(out_dir, 'coreg-initial.png'))
+        plt.close(fig)
+    align_fig.plotter.close()
 
-    # Rough fit of fiducials to get rough alignment
+    # Rough fit of fiducials
     coreg.set_scale_mode('uniform')
     coreg.fit_fiducials(verbose=True)
 
-    # Visualize rough alignment
     align_fig = mne.viz.plot_alignment(info, trans=coreg.trans, **plot_kwargs)
     if out_dir is not None:
         screenshot = align_fig.plotter.screenshot()
         fig, axis = plt.subplots(figsize=(10, 10))
         axis.imshow(screenshot, origin='upper')
-        axis.set_axis_off()  # Disable axis labels and ticks
+        axis.set_axis_off()
         fig.tight_layout()
         fig.savefig(os.path.join(out_dir, 'coreg-fit_fiducials.png'))
+        plt.close(fig)
+    align_fig.plotter.close()
 
-    # ICP fit - not fitting fiducial locations, just digitised points
-    coreg.fit_icp(n_iterations=50, nasion_weight=0.0,  lpa_weight=0.0, rpa_weight=0.0, verbose=True)
+    # ICP fit - only digitized points, not fiducials
+    coreg.fit_icp(
+        n_iterations=50,
+        nasion_weight=0.0,
+        lpa_weight=0.0,
+        rpa_weight=0.0,
+        verbose=True
+    )
 
-    # Visualize final alignment
     align_fig = mne.viz.plot_alignment(info, trans=coreg.trans, **plot_kwargs)
     if out_dir is not None:
         screenshot = align_fig.plotter.screenshot()
         fig, axis = plt.subplots(figsize=(10, 10))
         axis.imshow(screenshot, origin='upper')
-        axis.set_axis_off()  # Disable axis labels and ticks
+        axis.set_axis_off()
         fig.tight_layout()
         fig.savefig(os.path.join(out_dir, 'coreg-fit_icp.png'))
+        plt.close(fig)
+    align_fig.plotter.close()
 
+    # Save the final coregistration transform in a version-compatible way
+    trans_fname = os.path.join(surf_dir, 'head_to_mri-trans.fif')
+    try:
+        mne.write_trans(trans_fname, coreg.trans, overwrite=True)
+    except TypeError:
+        if os.path.exists(trans_fname):
+            os.remove(trans_fname)
+        mne.write_trans(trans_fname, coreg.trans)
 
-    # Apply inverse transformation to fiducial coordinates to get coordinates in FreeSurfer space,
-    # convert to mm
+    # Transform fiducials to FreeSurfer tkrRAS, then to mm
     lpa_tkras = apply_trans(coreg.trans, lpa) * 1e3
     rpa_tkras = apply_trans(coreg.trans, rpa) * 1e3
     nas_tkras = apply_trans(coreg.trans, nas) * 1e3
 
-    # Read FreeSurfer matrices from the SAME volume SPM will use (ideally orig.mgz from recon-all)
+    # Read FreeSurfer matrices from orig.mgz
     orig_mgz = os.path.join(fs_subjects_dir, subject_id, 'mri', 'orig.mgz')
 
-    def _mat(flag):  # returns 4x4
-        out = subprocess.check_output(['mri_info', flag, orig_mgz]).decode().strip().split()
-        return np.array([float(x) for x in out]).reshape(4, 4)
+    def _mat(flag):
+        out = subprocess.check_output(
+            ['mri_info', flag, orig_mgz]
+        ).decode().strip().split()
+        return np.array([float(x) for x in out], dtype=float).reshape(4, 4)
 
-    t_orig = _mat('--vox2ras-tkr')  # vox - tkRAS (mm)
-    n_orig = _mat('--vox2ras')  # vox - scanner RAS (mm)
+    t_orig = _mat('--vox2ras-tkr')  # vox -> tkRAS (mm)
+    n_orig = _mat('--vox2ras')  # vox -> scanner RAS (mm)
     it_orig = np.linalg.inv(t_orig)
 
     def tkras_to_scanner_ras(xyz_mm):
-        xyz1 = np.r_[xyz_mm, 1.0]
-        return (n_orig @ (it_orig @ xyz1))[:3]
+        xyz_mm = np.asarray(xyz_mm, dtype=float)
+        if xyz_mm.ndim == 1:
+            xyz1 = np.r_[xyz_mm, 1.0]
+            return (n_orig @ (it_orig @ xyz1))[:3]
+        if xyz_mm.ndim == 2:
+            xyz1 = np.c_[xyz_mm, np.ones((xyz_mm.shape[0], 1), dtype=float)]
+            return (xyz1 @ it_orig.T @ n_orig.T)[:, :3]
+        raise ValueError('xyz_mm must have shape (3,) or (N, 3).')
 
     lpa_spm = tkras_to_scanner_ras(lpa_tkras)
     rpa_spm = tkras_to_scanner_ras(rpa_tkras)
     nas_spm = tkras_to_scanner_ras(nas_tkras)
+
+    face_verts_tkras = apply_trans(coreg.trans, vertices_m) * 1e3
+    face_verts_spm = tkras_to_scanner_ras(face_verts_tkras)
+
+    face_surf = nib.gifti.GiftiImage()
+    face_surf.add_gifti_data_array(
+        nib.gifti.GiftiDataArray(
+            data=face_verts_spm.astype(np.float32),
+            intent=nib.nifti1.intent_codes['NIFTI_INTENT_POINTSET']
+        )
+    )
+    face_surf.add_gifti_data_array(
+        nib.gifti.GiftiDataArray(
+            data=face_faces.astype(np.int32),
+            intent=nib.nifti1.intent_codes['NIFTI_INTENT_TRIANGLE']
+        )
+    )
+
+    face_fname = os.path.join(surf_dir, 'face_3d.gii')
+    nib.save(face_surf, face_fname)
 
     return lpa_spm, rpa_spm, nas_spm
 
