@@ -1433,6 +1433,136 @@ class LayerSurfaceSet:
         )
         return layer_names
 
+    def get_roi_idx(self, regions, hemi=None, atlas='aparc', layer_name='pial',
+                    to_stage='ds'):
+        """
+        Return vertex indices for one or more atlas-defined ROIs in the requested surface space.
+
+        This method reads a FreeSurfer annotation file (e.g., ``lh.aparc.annot``,
+        ``lh.aparc.a2009s.annot``, ``lh.BA_exvivo.annot``), identifies the vertices belonging
+        to the requested region names, and maps those vertices into the target surface stage.
+
+        Parameters
+        ----------
+        regions : str | sequence of str
+            Region name or list of region names to extract from the annotation.
+            Names must match the labels stored in the selected FreeSurfer annotation.
+        hemi : {'lh', 'rh', None}, optional
+            Hemisphere to query. If None, both hemispheres are used and indices are returned in the
+            combined target-space indexing. Default is None.
+        atlas : str, optional
+            FreeSurfer annotation basename, without hemisphere prefix or ``.annot`` suffix.
+            Examples: ``'aparc'``, ``'aparc.a2009s'``, ``'BA_exvivo'``.
+            Default is ``'aparc'``.
+        layer_name : str, optional
+            Cortical layer on which to define the ROI. Default is ``'pial'``.
+        to_stage : {'converted', 'nodeep', 'combined', 'ds'}, optional
+            Surface stage in which indices should be returned. Default is ``'ds'``.
+
+        Returns
+        -------
+        roi_idx : np.ndarray
+            Sorted array of unique vertex indices in the requested target surface space.
+
+        Raises
+        ------
+        ValueError
+            If an invalid hemisphere is provided or if one or more requested regions are not found
+            in the annotation.
+        FileNotFoundError
+            If the requested annotation file does not exist.
+
+        Notes
+        -----
+        - FreeSurfer annotation files are hemisphere-specific and index the native-resolution
+          surface vertices.
+        - When ``hemi=None`` and ``to_stage`` is ``'combined'`` or ``'ds'``, right-hemisphere
+          indices are automatically offset into the combined mesh space.
+        - For ``to_stage='ds'``, mapping is performed via nearest-neighbour stage mapping, not
+          exact coordinate equality.
+        """
+        if hemi not in (None, 'lh', 'rh'):
+            raise ValueError("hemi must be one of: None, 'lh', or 'rh'.")
+
+        if isinstance(regions, str):
+            regions = [regions]
+        regions = list(regions)
+
+        hemis = ['lh', 'rh'] if hemi is None else [hemi]
+        roi_idx = []
+
+        for this_hemi in hemis:
+            annot_path = os.path.join(self.subj_dir, 'label', f'{this_hemi}.{atlas}.annot')
+            if not os.path.exists(annot_path):
+                raise FileNotFoundError(f"Annotation not found: {annot_path}")
+
+            labels, _, names = nib.freesurfer.read_annot(annot_path)
+
+            decoded_names = [
+                name.decode('utf-8', errors='ignore') if isinstance(name, bytes) else str(name)
+                for name in names
+            ]
+
+            missing_regions = [region for region in regions if region not in decoded_names]
+            if missing_regions:
+                raise ValueError(
+                    f"Regions not found in {this_hemi}.{atlas}.annot: {missing_regions}. "
+                    f"Available labels include: "
+                    f"{decoded_names[:10]}{' ...' if len(decoded_names) > 10 else ''}"
+                )
+
+            region_label_ids = [decoded_names.index(region) for region in regions]
+            hemi_orig_idx = np.where(np.isin(labels, region_label_ids))[0]
+
+            if hemi_orig_idx.size == 0:
+                continue
+
+            if to_stage == 'converted':
+                mapped_idx = hemi_orig_idx
+
+            elif to_stage == 'nodeep':
+                conv_to_nodeep = self.map_between_stages(
+                    layer_name,
+                    from_stage='converted',
+                    from_hemi=this_hemi,
+                    to_stage='nodeep',
+                    to_hemi=this_hemi
+                )
+                keep_mask = np.isin(conv_to_nodeep, hemi_orig_idx)
+                mapped_idx = np.where(keep_mask)[0]
+
+            elif to_stage in ('combined', 'ds'):
+                conv_to_nodeep = self.map_between_stages(
+                    layer_name,
+                    from_stage='converted',
+                    from_hemi=this_hemi,
+                    to_stage='nodeep',
+                    to_hemi=this_hemi
+                )
+                keep_mask = np.isin(conv_to_nodeep, hemi_orig_idx)
+                nodeep_idx = np.where(keep_mask)[0]
+
+                nodeep_to_target = self.map_between_stages(
+                    layer_name,
+                    from_stage='nodeep',
+                    from_hemi=this_hemi,
+                    to_stage=to_stage,
+                    to_hemi=None
+                )
+                mapped_idx = nodeep_to_target[nodeep_idx]
+
+            else:
+                raise ValueError(
+                    f"Unsupported mapping: to to_stage='{to_stage}'."
+                )
+
+            roi_idx.append(np.asarray(mapped_idx, dtype=int))
+
+        if not roi_idx:
+            return np.array([], dtype=int)
+
+        roi_idx = np.unique(np.concatenate(roi_idx))
+        return roi_idx
 
     # pylint: disable=R0912,R0915
     def create(self, ds_factor=0.1, orientation='link_vector', fix_orientation=True, n_jobs=-1,
@@ -2755,3 +2885,70 @@ def _concatenate_surfaces(surfaces):
 
 __all__ = ["LayerSurfaceSet", "interpolate_data", "convert_fsaverage_to_native",
            "convert_native_to_fsaverage"]
+
+
+def _estimate_rigid_transform(source_points, target_points, allow_scaling=False):
+    """
+    Estimate a rigid transform mapping source_points -> target_points.
+
+    Parameters
+    ----------
+    source_points : array-like, shape (N, 3)
+    target_points : array-like, shape (N, 3)
+    allow_scaling : bool, optional
+        If True, estimate a single global scale as well.
+
+    Returns
+    -------
+    affine : ndarray, shape (4, 4)
+        4x4 transform matrix.
+    rmse : float
+        Root-mean-square fitting error.
+    """
+    source_points = np.asarray(source_points, dtype=float)
+    target_points = np.asarray(target_points, dtype=float)
+
+    if source_points.shape != target_points.shape or source_points.shape[1] != 3:
+        raise ValueError("source_points and target_points must both have shape (N, 3).")
+    if source_points.shape[0] < 3:
+        raise ValueError("At least 3 correspondences are needed.")
+
+    src_centroid = source_points.mean(axis=0)
+    tgt_centroid = target_points.mean(axis=0)
+
+    src_centered = source_points - src_centroid
+    tgt_centered = target_points - tgt_centroid
+
+    h_mat = src_centered.T @ tgt_centered
+    u_mat, s_mat, vt_mat = np.linalg.svd(h_mat)
+    rot = vt_mat.T @ u_mat.T
+
+    if np.linalg.det(rot) < 0:
+        vt_mat[-1, :] *= -1
+        rot = vt_mat.T @ u_mat.T
+
+    scale = 1.0
+    if allow_scaling:
+        denom = np.sum(src_centered ** 2)
+        if denom > 0:
+            scale = np.sum(s_mat) / denom
+
+    trans = tgt_centroid - scale * (rot @ src_centroid)
+
+    affine = np.eye(4)
+    affine[:3, :3] = scale * rot
+    affine[:3, 3] = trans
+
+    fitted = _apply_affine(source_points, affine)
+    rmse = np.sqrt(np.mean(np.sum((fitted - target_points) ** 2, axis=1)))
+
+    return affine, rmse
+
+
+def _apply_affine(points, affine):
+    """
+    Apply a 4x4 affine to Nx3 points.
+    """
+    points = np.asarray(points, dtype=float)
+    pts_h = np.c_[points, np.ones(points.shape[0])]
+    return (affine @ pts_h.T).T[:, :3]
