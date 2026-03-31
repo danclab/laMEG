@@ -2169,6 +2169,52 @@ laminar orientation models.</p></li>
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="lameg.surf.LayerSurfaceSet.get_roi_idx">
+<span class="sig-name descname"><span class="pre">get_roi_idx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">regions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">hemi</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">atlas</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'aparc'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'pial'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ds'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.LayerSurfaceSet.get_roi_idx" title="Permalink to this definition">#</a></dt>
+<dd><p>Return vertex indices for one or more atlas-defined ROIs in the requested surface space.</p>
+<p>This method reads a FreeSurfer annotation file (e.g., <code class="docutils literal notranslate"><span class="pre">lh.aparc.annot</span></code>,
+<code class="docutils literal notranslate"><span class="pre">lh.aparc.a2009s.annot</span></code>, <code class="docutils literal notranslate"><span class="pre">lh.BA_exvivo.annot</span></code>), identifies the vertices belonging
+to the requested region names, and maps those vertices into the target surface stage.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>regions</strong> (<em>str</em><em> | </em><em>sequence</em><em> of </em><em>str</em>) – Region name or list of region names to extract from the annotation.
+Names must match the labels stored in the selected FreeSurfer annotation.</p></li>
+<li><p><strong>hemi</strong> (<em>{'lh'</em><em>, </em><em>'rh'</em><em>, </em><em>None}</em><em>, </em><em>optional</em>) – Hemisphere to query. If None, both hemispheres are used and indices are returned in the
+combined target-space indexing. Default is None.</p></li>
+<li><p><strong>atlas</strong> (<em>str</em><em>, </em><em>optional</em>) – FreeSurfer annotation basename, without hemisphere prefix or <code class="docutils literal notranslate"><span class="pre">.annot</span></code> suffix.
+Examples: <code class="docutils literal notranslate"><span class="pre">'aparc'</span></code>, <code class="docutils literal notranslate"><span class="pre">'aparc.a2009s'</span></code>, <code class="docutils literal notranslate"><span class="pre">'BA_exvivo'</span></code>.
+Default is <code class="docutils literal notranslate"><span class="pre">'aparc'</span></code>.</p></li>
+<li><p><strong>layer_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Cortical layer on which to define the ROI. Default is <code class="docutils literal notranslate"><span class="pre">'pial'</span></code>.</p></li>
+<li><p><strong>to_stage</strong> (<em>{'converted'</em><em>, </em><em>'nodeep'</em><em>, </em><em>'combined'</em><em>, </em><em>'ds'}</em><em>, </em><em>optional</em>) – Surface stage in which indices should be returned. Default is <code class="docutils literal notranslate"><span class="pre">'ds'</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>roi_idx</strong> – Sorted array of unique vertex indices in the requested target surface space.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray</p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>ValueError</strong> – If an invalid hemisphere is provided or if one or more requested regions are not found
+in the annotation.</p></li>
+<li><p><strong>FileNotFoundError</strong> – If the requested annotation file does not exist.</p></li>
+</ul>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<ul class="simple">
+<li><p>FreeSurfer annotation files are hemisphere-specific and index the native-resolution
+surface vertices.</p></li>
+<li><p>When <code class="docutils literal notranslate"><span class="pre">hemi=None</span></code> and <code class="docutils literal notranslate"><span class="pre">to_stage</span></code> is <code class="docutils literal notranslate"><span class="pre">'combined'</span></code> or <code class="docutils literal notranslate"><span class="pre">'ds'</span></code>, right-hemisphere
+indices are automatically offset into the combined mesh space.</p></li>
+<li><p>For <code class="docutils literal notranslate"><span class="pre">to_stage='ds'</span></code>, mapping is performed via nearest-neighbour stage mapping, not
+exact coordinate equality.</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="lameg.surf.LayerSurfaceSet.get_vertices_per_layer">
 <span class="sig-name descname"><span class="pre">get_vertices_per_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.surf.LayerSurfaceSet.get_vertices_per_layer" title="Permalink to this definition">#</a></dt>
 <dd><p>Return the number of vertices per cortical layer in the downsampled multilayer mesh.</p>
@@ -3444,19 +3490,31 @@ is True.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.viz.verify_coregistration">
-<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">verify_coregistration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fid_coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.viz.verify_coregistration" title="Permalink to this definition">#</a></dt>
-<dd><p>Visualize MEG-MRI coregistration by plotting the scalp, skull, and cortical surfaces
-along with fiducial landmarks.</p>
-<p>This function provides a 3D visualization of the subject’s head geometry and fiducial
-points (nasion, left and right preauricular) to verify whether MEG-MRI coregistration
-was successful. It loads the pial, scalp, inner skull, and outer skull surfaces from
-the subject’s directory and displays them using a <cite>k3d</cite> interactive plot.</p>
+<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">verify_coregistration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ds'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inversion_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fid_coords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.viz.verify_coregistration" title="Permalink to this definition">#</a></dt>
+<dd><p>Visualize MEG-MRI coregistration by plotting the scalp, skull, cortical surfaces,
+and sensors, optionally along with fiducial landmarks.</p>
+<p>This function provides a 3D visualization of sensors as well as the subject’s head
+geometry and fiducial points (nasion, left and right preauricular, if provided) to
+verify whether MEG-MRI coregistration was successful. It loads the pial, scalp,
+inner skull, and outer skull surfaces from the subject’s directory and displays
+them using a <cite>k3d</cite> interactive plot.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>fid_coords</strong> (<em>dict</em>) – Dictionary of fiducial coordinates in MEG headspace, e.g.:
-<code class="docutils literal notranslate"><span class="pre">{'nas':</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z],</span> <span class="pre">'lpa':</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z],</span> <span class="pre">'rpa':</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z]}</span></code>.</p></li>
+<li><p><strong>data_file</strong> (<em>str</em>) – Path to the MEG dataset (SPM-compatible .mat file) that coregistration has already
+been run on.</p></li>
 <li><p><strong>surf_set</strong> (<a class="reference internal" href="#lameg.surf.LayerSurfaceSet" title="lameg.surf.LayerSurfaceSet"><em>LayerSurfaceSet</em></a>) – Subject’s surface set containing paths and metadata for cortical and head meshes.</p></li>
+<li><p><strong>layer_name</strong> (<em>str</em><em>, </em><em>optional</em>) – Name of the mesh layer used for coregistration.
+Default is None (multilayer mesh)</p></li>
+<li><p><strong>stage</strong> (<em>{'combined'</em><em>, </em><em>'ds'}</em><em>, </em><em>optional</em>) – Processing stage of mesh used for coregistration : <cite>‘combined’</cite> for merged
+hemispheres, <cite>‘ds’</cite> for downsampled single surfaces.
+Default is <cite>‘ds’</cite>.</p></li>
+<li><p><strong>orientation</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Downsampling orientation identifier used when <cite>stage=’ds’</cite>. Ignored otherwise.</p></li>
+<li><p><strong>fixed</strong> (<em>bool</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Whether to load fixed or adaptive orientation surfaces when <cite>stage=’ds’</cite>. Default is None.</p></li>
+<li><p><strong>inversion_idx</strong> (<em>int</em><em>, </em><em>optional</em>) – Index of the forward model to show within the SPM data object (default: 0).</p></li>
+<li><p><strong>fid_coords</strong> (<em>dict</em><em>, </em><em>optional</em>) – Dictionary of fiducial coordinates in MEG headspace, e.g.:
+<code class="docutils literal notranslate"><span class="pre">{'nas':</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z],</span> <span class="pre">'lpa':</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z],</span> <span class="pre">'rpa':</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z]}</span></code>.
+Default is None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -3472,24 +3530,6 @@ or segmentation has not yet been completed.</p>
 </dl>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><dl class="simple">
-<dt>The following meshes are required:</dt><dd><ul>
-<li><p><cite>&lt;subject&gt;/mri/origscalp_2562.surf.gii</cite></p></li>
-<li><p><cite>&lt;subject&gt;/mri/origiskull_2562.surf.gii</cite></p></li>
-<li><p><cite>&lt;subject&gt;/mri/origoskull_2562.surf.gii</cite></p></li>
-</ul>
-</dd>
-</dl>
-</li>
-<li><dl class="simple">
-<dt>Fiducial markers are displayed as colored spheres:</dt><dd><ul>
-<li><p>Nasion: blue</p></li>
-<li><p>LPA: red</p></li>
-<li><p>RPA: green</p></li>
-</ul>
-</dd>
-</dl>
-</li>
 <li><p>Intended as a visual diagnostic tool; does not modify or compute transformations.</p></li>
 </ul>
 </dd></dl>
@@ -3593,6 +3633,7 @@ or segmentation has not yet been completed.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.LayerSurfaceSet.get_mesh_path"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_mesh_path()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.LayerSurfaceSet.get_multilayer_vertex"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_multilayer_vertex()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.LayerSurfaceSet.get_radiality_to_scalp"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_radiality_to_scalp()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.LayerSurfaceSet.get_roi_idx"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_roi_idx()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.LayerSurfaceSet.get_vertices_per_layer"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.get_vertices_per_layer()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.LayerSurfaceSet.interpolate_layer_data"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.interpolate_layer_data()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.surf.LayerSurfaceSet.load"><code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet.load()</span></code></a></li>
