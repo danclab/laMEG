@@ -1927,7 +1927,7 @@ def _load_inverse_components(inv_fname, inversion_idx=0):
 
     except OSError:
         mat = loadmat(inv_fname, simplify_cells=True)
-        inv = mat["D"]["other"]["inv"][inversion_idx]
+        inv = mat["D"]["other"]["inv"][inversion_idx]["inverse"]
 
         # U
         u_raw = inv["U"][0] if isinstance(inv["U"], (list, tuple, np.ndarray)) else inv["U"]
