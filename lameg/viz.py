@@ -51,12 +51,18 @@ import os
 import collections
 import warnings
 
+import h5py
 import numpy as np
+from scipy.io import loadmat
 from scipy.spatial import cKDTree # pylint: disable=E0611
 import nibabel as nib
+
 from matplotlib import cm, colors
 import matplotlib.pyplot as plt
 import k3d
+
+from lameg.invert import check_inversion_exists
+from lameg.surf import _normit, _estimate_rigid_transform, _apply_affine
 
 warnings.filterwarnings(
     "ignore", message="^.*A coerced copy has been created.*$"
@@ -439,23 +445,241 @@ def show_surface(
     return plot
 
 
-def verify_coregistration(fid_coords, surf_set):
+def _sensor_frame(normal, direction=None):
     """
-    Visualize MEG-MRI coregistration by plotting the scalp, skull, and cortical surfaces
-    along with fiducial landmarks.
+    Construct an orthonormal in-plane frame for a sensor glyph.
+    """
+    normal = _normit(np.asarray(normal, dtype=float)[None, :])[0]
 
-    This function provides a 3D visualization of the subject's head geometry and fiducial
-    points (nasion, left and right preauricular) to verify whether MEG-MRI coregistration
-    was successful. It loads the pial, scalp, inner skull, and outer skull surfaces from
-    the subject's directory and displays them using a `k3d` interactive plot.
+    if direction is not None and np.all(np.isfinite(direction)):
+        direction = np.asarray(direction, dtype=float)
+        direction = direction - np.dot(direction, normal) * normal
+        if np.linalg.norm(direction) > np.finfo(float).eps:
+            u_vec = direction / np.linalg.norm(direction)
+            v_vec = np.cross(normal, u_vec)
+            v_vec = v_vec / np.linalg.norm(v_vec)
+            return u_vec, v_vec
+
+    ref = np.array([0.0, 0.0, 1.0])
+    if abs(np.dot(normal, ref)) > 0.95:
+        ref = np.array([0.0, 1.0, 0.0])
+
+    u_vec = np.cross(normal, ref)
+    u_vec = u_vec / np.linalg.norm(u_vec)
+    v_vec = np.cross(normal, u_vec)
+    v_vec = v_vec / np.linalg.norm(v_vec)
+    return u_vec, v_vec
+
+
+def _make_circle_sensor_mesh(positions, orientations, radius=0.005, n_circle=24):
+    """
+    Build one batched triangular mesh containing one filled disc per sensor.
+    """
+    positions = np.asarray(positions, dtype=float)
+    orientations = _normit(np.asarray(orientations, dtype=float))
+
+    angles = np.linspace(0.0, 2.0 * np.pi, n_circle, endpoint=False)
+
+    vertices = []
+    faces = []
+    offset = 0
+
+    for pos, normal in zip(positions, orientations):
+        u_vec, v_vec = _sensor_frame(normal)
+
+        center = pos
+        ring = np.array([
+            pos + radius * (np.cos(a) * u_vec + np.sin(a) * v_vec)
+            for a in angles
+        ])
+
+        sensor_vertices = np.vstack([center[None, :], ring])
+        vertices.append(sensor_vertices.astype(np.float32))
+
+        # fan triangulation from center
+        for i in range(n_circle):
+            i1_idx = offset + 1 + i
+            i2_idx = offset + 1 + ((i + 1) % n_circle)
+            faces.append([offset, i1_idx, i2_idx])
+
+        offset += sensor_vertices.shape[0]
+
+    return np.vstack(vertices), np.asarray(faces, dtype=np.uint32)
+
+
+def _make_square_sensor_mesh(positions, orientations, directions=None, edge_length=0.01):
+    """
+    Build one batched triangular mesh containing one filled square per sensor.
+    """
+    positions = np.asarray(positions, dtype=float)
+    orientations = _normit(np.asarray(orientations, dtype=float))
+    directions = None if directions is None else np.asarray(directions, dtype=float)
+
+    half = edge_length / 2.0
+    vertices = []
+    faces = []
+    offset = 0
+
+    for idx, (pos, normal) in enumerate(zip(positions, orientations)):
+        dir_vec = None if directions is None else directions[idx]
+        u_vec, v_vec = _sensor_frame(normal, direction=dir_vec)
+
+        corners = np.array([
+            pos + (+half * u_vec) + (+half * v_vec),
+            pos + (-half * u_vec) + (+half * v_vec),
+            pos + (-half * u_vec) + (-half * v_vec),
+            pos + (+half * u_vec) + (-half * v_vec),
+        ], dtype=np.float32)
+
+        vertices.append(corners)
+
+        # two triangles, no diagonals rendered separately
+        faces.append([offset + 0, offset + 1, offset + 2])
+        faces.append([offset + 0, offset + 2, offset + 3])
+
+        offset += 4
+
+    return np.vstack(vertices), np.asarray(faces, dtype=np.uint32)
+
+
+def _compute_planar_channel_directions(tra, coil_positions, planar_mask):
+    """
+    Compute planar gradiometer in-plane directions from the transfer matrix.
+
+    This follows the FieldTrip logic used for square Neuromag glyphs:
+    for channels with exactly one positive and one negative coil weight,
+    the in-plane direction is:
+
+        coilpos(poscoil) - coilpos(negcoil)
 
     Parameters
     ----------
-    fid_coords : dict
-        Dictionary of fiducial coordinates in MEG headspace, e.g.:
-        ``{'nas': [x, y, z], 'lpa': [x, y, z], 'rpa': [x, y, z]}``.
+    tra : ndarray, shape (n_channels, n_coils)
+        Coil-to-channel transfer matrix.
+    coil_positions : ndarray, shape (n_coils, 3)
+        Coil positions.
+    planar_mask : ndarray, shape (n_channels,)
+        Boolean mask selecting planar channels.
+
+    Returns
+    -------
+    chan_dir : ndarray, shape (n_planar, 3)
+        In-plane direction vectors for planar channels. Rows are NaN if a
+        simple positive/negative pair cannot be identified.
+    """
+    tra = np.asarray(tra, dtype=float)
+    coil_positions = np.asarray(coil_positions, dtype=float)
+    planar_idx = np.where(planar_mask)[0]
+
+    chan_dir = np.full((len(planar_idx), 3), np.nan, dtype=float)
+
+    for out_idx, chan_idx in enumerate(planar_idx):
+        pos_coil = np.where(tra[chan_idx, :] > 0)[0]
+        neg_coil = np.where(tra[chan_idx, :] < 0)[0]
+
+        if len(pos_coil) == 1 and len(neg_coil) == 1:
+            direction = coil_positions[pos_coil[0], :] - coil_positions[neg_coil[0], :]
+            chan_dir[out_idx, :] = _normit(direction[None, :])[0]
+
+    return chan_dir
+
+
+def _read_matlab_string(file, ref):
+    arr = file[ref][()]
+    arr = np.asarray(arr).squeeze()
+    return ''.join(chr(int(x)) for x in arr if int(x) != 0)
+
+
+def _load_sensor_geometry(data_file, inversion_idx=0):
+    """
+    Load both forward sensor geometry
+    """
+    check_inversion_exists(data_file, inversion_idx=inversion_idx)
+
+    try:
+        with h5py.File(data_file, "r") as file:
+            inv = file[file["D"]["other"]["inv"][inversion_idx][0]]
+
+            forward = inv["forward"]
+
+            forward_sens = {
+                "chanpos": forward["sensors"]["chanpos"][()].T,
+                "chanori": forward["sensors"]["chanori"][()].T,
+                "coilpos": forward["sensors"]["coilpos"][()].T,
+                "coilori": forward["sensors"]["coilori"][()].T,
+                "tra": forward["sensors"]["tra"][()].T,
+                "chantype": [
+                    _read_matlab_string(file, x) for x in forward["sensors"]["chantype"][()][0]
+                ],
+                "label": [
+                    _read_matlab_string(file, x) for x in forward["sensors"]["label"][()][0]
+                ]
+            }
+
+            mesh_verts = np.array(forward["mesh"]["vert"][()], dtype=float).T
+            mesh_faces = forward["mesh"]["face"][()].T - 1
+
+    except OSError:
+        mat = loadmat(data_file, simplify_cells=True)
+        inv = mat["D"]["other"]["inv"][inversion_idx]
+
+        forward_sens = {
+            "chanpos": inv["forward"]["sensors"]["chanpos"],
+            "chanori": inv["forward"]["sensors"]["chanori"],
+            "coilpos": inv["forward"]["sensors"]["coilpos"],
+            "coilori": inv["forward"]["sensors"]["coilori"],
+            "tra": inv["forward"]["sensors"]["tra"],
+            "chantype": inv["forward"]["sensors"]["chantype"],
+            "label": inv["forward"]["sensors"]["label"]
+        }
+
+        mesh_verts = inv["forward"]["mesh"]["vert"]
+        mesh_faces = inv["forward"]["mesh"]["face"]
+
+    return {
+        "forward_sensors": forward_sens,
+        'mesh_verts': mesh_verts,
+        'mesh_faces': mesh_faces
+    }
+
+
+def verify_coregistration(data_file, surf_set, layer_name=None, stage='ds',
+                          orientation='link_vector', fixed=True,
+                          inversion_idx=0, fid_coords=None):
+    """
+    Visualize MEG-MRI coregistration by plotting the scalp, skull, cortical surfaces,
+    and sensors, optionally along with fiducial landmarks.
+
+    This function provides a 3D visualization of sensors as well as the subject's head
+    geometry and fiducial points (nasion, left and right preauricular, if provided) to
+    verify whether MEG-MRI coregistration was successful. It loads the pial, scalp,
+    inner skull, and outer skull surfaces from the subject's directory and displays
+    them using a `k3d` interactive plot.
+
+    Parameters
+    ----------
+    data_file : str
+        Path to the MEG dataset (SPM-compatible .mat file) that coregistration has already
+        been run on.
     surf_set : LayerSurfaceSet
         Subject's surface set containing paths and metadata for cortical and head meshes.
+    layer_name : str, optional
+        Name of the mesh layer used for coregistration.
+        Default is None (multilayer mesh)
+    stage : {'combined', 'ds'}, optional
+        Processing stage of mesh used for coregistration : `'combined'` for merged
+        hemispheres, `'ds'` for downsampled single surfaces.
+        Default is `'ds'`.
+    orientation : str or None, optional
+        Downsampling orientation identifier used when `stage='ds'`. Ignored otherwise.
+    fixed : bool or None, optional
+        Whether to load fixed or adaptive orientation surfaces when `stage='ds'`. Default is None.
+    inversion_idx: int, optional
+        Index of the forward model to show within the SPM data object (default: 0).
+    fid_coords : dict, optional
+        Dictionary of fiducial coordinates in MEG headspace, e.g.:
+        ``{'nas': [x, y, z], 'lpa': [x, y, z], 'rpa': [x, y, z]}``.
+        Default is None.
 
     Returns
     -------
@@ -470,98 +694,197 @@ def verify_coregistration(fid_coords, surf_set):
 
     Notes
     -----
-    - The following meshes are required:
-        - `<subject>/mri/origscalp_2562.surf.gii`
-        - `<subject>/mri/origiskull_2562.surf.gii`
-        - `<subject>/mri/origoskull_2562.surf.gii`
-    - Fiducial markers are displayed as colored spheres:
-        - Nasion: blue
-        - LPA: red
-        - RPA: green
     - Intended as a visual diagnostic tool; does not modify or compute transformations.
     """
+
+    geom = _load_sensor_geometry(data_file, inversion_idx=inversion_idx)
+    chan_positions = geom["forward_sensors"]["chanpos"]
+    chan_orientations = geom["forward_sensors"]["chanori"]
+    coil_positions = geom["forward_sensors"]["coilpos"]
+    tra = geom["forward_sensors"]["tra"]
+    channel_types = np.array(geom["forward_sensors"]["chantype"])
+    inv_mesh = surf_set.load(
+        layer_name=layer_name,
+        stage=stage,
+        orientation=orientation,
+        fixed=fixed
+    )
+    inv_vertices, inv_faces, *_ = inv_mesh.agg_data()
+    inv_mesh_path = surf_set.get_mesh_path(
+        layer_name=layer_name,
+        stage=stage,
+        orientation=orientation,
+        fixed=fixed
+    )
+
+    fwd_vertices = geom["mesh_verts"]
+    fwd_faces = geom["mesh_faces"]
+
+    mismatch_msg = (
+        f"Coregistration was not done using {inv_mesh_path}. "
+        f"Either run coregistration with this mesh, or change parameters "
+        f"to match the mesh coregistration was done with."
+    )
+
+    if inv_vertices.shape[0] != fwd_vertices.shape[0]:
+        raise ValueError(mismatch_msg)
+    if inv_faces.shape != fwd_faces.shape:
+        raise ValueError(mismatch_msg)
+    if not np.array_equal(inv_faces, fwd_faces):
+        raise ValueError(mismatch_msg)
+
+    scaled_affine, rmse = _estimate_rigid_transform(
+        inv_vertices,
+        fwd_vertices,
+        allow_scaling=True
+    )
+    print(f'RMSE of rigid transformation between forward model mesh and '
+          f'surf_set mesh is {rmse}.')
+    print('If this is high, coregistration may '
+          f'not have been done using {inv_mesh_path}.')
+    print('Either run coregistration with this mesh, or change parameters '
+          'to match the mesh coregistration was done with.')
+
     pial_mesh = surf_set.load(layer_name='pial', stage='combined')
     pial_vertices, pial_faces, *_ = pial_mesh.agg_data()
+    pial_vertices = _apply_affine(pial_vertices, scaled_affine)
 
     scalp_mesh = surf_set.load_head_mesh('scalp')
     scalp_vertices, scalp_faces, *_ = scalp_mesh.agg_data()
+    scalp_vertices = _apply_affine(scalp_vertices, scaled_affine)
 
     iskull_mesh = surf_set.load_head_mesh('iskull')
     iskull_faces, iskull_vertices, *_ = iskull_mesh.agg_data()
+    iskull_vertices = _apply_affine(iskull_vertices, scaled_affine)
 
     oskull_mesh = surf_set.load_head_mesh('oskull')
     oskull_faces, oskull_vertices, *_ = oskull_mesh.agg_data()
+    oskull_vertices = _apply_affine(oskull_vertices, scaled_affine)
 
-    plot = k3d.plot(
-        grid_visible=False
-    )
+    plot = k3d.plot(grid_visible=False)
 
-    pial_k3d_mesh = k3d.mesh(
-        pial_vertices,
-        pial_faces,
+    plot += k3d.mesh(
+        pial_vertices, pial_faces,
         side="double",
         color=rgbtoint([166, 166, 166]),
-        opacity=1,
-        name='cortex'
+        opacity=1.0,
+        name="cortex"
     )
-    plot += pial_k3d_mesh
 
-    scalp_k3d_mesh = k3d.mesh(
-        scalp_vertices,
-        scalp_faces,
+    plot += k3d.mesh(
+        scalp_vertices, scalp_faces,
         side="double",
         color=rgbtoint([186, 160, 115]),
-        opacity=0.5,
-        name='scalp'
+        opacity=0.35,
+        name="scalp"
     )
-    plot += scalp_k3d_mesh
 
-    iskull_k3d_mesh = k3d.mesh(
-        iskull_vertices,
-        iskull_faces,
+    plot += k3d.mesh(
+        iskull_vertices, iskull_faces,
         side="double",
         color=rgbtoint([255, 255, 255]),
-        opacity=0.5,
-        name='inner skull'
+        opacity=0.25,
+        name="inner skull"
     )
-    plot += iskull_k3d_mesh
 
-    oskull_k3d_mesh = k3d.mesh(
-        oskull_vertices,
-        oskull_faces,
+    plot += k3d.mesh(
+        oskull_vertices, oskull_faces,
         side="double",
         color=rgbtoint([255, 255, 255]),
-        opacity=0.5,
-        name='outer skull'
+        opacity=0.15,
+        name="outer skull"
     )
-    plot += oskull_k3d_mesh
 
-    nas_pts = k3d.points(
-        fid_coords['nas'],
-        point_size=5,
-        color=rgbtoint([0, 0, 255]),
-        name='nas'
-    )
-    plot += nas_pts
+    if fid_coords is not None:
+        if "nas" in fid_coords:
+            nas_vertex = _apply_affine(
+                np.atleast_2d(fid_coords["nas"]).astype(np.float32),
+                scaled_affine
+            )
+            plot += k3d.points(
+                nas_vertex,
+                point_size=0.004,
+                color=rgbtoint([0, 0, 255]),
+                name="nas"
+            )
+        if "lpa" in fid_coords:
+            lpa_vertex = _apply_affine(
+                np.atleast_2d(fid_coords["lpa"]).astype(np.float32),
+                scaled_affine
+            )
+            plot += k3d.points(
+                lpa_vertex,
+                point_size=0.004,
+                color=rgbtoint([255, 0, 0]),
+                name="lpa"
+            )
+        if "rpa" in fid_coords:
+            rpa_vertex = _apply_affine(
+                np.atleast_2d(fid_coords["rpa"]).astype(np.float32),
+                scaled_affine
+            )
+            plot += k3d.points(
+                rpa_vertex,
+                point_size=0.004,
+                color=rgbtoint([0, 255, 0]),
+                name="rpa"
+            )
 
-    lpa_pts = k3d.points(
-        fid_coords['lpa'],
-        point_size=5,
-        color=rgbtoint([255, 0, 0]),
-        name='lpa'
-    )
-    plot += lpa_pts
+    sensor_color = [0, 255, 0]
+    sensor_color_int = rgbtoint(sensor_color)
 
-    rpa_pts = k3d.points(
-        fid_coords['rpa'],
-        point_size=5,
-        color=rgbtoint([0, 255, 0]),
-        name='rpa'
-    )
-    plot += rpa_pts
+    mag_mask = channel_types == "megmag"
+    if np.any(mag_mask):
+        plot += k3d.points(
+            chan_positions[mag_mask, :].astype(np.float32),
+            point_size=0.003,
+            color=sensor_color_int,
+            name="magnetometers"
+        )
+
+    planar_mask = channel_types == "megplanar"
+    if np.any(planar_mask):
+        planar_dirs = _compute_planar_channel_directions(
+            tra=tra,
+            coil_positions=coil_positions,
+            planar_mask=planar_mask
+        )
+
+        square_vertices, square_faces = _make_square_sensor_mesh(
+            chan_positions[planar_mask, :],
+            chan_orientations[planar_mask, :],
+            directions=planar_dirs,
+            edge_length=0.03
+        )
+
+        plot += k3d.mesh(
+            square_vertices,
+            square_faces,
+            color=sensor_color_int,
+            opacity=0.2,
+            side="double",
+            name="planar gradiometers"
+        )
+
+    meg_mask = (channel_types == "meg") | (channel_types == 'meggrad') | (channel_types == 'opm')
+    if np.any(meg_mask):
+        circle_vertices, circle_faces = _make_circle_sensor_mesh(
+            chan_positions[meg_mask, :],
+            chan_orientations[meg_mask, :],
+            radius=0.01,
+            n_circle=24
+        )
+
+        plot += k3d.mesh(
+            circle_vertices,
+            circle_faces,
+            color=sensor_color_int,
+            opacity=0.3,
+            side="double",
+            name="meg"
+        )
 
     plot.display()
-
     return plot
 
 
