@@ -80,7 +80,7 @@ Installation
        conda deactivate
        conda activate <env name>
 
-7. If you want to run the tutorials, download and extract the `test data <https://osf.io/hbrga/download>`_
+7. If you want to run the tutorials, download and extract the `test data <https://osf.io/x4zd3/download>`_
 
 Documentation and Tutorials
 ===========================

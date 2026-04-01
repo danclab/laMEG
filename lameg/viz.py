@@ -645,7 +645,7 @@ def _load_sensor_geometry(data_file, inversion_idx=0):
 
 def verify_coregistration(data_file, surf_set, layer_name=None, stage='ds',
                           orientation='link_vector', fixed=True,
-                          inversion_idx=0, fid_coords=None):
+                          inversion_idx=0, fid_coords=None, display_3d_scan=False):
     """
     Visualize MEG-MRI coregistration by plotting the scalp, skull, cortical surfaces,
     and sensors, optionally along with fiducial landmarks.
@@ -882,6 +882,22 @@ def verify_coregistration(data_file, surf_set, layer_name=None, stage='ds',
             opacity=0.3,
             side="double",
             name="meg"
+        )
+
+    if display_3d_scan:
+        scan_fname = os.path.join(surf_set.surf_dir, 'face_3d.gii')
+        if not os.path.exists(scan_fname):
+            raise ValueError(f'3D scan of face not found at {scan_fname}. Did you use '
+                             f'lameg.util.coregister_3d_scan_mri?')
+        face_surf = nib.load(scan_fname)
+        face_verts, face_faces, *_ = face_surf.agg_data()
+        face_verts = _apply_affine(face_verts, scaled_affine)
+        plot += k3d.mesh(
+            face_verts, face_faces,
+            side="double",
+            color=rgbtoint([0, 0, 255]),
+            opacity=1.0,
+            name="3dscan"
         )
 
     plot.display()
