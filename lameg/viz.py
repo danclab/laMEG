@@ -645,7 +645,8 @@ def _load_sensor_geometry(data_file, inversion_idx=0):
 
 def verify_coregistration(data_file, surf_set, layer_name=None, stage='ds',
                           orientation='link_vector', fixed=True,
-                          inversion_idx=0, fid_coords=None, display_3d_scan=False):
+                          inversion_idx=0, fid_coords=None, display_3d_scan=False,
+                          camera_view=None):
     """
     Visualize MEG-MRI coregistration by plotting the scalp, skull, cortical surfaces,
     and sensors, optionally along with fiducial landmarks.
@@ -679,6 +680,9 @@ def verify_coregistration(data_file, surf_set, layer_name=None, stage='ds',
     fid_coords : dict, optional
         Dictionary of fiducial coordinates in MEG headspace, e.g.:
         ``{'nas': [x, y, z], 'lpa': [x, y, z], 'rpa': [x, y, z]}``.
+        Default is None.
+    camera_view : array_like, optional
+        Predefined camera position and orientation. If None, automatic camera fitting is used.
         Default is None.
 
     Returns
@@ -761,7 +765,8 @@ def verify_coregistration(data_file, surf_set, layer_name=None, stage='ds',
     oskull_faces, oskull_vertices, *_ = oskull_mesh.agg_data()
     oskull_vertices = _apply_affine(oskull_vertices, scaled_affine)
 
-    plot = k3d.plot(grid_visible=False)
+    cam_autofit = camera_view is None
+    plot = k3d.plot(grid_visible=False, camera_auto_fit=cam_autofit)
 
     plot += k3d.mesh(
         pial_vertices, pial_faces,
@@ -899,6 +904,9 @@ def verify_coregistration(data_file, surf_set, layer_name=None, stage='ds',
             opacity=1.0,
             name="3dscan"
         )
+
+    if camera_view is not None:
+        plot.camera = camera_view
 
     plot.display()
     return plot
