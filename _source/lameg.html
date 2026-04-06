@@ -1198,21 +1198,36 @@ SPM-compatible format.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.laminar.roi_power_comparison">
-<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">roi_power_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">woi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_woi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perc_thresh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ds'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roi_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.laminar.roi_power_comparison" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">roi_power_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">woi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">baseline_woi</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">perc_thresh</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">100</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roi_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">roi_mode</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'threshold'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.laminar.roi_power_comparison" title="Permalink to this definition">#</a></dt>
 <dd><p>Compute laminar power changes and identify or reuse regions of interest (ROIs) based on
 layer-specific modulation.</p>
 <p>This function quantifies power changes between a window of interest (WOI) and a baseline
-window in both pial and white matter layers. If no ROI indices are provided, it identifies
-spatial regions showing significant power modulation relative to baseline by applying a
-percentile threshold to vertex-wise t-statistics. If <cite>roi_idx</cite> is provided, only those
-vertices are loaded and processed, bypassing ROI computation.</p>
+window in both pial and white matter layers. ROI selection is controlled by <cite>roi_mode</cite>:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>‘threshold’:</dt><dd><p>Compute the ROI from all vertices using the percentile threshold.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>‘restrict_threshold’:</dt><dd><p>Use <cite>roi_idx</cite> as a candidate search space, and define the final ROI by thresholding
+only within that subset.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>‘direct’:</dt><dd><p>Use <cite>roi_idx</cite> directly as the ROI without any additional thresholding.</p>
+</dd>
+</dl>
+</li>
+</ul>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>data_fname</strong> (<em>str</em>) – Path to the MEG dataset (SPM-compatible .mat file) containing source time series.</p></li>
 <li><p><strong>woi</strong> (<em>tuple</em><em> of </em><em>float</em>) – Window of interest in milliseconds, specified as (start, end).</p></li>
 <li><p><strong>baseline_woi</strong> (<em>tuple</em><em> of </em><em>float</em>) – Baseline window in milliseconds, specified as (start, end), used for power normalization.</p></li>
-<li><p><strong>perc_thresh</strong> (<em>float</em>) – Percentile threshold (0-100) for defining significant power changes when <cite>roi_idx</cite> is None.</p></li>
+<li><p><strong>perc_thresh</strong> (<em>float</em>) – Percentile threshold (0-100) for defining significant power changes.</p></li>
 <li><p><strong>surf_set</strong> (<a class="reference internal" href="#lameg.surf.LayerSurfaceSet" title="lameg.surf.LayerSurfaceSet"><em>LayerSurfaceSet</em></a>) – Subject’s laminar surface set containing pial and white matter meshes.</p></li>
 <li><p><strong>stage</strong> (<em>str</em><em>, </em><em>optional</em>) – Surface mesh processing stage (default: ‘ds’).</p></li>
 <li><p><strong>orientation</strong> (<em>str</em><em>, </em><em>optional</em>) – Dipole orientation model used for inversion (default: ‘link_vector’).</p></li>
@@ -1220,8 +1235,11 @@ vertices are loaded and processed, bypassing ROI computation.</p>
 <li><p><strong>mu_matrix</strong> (<em>np.ndarray</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Precomputed source reconstruction matrix. If None, it is derived automatically from
 inversion data (default: None).</p></li>
 <li><p><strong>chunk_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Number of vertices processed per iteration to optimize memory usage (default: 1000).</p></li>
-<li><p><strong>roi_idx</strong> (<em>array_like</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Indices of vertices defining a precomputed ROI. If provided, only those vertices are
-loaded and analyzed; otherwise, ROIs are computed from all vertices based on <cite>perc_thresh</cite>.</p></li>
+<li><p><strong>roi_idx</strong> (<em>array_like</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Vertex indices used depending on <cite>roi_mode</cite>:
+- ignored if <cite>roi_mode=’threshold’</cite>
+- candidate search space if <cite>roi_mode=’restrict_threshold’</cite>
+- final ROI if <cite>roi_mode=’direct’</cite></p></li>
+<li><p><strong>roi_mode</strong> (<em>{'threshold'</em><em>, </em><em>'restrict_threshold'</em><em>, </em><em>'direct'}</em><em>, </em><em>optional</em>) – Strategy for ROI definition (default: ‘threshold’).</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1230,21 +1248,17 @@ loaded and analyzed; otherwise, ROIs are computed from all vertices based on <ci
 matter layers within the ROI.</p></li>
 <li><p><strong>laminar_p_value</strong> (<em>np.ndarray</em>) – Corresponding p-value of the laminar t-test.</p></li>
 <li><p><strong>deg_of_freedom</strong> (<em>int</em>) – Degrees of freedom for the laminar comparison.</p></li>
-<li><p><strong>roi_idx</strong> (<em>np.ndarray</em>) – Indices of vertices defining the analyzed ROI (either computed or provided).</p></li>
+<li><p><strong>roi_idx</strong> (<em>np.ndarray</em>) – Indices of vertices defining the analyzed ROI.</p></li>
 </ul>
 </p>
 </dd>
 </dl>
 <p class="rubric">Notes</p>
 <ul class="simple">
-<li><p>Power is computed as the variance of source time series within the specified time windows.</p></li>
-<li><p>Relative power change is calculated as (WOI - baseline) / baseline per trial and vertex.</p></li>
-<li><p>If <cite>roi_idx</cite> is None, the function computes vertex-wise t-statistics between WOI and
-baseline power, then selects vertices exceeding the given percentile threshold.</p></li>
-<li><p>If <cite>roi_idx</cite> is provided, only those vertices are loaded and processed, greatly improving
-performance for small ROIs.</p></li>
-<li><p>The resulting laminar statistics quantify whether activation is preferentially expressed
-in superficial (pial) or deep (white matter) layers within the ROI.</p></li>
+<li><p>Power is computed as the mean Hilbert envelope within each time window.</p></li>
+<li><p>Power change is calculated as WOI - baseline per trial and vertex.</p></li>
+<li><p>In ‘restrict_threshold’ mode, percentile thresholds are computed only across the candidate
+vertices in <cite>roi_idx</cite>, and the returned <cite>roi_idx</cite> is the subset that survives thresholding.</p></li>
 </ul>
 </dd></dl>
 
@@ -3490,7 +3504,7 @@ is True.</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.viz.verify_coregistration">
-<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">verify_coregistration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ds'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inversion_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fid_coords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display_3d_scan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.viz.verify_coregistration" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.viz.</span></span><span class="sig-name descname"><span class="pre">verify_coregistration</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ds'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inversion_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fid_coords</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">display_3d_scan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">camera_view</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.viz.verify_coregistration" title="Permalink to this definition">#</a></dt>
 <dd><p>Visualize MEG-MRI coregistration by plotting the scalp, skull, cortical surfaces,
 and sensors, optionally along with fiducial landmarks.</p>
 <p>This function provides a 3D visualization of sensors as well as the subject’s head
@@ -3514,6 +3528,8 @@ Default is <cite>‘ds’</cite>.</p></li>
 <li><p><strong>inversion_idx</strong> (<em>int</em><em>, </em><em>optional</em>) – Index of the forward model to show within the SPM data object (default: 0).</p></li>
 <li><p><strong>fid_coords</strong> (<em>dict</em><em>, </em><em>optional</em>) – Dictionary of fiducial coordinates in MEG headspace, e.g.:
 <code class="docutils literal notranslate"><span class="pre">{'nas':</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z],</span> <span class="pre">'lpa':</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z],</span> <span class="pre">'rpa':</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z]}</span></code>.
+Default is None.</p></li>
+<li><p><strong>camera_view</strong> (<em>array_like</em><em>, </em><em>optional</em>) – Predefined camera position and orientation. If None, automatic camera fitting is used.
 Default is None.</p></li>
 </ul>
 </dd>
