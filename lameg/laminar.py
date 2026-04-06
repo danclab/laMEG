@@ -350,18 +350,23 @@ def compute_csd(signal, thickness, sfreq, method='KCSD1D', smoothing=None, **kwa
     raise ValueError('method must be either StandardCSD or KCSD1D')
 
 
-def roi_power_comparison(data_fname, woi, baseline_woi, perc_thresh, surf_set, stage='ds',
-                         orientation='link_vector', fixed=True, mu_matrix=None, chunk_size=1000,
-                         roi_idx=None):
+# pylint: disable=R0915
+def roi_power_comparison(data_fname, woi, baseline_woi, perc_thresh, surf_set, mu_matrix=None,
+                         chunk_size=100, roi_idx=None, roi_mode='threshold'):
     """
     Compute laminar power changes and identify or reuse regions of interest (ROIs) based on
     layer-specific modulation.
 
     This function quantifies power changes between a window of interest (WOI) and a baseline
-    window in both pial and white matter layers. If no ROI indices are provided, it identifies
-    spatial regions showing significant power modulation relative to baseline by applying a
-    percentile threshold to vertex-wise t-statistics. If `roi_idx` is provided, only those
-    vertices are loaded and processed, bypassing ROI computation.
+    window in both pial and white matter layers. ROI selection is controlled by `roi_mode`:
+
+    - 'threshold':
+        Compute the ROI from all vertices using the percentile threshold.
+    - 'restrict_threshold':
+        Use `roi_idx` as a candidate search space, and define the final ROI by thresholding
+        only within that subset.
+    - 'direct':
+        Use `roi_idx` directly as the ROI without any additional thresholding.
 
     Parameters
     ----------
@@ -372,7 +377,7 @@ def roi_power_comparison(data_fname, woi, baseline_woi, perc_thresh, surf_set, s
     baseline_woi : tuple of float
         Baseline window in milliseconds, specified as (start, end), used for power normalization.
     perc_thresh : float
-        Percentile threshold (0-100) for defining significant power changes when `roi_idx` is None.
+        Percentile threshold (0-100) for defining significant power changes.
     surf_set : LayerSurfaceSet
         Subject's laminar surface set containing pial and white matter meshes.
     stage : str, optional
@@ -387,8 +392,12 @@ def roi_power_comparison(data_fname, woi, baseline_woi, perc_thresh, surf_set, s
     chunk_size : int, optional
         Number of vertices processed per iteration to optimize memory usage (default: 1000).
     roi_idx : array_like or None, optional
-        Indices of vertices defining a precomputed ROI. If provided, only those vertices are
-        loaded and analyzed; otherwise, ROIs are computed from all vertices based on `perc_thresh`.
+        Vertex indices used depending on `roi_mode`:
+        - ignored if `roi_mode='threshold'`
+        - candidate search space if `roi_mode='restrict_threshold'`
+        - final ROI if `roi_mode='direct'`
+    roi_mode : {'threshold', 'restrict_threshold', 'direct'}, optional
+        Strategy for ROI definition (default: 'threshold').
 
     Returns
     -------
@@ -400,25 +409,31 @@ def roi_power_comparison(data_fname, woi, baseline_woi, perc_thresh, surf_set, s
     deg_of_freedom : int
         Degrees of freedom for the laminar comparison.
     roi_idx : np.ndarray
-        Indices of vertices defining the analyzed ROI (either computed or provided).
+        Indices of vertices defining the analyzed ROI.
 
     Notes
     -----
-    - Power is computed as the variance of source time series within the specified time windows.
-    - Relative power change is calculated as (WOI - baseline) / baseline per trial and vertex.
-    - If `roi_idx` is None, the function computes vertex-wise t-statistics between WOI and
-      baseline power, then selects vertices exceeding the given percentile threshold.
-    - If `roi_idx` is provided, only those vertices are loaded and processed, greatly improving
-      performance for small ROIs.
-    - The resulting laminar statistics quantify whether activation is preferentially expressed
-      in superficial (pial) or deep (white matter) layers within the ROI.
+    - Power is computed as the mean Hilbert envelope within each time window.
+    - Power change is calculated as WOI - baseline per trial and vertex.
+    - In 'restrict_threshold' mode, percentile thresholds are computed only across the candidate
+      vertices in `roi_idx`, and the returned `roi_idx` is the subset that survives thresholding.
     """
 
-    mesh = surf_set.load(layer_name='pial', stage=stage, orientation=orientation, fixed=fixed)
-    verts_per_surf = mesh.darrays[0].data.shape[0]
+    valid_roi_modes = {'threshold', 'restrict_threshold', 'direct'}
+    if roi_mode not in valid_roi_modes:
+        raise ValueError(
+            f"roi_mode must be one of {valid_roi_modes}, got {roi_mode!r}"
+        )
+
+    if roi_mode in {'restrict_threshold', 'direct'} and roi_idx is None:
+        raise ValueError(
+            f"roi_idx must be provided when roi_mode='{roi_mode}'"
+        )
+
+    verts_per_surf = surf_set.get_vertices_per_layer()
     n_layers = surf_set.n_layers
+
     pial_vertices = np.arange(verts_per_surf)
-    white_vertices = (n_layers - 1) * verts_per_surf + np.arange(verts_per_surf)
 
     # Load time indices
     ts_v, time, _ = load_source_time_series(
@@ -430,37 +445,58 @@ def roi_power_comparison(data_fname, woi, baseline_woi, perc_thresh, surf_set, s
     base_t_idx = np.where((time >= baseline_woi[0]) & (time < baseline_woi[1]))[0]
     exp_t_idx = np.where((time >= woi[0]) & (time < woi[1]))[0]
 
-    # Load data incrementally
     def load_and_compute_power(vertices, n_trials, chunk_size):
+        vertices = np.asarray(vertices, dtype=int)
         base_incremental_power = np.zeros((len(vertices), n_trials))
         exp_incremental_power = np.zeros((len(vertices), n_trials))
-        if chunk_size>len(vertices):
-            chunk_size = len(vertices)
+
+        if len(vertices) == 0:
+            return base_incremental_power, exp_incremental_power
+
+        chunk_size = min(chunk_size, len(vertices))
+
         for start in range(0, len(vertices), chunk_size):
             end = min(start + chunk_size, len(vertices))
             vertex_slice = vertices[start:end]
+
             ts_chunk, _, _ = load_source_time_series(
-                data_fname, vertices=vertex_slice, mu_matrix=mu_matrix
+                data_fname,
+                vertices=vertex_slice,
+                mu_matrix=mu_matrix
             )
             envelope = np.abs(hilbert(ts_chunk, axis=1))
 
-            base_power_chunk = np.squeeze(np.mean(envelope[:, base_t_idx, :],axis=1))
-            base_incremental_power[start:end,:] = base_power_chunk
+            base_power_chunk = np.squeeze(np.mean(envelope[:, base_t_idx, :], axis=1))
+            exp_power_chunk = np.squeeze(np.mean(envelope[:, exp_t_idx, :], axis=1))
 
-            exp_power_chunk = np.squeeze(np.mean(envelope[:, exp_t_idx, :],axis=1))
+            if base_power_chunk.ndim == 1:
+                base_power_chunk = base_power_chunk[np.newaxis, :]
+            if exp_power_chunk.ndim == 1:
+                exp_power_chunk = exp_power_chunk[np.newaxis, :]
+
+            base_incremental_power[start:end, :] = base_power_chunk
             exp_incremental_power[start:end, :] = exp_power_chunk
-            del ts_chunk, envelope  # Free up memory
+
+            del ts_chunk, envelope
+
         return base_incremental_power, exp_incremental_power
 
-    if roi_idx is None:
-        # Compute power changes for pial and white matter layers
+    if roi_mode == 'threshold':
+        candidate_roi_idx = pial_vertices
+    else:
+        candidate_roi_idx = np.asarray(roi_idx, dtype=int)
+
+    if roi_mode in {'threshold', 'restrict_threshold'}:
+        pial_candidate_idx = candidate_roi_idx
+        white_candidate_idx = (n_layers - 1) * verts_per_surf + candidate_roi_idx
+
         pial_base_power, pial_exp_power = load_and_compute_power(
-            pial_vertices,
+            pial_candidate_idx,
             n_trials,
             chunk_size
         )
         white_base_power, white_exp_power = load_and_compute_power(
-            white_vertices,
+            white_candidate_idx,
             n_trials,
             chunk_size
         )
@@ -468,35 +504,48 @@ def roi_power_comparison(data_fname, woi, baseline_woi, perc_thresh, surf_set, s
         pial_power_change = pial_exp_power - pial_base_power
         white_power_change = white_exp_power - white_base_power
 
-        # Define ROI
         pial_t_statistic, _, _ = ttest_rel_corrected(
-            (pial_exp_power - pial_base_power),
+            pial_power_change,
             axis=-1
         )
         white_t_statistic, _, _ = ttest_rel_corrected(
-            (white_exp_power - white_base_power),
+            white_power_change,
             axis=-1
         )
 
         pial_thresh = np.percentile(pial_t_statistic, perc_thresh)
         white_thresh = np.percentile(white_t_statistic, perc_thresh)
-        roi_idx = np.where((pial_t_statistic > pial_thresh) |
-                           (white_t_statistic > white_thresh))[0]
 
-        pial_roi_power_change = np.mean(pial_power_change[roi_idx, :], axis=0)
-        white_roi_power_change = np.mean(white_power_change[roi_idx, :], axis=0)
-    else:
+        keep_mask = (
+            (pial_t_statistic > pial_thresh) |
+            (white_t_statistic > white_thresh)
+        )
+
+        roi_idx = candidate_roi_idx[keep_mask]
+
+        if roi_idx.size == 0:
+            raise ValueError(
+                "No vertices survived thresholding. "
+                "Try lowering perc_thresh or checking roi_idx."
+            )
+
+        pial_roi_power_change = np.mean(pial_power_change[keep_mask, :], axis=0)
+        white_roi_power_change = np.mean(white_power_change[keep_mask, :], axis=0)
+
+    elif roi_mode == 'direct':
+        roi_idx = np.asarray(roi_idx, dtype=int)
         pial_roi_idx = roi_idx
         white_roi_idx = (n_layers - 1) * verts_per_surf + roi_idx
+
         pial_base_power, pial_exp_power = load_and_compute_power(
             pial_roi_idx,
             n_trials,
-            len(pial_roi_idx)
+            min(len(pial_roi_idx), chunk_size)
         )
         white_base_power, white_exp_power = load_and_compute_power(
             white_roi_idx,
             n_trials,
-            len(white_roi_idx)
+            min(len(white_roi_idx), chunk_size)
         )
 
         pial_power_change = pial_exp_power - pial_base_power
@@ -505,7 +554,6 @@ def roi_power_comparison(data_fname, woi, baseline_woi, perc_thresh, surf_set, s
         pial_roi_power_change = np.mean(pial_power_change, axis=0)
         white_roi_power_change = np.mean(white_power_change, axis=0)
 
-    # Compare power t statistic
     laminar_t_statistic, deg_of_freedom, laminar_p_value = ttest_rel_corrected(
         np.abs(pial_roi_power_change) - np.abs(white_roi_power_change),
         axis=-1
