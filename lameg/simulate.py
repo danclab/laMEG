@@ -41,16 +41,16 @@ import matlab # pylint: disable=wrong-import-order,import-error
 
 
 def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_moments,
-                                   sim_patch_sizes, snr, sim_woi=None, average_trials=False,
-                                   spm_instance=None):
+                                   sim_patch_sizes, snr, noise_color='white', sim_woi=None,
+                                   average_trials=False, viz=True, spm_instance=None):
     """
     Simulate laminar current density data using SPM's MEG forward model.
 
     This function generates synthetic MEG datasets by projecting user-defined source time series
     (signals) from specified cortical vertices through an existing SPM forward model. Each
-    simulated source is defined by its vertex location, dipole moment, and patch extent. Gaussian
-    noise is added at the sensor level to achieve the desired signal-to-noise ratio (SNR), and the
-    simulated data can optionally be averaged across trials.
+    simulated source is defined by its vertex location, dipole moment, and patch extent. Noise
+    (white by default) is added at the sensor level to achieve the desired signal-to-noise ratio
+    (SNR), and the simulated data can optionally be averaged across trials.
 
     Parameters
     ----------
@@ -69,11 +69,15 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
         Patch sizes (in mm) around each vertex that define spatial spread of the simulated sources.
     snr : float
         Desired signal-to-noise ratio at the sensor level (in dB).
+    noise_color: str
+        Type of noise to add - can be white or pink (default: 'white')
     sim_woi : list of float, optional
         Window of interest for the simulation, specified as [start, end] in milliseconds.
         Default is [-np.inf, np.inf].
     average_trials : bool, optional
         Whether to average across simulated trials (default: False).
+    viz : bool, optional
+        Whether to display SPM's diagnostic plots (default: True).
     spm_instance : spm_standalone, optional
         Active standalone SPM instance. If None, a temporary instance is created and closed after
         execution.
@@ -114,6 +118,14 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
         sim_coords[c_idx,:]=verts[i, :]
 
     with spm_context(spm_instance) as spm:
+        spm.spm_standalone(
+            "eval",
+            f"""
+            spm('defaults', 'EEG');
+            spm_get_defaults('cmdline',{int(not viz)}); 
+            """,
+            nargout=0
+        )
         spm.spm_eeg_simulate(
             data_file,
             prefix,
@@ -127,6 +139,7 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
             matlab.double([]),
             matlab.double(sim_patch_sizes),
             matlab.double(dipole_moments),
+            noise_color,
             nargout=0
         )
 
@@ -159,8 +172,6 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
             "eval",
             f"""
             load('{name}'); 
-            spm('defaults', 'EEG'); 
-            spm_get_defaults('cmdline',1); 
             spm_jobman('run', matlabbatch);
             """,
             nargout=0
@@ -172,8 +183,8 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
 
 
 def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_orientations,
-                          dipole_moments, sim_patch_sizes, snr, sim_woi=None, average_trials=False,
-                          spm_instance=None):
+                          dipole_moments, sim_patch_sizes, snr, noise_color='white', sim_woi=None,
+                          average_trials=False, viz=True, spm_instance=None):
     """
     Simulate dipole-level MEG data using SPM's forward model.
 
@@ -203,11 +214,15 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
         Spatial extent of the simulated dipole patch (in mm).
     snr : float
         Desired signal-to-noise ratio at the sensor level (in dB).
+    noise_color: str
+        Type of noise to add - can be white or pink (default: 'white')
     sim_woi : list of float, optional
         Simulation window of interest, specified as [start, end] in milliseconds.
         Default is [-np.inf, np.inf].
     average_trials : bool, optional
         Whether to average the simulated data over trials (default: False).
+    viz : bool, optional
+        Whether to display SPM's diagnostic plots (default: True).
     spm_instance : spm_standalone, optional
         Active standalone SPM instance. If None, a temporary instance is created and closed after
         execution.
@@ -249,6 +264,14 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
         sim_coords[c_idx, :] = verts[i, :]
 
     with spm_context(spm_instance) as spm:
+        spm.spm_standalone(
+            "eval",
+            f"""
+            spm('defaults', 'EEG');
+            spm_get_defaults('cmdline',{int(not viz)}); 
+            """,
+            nargout=0
+        )
         spm.spm_eeg_simulate(
             data_file,
             prefix,
@@ -262,6 +285,7 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
             matlab.double([]),
             matlab.double(sim_patch_sizes),
             matlab.double(dipole_moments),
+            noise_color,
             nargout=0
         )
 
@@ -294,8 +318,6 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
                 "eval",
                 f"""
                 load('{name}'); 
-                spm('defaults', 'EEG'); 
-                spm_get_defaults('cmdline',1); 
                 spm_jobman('run', matlabbatch);
                 """,
                 nargout=0
@@ -309,7 +331,7 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
 def setup_opm_simulation(data_file, surf_set, s_rate=1000, wholehead=True, sensor_spacing=35,
                          sensor_offset=6.5, n_samples=1000, n_trials=1, density_checks=40, axes=1,
                          sensor_positions_file=None, iskull_fname=None, oskull_fname=None,
-                         scalp_fname=None, spm_instance=None):
+                         scalp_fname=None, viz=True, spm_instance=None):
     """
     Configure and setup an SPM OPM (Optically Pumped Magnetometer) data file.
 
@@ -348,6 +370,8 @@ def setup_opm_simulation(data_file, surf_set, s_rate=1000, wholehead=True, senso
     iskull_fname, oskull_fname, scalp_fname : str, optional
         Optional custom inner skull, outer skull, and scalp surface files (GIFTI format).
         If omitted, default meshes from SPM segmentation are used.
+    viz : bool, optional
+        Whether to display SPM's diagnostic plots (default: True).
     spm_instance : spm_standalone, optional
         Active SPM standalone context for calling :func:`spm_opm_sim`. If None, a temporary
         instance is created and destroyed automatically.
@@ -400,6 +424,14 @@ def setup_opm_simulation(data_file, surf_set, s_rate=1000, wholehead=True, senso
         config['iskull'] = iskull_fname
 
     with spm_context(spm_instance) as spm:
+        spm.spm_standalone(
+            "eval",
+            f"""
+            spm('defaults', 'EEG');
+            spm_get_defaults('cmdline',{int(not viz)}); 
+            """,
+            nargout=0
+        )
         spm.spm_opm_sim(config, nargout=0)
 
     shutil.move(
