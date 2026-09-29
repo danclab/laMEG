@@ -43,6 +43,7 @@ Notes
 """
 
 # pylint: disable=C0302
+# pylint: disable=duplicate-code
 import os
 import h5py
 import numpy as np
@@ -406,8 +407,8 @@ def invert_ebb(data_fname, surf_set, layer_name=None, stage='ds',
 def invert_ebb_layer(data_fname, surf_set, layer_name=None, stage='ds',
                      orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=4,
                      n_spatial_modes='auto', foi=None, woi=None, hann_windowing=False, n_folds=1,
-                     ideal_pc_test=0, inversion_idx=0, viz=True, return_mu_matrix=False,
-                     spm_instance=None):
+                     ideal_pc_test=0, diag_vertex=None, sum_pair_topk=2, diff_pair_topk=2,
+                     inversion_idx=0, viz=True, return_mu_matrix=False, spm_instance=None):
     """
     Perform laminar Empirical Bayesian Beamformer (EBBlayer) source inversion on MEG data.
 
@@ -417,24 +418,27 @@ def invert_ebb_layer(data_fname, surf_set, layer_name=None, stage='ds',
     the inversion employs a modified EBB formulation ("EBBlayer") that models potential
     correlated activity across layers within the same cortical column.
 
-    The EBBlayer model introduces multiple spatial source priors that are combined and
-    weighted using Restricted Maximum Likelihood (ReML):
+    The EBBlayer model combines three spatial source-prior families using
+    Restricted Maximum Likelihood (ReML):
 
-    1. Independent prior (classic EBB)
+    1. Independent prior (IND)
        A standard EBB variance map computed from smoothed lead fields.
 
-    2. Correlated sum prior
-       Constructed from pairwise combinations of sources across layers
-       (q+ = l_a + l_b), capturing activity that is shared across laminar levels.
+    2. Same-sign pair prior (SUM)
+       For each pair of layers within a cortical column, EBBlayer continuously
+       optimises a positive within-pair mixing weight r. Endpoint optima are
+       excluded because they reduce to single-source solutions already represented
+       by IND. The highest-scoring eligible SUM pairs are then retained independently
+       at each cortical column.
 
-    3. Correlated difference prior
-       Constructed from pairwise differences across layers
-       (q- = l_a - l_b), emphasising laminar contrast and helping separate nearby
-       sources located at different cortical depths.
+    3. Opposite-sign pair prior (DIFF)
+       A fixed equal-magnitude difference hypothesis is evaluated for each layer
+       pair, and the highest-scoring DIFF pairs are retained independently at each
+       cortical column.
 
-    ReML estimates hyperparameters that determine the contribution of each prior
-    component. This allows the inversion to adaptively balance independent,
-    co-activation, and depth-contrast structure in the data.
+    ReML estimates the contribution of IND, SUM, and DIFF to the final source
+    covariance. The number of retained SUM and DIFF pair hypotheses can be varied
+    for algorithmic sensitivity testing.
 
     Prior to inversion, the cortical mesh is geodesically smoothed using
     `spm_eeg_smoothmesh_multilayer_mm`, which creates spatial patches along each
@@ -475,7 +479,16 @@ def invert_ebb_layer(data_fname, surf_set, layer_name=None, stage='ds',
         Number of cross-validation folds used for spatial mode testing (default: 1).
     ideal_pc_test : float, optional
         Fraction of channels left out during cross-validation (default: 0).
-    inversion_idx : int, optional
+    diag_vertex : int or None, optional
+        Zero-based within-layer vertex index at which to save EBBlayer pair-score
+        diagnostics. If None, diagnostic pair-score output is disabled.
+    sum_pair_topk : int, optional
+        Number of highest-scoring eligible continuous-interior SUM pair hypotheses
+        retained independently at each cortical column (default: 2).
+    diff_pair_topk : int, optional
+        Number of highest-scoring fixed DIFF pair hypotheses retained independently
+        at each cortical column (default: 2).
+inversion_idx : int, optional
         Index of the inversion within the SPM data object (default: 0).
     viz : bool, optional
         Display SPM inversion progress and diagnostic plots (default: True).
@@ -526,7 +539,10 @@ def invert_ebb_layer(data_fname, surf_set, layer_name=None, stage='ds',
         viz=viz,
         return_mu_matrix=return_mu_matrix,
         spm_instance=spm_instance,
-        layerwise=True
+        layerwise=True,
+        ebblayer_diag_vertex=diag_vertex,
+        ebblayer_sum_pair_topk=sum_pair_topk,
+        ebblayer_diff_pair_topk=diff_pair_topk
     )
 
 
@@ -1198,7 +1214,10 @@ def _build_invertiter_cfg(data_fname, inversion_idx, invtype,
                           woi=None, wois=None,
                           pctest=0, n_folds=1,
                           n_layers=None,
-                          patchfilename=None):
+                          patchfilename=None,
+                          ebblayer_diag_vertex=None,
+                          ebblayer_sum_pair_topk=2,
+                          ebblayer_diff_pair_topk=2):
     """
     Build the common SPM invertiter batch configuration.
 
@@ -1236,6 +1255,13 @@ def _build_invertiter_cfg(data_fname, inversion_idx, invtype,
     patchfilename : str or None, optional
         If provided, configures a fixed patch using this file. If None,
         a random patch configuration is used.
+    ebblayer_diag_vertex : int or None, optional
+        Zero-based within-layer diagnostic vertex for EBBlayer. Converted
+        internally to MATLAB one-based indexing.
+    ebblayer_sum_pair_topk : int, optional
+        Number of continuous-interior SUM pairs retained per cortical column.
+    ebblayer_diff_pair_topk : int, optional
+        Number of fixed DIFF pairs retained per cortical column.
 
     Returns
     -------
@@ -1265,6 +1291,14 @@ def _build_invertiter_cfg(data_fname, inversion_idx, invtype,
 
     if n_layers is not None:
         custom_cfg["nlayers"] = float(n_layers)
+
+    if ebblayer_diag_vertex is not None:
+        custom_cfg["ebblayer_diag_vertex"] = float(ebblayer_diag_vertex) + 1
+
+    # EBBlayer sparsity controls. These are harmless for non-EBBlayer jobs and
+    # keep the generated custom configuration complete.
+    custom_cfg["ebblayer_sum_pair_topk"] = float(ebblayer_sum_pair_topk)
+    custom_cfg["ebblayer_diff_pair_topk"] = float(ebblayer_diff_pair_topk)
 
     if patchfilename is not None:
         custom_cfg["isfixedpatch"] = {
@@ -1494,7 +1528,10 @@ def _invert_ebb_base(data_fname, surf_set, layer_name=None, stage='ds',
                      n_temp_modes=4, n_spatial_modes=None, foi=None, woi=None,
                      hann_windowing=False, n_folds=1, ideal_pc_test=0,
                      inversion_idx=0, viz=True, return_mu_matrix=False,
-                     spm_instance=None, layerwise=False):
+                     spm_instance=None, layerwise=False,
+                     ebblayer_diag_vertex=None,
+                     ebblayer_sum_pair_topk=2,
+                     ebblayer_diff_pair_topk=2):
     """
     Internal implementation for EBB inversion.
 
@@ -1511,6 +1548,51 @@ def _invert_ebb_base(data_fname, surf_set, layer_name=None, stage='ds',
     n_layers = 1
     if layer_name is None:
         n_layers = surf_set.n_layers
+
+    if ebblayer_diag_vertex is not None:
+        if not layerwise:
+            raise ValueError("`ebblayer_diag_vertex` is only valid for EBBlayer.")
+        if (
+            not np.isfinite(ebblayer_diag_vertex)
+            or int(ebblayer_diag_vertex) != ebblayer_diag_vertex
+            or ebblayer_diag_vertex < 0
+        ):
+            raise ValueError("`ebblayer_diag_vertex` must be a non-negative integer.")
+        ebblayer_diag_vertex = int(ebblayer_diag_vertex)
+
+    for name, value in (
+        ("ebblayer_sum_pair_topk", ebblayer_sum_pair_topk),
+        ("ebblayer_diff_pair_topk", ebblayer_diff_pair_topk),
+    ):
+        if (
+            not np.isfinite(value)
+            or int(value) != value
+            or value < 1
+        ):
+            raise ValueError(f"`{name}` must be a positive integer.")
+
+    ebblayer_sum_pair_topk = int(ebblayer_sum_pair_topk)
+    ebblayer_diff_pair_topk = int(ebblayer_diff_pair_topk)
+
+    if layerwise:
+        n_layer_pairs = n_layers * (n_layers - 1) // 2
+
+        if n_layer_pairs < 1:
+            raise ValueError(
+                "EBBlayer requires a multilayer surface with at least two layers."
+            )
+
+        if ebblayer_sum_pair_topk > n_layer_pairs:
+            raise ValueError(
+                "`ebblayer_sum_pair_topk` exceeds the number of available "
+                f"layer pairs ({n_layer_pairs})."
+            )
+
+        if ebblayer_diff_pair_topk > n_layer_pairs:
+            raise ValueError(
+                "`ebblayer_diff_pair_topk` exceeds the number of available "
+                f"layer pairs ({n_layer_pairs})."
+            )
 
     norm = _normalize_inversion_inputs(
         foi=foi,
@@ -1542,7 +1624,10 @@ def _invert_ebb_base(data_fname, surf_set, layer_name=None, stage='ds',
         hann_windowing=hann_windowing,
         pctest=pctest,
         n_folds=n_folds,
-        n_layers=n_layers if layerwise else None
+        n_layers=n_layers if layerwise else None,
+        ebblayer_diag_vertex=ebblayer_diag_vertex,
+        ebblayer_sum_pair_topk=ebblayer_sum_pair_topk,
+        ebblayer_diff_pair_topk=ebblayer_diff_pair_topk
     )
 
     batch(cfg, viz=viz, spm_instance=spm_instance)
