@@ -514,7 +514,7 @@ def test_sliding_window_model_comparison_opm(spm):
                        [time[0], time[0] + 100.]])
     assert np.allclose(wois, target)
 
-    remove_dataset(opm_fname)    
+    remove_dataset(opm_fname)
 
 
 def test_compute_csd():
