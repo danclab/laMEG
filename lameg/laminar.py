@@ -32,30 +32,31 @@ import elephant
 import neo
 import quantities as pq
 
-from lameg.invert import (invert_ebb, coregister, load_source_time_series, invert_msp,
-                          invert_sliding_window_msp)
+from lameg.invert import (invert_ebb, coregister, opm_headmodel, load_source_time_series,
+                          invert_msp, invert_sliding_window_msp)
 from lameg.util import ttest_rel_corrected
 
 
 def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='link_vector',
-                     fixed=True, method='EBB', viz=True, spm_instance=None, coregister_kwargs=None,
-                     invert_kwargs=None):
+                     fixed=True, method='EBB', device='squid', viz=True, spm_instance=None,
+                     forward_kwargs=None, invert_kwargs=None):
     """
     Perform laminar model comparison by evaluating free energy and/or cross-validation error across
     cortical surfaces.
 
-    This function coregisters MEG data to a subject's anatomical MRI and performs source
-    reconstruction separately on each layer within a `LayerSurfaceSet`, using either the
-    Empirical Bayesian Beamformer (EBB) or Multiple Sparse Priors (MSP) algorithm. It returns
-    the free energy and cross-validation error for each layer, enabling laminar model comparison
-    based on model evidence.
+    This function coregisters MEG data to or computes an OPM forward model from
+    the subject's anatomical MRI, then performs source reconstruction separately on each layer
+    within a `LayerSurfaceSet`, using either the Empirical Bayesian Beamformer (EBB) or Multiple
+    Sparse Priors (MSP) algorithm. It returns the free energy and cross-validation error for each
+    layer, enabling laminar model comparison based on model evidence.
 
     Parameters
-    ----------
+    -------
     fid_coords : dict
         Dictionary of fiducial landmark coordinates, e.g.:
         ``{'nas': [x, y, z], 'lpa': [x, y, z], 'rpa': [x, y, z]}``
         Values must be expressed in MEG headspace coordinates (millimeters).
+        Required for device='squid'; ignored (None) for device='opm'.
     data_fname : str
         Path to the MEG dataset (SPM-compatible .mat file).
     surf_set : LayerSurfaceSet
@@ -68,16 +69,24 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
         Whether to use fixed dipole orientations across layers (default: True).
     method : {'EBB', 'MSP'}, optional
         Source reconstruction method to use (default: 'EBB').
+    device : {'squid', 'opm'}, optional
+        MEG system type, which selects the forward-model function (default: 'squid').
+        'squid' -> coregister(); 'opm' -> opm_headmodel().
     viz : bool, optional
         Whether to display SPM visualizations during coregistration and inversion (default: True).
+    forward_kwargs : dict, optional
+        Extra keyword arguments for the device's forward-model function:
+        - squid: passed to `coregister()`
+        - opm: passed to `opm_headmodel()`; must include 'mri_fname', and may include
+          'coordsystem_fname', 'iskull_fname', 'oskull_fname', 'scalp_fname',
+          'voltype', 'meshres', etc.
+        Do not include layer_name, stage, orientation, fixed, viz or spm_instance;
+        these are set by model_comparison.
     spm_instance : spm_standalone, optional
         Active standalone SPM instance. If None, a temporary instance is created and closed after
         execution.
-    coregister_kwargs : dict, optional
-        Additional keyword arguments passed to the `coregister()` function.
     invert_kwargs : dict, optional
-        Additional keyword arguments passed to the selected inversion function (`invert_ebb()` or
-        `invert_msp()`).
+        Additional keyword arguments passed to `invert_ebb()` or `invert_msp()`.
 
     Returns
     -------
@@ -89,38 +98,57 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
     Notes
     -----
     - The function iterates over all layer surfaces defined in `surf_set`.
-    - A forward model is created for each layer surface within the SPM data object
+    - For OPM simulations 'coordsystem_fname' is None
     - Free energy serves as a quantitative parametric model comparison metric, with higher values
       indicating better model evidence.
     - Cross-validation serves as a quantitative nonparameteric model comparison metric, with lower
       values indicating better model evidence.
-    - Requires prior generation of laminar surfaces and preprocessing of MEG data into
-      SPM-compatible format.
-    - Uses the Nolte single-shell MEG forward model as defined in SPM.
-    """
 
-    if coregister_kwargs is None:
-        coregister_kwargs = {}
+    """
     if invert_kwargs is None:
         invert_kwargs = {}
+    forward_kwargs = dict(forward_kwargs or {})
+
+    device = device.lower()
+    if device == 'squid':
+        if fid_coords is None:
+            raise ValueError("device='squid' requires fid_coords.")
+
+        def build_forward(layer_name):
+            coregister(fid_coords,
+                       data_fname,
+                       surf_set,
+                       layer_name=layer_name,
+                       stage=stage,
+                       orientation=orientation,
+                       fixed=fixed,
+                       viz=viz,
+                       spm_instance=spm_instance,
+                       **forward_kwargs)
+
+    elif device == 'opm':
+        if not forward_kwargs.get('mri_fname'):
+            raise ValueError("device='opm' requires forward_kwargs={'mri_fname': ...}.")
+
+        def build_forward(layer_name):
+            opm_headmodel(data_fname,
+                          surf_set,
+                          layer_name=layer_name,
+                          stage=stage,
+                          orientation=orientation,
+                          fixed=fixed, viz=viz,
+                          spm_instance=spm_instance,
+                          **forward_kwargs)
+
+    else:
+        raise ValueError(f"Unknown device '{device}'; expected 'squid' or 'opm'.")
 
     f_vals = []
     cv_errs = []
     layer_names = surf_set.get_layer_names()
 
     for layer_name in layer_names:
-        coregister(
-            fid_coords,
-            data_fname,
-            surf_set,
-            layer_name=layer_name,
-            stage=stage,
-            orientation=orientation,
-            fixed=fixed,
-            viz=viz,
-            spm_instance=spm_instance,
-            **coregister_kwargs
-        )
+        build_forward(layer_name)
 
         f_val = np.nan
         cv_err = np.nan
@@ -159,17 +187,20 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
     return f_vals, cv_errs
 
 
+
 def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, stage='ds',
-                                    orientation='link_vector', fixed=True, viz=True,
-                                    spm_instance=None, coregister_kwargs=None, invert_kwargs=None):
+                                    orientation='link_vector', fixed=True, device ='squid',
+                                    viz=True, spm_instance=None, forward_kwargs=None,
+                                    invert_kwargs=None):
     """
     Perform laminar model comparison over time using sliding-window MSP inversions.
 
     This function performs time-resolved source reconstruction across multiple laminar surfaces
     using the Multiple Sparse Priors (MSP) algorithm within sliding time windows. For each layer
-    in a `LayerSurfaceSet`, the function coregisters MEG data to the MRI, performs MSP inversion
-    over successive windows, and computes the corresponding free energy values. The result is a
-    layer-by-time representation of model evidence, suitable for laminar model comparison.
+    in a `LayerSurfaceSet`, the function coregisters MEG data to or computes an OPM forward model
+    the MRI, performs MSP inversion over successive windows, and computes the corresponding free
+    energy values. The result is a layer-by-time representation of model evidence, suitable for
+    laminar model comparison.
 
     Parameters
     ----------
@@ -189,13 +220,20 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
         Dipole orientation model used for inversion (default: 'link_vector').
     fixed : bool, optional
         Whether to use fixed dipole orientations across layers (default: True).
+    device : {'squid', 'opm'}, optional
+        MEG system type, which selects the forward-model function (default: 'squid').
+        'squid' -> coregister(); 'opm' -> opm_headmodel().
     viz : bool, optional
         Whether to display SPM visualizations during coregistration and inversion (default: True).
     spm_instance : spm_standalone, optional
         Active standalone SPM instance. If None, a temporary instance is created and closed after
         execution.
-    coregister_kwargs : dict, optional
-        Additional keyword arguments passed to the `coregister()` function.
+    forward_kwargs : dict, optional
+        Extra keyword arguments for the device's forward-model function:
+        - squid: passed to `coregister()`
+        - opm: passed to `opm_headmodel()`; must include 'mri_fname', and may include
+          'coordsystem_fname', 'iskull_fname', 'oskull_fname', 'scalp_fname',
+          'voltype', 'meshres', etc.
     invert_kwargs : dict, optional
         Additional keyword arguments passed to the `invert_sliding_window_msp()` function.
 
@@ -218,28 +256,50 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
     - Typically used to examine how laminar model evidence evolves during task-related dynamics.
     """
 
-    if coregister_kwargs is None:
-        coregister_kwargs = {}
     if invert_kwargs is None:
         invert_kwargs = {}
+    forward_kwargs = dict(forward_kwargs or {})
+
+    device = device.lower()
+    if device == 'squid':
+        if fid_coords is None:
+            raise ValueError("device='squid' requires fid_coords.")
+
+        def build_forward(layer_name):
+            coregister(fid_coords,
+                       data_fname,
+                       surf_set,
+                       layer_name=layer_name,
+                       stage=stage,
+                       orientation=orientation,
+                       fixed=fixed,
+                       viz=viz,
+                       spm_instance=spm_instance,
+                       **forward_kwargs)
+
+    elif device == 'opm':
+        if not forward_kwargs.get('mri_fname'):
+            raise ValueError("device='opm' requires forward_kwargs={'mri_fname': ...}.")
+
+        def build_forward(layer_name):
+            opm_headmodel(data_fname,
+                          surf_set,
+                          layer_name=layer_name,
+                          stage=stage,
+                          orientation=orientation,
+                          fixed=fixed, viz=viz,
+                          spm_instance=spm_instance,
+                          **forward_kwargs)
+
+    else:
+        raise ValueError(f"Unknown device '{device}'; expected 'squid' or 'opm'.")
 
     f_vals = []
     wois = []
     layer_names = surf_set.get_layer_names()
 
     for layer_name in layer_names:
-        coregister(
-            fid_coords,
-            data_fname,
-            surf_set,
-            layer_name=layer_name,
-            stage=stage,
-            orientation=orientation,
-            fixed=fixed,
-            viz=viz,
-            spm_instance=spm_instance,
-            **coregister_kwargs
-        )
+        build_forward(layer_name)
 
         [mesh_fvals, wois] = invert_sliding_window_msp(
             prior,

@@ -6,9 +6,10 @@ import os
 import numpy as np
 import pytest
 
-from lameg.simulate import run_dipole_simulation, run_current_density_simulation
+from lameg.simulate import (run_dipole_simulation, run_current_density_simulation,
+                            setup_opm_simulation)
 from lameg.surf import LayerSurfaceSet
-from lameg.util import load_meg_sensor_data
+from lameg.util import load_meg_sensor_data, make_directory
 
 
 @pytest.mark.dependency(depends=["tests/test_02_invert.py::test_invert_sliding_window_msp"],
@@ -226,3 +227,71 @@ def test_run_current_density_simulation(spm):
     data_fname_base = os.path.split(os.path.splitext(base_fname)[0])[1]
     os.remove(os.path.join('output', f'{data_fname_base}.mat'))
     os.remove(os.path.join('output', f'{data_fname_base}.dat'))
+
+
+@pytest.mark.dependency()
+def test_setup_opm_simulation(spm):
+    """
+    Tests the `setup_opm_simulation` function, which wraps SPM's `spm_opm_sim` to create a
+    simulated OPM dataset with sensors placed on the subject's scalp.
+
+    This test performs several key operations:
+    1. Runs a whole-head simulation and checks that the `.mat` and `.dat` files are moved from the
+       working directory to the requested output directory, and that the returned path points to
+       the `.mat` file.
+    2. Loads the sensor data and checks the number of channels, the number of samples and the
+       sampling interval against the requested parameters.
+    3. Runs a second simulation restricted to the upper hemisphere (`wholehead=False`) and checks
+       that it has fewer sensors than the whole-head array.
+    """
+    surf_set = LayerSurfaceSet('sub-104', 2)
+    out_dir = make_directory('./', ['output'])
+    s_rate = 1000
+    n_samples = 200
+
+    np.random.seed(0)
+    data_file = os.path.join(out_dir, 'opm_sim_test.mat')
+    sim_fname = setup_opm_simulation(
+        data_file,
+        surf_set,
+        s_rate=s_rate,
+        n_samples=n_samples,
+        n_trials=1,
+        wholehead=True,
+        viz=False,
+        spm_instance=spm
+    )
+
+    # Output files are moved out of the working directory
+    assert os.path.abspath(sim_fname) == os.path.abspath(data_file)
+    assert os.path.exists(os.path.join(out_dir, 'opm_sim_test.mat'))
+    assert os.path.exists(os.path.join(out_dir, 'opm_sim_test.dat'))
+    assert not os.path.exists('opm_sim_test.mat')
+    assert not os.path.exists('opm_sim_test.dat')
+
+    sensor_data, time, ch_names = load_meg_sensor_data(sim_fname)
+    n_wholehead_sensors = len(ch_names)
+    assert n_wholehead_sensors > 0
+    assert sensor_data.shape[0] == n_wholehead_sensors
+    assert sensor_data.shape[1] == n_samples
+    assert np.all(np.isfinite(sensor_data))
+    assert len(time) == n_samples
+    # Time is in ms
+    assert np.allclose(np.diff(time), 1000 / s_rate)
+
+    # Sensors restricted to the upper part of the head
+    upper_fname = setup_opm_simulation(
+        os.path.join(out_dir, 'opm_sim_upper_test.mat'),
+        surf_set,
+        s_rate=s_rate,
+        n_samples=n_samples,
+        wholehead=False,
+        viz=False,
+        spm_instance=spm
+    )
+    _, _, ch_names = load_meg_sensor_data(upper_fname)
+    assert 0 < len(ch_names) < n_wholehead_sensors
+
+    for fname in ['opm_sim_test', 'opm_sim_upper_test']:
+        os.remove(os.path.join(out_dir, f'{fname}.mat'))
+        os.remove(os.path.join(out_dir, f'{fname}.dat'))
