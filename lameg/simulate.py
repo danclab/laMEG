@@ -28,6 +28,7 @@ Notes
   biophysically realistic projection of cortical activity to MEG sensors.
 """
 
+# pylint: disable=duplicate-code
 import os
 import shutil
 import tempfile
