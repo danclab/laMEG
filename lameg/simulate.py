@@ -122,7 +122,7 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
             "eval",
             f"""
             spm('defaults', 'EEG');
-            spm_get_defaults('cmdline',{int(not viz)}); 
+            spm_get_defaults('cmdline',{int(not viz)});
             """,
             nargout=0
         )
@@ -171,7 +171,7 @@ def run_current_density_simulation(data_file, prefix, sim_vertices, sim_signals,
         spm.spm_standalone(
             "eval",
             f"""
-            load('{name}'); 
+            load('{name}');
             spm_jobman('run', matlabbatch);
             """,
             nargout=0
@@ -268,7 +268,7 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
             "eval",
             f"""
             spm('defaults', 'EEG');
-            spm_get_defaults('cmdline',{int(not viz)}); 
+            spm_get_defaults('cmdline',{int(not viz)});
             """,
             nargout=0
         )
@@ -317,7 +317,7 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
             spm.spm_standalone(
                 "eval",
                 f"""
-                load('{name}'); 
+                load('{name}');
                 spm_jobman('run', matlabbatch);
                 """,
                 nargout=0
@@ -328,7 +328,8 @@ def run_dipole_simulation(data_file, prefix, sim_vertices, sim_signals, dipole_o
     return sim_fname
 
 
-def setup_opm_simulation(data_file, surf_set, s_rate=1000, wholehead=True, sensor_spacing=35,
+def setup_opm_simulation(data_file, surf_set, layer_name=None, stage='ds',orientation='link_vector',
+                         fixed=True, s_rate=1000, wholehead=True, sensor_spacing=35,
                          sensor_offset=6.5, n_samples=1000, n_trials=1, density_checks=40, axes=1,
                          sensor_positions_file=None, iskull_fname=None, oskull_fname=None,
                          scalp_fname=None, viz=True, spm_instance=None):
@@ -347,6 +348,15 @@ def setup_opm_simulation(data_file, surf_set, s_rate=1000, wholehead=True, senso
     surf_set : LayerSurfaceSet
         Surface set object providing the cortical mesh and MRI reference.
         The pial surface from ``surf_set`` is used as the cortical source model.
+    layer_name : str or None, optional
+        Surface layer to use for inversion (e.g., 'pial', 'white', or a fractional layer).
+        If None, the full multilayer surface is used.
+    stage : str, optional
+        Processing stage of the surface mesh (default: 'ds').
+    orientation : str, optional
+        Orientation model used for dipole alignment (default: 'link_vector').
+    fixed : bool, optional
+        Whether to use fixed dipole orientations across layers (default: True).
     s_rate : int, optional
         Sampling frequency in Hz (default: 1000).
     wholehead : bool, optional
@@ -399,6 +409,9 @@ def setup_opm_simulation(data_file, surf_set, s_rate=1000, wholehead=True, senso
     data_dir = os.path.dirname(data_file)
     data_fname = os.path.split(os.path.splitext(data_file)[0])[1]
 
+    mesh_fname = surf_set.get_mesh_path(layer_name=layer_name, stage=stage,
+                                        orientation=orientation, fixed=fixed)
+
     config = {
         'space': float(sensor_spacing),
         'lead': float(0),
@@ -408,7 +421,7 @@ def setup_opm_simulation(data_file, surf_set, s_rate=1000, wholehead=True, senso
         'nTrials': float(n_trials),
         'fs': float(s_rate),
         'nSamples': float(n_samples),
-        'cortex': surf_set.get_mesh_path(layer_name='pial', stage='ds'),
+        'cortex': mesh_fname,
         'sMRI': surf_set.mri_file,
         'fname': data_fname,
         'Dens': float(density_checks),
@@ -428,7 +441,7 @@ def setup_opm_simulation(data_file, surf_set, s_rate=1000, wholehead=True, senso
             "eval",
             f"""
             spm('defaults', 'EEG');
-            spm_get_defaults('cmdline',{int(not viz)}); 
+            spm_get_defaults('cmdline',{int(not viz)});
             """,
             nargout=0
         )

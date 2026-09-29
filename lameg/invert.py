@@ -197,6 +197,115 @@ def coregister(fid_coords, data_fname, surf_set, layer_name=None, stage='ds',
     batch(cfg, viz=viz, spm_instance=spm_instance)
 
 
+def opm_headmodel(data_fname, surf_set, coordsystem_fname=None, mri_fname=None,
+                   layer_name=None, stage='ds',orientation='link_vector',
+                   fixed=True, iskull_fname=None, oskull_fname=None,
+                   scalp_fname=None,voltype='Single Shell', meshres=2,
+                   lead=False, viz=True, spm_instance=None):
+
+    """
+    Compute an OPM forward model via SPM's spm_opm_headmodel, using a laminar
+    surface mesh from a LayerSurfaceSet as the cortical surface.
+
+    For data produced by setup_opm_simulation(), sensors and MRI are already
+    in the same space, so leave coordsystem_fname=None and pass mri_fname.
+
+    Parameters
+    ----------
+    data_fname : str
+        Path to the MEG dataset (.mat). For simulated data, this is the file
+        returned by setup_opm_simulation(). Passed as S.D.
+    surf_set : LayerSurfaceSet
+        Used to derive the cortical mesh (S.cortex), same convention as
+        coregister() / setup_opm_simulation().
+    coordsystem_fname : str or None
+        Path to a BIDS coordsystem.json (real-data fiducial registration).
+        Leave None for simulated data.
+    mri_fname : str or None
+        Subject MRI path.
+    layer_name : str or None, optional
+        Surface layer to use for inversion (e.g., 'pial', 'white', or a fractional layer).
+        If None, the full multilayer surface is used.
+    stage : str, optional
+        Processing stage of the surface mesh (default: 'ds').
+    orientation : str, optional
+        Orientation model used for dipole alignment (default: 'link_vector').
+    fixed : bool, optional
+        Whether to use fixed dipole orientations across layers (default: True).
+    iskull_fname, oskull_fname, scalp_fname : str or None
+        Custom skull/scalp meshes; empty string passed to SPM if None,
+        letting SPM fall back to inverse-normalised meshes.
+    voltype : str, optional
+        Volume conductor model (default: 'Single Shell').
+    meshres : int, optional
+        Mesh resolution 1/2/3 (default: 2).
+    lead : bool, optional
+        Whether to compute and return the lead field.
+    viz : bool, optional
+        Whether to display SPM's coregistration/forward-model checks.
+    spm_instance : spm_standalone, optional
+        Active standalone SPM instance. If None, spm_context() creates and
+        tears down a temporary one.
+
+    Returns
+    -------
+    lead_field : np.ndarray or None
+        Lead field, if lead=True; otherwise None. D is saved to data_fname's
+        directory.
+    """
+    mesh_fname = surf_set.get_mesh_path(layer_name=layer_name, stage=stage,
+                                         orientation=orientation, fixed=fixed)
+
+    if iskull_fname is None:
+        iskull_fname = ''
+    if oskull_fname is None:
+        oskull_fname = ''
+    if scalp_fname is None:
+        scalp_fname = ''
+    if coordsystem_fname is None:
+        coordsystem_fname = ''
+    headshape_fname = ''
+    if not mri_fname:
+        raise ValueError(
+            "opm_headmodel requires mri_fname."
+        )
+
+    config = {
+        'D': data_fname,
+        'coordsystem': coordsystem_fname,
+        'sMRI': mri_fname,
+        'template': float(0),
+        'headshape': headshape_fname,
+        'cortex': mesh_fname,
+        'scalp': scalp_fname,
+        'oskull': oskull_fname,
+        'iskull': iskull_fname,
+        'voltype': voltype,
+        'meshres': float(meshres),
+        'lead': float(1 if lead else 0),
+    }
+
+    with spm_context(spm_instance) as spm:
+        spm.spm_standalone(
+            "eval",
+            f"""
+            spm('defaults', 'EEG');
+            spm_get_defaults('cmdline',{int(not viz)});
+            """,
+            nargout=0
+        )
+        spm.spm_opm_headmodel(config, nargout=0)
+
+    lead_field = None
+    if lead:
+        data_path, data_file_name = os.path.split(data_fname)
+        data_base = os.path.splitext(data_file_name)[0]
+        gainmat_fname = os.path.join(data_path, f'SPMgainmatrix_{data_base}_1.mat')
+        with h5py.File(gainmat_fname, 'r') as file:
+            lead_field = np.array(file['G'][()])
+
+    return lead_field
+
 def invert_ebb(data_fname, surf_set, layer_name=None, stage='ds',
                orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=4,
                n_spatial_modes='auto', foi=None, woi=None, hann_windowing=False, n_folds=1,

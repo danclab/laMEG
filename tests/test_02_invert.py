@@ -10,7 +10,9 @@ import numpy as np
 import pytest
 
 from lameg.invert import (coregister, invert_ebb, invert_msp, load_source_time_series,
-                          invert_sliding_window_msp, get_lead_field_rms_diff)
+                          invert_sliding_window_msp, get_lead_field_rms_diff, opm_headmodel,
+                          check_inversion_exists, load_forward_model_vertices)
+from lameg.simulate import setup_opm_simulation
 from lameg.surf import LayerSurfaceSet
 from lameg.util import get_fiducial_coords, make_directory
 
@@ -552,3 +554,82 @@ def test_invert_ebb(spm):
     assert np.allclose(time[:10], target)
 
     assert np.allclose(mu_matrix[0, :10], mu_target, atol=1e-5)
+
+
+@pytest.mark.dependency(depends=["test_invert_ebb"])
+def test_opm_headmodel(spm):
+    """
+    Tests the `opm_headmodel` function, which builds an OPM forward model with SPM's
+    `spm_opm_headmodel` using a laminar mesh from a `LayerSurfaceSet` as the cortical surface.
+
+    This test performs several key operations:
+    1. Generates a small simulated OPM dataset with `setup_opm_simulation`, so that sensors and
+       MRI are already in the same space (no coordsystem file needed).
+    2. Checks that a missing `mri_fname` raises a ValueError before SPM is called.
+    3. Builds the forward model on the first (pial) layer with `lead=True` and checks that a forward
+       model is stored in the dataset and that the returned lead field is finite and sized to the
+       number of mesh vertices.
+    4. Builds the forward model on the last (white matter) layer with `lead=False` and checks that
+       no lead field is returned and that the forward-model mesh has changed, confirming that the
+       `layer_name` argument selects the cortical mesh.
+    """
+    surf_set = LayerSurfaceSet('sub-104', 2)
+    layer_names = surf_set.get_layer_names()
+    out_dir = make_directory('./', ['output'])
+
+    # Simulated OPM data: sensors and MRI are already in the same space
+    np.random.seed(0)
+    # pylint: disable=duplicate-code
+    opm_fname = setup_opm_simulation(
+        os.path.join(out_dir, 'opm_headmodel_test.mat'),
+        surf_set,
+        n_samples=200,
+        viz=False,
+        spm_instance=spm
+    )
+
+    # mri_fname is required
+    with pytest.raises(ValueError):
+        opm_headmodel(opm_fname, surf_set, mri_fname=None, spm_instance=spm)
+
+    n_verts = surf_set.load(
+        layer_name=layer_names[0],
+        stage='ds',
+        orientation='link_vector',
+        fixed=True
+    ).darrays[0].data.shape[0]
+
+    # Pial forward model, returning the lead field
+    lead_field = opm_headmodel(
+        opm_fname,
+        surf_set,
+        mri_fname=surf_set.mri_file,
+        layer_name=layer_names[0],
+        lead=True,
+        viz=False,
+        spm_instance=spm
+    )
+    assert check_inversion_exists(opm_fname)
+    assert lead_field.ndim == 2
+    assert n_verts in lead_field.shape
+    assert np.all(np.isfinite(lead_field))
+    pial_verts = load_forward_model_vertices(opm_fname)
+    assert pial_verts.shape[0] == n_verts
+
+    # White matter forward model, without the lead field
+    lead_field = opm_headmodel(
+        opm_fname,
+        surf_set,
+        mri_fname=surf_set.mri_file,
+        layer_name=layer_names[-1],
+        lead=False,
+        viz=False,
+        spm_instance=spm
+    )
+    assert lead_field is None
+    white_verts = load_forward_model_vertices(opm_fname)
+    assert white_verts.shape == pial_verts.shape
+    assert not np.allclose(white_verts, pial_verts)
+
+    os.remove(os.path.join(out_dir, 'opm_headmodel_test.mat'))
+    os.remove(os.path.join(out_dir, 'opm_headmodel_test.dat'))

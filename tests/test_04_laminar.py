@@ -8,8 +8,9 @@ import pytest
 
 from lameg.laminar import (model_comparison, sliding_window_model_comparison, compute_csd,
                            roi_power_comparison)
+from lameg.simulate import setup_opm_simulation
 from lameg.surf import LayerSurfaceSet
-from lameg.util import get_fiducial_coords
+from lameg.util import get_fiducial_coords, load_meg_sensor_data, make_directory
 
 
 @pytest.mark.dependency(depends=["tests/test_03_simulate.py::test_run_current_density_simulation"],
@@ -184,14 +185,15 @@ def test_model_comparison(spm):
     target = np.array([-326440.3282751,  -329645.10036844])
     assert np.allclose(free_energy, target, atol=1e2)
 
-    # Test coreg kwargs
+    # Test forward kwargs (passed to coregister for device='squid')
     [free_energy, _] = model_comparison(
         fid_coords,
         sim_fname,
         surf_set,
         method='EBB',
+        device='squid',
         viz=False,
-        coregister_kwargs={},
+        forward_kwargs={},
         spm_instance=spm
     )
 
@@ -303,6 +305,216 @@ def test_sliding_window_model_comparison(spm):
                        [-100., -61.66666667],
                        [-100., -60.]])
     assert np.allclose(wois, target)
+
+
+def make_opm_dataset(spm, surf_set, name):
+    """
+    Create a small simulated OPM dataset in the output directory for the OPM model comparison
+    tests, and return the path to its `.mat` file.
+    """
+    out_dir = make_directory('./', ['output'])
+    # Seed Python's and reset MATLAB's random number generators so that the simulated data and the
+    # sensor positions (placed by SPM) are the same on every run
+    np.random.seed(0)
+    spm.spm_standalone("eval", "rng('default');", nargout=0)
+    return setup_opm_simulation(
+        os.path.join(out_dir, f'{name}.mat'),
+        surf_set,
+        n_samples=200,
+        viz=False,
+        spm_instance=spm
+    )
+
+
+def remove_dataset(data_fname):
+    """
+    Delete the `.mat` and `.dat` files of an SPM dataset.
+    """
+    base = os.path.splitext(data_fname)[0]
+    os.remove(f'{base}.mat')
+    os.remove(f'{base}.dat')
+
+
+def test_model_comparison_device_errors():
+    """
+    Tests that `model_comparison` and `sliding_window_model_comparison` reject invalid device
+    settings before any forward model is computed:
+    - device='squid' without fiducial coordinates
+    - device='opm' without an MRI file in `forward_kwargs`
+    - an unknown device name
+    """
+    surf_set = LayerSurfaceSet('sub-104', 2)
+    data_fname = 'not_used.mat'
+
+    with pytest.raises(ValueError, match='fid_coords'):
+        model_comparison(None, data_fname, surf_set, device='squid')
+    with pytest.raises(ValueError, match='mri_fname'):
+        model_comparison(None, data_fname, surf_set, device='opm')
+    with pytest.raises(ValueError, match='mri_fname'):
+        model_comparison(None, data_fname, surf_set, device='opm', forward_kwargs={})
+    with pytest.raises(ValueError, match='Unknown device'):
+        model_comparison(None, data_fname, surf_set, device='eeg')
+
+    with pytest.raises(ValueError, match='fid_coords'):
+        sliding_window_model_comparison(24588, None, data_fname, surf_set, device='squid')
+    with pytest.raises(ValueError, match='mri_fname'):
+        sliding_window_model_comparison(24588, None, data_fname, surf_set, device='opm')
+    with pytest.raises(ValueError, match='Unknown device'):
+        sliding_window_model_comparison(24588, None, data_fname, surf_set, device='eeg')
+
+
+@pytest.mark.dependency(depends=["tests/test_02_invert.py::test_opm_headmodel"],
+                        scope='session')
+def test_model_comparison_opm(spm):
+    """
+    Tests the `model_comparison` function with device='opm', where the forward model for each
+    layer is built with `opm_headmodel` instead of `coregister`. Mirrors `test_model_comparison`.
+
+    Key steps executed in this test:
+    - Creates a simulated OPM dataset with `setup_opm_simulation` (sensors and MRI are already in
+      the same space, so no fiducial coordinates are needed).
+    - Executes `model_comparison` with MSP, with EBB, with default inversion arguments and with
+      extra forward-model arguments, and checks the computed free energy values against expected
+      values.
+
+    Assertions:
+    - Asserts that the computed free energy values closely match the predefined values.
+    """
+    surf_set = LayerSurfaceSet('sub-104', 2)
+    opm_fname = make_opm_dataset(spm, surf_set, 'opm_model_comparison_test')
+    forward_kwargs = {'mri_fname': surf_set.mri_file}
+    patch_size = 5
+    n_temp_modes = 4
+
+    # Test MSP
+    [free_energy, _] = model_comparison(
+        None,
+        opm_fname,
+        surf_set,
+        method='MSP',
+        device='opm',
+        viz=False,
+        spm_instance=spm,
+        forward_kwargs=forward_kwargs,
+        invert_kwargs={
+            'patch_size': patch_size,
+            'n_temp_modes': n_temp_modes,
+        }
+    )
+
+    target = np.array([-296.01181422, -299.04763967])
+    assert np.allclose(free_energy, target, atol=1)
+
+    # Test EBB
+    [free_energy, _] = model_comparison(
+        None,
+        opm_fname,
+        surf_set,
+        method='EBB',
+        device='opm',
+        viz=False,
+        spm_instance=spm,
+        forward_kwargs=forward_kwargs,
+        invert_kwargs={
+            'patch_size': patch_size,
+            'n_temp_modes': n_temp_modes,
+        }
+    )
+
+    target = np.array([-338.28330395, -338.32176079])
+    assert np.allclose(free_energy, target, atol=1)
+
+    # Test default invert kwargs
+    [free_energy, _] = model_comparison(
+        None,
+        opm_fname,
+        surf_set,
+        method='EBB',
+        device='opm',
+        viz=False,
+        spm_instance=spm,
+        forward_kwargs=forward_kwargs
+    )
+
+    target = np.array([-338.28330395, -338.32176079])
+    assert np.allclose(free_energy, target, atol=1)
+
+    # Test forward kwargs (extra arguments passed to opm_headmodel)
+    [free_energy, _] = model_comparison(
+        None,
+        opm_fname,
+        surf_set,
+        method='EBB',
+        device='opm',
+        viz=False,
+        spm_instance=spm,
+        forward_kwargs={
+            'mri_fname': surf_set.mri_file,
+            'voltype': 'Single Shell',
+            'meshres': 2,
+        }
+    )
+
+    # Same values as "Test EBB": these are opm_headmodel's default settings
+    target = np.array([-338.28330395, -338.32176079])
+    assert np.allclose(free_energy, target, atol=1)
+
+    remove_dataset(opm_fname)
+
+
+@pytest.mark.dependency(depends=["tests/test_04_laminar.py::test_model_comparison_opm"],
+                        scope='session')
+def test_sliding_window_model_comparison_opm(spm):
+    """
+    Tests the `sliding_window_model_comparison` function with device='opm', where the forward
+    model for each layer is built with `opm_headmodel` instead of `coregister`. Mirrors
+    `test_sliding_window_model_comparison`.
+
+    Detailed Steps:
+    - Creates a simulated OPM dataset with `setup_opm_simulation`.
+    - Defines windows of interest from the dataset's time vector.
+    - Runs the sliding window model comparison.
+    - Validates the results for both free energy and windows of interest against pre-defined
+      targets.
+    """
+    surf_set = LayerSurfaceSet('sub-104', 2)
+    opm_fname = make_opm_dataset(spm, surf_set, 'opm_sliding_window_test')
+
+    patch_size = 5
+    sliding_n_temp_modes = 1
+
+    _, time, _ = load_meg_sensor_data(opm_fname)
+    # Like the original test: windows start at the beginning of the epoch and grow
+    wois = [
+        [time[0], time[0] + 50.],
+        [time[0], time[0] + 100.]
+    ]
+
+    [free_energy, wois] = sliding_window_model_comparison(
+        24588,
+        None,
+        opm_fname,
+        surf_set,
+        device='opm',
+        viz=False,
+        spm_instance=spm,
+        forward_kwargs={'mri_fname': surf_set.mri_file},
+        invert_kwargs={
+            'patch_size': patch_size,
+            'n_temp_modes': sliding_n_temp_modes,
+            'wois': wois
+        }
+    )
+
+    target = np.array([[-126.35599317, -125.2515429],
+                       [-126.38207293, -125.27212981]])
+    assert np.allclose(free_energy, target, atol=1)
+
+    target = np.array([[time[0], time[0] + 50.],
+                       [time[0], time[0] + 100.]])
+    assert np.allclose(wois, target)
+
+    remove_dataset(opm_fname)    
 
 
 def test_compute_csd():
