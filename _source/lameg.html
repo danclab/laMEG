@@ -1078,6 +1078,52 @@ apply it to sensor data for the time indices in woi[i].</p></li>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.invert.opm_headmodel">
+<span class="sig-prename descclassname"><span class="pre">lameg.invert.</span></span><span class="sig-name descname"><span class="pre">opm_headmodel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coordsystem_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ds'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iskull_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oskull_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalp_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">voltype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'Single</span> <span class="pre">Shell'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">meshres</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">2</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lead</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.invert.opm_headmodel" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute an OPM forward model via SPM’s spm_opm_headmodel, using a laminar
+surface mesh from a LayerSurfaceSet as the cortical surface.</p>
+<p>For data produced by setup_opm_simulation(), sensors and MRI are already
+in the same space, so leave coordsystem_fname=None and pass mri_fname.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_fname</strong> (<em>str</em>) – Path to the MEG dataset (.mat). For simulated data, this is the file
+returned by setup_opm_simulation(). Passed as S.D.</p></li>
+<li><p><strong>surf_set</strong> (<a class="reference internal" href="#lameg.surf.LayerSurfaceSet" title="lameg.surf.LayerSurfaceSet"><em>LayerSurfaceSet</em></a>) – Used to derive the cortical mesh (S.cortex), same convention as
+coregister() / setup_opm_simulation().</p></li>
+<li><p><strong>coordsystem_fname</strong> (<em>str</em><em> or </em><em>None</em>) – Path to a BIDS coordsystem.json (real-data fiducial registration).
+Leave None for simulated data.</p></li>
+<li><p><strong>mri_fname</strong> (<em>str</em><em> or </em><em>None</em>) – Subject MRI path.</p></li>
+<li><p><strong>layer_name</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Surface layer to use for inversion (e.g., ‘pial’, ‘white’, or a fractional layer).
+If None, the full multilayer surface is used.</p></li>
+<li><p><strong>stage</strong> (<em>str</em><em>, </em><em>optional</em>) – Processing stage of the surface mesh (default: ‘ds’).</p></li>
+<li><p><strong>orientation</strong> (<em>str</em><em>, </em><em>optional</em>) – Orientation model used for dipole alignment (default: ‘link_vector’).</p></li>
+<li><p><strong>fixed</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use fixed dipole orientations across layers (default: True).</p></li>
+<li><p><strong>iskull_fname</strong> (<em>str</em><em> or </em><em>None</em>) – Custom skull/scalp meshes; empty string passed to SPM if None,
+letting SPM fall back to inverse-normalised meshes.</p></li>
+<li><p><strong>oskull_fname</strong> (<em>str</em><em> or </em><em>None</em>) – Custom skull/scalp meshes; empty string passed to SPM if None,
+letting SPM fall back to inverse-normalised meshes.</p></li>
+<li><p><strong>scalp_fname</strong> (<em>str</em><em> or </em><em>None</em>) – Custom skull/scalp meshes; empty string passed to SPM if None,
+letting SPM fall back to inverse-normalised meshes.</p></li>
+<li><p><strong>voltype</strong> (<em>str</em><em>, </em><em>optional</em>) – Volume conductor model (default: ‘Single Shell’).</p></li>
+<li><p><strong>meshres</strong> (<em>int</em><em>, </em><em>optional</em>) – Mesh resolution 1/2/3 (default: 2).</p></li>
+<li><p><strong>lead</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to compute and return the lead field.</p></li>
+<li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to display SPM’s coregistration/forward-model checks.</p></li>
+<li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Active standalone SPM instance. If None, spm_context() creates and
+tears down a temporary one.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>lead_field</strong> – Lead field, if lead=True; otherwise None. D is saved to data_fname’s
+directory.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>np.ndarray or None</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 <section id="module-lameg.laminar">
 <span id="lameg-laminar-module"></span><h2>lameg.laminar module<a class="headerlink" href="#module-lameg.laminar" title="Permalink to this heading">#</a></h2>
@@ -1146,32 +1192,43 @@ KCSD1D).</p></li>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.laminar.model_comparison">
-<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">model_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fid_coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ds'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'EBB'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coregister_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">invert_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.laminar.model_comparison" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">model_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fid_coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ds'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'EBB'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'squid'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forward_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">invert_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.laminar.model_comparison" title="Permalink to this definition">#</a></dt>
 <dd><p>Perform laminar model comparison by evaluating free energy and/or cross-validation error across
 cortical surfaces.</p>
-<p>This function coregisters MEG data to a subject’s anatomical MRI and performs source
-reconstruction separately on each layer within a <cite>LayerSurfaceSet</cite>, using either the
-Empirical Bayesian Beamformer (EBB) or Multiple Sparse Priors (MSP) algorithm. It returns
-the free energy and cross-validation error for each layer, enabling laminar model comparison
-based on model evidence.</p>
+<p>This function coregisters MEG data to or computes an OPM forward model from
+the subject’s anatomical MRI, then performs source reconstruction separately on each layer
+within a <cite>LayerSurfaceSet</cite>, using either the Empirical Bayesian Beamformer (EBB) or Multiple
+Sparse Priors (MSP) algorithm. It returns the free energy and cross-validation error for each
+layer, enabling laminar model comparison based on model evidence.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>fid_coords</strong> (<em>dict</em>) – Dictionary of fiducial landmark coordinates, e.g.:
 <code class="docutils literal notranslate"><span class="pre">{'nas':</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z],</span> <span class="pre">'lpa':</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z],</span> <span class="pre">'rpa':</span> <span class="pre">[x,</span> <span class="pre">y,</span> <span class="pre">z]}</span></code>
-Values must be expressed in MEG headspace coordinates (millimeters).</p></li>
+Values must be expressed in MEG headspace coordinates (millimeters).
+Required for device=’squid’; ignored (None) for device=’opm’.</p></li>
 <li><p><strong>data_fname</strong> (<em>str</em>) – Path to the MEG dataset (SPM-compatible .mat file).</p></li>
 <li><p><strong>surf_set</strong> (<a class="reference internal" href="#lameg.surf.LayerSurfaceSet" title="lameg.surf.LayerSurfaceSet"><em>LayerSurfaceSet</em></a>) – The subject’s surface set containing laminar meshes (e.g., pial, white, intermediate).</p></li>
 <li><p><strong>stage</strong> (<em>str</em><em>, </em><em>optional</em>) – Surface mesh processing stage (default: ‘ds’).</p></li>
 <li><p><strong>orientation</strong> (<em>str</em><em>, </em><em>optional</em>) – Dipole orientation model used for inversion (default: ‘link_vector’).</p></li>
 <li><p><strong>fixed</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use fixed dipole orientations across layers (default: True).</p></li>
 <li><p><strong>method</strong> (<em>{'EBB'</em><em>, </em><em>'MSP'}</em><em>, </em><em>optional</em>) – Source reconstruction method to use (default: ‘EBB’).</p></li>
+<li><p><strong>device</strong> (<em>{'squid'</em><em>, </em><em>'opm'}</em><em>, </em><em>optional</em>) – MEG system type, which selects the forward-model function (default: ‘squid’).
+‘squid’ -&gt; coregister(); ‘opm’ -&gt; opm_headmodel().</p></li>
 <li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to display SPM visualizations during coregistration and inversion (default: True).</p></li>
+<li><p><strong>forward_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – <p>Extra keyword arguments for the device’s forward-model function:
+- squid: passed to <cite>coregister()</cite>
+- opm: passed to <cite>opm_headmodel()</cite>; must include ‘mri_fname’, and may include</p>
+<blockquote>
+<div><p>’coordsystem_fname’, ‘iskull_fname’, ‘oskull_fname’, ‘scalp_fname’,
+‘voltype’, ‘meshres’, etc.</p>
+</div></blockquote>
+<p>Do not include layer_name, stage, orientation, fixed, viz or spm_instance;
+these are set by model_comparison.</p>
+</p></li>
 <li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Active standalone SPM instance. If None, a temporary instance is created and closed after
 execution.</p></li>
-<li><p><strong>coregister_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Additional keyword arguments passed to the <cite>coregister()</cite> function.</p></li>
-<li><p><strong>invert_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Additional keyword arguments passed to the selected inversion function (<cite>invert_ebb()</cite> or
-<cite>invert_msp()</cite>).</p></li>
+<li><p><strong>invert_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Additional keyword arguments passed to <cite>invert_ebb()</cite> or <cite>invert_msp()</cite>.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -1185,14 +1242,11 @@ execution.</p></li>
 <p class="rubric">Notes</p>
 <ul class="simple">
 <li><p>The function iterates over all layer surfaces defined in <cite>surf_set</cite>.</p></li>
-<li><p>A forward model is created for each layer surface within the SPM data object</p></li>
+<li><p>For OPM simulations ‘coordsystem_fname’ is None</p></li>
 <li><p>Free energy serves as a quantitative parametric model comparison metric, with higher values
 indicating better model evidence.</p></li>
 <li><p>Cross-validation serves as a quantitative nonparameteric model comparison metric, with lower
 values indicating better model evidence.</p></li>
-<li><p>Requires prior generation of laminar surfaces and preprocessing of MEG data into
-SPM-compatible format.</p></li>
-<li><p>Uses the Nolte single-shell MEG forward model as defined in SPM.</p></li>
 </ul>
 </dd></dl>
 
@@ -1264,13 +1318,14 @@ vertices in <cite>roi_idx</cite>, and the returned <cite>roi_idx</cite> is the s
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.laminar.sliding_window_model_comparison">
-<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">sliding_window_model_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fid_coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ds'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">coregister_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">invert_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.laminar.sliding_window_model_comparison" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.laminar.</span></span><span class="sig-name descname"><span class="pre">sliding_window_model_comparison</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prior</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fid_coords</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ds'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'squid'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">forward_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">invert_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.laminar.sliding_window_model_comparison" title="Permalink to this definition">#</a></dt>
 <dd><p>Perform laminar model comparison over time using sliding-window MSP inversions.</p>
 <p>This function performs time-resolved source reconstruction across multiple laminar surfaces
 using the Multiple Sparse Priors (MSP) algorithm within sliding time windows. For each layer
-in a <cite>LayerSurfaceSet</cite>, the function coregisters MEG data to the MRI, performs MSP inversion
-over successive windows, and computes the corresponding free energy values. The result is a
-layer-by-time representation of model evidence, suitable for laminar model comparison.</p>
+in a <cite>LayerSurfaceSet</cite>, the function coregisters MEG data to or computes an OPM forward model
+the MRI, performs MSP inversion over successive windows, and computes the corresponding free
+energy values. The result is a layer-by-time representation of model evidence, suitable for
+laminar model comparison.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -1283,10 +1338,19 @@ Values must be expressed in MEG headspace coordinates (millimeters).</p></li>
 <li><p><strong>stage</strong> (<em>str</em><em>, </em><em>optional</em>) – Surface mesh processing stage (default: ‘ds’).</p></li>
 <li><p><strong>orientation</strong> (<em>str</em><em>, </em><em>optional</em>) – Dipole orientation model used for inversion (default: ‘link_vector’).</p></li>
 <li><p><strong>fixed</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use fixed dipole orientations across layers (default: True).</p></li>
+<li><p><strong>device</strong> (<em>{'squid'</em><em>, </em><em>'opm'}</em><em>, </em><em>optional</em>) – MEG system type, which selects the forward-model function (default: ‘squid’).
+‘squid’ -&gt; coregister(); ‘opm’ -&gt; opm_headmodel().</p></li>
 <li><p><strong>viz</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to display SPM visualizations during coregistration and inversion (default: True).</p></li>
 <li><p><strong>spm_instance</strong> (<em>spm_standalone</em><em>, </em><em>optional</em>) – Active standalone SPM instance. If None, a temporary instance is created and closed after
 execution.</p></li>
-<li><p><strong>coregister_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Additional keyword arguments passed to the <cite>coregister()</cite> function.</p></li>
+<li><p><strong>forward_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – <p>Extra keyword arguments for the device’s forward-model function:
+- squid: passed to <cite>coregister()</cite>
+- opm: passed to <cite>opm_headmodel()</cite>; must include ‘mri_fname’, and may include</p>
+<blockquote>
+<div><p>’coordsystem_fname’, ‘iskull_fname’, ‘oskull_fname’, ‘scalp_fname’,
+‘voltype’, ‘meshres’, etc.</p>
+</div></blockquote>
+</p></li>
 <li><p><strong>invert_kwargs</strong> (<em>dict</em><em>, </em><em>optional</em>) – Additional keyword arguments passed to the <cite>invert_sliding_window_msp()</cite> function.</p></li>
 </ul>
 </dd>
@@ -1486,7 +1550,7 @@ performance, and evaluating laminar sensitivity under controlled SNR conditions.
 
 <dl class="py function">
 <dt class="sig sig-object py" id="lameg.simulate.setup_opm_simulation">
-<span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">setup_opm_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wholehead</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_spacing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">35</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">density_checks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_positions_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iskull_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oskull_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalp_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.setup_opm_simulation" title="Permalink to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">lameg.simulate.</span></span><span class="sig-name descname"><span class="pre">setup_opm_simulation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_file</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_name</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ds'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s_rate</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">wholehead</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_spacing</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">35</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_offset</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">6.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_samples</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1000</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_trials</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">density_checks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">40</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axes</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_positions_file</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iskull_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">oskull_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scalp_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">viz</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">spm_instance</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.simulate.setup_opm_simulation" title="Permalink to this definition">#</a></dt>
 <dd><p>Configure and setup an SPM OPM (Optically Pumped Magnetometer) data file.</p>
 <p>This function wraps the MATLAB routine <code class="xref py py-func docutils literal notranslate"><span class="pre">spm_opm_sim()</span></code> to generate synthetic MEG data
 using user-specified anatomical meshes, sensor geometry, and simulation parameters.
@@ -1498,6 +1562,11 @@ provided SPM standalone context.</p>
 <li><p><strong>data_file</strong> (<em>str</em>) – Path to the intended output data file (used to determine simulation name and destination).</p></li>
 <li><p><strong>surf_set</strong> (<a class="reference internal" href="#lameg.surf.LayerSurfaceSet" title="lameg.surf.LayerSurfaceSet"><em>LayerSurfaceSet</em></a>) – Surface set object providing the cortical mesh and MRI reference.
 The pial surface from <code class="docutils literal notranslate"><span class="pre">surf_set</span></code> is used as the cortical source model.</p></li>
+<li><p><strong>layer_name</strong> (<em>str</em><em> or </em><em>None</em><em>, </em><em>optional</em>) – Surface layer to use for inversion (e.g., ‘pial’, ‘white’, or a fractional layer).
+If None, the full multilayer surface is used.</p></li>
+<li><p><strong>stage</strong> (<em>str</em><em>, </em><em>optional</em>) – Processing stage of the surface mesh (default: ‘ds’).</p></li>
+<li><p><strong>orientation</strong> (<em>str</em><em>, </em><em>optional</em>) – Orientation model used for dipole alignment (default: ‘link_vector’).</p></li>
+<li><p><strong>fixed</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to use fixed dipole orientations across layers (default: True).</p></li>
 <li><p><strong>s_rate</strong> (<em>int</em><em>, </em><em>optional</em>) – Sampling frequency in Hz (default: 1000).</p></li>
 <li><p><strong>wholehead</strong> (<em>bool</em><em>, </em><em>optional</em>) – If True, sensor array covers the entire scalp; otherwise, sensors are restricted
 to the upper hemisphere (default: True).</p></li>
@@ -3604,6 +3673,7 @@ or segmentation has not yet been completed.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.invert_sliding_window_msp"><code class="docutils literal notranslate"><span class="pre">invert_sliding_window_msp()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.load_forward_model_vertices"><code class="docutils literal notranslate"><span class="pre">load_forward_model_vertices()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.load_source_time_series"><code class="docutils literal notranslate"><span class="pre">load_source_time_series()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.invert.opm_headmodel"><code class="docutils literal notranslate"><span class="pre">opm_headmodel()</span></code></a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#module-lameg.laminar">lameg.laminar module</a><ul class="nav section-nav flex-column">
