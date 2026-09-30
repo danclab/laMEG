@@ -92,7 +92,7 @@ For guidelines on MRI sequences, head-cast construction, and co-registration, se
 
 Funding
 =======
-*Supported by the European Research Council (ERC) under the European Union's Horizon 2020 research and innovation programme grant agreement 864550, and a seed grant from the Fondation pour l'Audition.*
+*Supported by the European Research Council (ERC) under the European Union's Horizon 2020 research and innovation programme grant agreement 864550, , a French National Research Agency (ANR) grant HiFi (ANR-20-CE17-0023), and a seed grant from the Fondation pour l'Audition.*
 
 |ERC| |FPA|
 
@@ -133,6 +133,10 @@ Funding
 
 .. |ERC| image:: https://github.com/danclab/laMEG/blob/main/lameg/assets/erc_logo.jpg?raw=true
    :alt: ERC
+   :height: 100
+
+.. |ANR| image:: https://github.com/danclab/laMEG/blob/main/lameg/assets/anr_logo.png?raw=true
+   :alt: ANR
    :height: 100
 
 .. |FPA| image:: https://github.com/danclab/laMEG/blob/main/lameg/assets/fpa_logo.png?raw=true
