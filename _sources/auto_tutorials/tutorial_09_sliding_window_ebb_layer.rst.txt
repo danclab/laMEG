@@ -537,7 +537,7 @@ For this 3 spatial source priors will be used:
 - a correlated sum prior: for each layer pair, we create a combined lead field (q+=la+lb)
 - a correlated depth contrast prior: for each pair of potential layer sources, we create the difference lead field (q-=la-lb)
 
-.. GENERATED FROM PYTHON SOURCE LINES 404-418
+.. GENERATED FROM PYTHON SOURCE LINES 404-416
 
 .. code-block:: default
 
@@ -548,25 +548,23 @@ For this 3 spatial source priors will be used:
         surf_set,
         patch_size=patch_size,
         n_temp_modes=n_temp_modes,
-        win_size=25,
-        win_overlap=True,
         spm_instance=spm
     )
 
     load_and_plot_csd(sim_fname_2, surf_set, layer_verts, layer_dists)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 419-422
+.. GENERATED FROM PYTHON SOURCE LINES 417-420
 
 .. image:: ../_static/tutorial_09_simult_sliding_ebb_layer_csd.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 424-425
+.. GENERATED FROM PYTHON SOURCE LINES 422-423
 
 EBB layer can then reconstruct 2 simultaneous sources.
 
-.. GENERATED FROM PYTHON SOURCE LINES 427-431
+.. GENERATED FROM PYTHON SOURCE LINES 425-429
 
 .. code-block:: default
 

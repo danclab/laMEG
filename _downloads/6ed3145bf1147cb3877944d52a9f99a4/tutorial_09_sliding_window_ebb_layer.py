@@ -408,8 +408,6 @@ load_and_plot_csd(sim_fname_2, surf_set, layer_verts, layer_dists)
     surf_set,
     patch_size=patch_size,
     n_temp_modes=n_temp_modes,
-    win_size=25,
-    win_overlap=True,
     spm_instance=spm
 )
 
