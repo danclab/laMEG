@@ -141,8 +141,13 @@ def init_spm_parallel_pool(spm, n_workers):
         "eval",
         f"""
             try
-                parpool({n_workers});
+                p = gcp('nocreate');
+    
+                if isempty(p)
+                    parpool({n_workers}, 'IdleTimeout', Inf);
+                end
             catch ME
+                disp(getReport(ME));
             end
         """,
         nargout=0
