@@ -145,7 +145,7 @@ Funding
 
 .. |ANR| image:: https://github.com/danclab/laMEG/blob/main/lameg/assets/anr_logo.png?raw=true
    :alt: ANR
-   :height: 100
+   :height: 50
 
 .. |FPA| image:: https://github.com/danclab/laMEG/blob/main/lameg/assets/fpa_logo.png?raw=true
    :alt: FPA
