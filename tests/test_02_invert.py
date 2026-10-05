@@ -9,9 +9,10 @@ import h5py
 import numpy as np
 import pytest
 
-from lameg.invert import (coregister, invert_ebb, invert_msp, load_source_time_series,
-                          invert_sliding_window_msp, get_lead_field_rms_diff, opm_headmodel,
-                          check_inversion_exists, load_forward_model_vertices)
+from lameg.invert import (coregister, invert_ebb, invert_msp, invert_sliding_window_msp,
+                          get_lead_field_rms_diff, opm_headmodel, check_inversion_exists,
+                          load_forward_model_vertices)
+from lameg.source import load_source_time_series
 from lameg.simulate import setup_opm_simulation
 from lameg.surf import LayerSurfaceSet
 from lameg.util import get_fiducial_coords, make_directory

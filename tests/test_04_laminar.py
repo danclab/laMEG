@@ -6,11 +6,118 @@ import os
 import numpy as np
 import pytest
 
-from lameg.laminar import (model_comparison, sliding_window_model_comparison, compute_csd,
-                           roi_power_comparison)
+from lameg.laminar import (
+    compute_bigbrain_laminar_weights,
+    compute_csd,
+    model_comparison,
+    roi_power_comparison,
+    sliding_window_model_comparison,
+    surface_to_laminae,
+)
 from lameg.simulate import setup_opm_simulation
 from lameg.surf import LayerSurfaceSet
 from lameg.util import get_fiducial_coords, load_meg_sensor_data, make_directory
+
+
+def _reference_bigbrain_mapping(layer_ts, source_depth, edges):
+    """Independent reference implementation of the old BigBrain mapping."""
+    n_laminae = 6
+    n_times = layer_ts.shape[1]
+
+    lamina_ts = np.zeros(
+        (n_laminae, n_times),
+        dtype=float,
+    )
+
+    for lamina_idx in range(n_laminae):
+        lower_edge = edges[lamina_idx]
+        upper_edge = edges[lamina_idx + 1]
+
+        inside = (
+            (source_depth > lower_edge)
+            & (source_depth < upper_edge)
+        )
+
+        interp_depth = np.concatenate(
+            (
+                [lower_edge],
+                source_depth[inside],
+                [upper_edge],
+            )
+        )
+
+        for time_idx in range(n_times):
+            interp_values = np.interp(
+                interp_depth,
+                source_depth,
+                layer_ts[:, time_idx],
+            )
+
+            lamina_ts[
+                lamina_idx,
+                time_idx,
+            ] = (
+                np.trapz(
+                    interp_values,
+                    interp_depth,
+                )
+                / (upper_edge - lower_edge)
+            )
+
+    return lamina_ts
+
+
+def test_bigbrain_laminar_weights():
+    """Test analytic BigBrain weights against independent integration."""
+    surf_set = LayerSurfaceSet(
+        "sub-104",
+        11,
+    )
+
+    columns = np.array(
+        [0, 100, 1000, 5000, 10000]
+    )
+
+    edges, weights = compute_bigbrain_laminar_weights(
+        surf_set,
+        columns=columns,
+    )
+
+    source_depth = (
+        1.0
+        - np.asarray(
+            surf_set.layer_spacing
+        )
+    )
+
+    rng = np.random.default_rng(42)
+    layer_ts = rng.standard_normal(
+        (surf_set.n_layers, 100)
+    )
+
+    for idx in range(len(columns)):
+        reference = _reference_bigbrain_mapping(
+            layer_ts,
+            source_depth,
+            edges[idx],
+        )
+
+        result = surface_to_laminae(
+            layer_ts,
+            weights[idx],
+        )
+
+        assert np.allclose(
+            result,
+            reference,
+            rtol=1e-10,
+            atol=1e-12,
+        )
+
+        assert np.allclose(
+            weights[idx].sum(axis=1),
+            1.0,
+        )
 
 
 @pytest.mark.dependency(depends=["tests/test_03_simulate.py::test_run_current_density_simulation"],

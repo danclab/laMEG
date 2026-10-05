@@ -5,6 +5,9 @@ This module creates an spm instance fixture so other tests can use it
 import pytest
 import spm_standalone
 
+from tests.source_test_utils import make_source_file
+
+
 @pytest.fixture(scope="session")
 def spm():
     """
@@ -31,3 +34,24 @@ def spm():
     spm_instance = spm_standalone.initialize()
     yield spm_instance
     spm_instance.terminate()
+
+@pytest.fixture
+def source_file(tmp_path):
+    """Source file without an explicit trial dimension."""
+    fname = tmp_path / "source.h5"
+    expected = make_source_file(
+        fname,
+        with_trials=False,
+    )
+    return fname, expected
+
+
+@pytest.fixture
+def trial_source_file(tmp_path):
+    """Source file with an explicit trial dimension."""
+    fname = tmp_path / "source_trials.h5"
+    expected = make_source_file(
+        fname,
+        with_trials=True,
+    )
+    return fname, expected

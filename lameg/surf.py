@@ -1374,7 +1374,7 @@ class LayerSurfaceSet:
         - Uses `convert_native_to_fsaverage` to identify corresponding fsaverage vertices for the
           subject.
         - Retrieves laminar proportion data from `big_brain_proportional_layer_boundaries()`.
-        - The returned values represent depth fractions (0 at white matter, 1 at pial surface) that
+        - The returned values represent depth fractions (0 at pial, 1 at white matter surface) that
           can be used for aligning laminar CSD or source estimates across subjects.
         """
         hemi, fsave_v_idx = convert_native_to_fsaverage(self, 'pial', subj_coord=subj_coord)

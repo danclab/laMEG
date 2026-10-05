@@ -32,8 +32,15 @@ import elephant
 import neo
 import quantities as pq
 
-from lameg.invert import (invert_ebb, coregister, opm_headmodel, load_source_time_series,
-                          invert_msp, invert_sliding_window_msp)
+from lameg.invert import (
+    coregister,
+    invert_ebb,
+    invert_msp,
+    invert_sliding_window_msp,
+    opm_headmodel,
+)
+from lameg import _bigbrain
+from lameg._source_io import load_source_time_series
 from lameg.util import ttest_rel_corrected
 
 
@@ -620,3 +627,120 @@ def roi_power_comparison(data_fname, woi, baseline_woi, perc_thresh, surf_set, m
     )
 
     return laminar_t_statistic, laminar_p_value, deg_of_freedom, roi_idx
+
+
+def compute_bigbrain_laminar_weights(
+    surf_set,
+    columns=None,
+):
+    """
+    Compute the linear transformation from reconstructed cortical layers
+    to BigBrain-defined laminae.
+
+    The reconstructed layer coordinate is defined as::
+
+        0 = pial
+        1 = white
+
+    matching the cumulative BigBrain laminar boundary coordinate.
+
+    For each cortical column, this function constructs a matrix W with
+    shape ``(6, n_layers)`` such that::
+
+        lamina_data = W @ layer_data
+
+    gives the mean piecewise-linearly interpolated source activity within
+    BigBrain laminae I-VI.
+
+    Parameters
+    ----------
+    surf_set : LayerSurfaceSet
+        Surface set corresponding to the source reconstruction.
+
+    columns : int, sequence of int, or None, optional
+        Downsampled cortical-column indices for which to compute weights.
+        If None, weights are computed for all cortical columns. Supplying a
+        subset is useful for testing or targeted analyses.
+
+    Returns
+    -------
+    edges : ndarray, shape (n_columns, 7)
+        BigBrain laminar boundaries for each requested cortical column.
+        The first edge is 0 (pial) and the final edge is 1 (white).
+
+    weights : ndarray, shape (n_columns, 6, n_layers)
+        Linear transformation from reconstructed layers to BigBrain
+        laminae. ``weights[c]`` maps an ``n_layers`` depth profile at
+        cortical column ``c`` to six BigBrain laminar values.
+
+    Notes
+    -----
+    The transformation exactly integrates the piecewise-linear depth
+    profile implied by the reconstructed layer samples. Each laminar
+    value is divided by that lamina's thickness, so it represents mean
+    signed source activity within the lamina rather than its integral.
+
+    Cortical columns with invalid mapped BigBrain boundaries are retained in
+    the returned arrays but their edges and weights are set to NaN.
+    """
+    return _bigbrain.compute_bigbrain_laminar_weights(
+        surf_set,
+        columns=columns,
+    )
+
+
+def surface_to_laminae(
+    layer_data,
+    weights,
+):
+    """
+    Transform reconstructed layer data into BigBrain-defined laminae.
+
+    Parameters
+    ----------
+    layer_data : ndarray
+        Source data indexed by reconstructed layer.
+
+        For one cortical column, the first dimension must be layer::
+
+            layer x ...
+
+        For multiple cortical columns, the first two dimensions must be::
+
+            layer x column x ...
+
+        Trailing dimensions can contain time, trial, or other data axes.
+
+    weights : ndarray
+        BigBrain transformation weights.
+
+        For one cortical column::
+
+            lamina x layer
+
+        For multiple cortical columns::
+
+            column x lamina x layer
+
+    Returns
+    -------
+    lamina_data : ndarray
+        BigBrain-mapped source data.
+
+        For one cortical column::
+
+            lamina x ...
+
+        For multiple cortical columns::
+
+            lamina x column x ...
+
+    Notes
+    -----
+    This is a purely linear transformation. No interpolation or anatomical
+    lookup is performed here; those operations are encoded in ``weights``.
+    """
+    return _bigbrain.surface_to_laminae(
+        layer_data,
+        weights,
+    )
