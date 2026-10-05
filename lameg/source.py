@@ -247,10 +247,10 @@ class LaminarSourceData:  # pylint: disable=too-many-public-methods
 
     @property
     def layer_depth(self):
-        """Reconstructed layer depths, with 0=pial and 1=white, if stored."""
+        """Reconstructed depths, with 0=pial and 1=white, if stored."""
         self._require_open()
 
-        if not self.has_bigbrain_mapping:
+        if "layer_depth" not in self._file:
             return None
 
         return np.asarray(self._file["layer_depth"], dtype=float)
@@ -302,19 +302,10 @@ class LaminarSourceData:  # pylint: disable=too-many-public-methods
 
         group = self._file["bigbrain"]
         if "valid_columns" in group:
-            return np.asarray(
-                group["valid_columns"],
-                dtype=bool,
-            )
+            return np.asarray(group["valid_columns"], dtype=bool)
 
-        edges = np.asarray(
-            group["edges"],
-            dtype=float,
-        )
-        weights = np.asarray(
-            group["weights"],
-            dtype=float,
-        )
+        edges = np.asarray(group["edges"], dtype=float)
+        weights = np.asarray(group["weights"], dtype=float)
         return (
             np.all(
                 np.isfinite(edges),
@@ -540,10 +531,7 @@ class LaminarSourceData:  # pylint: disable=too-many-public-methods
 
         weights = np.asarray(weights_ds[column_sel, :, :], dtype=float)
 
-        lamina_data = _laminar.surface_to_laminae(
-            layer_data,
-            weights,
-        )
+        lamina_data = _laminar.surface_to_laminae(layer_data, weights)
 
         return np.asarray(lamina_data[lamina_sel, ...])
 
@@ -551,9 +539,7 @@ class LaminarSourceData:  # pylint: disable=too-many-public-methods
 def _bigbrain_dataset_kwargs(compression):
     """Return HDF5 creation options for BigBrain mapping arrays."""
     if compression not in ("lzf", "gzip", None):
-        raise ValueError(
-            "`compression` must be 'lzf', 'gzip', or None."
-        )
+        raise ValueError("`compression` must be 'lzf', 'gzip', or None.")
 
     if compression is None:
         return {}
@@ -574,25 +560,16 @@ def _prepare_bigbrain_mapping(
     compression,
 ):
     """Validate inputs and compute a BigBrain mapping for a source file."""
-    source_fname = os.path.abspath(
-        os.fspath(source_fname)
-    )
-    dataset_kwargs = _bigbrain_dataset_kwargs(
-        compression
-    )
+    source_fname = os.path.abspath(os.fspath(source_fname))
+    dataset_kwargs = _bigbrain_dataset_kwargs(compression)
 
     with LaminarSourceData(source_fname) as source:
         n_layers = source.n_layers
         n_columns = source.n_columns
 
-    layer_spacing = np.asarray(
-        surf_set.layer_spacing,
-        dtype=float,
-    )
+    layer_spacing = np.asarray(surf_set.layer_spacing, dtype=float)
     if layer_spacing.ndim != 1:
-        raise ValueError(
-            "`surf_set.layer_spacing` must be one-dimensional."
-        )
+        raise ValueError("`surf_set.layer_spacing` must be one-dimensional.")
     if layer_spacing.size != n_layers:
         raise ValueError(
             "Layer-count mismatch between source file and surface set: "
@@ -602,41 +579,16 @@ def _prepare_bigbrain_mapping(
 
     layer_depth = 1.0 - layer_spacing
     if np.any(~np.isfinite(layer_depth)):
-        raise ValueError(
-            "`surf_set.layer_spacing` produced non-finite layer depths."
-        )
-    if (
-        layer_depth.size > 1
-        and np.any(np.diff(layer_depth) <= 0)
-    ):
-        raise ValueError(
-            "Layer depths must increase monotonically from "
-            "pial (0) to white (1)."
-        )
+        raise ValueError("`surf_set.layer_spacing` produced non-finite layer depths.")
+    if layer_depth.size > 1 and np.any(np.diff(layer_depth) <= 0):
+        raise ValueError("Layer depths must increase monotonically from pial (0) to white (1).")
 
-    edges, weights = (
-        _laminar.compute_bigbrain_laminar_weights(
-            surf_set
-        )
-    )
-    edges = np.asarray(
-        edges,
-        dtype=np.float64,
-    )
-    weights = np.asarray(
-        weights,
-        dtype=np.float64,
-    )
+    edges, weights = _laminar.compute_bigbrain_laminar_weights(surf_set)
+    edges = np.asarray(edges, dtype=np.float64)
+    weights = np.asarray(weights, dtype=np.float64)
 
-    expected_edges_shape = (
-        n_columns,
-        7,
-    )
-    expected_weights_shape = (
-        n_columns,
-        6,
-        n_layers,
-    )
+    expected_edges_shape = (n_columns, 7)
+    expected_weights_shape = (n_columns, 6, n_layers)
     if edges.shape != expected_edges_shape:
         raise ValueError(
             "BigBrain edge dimensions do not match the source file: "
@@ -647,27 +599,14 @@ def _prepare_bigbrain_mapping(
             "BigBrain weight dimensions do not match the source file: "
             f"expected {expected_weights_shape}, got {weights.shape}."
         )
-    finite_edges = np.all(
-        np.isfinite(edges),
-        axis=1,
-    )
-    finite_weights = np.all(
-        np.isfinite(weights),
-        axis=(1, 2),
-    )
-    if not np.array_equal(
-        finite_edges,
-        finite_weights,
-    ):
-        raise ValueError(
-            "BigBrain edge and weight validity masks do not match."
-        )
+    finite_edges = np.all(np.isfinite(edges), axis=1)
+    finite_weights = np.all(np.isfinite(weights), axis=(1, 2))
+    if not np.array_equal(finite_edges, finite_weights):
+        raise ValueError("BigBrain edge and weight validity masks do not match.")
 
     valid_columns = finite_edges
     if not np.any(valid_columns):
-        raise ValueError(
-            "BigBrain mapping contains no valid cortical columns."
-        )
+        raise ValueError("BigBrain mapping contains no valid cortical columns.")
 
     invalid_columns = ~valid_columns
     if (
@@ -690,10 +629,7 @@ def _prepare_bigbrain_mapping(
             "edges and weights."
         )
 
-    labels = np.asarray(
-        ["I", "II", "III", "IV", "V", "VI"],
-        dtype="S3",
-    )
+    labels = np.asarray(["I", "II", "III", "IV", "V", "VI"], dtype="S3")
     return (
         source_fname,
         layer_depth,
@@ -716,38 +652,56 @@ def _write_bigbrain_mapping(
     subj_id,
     overwrite,
 ):
-    """Atomically replace the stored BigBrain mapping."""
+    """Atomically add or replace the stored BigBrain mapping."""
     temp_layer_name = "__layer_depth_tmp__"
     temp_group_name = "__bigbrain_tmp__"
 
-    with h5py.File(
-        source_fname,
-        "r+",
-    ) as source_file:
-        mapping_exists = (
-            "layer_depth" in source_file
-            or "bigbrain" in source_file
-        )
+    with h5py.File(source_fname, "r+") as source_file:
+        mapping_exists = "bigbrain" in source_file
+
         if mapping_exists and not overwrite:
             raise FileExistsError(
                 "BigBrain mapping already exists in "
-                f"{source_fname!r}. Pass overwrite=True to replace it."
+                f"{source_fname!r}. "
+                "Pass overwrite=True to replace it."
             )
 
-        _remove_hdf5_objects(
-            source_file,
-            (
-                temp_layer_name,
-                temp_group_name,
-            ),
-        )
+        has_layer_depth = "layer_depth" in source_file
+
+        if has_layer_depth:
+            existing_depth = np.asarray(source_file["layer_depth"], dtype=float)
+
+            if (
+                existing_depth.shape
+                != layer_depth.shape
+                or not np.allclose(
+                    existing_depth,
+                    layer_depth,
+                    rtol=0.0,
+                    atol=1e-12,
+                )
+            ):
+                raise ValueError("Stored `layer_depth` does not match the supplied surface set.")
+
+        _remove_hdf5_objects(source_file, (temp_layer_name, temp_group_name))
 
         try:
-            _write_bigbrain_temporary_objects(
+            if not has_layer_depth:
+                layer_ds = (
+                    source_file.create_dataset(
+                        temp_layer_name,
+                        data=layer_depth.astype(
+                            np.float64,
+                            copy=False,
+                        ),
+                    )
+                )
+                layer_ds.attrs["axis_order"] = "layer"
+                layer_ds.attrs["depth_convention"] = "0=pial,1=white"
+
+            _write_bigbrain_temporary_group(
                 source_file,
-                temp_layer_name,
                 temp_group_name,
-                layer_depth,
                 edges,
                 weights,
                 valid_columns,
@@ -755,26 +709,17 @@ def _write_bigbrain_mapping(
                 dataset_kwargs,
                 subj_id,
             )
-            _remove_hdf5_objects(
-                source_file,
-                ("layer_depth", "bigbrain"),
-            )
-            source_file.move(
-                temp_layer_name,
-                "layer_depth",
-            )
-            source_file.move(
-                temp_group_name,
-                "bigbrain",
-            )
+
+            if mapping_exists:
+                del source_file["bigbrain"]
+
+            source_file.move(temp_group_name, "bigbrain")
+
+            if not has_layer_depth:
+                source_file.move(temp_layer_name, "layer_depth")
+
         except Exception:
-            _remove_hdf5_objects(
-                source_file,
-                (
-                    temp_layer_name,
-                    temp_group_name,
-                ),
-            )
+            _remove_hdf5_objects(source_file, (temp_layer_name, temp_group_name))
             raise
 
 
@@ -785,11 +730,9 @@ def _remove_hdf5_objects(h5_file, names):
             del h5_file[name]
 
 
-def _write_bigbrain_temporary_objects(
+def _write_bigbrain_temporary_group(
     source_file,
-    layer_name,
     group_name,
-    layer_depth,
     edges,
     weights,
     valid_columns,
@@ -797,88 +740,24 @@ def _write_bigbrain_temporary_objects(
     dataset_kwargs,
     subj_id,
 ):
-    """Write a complete BigBrain mapping under temporary object names."""
-    layer_ds = source_file.create_dataset(
-        layer_name,
-        data=layer_depth.astype(
-            np.float64,
-            copy=False,
-        ),
-    )
-    layer_ds.attrs["axis_order"] = "layer"
-    layer_ds.attrs[
-        "depth_convention"
-    ] = "0=pial,1=white"
+    """Write a complete BigBrain mapping under a temporary group name."""
+    group = source_file.create_group(group_name)
 
-    group = source_file.create_group(
-        group_name
-    )
-
-    edge_ds = group.create_dataset(
-        "edges",
-        data=edges,
-        **dataset_kwargs,
-    )
+    edge_ds = group.create_dataset("edges", data=edges, **dataset_kwargs)
     edge_ds.attrs["axis_order"] = "column,boundary"
-    edge_ds.attrs[
-        "depth_convention"
-    ] = "0=pial,1=white"
-    edge_ds.attrs["boundary_order"] = (
-        "pial,end_I,end_II,end_III,"
-        "end_IV,end_V,end_VI"
-    )
 
-    weight_ds = group.create_dataset(
-        "weights",
-        data=weights,
-        **dataset_kwargs,
-    )
-    weight_ds.attrs[
-        "axis_order"
-    ] = "column,lamina,layer"
-    weight_ds.attrs[
-        "mapping"
-    ] = "lamina = weights @ layer"
+    weights_ds = group.create_dataset("weights", data=weights, **dataset_kwargs)
+    weights_ds.attrs["axis_order"] = "column,lamina,layer"
 
-    valid_ds = group.create_dataset(
-        "valid_columns",
-        data=np.asarray(
-            valid_columns,
-            dtype=bool,
-        ),
-    )
-    valid_ds.attrs["axis_order"] = "column"
-    valid_ds.attrs["meaning"] = (
-        "True where BigBrain laminar boundaries are valid"
-    )
+    group.create_dataset("labels", data=labels)
 
-    label_ds = group.create_dataset(
-        "labels",
-        data=labels,
-    )
-    label_ds.attrs["axis_order"] = "lamina"
+    group.create_dataset("valid_columns", data=valid_columns.astype(bool, copy=False))
 
-    group.attrs[
-        "depth_convention"
-    ] = "0=pial,1=white"
-    group.attrs["n_laminae"] = 6
-    group.attrs["n_valid_columns"] = int(
-        np.count_nonzero(
-            valid_columns
-        )
-    )
-    group.attrs["n_invalid_columns"] = int(
-        np.count_nonzero(
-            ~np.asarray(
-                valid_columns,
-                dtype=bool,
-            )
-        )
-    )
+    group.attrs["n_laminae"] = int(labels.shape[0])
+    group.attrs["depth_convention"] = "0=pial,1=white"
+
     if subj_id is not None:
-        group.attrs["subject_id"] = str(
-            subj_id
-        )
+        group.attrs["subject_id"] = str(subj_id)
 
 
 def add_bigbrain_mapping(source_fname, surf_set, overwrite=False, compression="lzf"):
