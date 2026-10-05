@@ -18,7 +18,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 import tempfile
 
-from lameg.invert import coregister, invert_ebb, load_source_time_series
+from lameg.invert import coregister, invert_ebb
+from lameg.source import load_source_time_series
 from lameg.laminar import sliding_window_model_comparison
 from lameg.simulate import run_current_density_simulation
 from lameg.surf import LayerSurfaceSet

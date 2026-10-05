@@ -35,7 +35,8 @@ import tempfile
 from IPython.display import Image
 import base64
 
-from lameg.invert import invert_ebb, invert_sliding_window_ebb, invert_sliding_window_ebb_layer, coregister, load_source_time_series
+from lameg.invert import invert_ebb, invert_sliding_window_ebb, invert_sliding_window_ebb_layer, coregister
+from lameg.source import load_source_time_series
 from lameg.laminar import compute_csd
 from lameg.simulate import run_current_density_simulation
 from lameg.surf import LayerSurfaceSet

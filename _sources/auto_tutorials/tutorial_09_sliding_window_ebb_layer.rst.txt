@@ -45,7 +45,7 @@ Part I: Temporal smoothing effect: the need for sliding time windows
 
 Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.
 
-.. GENERATED FROM PYTHON SOURCE LINES 29-65
+.. GENERATED FROM PYTHON SOURCE LINES 29-66
 
 .. code-block:: default
 
@@ -58,7 +58,8 @@ Simulations are based on an existing dataset, which is used to define the sampli
     from IPython.display import Image
     import base64
 
-    from lameg.invert import invert_ebb, invert_sliding_window_ebb, invert_sliding_window_ebb_layer, coregister, load_source_time_series
+    from lameg.invert import invert_ebb, invert_sliding_window_ebb, invert_sliding_window_ebb_layer, coregister
+    from lameg.source import load_source_time_series
     from lameg.laminar import compute_csd
     from lameg.simulate import run_current_density_simulation
     from lameg.surf import LayerSurfaceSet
@@ -86,11 +87,11 @@ Simulations are based on an existing dataset, which is used to define the sampli
     init_spm_parallel_pool(spm, 16)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 66-67
+.. GENERATED FROM PYTHON SOURCE LINES 67-68
 
 The simulations and source reconstructions will be based on a forward model using the multilayer mesh, with 11 layers
 
-.. GENERATED FROM PYTHON SOURCE LINES 67-72
+.. GENERATED FROM PYTHON SOURCE LINES 68-73
 
 .. code-block:: default
 
@@ -100,11 +101,11 @@ The simulations and source reconstructions will be based on a forward model usin
     verts_per_surf = surf_set.get_vertices_per_layer()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 73-74
+.. GENERATED FROM PYTHON SOURCE LINES 74-75
 
 We’re going to copy the data file to a temporary directory and direct all output there.
 
-.. GENERATED FROM PYTHON SOURCE LINES 74-99
+.. GENERATED FROM PYTHON SOURCE LINES 75-100
 
 .. code-block:: default
 
@@ -134,11 +135,11 @@ We’re going to copy the data file to a temporary directory and direct all outp
     base_fname = os.path.join(tmp_dir, f'{data_base}.mat')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 100-101
+.. GENERATED FROM PYTHON SOURCE LINES 101-102
 
 Invert the subject’s data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations
 
-.. GENERATED FROM PYTHON SOURCE LINES 101-124
+.. GENERATED FROM PYTHON SOURCE LINES 102-125
 
 .. code-block:: default
 
@@ -166,14 +167,14 @@ Invert the subject’s data using the multilayer mesh. This step only has to be 
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 125-129
+.. GENERATED FROM PYTHON SOURCE LINES 126-130
 
 **Simulating two sources in different layers**
 In other tutorials we explored the case of a single laminar source but in real data, we might expect several consecutive sources in different layers.
 
 We’re going to simulate 200ms of 2 Gaussian with a dipole moment of 5nAm, a width of 25ms, the second one occuring 80ms after the first
 
-.. GENERATED FROM PYTHON SOURCE LINES 129-149
+.. GENERATED FROM PYTHON SOURCE LINES 130-150
 
 .. code-block:: default
 
@@ -198,11 +199,11 @@ We’re going to simulate 200ms of 2 Gaussian with a dipole moment of 5nAm, a wi
     plt.ylabel('Amplitude (nAm)')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 150-151
+.. GENERATED FROM PYTHON SOURCE LINES 151-152
 
 Select the best vertex to simulate at (based on anatomical measures), and get the corresponding layer vertices. See other tutorials.
 
-.. GENERATED FROM PYTHON SOURCE LINES 151-159
+.. GENERATED FROM PYTHON SOURCE LINES 152-160
 
 .. code-block:: default
 
@@ -215,11 +216,11 @@ Select the best vertex to simulate at (based on anatomical measures), and get th
     ]
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 160-161
+.. GENERATED FROM PYTHON SOURCE LINES 161-162
 
 We’ll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-.. GENERATED FROM PYTHON SOURCE LINES 161-182
+.. GENERATED FROM PYTHON SOURCE LINES 162-183
 
 .. code-block:: default
 
@@ -245,13 +246,13 @@ We’ll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 183-186
+.. GENERATED FROM PYTHON SOURCE LINES 184-187
 
 .. image:: ../_static/tutorial_09_sim_consec.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 188-195
+.. GENERATED FROM PYTHON SOURCE LINES 189-196
 
 **Inversion**
 
@@ -261,7 +262,7 @@ Now we’ll run a source reconstruction using the multilayer mesh, select the ve
 
 We will first look at the behavior of inverting the full window with the basic EBB algorithm
 
-.. GENERATED FROM PYTHON SOURCE LINES 195-217
+.. GENERATED FROM PYTHON SOURCE LINES 196-218
 
 .. code-block:: default
 
@@ -288,11 +289,11 @@ We will first look at the behavior of inverting the full window with the basic E
     print(f'Simulated vertex={sim_vertex}, Prior vertex={peak}')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 218-219
+.. GENERATED FROM PYTHON SOURCE LINES 219-220
 
 We can see that the peak is at the same location we simulated at
 
-.. GENERATED FROM PYTHON SOURCE LINES 219-249
+.. GENERATED FROM PYTHON SOURCE LINES 220-250
 
 .. code-block:: default
 
@@ -327,17 +328,17 @@ We can see that the peak is at the same location we simulated at
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 250-253
+.. GENERATED FROM PYTHON SOURCE LINES 251-254
 
 .. image:: ../_static/tutorial_09_localizer.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 255-256
+.. GENERATED FROM PYTHON SOURCE LINES 256-257
 
 We need the indices of the vertex at each layer for this location, and the distances between them
 
-.. GENERATED FROM PYTHON SOURCE LINES 256-262
+.. GENERATED FROM PYTHON SOURCE LINES 257-263
 
 .. code-block:: default
 
@@ -348,11 +349,11 @@ We need the indices of the vertex at each layer for this location, and the dista
     print(layer_dists)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 263-264
+.. GENERATED FROM PYTHON SOURCE LINES 264-265
 
 Now we can compute and plot the laminar CSD
 
-.. GENERATED FROM PYTHON SOURCE LINES 264-299
+.. GENERATED FROM PYTHON SOURCE LINES 265-300
 
 .. code-block:: default
 
@@ -392,13 +393,13 @@ Now we can compute and plot the laminar CSD
     load_and_plot_csd(sim_fname, surf_set, layer_verts, layer_dists, MU=MU)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 300-303
+.. GENERATED FROM PYTHON SOURCE LINES 301-304
 
 .. image:: ../_static/tutorial_09_consec_ebb_csd.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 305-310
+.. GENERATED FROM PYTHON SOURCE LINES 306-311
 
 We can observe that the two sources are not separated spatially, we do not retreive the layers we simulated at. Note that the amplitude difference in the second source comes from the source being deep and further away from the surface.
 
@@ -406,7 +407,7 @@ We can observe that the two sources are not separated spatially, we do not retre
 
 We then reconstruct layer source time series using a sliding time window of 25ms.
 
-.. GENERATED FROM PYTHON SOURCE LINES 310-322
+.. GENERATED FROM PYTHON SOURCE LINES 311-323
 
 .. code-block:: default
 
@@ -423,11 +424,11 @@ We then reconstruct layer source time series using a sliding time window of 25ms
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 323-324
+.. GENERATED FROM PYTHON SOURCE LINES 324-325
 
 Then, we extract the time series and compute the laminar CSD
 
-.. GENERATED FROM PYTHON SOURCE LINES 324-327
+.. GENERATED FROM PYTHON SOURCE LINES 325-328
 
 .. code-block:: default
 
@@ -435,13 +436,13 @@ Then, we extract the time series and compute the laminar CSD
     load_and_plot_csd(sim_fname, surf_set, layer_verts, layer_dists)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 328-331
+.. GENERATED FROM PYTHON SOURCE LINES 329-332
 
 .. image:: ../_static/tutorial_09_consec_sliding_ebb_csd.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 333-343
+.. GENERATED FROM PYTHON SOURCE LINES 334-344
 
 Here the spatiotemporal dynamics of layer activity are accurately reconstructed.
 
@@ -454,7 +455,7 @@ Part II: Correlated sources across layers: the need for layer-specific spatial s
 
 Here we simulate two sources - one in a superficial layer and one in a deep layer (as before) but occuring at the same time. We keep the same SNR = -5bB and dipole moment 5nAm as previously.
 
-.. GENERATED FROM PYTHON SOURCE LINES 343-353
+.. GENERATED FROM PYTHON SOURCE LINES 344-354
 
 .. code-block:: default
 
@@ -469,13 +470,13 @@ Here we simulate two sources - one in a superficial layer and one in a deep laye
     plt.ylabel('Amplitude (nAm)')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 354-357
+.. GENERATED FROM PYTHON SOURCE LINES 355-358
 
 .. image:: ../_static/tutorial_09_sim_simult.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 357-373
+.. GENERATED FROM PYTHON SOURCE LINES 358-374
 
 .. code-block:: default
 
@@ -496,11 +497,11 @@ Here we simulate two sources - one in a superficial layer and one in a deep laye
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 374-375
+.. GENERATED FROM PYTHON SOURCE LINES 375-376
 
 **Inversion with basic sliding window EBB**
 
-.. GENERATED FROM PYTHON SOURCE LINES 375-388
+.. GENERATED FROM PYTHON SOURCE LINES 376-389
 
 .. code-block:: default
 
@@ -518,13 +519,13 @@ Here we simulate two sources - one in a superficial layer and one in a deep laye
     load_and_plot_csd(sim_fname_2, surf_set, layer_verts, layer_dists)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 389-392
+.. GENERATED FROM PYTHON SOURCE LINES 390-393
 
 .. image:: ../_static/tutorial_09_simult_sliding_ebb_csd.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 394-404
+.. GENERATED FROM PYTHON SOURCE LINES 395-405
 
 We can observe that with simultaneous (correlated) sources, we reconstruct a source in the middle layer. This issue also occurs with the free energy model comparison approach, with the surface in the middle of the two simulated layers being the model with the highest likelihood.
 
@@ -537,7 +538,7 @@ For this 3 spatial source priors will be used:
 - a correlated sum prior: for each layer pair, we create a combined lead field (q+=la+lb)
 - a correlated depth contrast prior: for each pair of potential layer sources, we create the difference lead field (q-=la-lb)
 
-.. GENERATED FROM PYTHON SOURCE LINES 404-416
+.. GENERATED FROM PYTHON SOURCE LINES 405-417
 
 .. code-block:: default
 
@@ -554,17 +555,17 @@ For this 3 spatial source priors will be used:
     load_and_plot_csd(sim_fname_2, surf_set, layer_verts, layer_dists)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 417-420
+.. GENERATED FROM PYTHON SOURCE LINES 418-421
 
 .. image:: ../_static/tutorial_09_simult_sliding_ebb_layer_csd.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 422-423
+.. GENERATED FROM PYTHON SOURCE LINES 423-424
 
 EBB layer can then reconstruct 2 simultaneous sources.
 
-.. GENERATED FROM PYTHON SOURCE LINES 425-429
+.. GENERATED FROM PYTHON SOURCE LINES 426-430
 
 .. code-block:: default
 

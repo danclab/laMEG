@@ -36,6 +36,14 @@ lameg.simulate module
    :undoc-members:
    :show-inheritance:
 
+lameg.source module
+-------------------
+
+.. automodule:: lameg.source
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 lameg.surf module
 -----------------
 

@@ -30,7 +30,7 @@ Setting up the simulations
 
 Simulations are based on an existing dataset, which is used to define the sampling rate, number of trials, duration of each trial, and the channel layout.
 
-.. GENERATED FROM PYTHON SOURCE LINES 13-47
+.. GENERATED FROM PYTHON SOURCE LINES 13-48
 
 .. code-block:: default
 
@@ -42,7 +42,8 @@ Simulations are based on an existing dataset, which is used to define the sampli
     import matplotlib.pyplot as plt
     import tempfile
 
-    from lameg.invert import coregister, invert_ebb, load_source_time_series
+    from lameg.invert import coregister, invert_ebb
+    from lameg.source import load_source_time_series
     from lameg.laminar import sliding_window_model_comparison
     from lameg.simulate import run_current_density_simulation
     from lameg.surf import LayerSurfaceSet
@@ -69,11 +70,11 @@ Simulations are based on an existing dataset, which is used to define the sampli
     spm = spm_standalone.initialize()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 48-49
+.. GENERATED FROM PYTHON SOURCE LINES 49-50
 
 For source reconstructions, we need an MRI and a surface mesh. The simulations will be based on a forward model using the multilayer mesh, and the model comparison will use each layer mesh
 
-.. GENERATED FROM PYTHON SOURCE LINES 49-53
+.. GENERATED FROM PYTHON SOURCE LINES 50-54
 
 .. code-block:: default
 
@@ -82,11 +83,11 @@ For source reconstructions, we need an MRI and a surface mesh. The simulations w
     surf_set = LayerSurfaceSet(subj_id, 11)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 54-55
+.. GENERATED FROM PYTHON SOURCE LINES 55-56
 
 We're going to copy the data file to a temporary directory and direct all output there.
 
-.. GENERATED FROM PYTHON SOURCE LINES 55-76
+.. GENERATED FROM PYTHON SOURCE LINES 56-77
 
 .. code-block:: default
 
@@ -112,11 +113,11 @@ We're going to copy the data file to a temporary directory and direct all output
     base_fname = os.path.join(tmp_dir, f'{data_base}.mat')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 77-78
+.. GENERATED FROM PYTHON SOURCE LINES 78-79
 
 Invert the subject's data using the multilayer mesh. This step only has to be done once - this is just to compute the forward model that will be used in the simulations
 
-.. GENERATED FROM PYTHON SOURCE LINES 78-101
+.. GENERATED FROM PYTHON SOURCE LINES 79-102
 
 .. code-block:: default
 
@@ -144,13 +145,13 @@ Invert the subject's data using the multilayer mesh. This step only has to be do
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 102-105
+.. GENERATED FROM PYTHON SOURCE LINES 103-106
 
 Simulating a signal on the pial surface
 ---------------------------------------
 We're going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a width of 25ms
 
-.. GENERATED FROM PYTHON SOURCE LINES 105-121
+.. GENERATED FROM PYTHON SOURCE LINES 106-122
 
 .. code-block:: default
 
@@ -171,17 +172,17 @@ We're going to simulate 200ms of a Gaussian with a dipole moment of 5nAm and a w
     plt.ylabel('Amplitude (nAm)')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 122-125
+.. GENERATED FROM PYTHON SOURCE LINES 123-126
 
 .. image:: ../_static/tutorial_04_sim_signal.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 127-128
+.. GENERATED FROM PYTHON SOURCE LINES 128-129
 
 We need to pick a location (mesh vertex) to simulate at
 
-.. GENERATED FROM PYTHON SOURCE LINES 128-142
+.. GENERATED FROM PYTHON SOURCE LINES 129-143
 
 .. code-block:: default
 
@@ -200,17 +201,17 @@ We need to pick a location (mesh vertex) to simulate at
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 143-146
+.. GENERATED FROM PYTHON SOURCE LINES 144-147
 
 .. image:: ../_static/tutorial_04_sim_location.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 148-149
+.. GENERATED FROM PYTHON SOURCE LINES 149-150
 
 We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The desired level of SNR is achieved by adding white noise to the projected sensor signals
 
-.. GENERATED FROM PYTHON SOURCE LINES 149-171
+.. GENERATED FROM PYTHON SOURCE LINES 150-172
 
 .. code-block:: default
 
@@ -237,13 +238,13 @@ We'll simulate a 5mm patch of activity with -5 dB SNR at the sensor level. The d
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 172-175
+.. GENERATED FROM PYTHON SOURCE LINES 173-176
 
 Localizer inversion
 -------------------
 Now we'll run a source reconstruction using the multilayer mesh, extract the signal in the pial layer, and select a prior based on the peak.
 
-.. GENERATED FROM PYTHON SOURCE LINES 175-196
+.. GENERATED FROM PYTHON SOURCE LINES 176-197
 
 .. code-block:: default
 
@@ -269,11 +270,11 @@ Now we'll run a source reconstruction using the multilayer mesh, extract the sig
     prior = np.argmax(m_layer_max)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 197-198
+.. GENERATED FROM PYTHON SOURCE LINES 198-199
 
 We can see that the prior is the same as the location we simulated at
 
-.. GENERATED FROM PYTHON SOURCE LINES 198-224
+.. GENERATED FROM PYTHON SOURCE LINES 199-225
 
 .. code-block:: default
 
@@ -304,19 +305,19 @@ We can see that the prior is the same as the location we simulated at
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 225-228
+.. GENERATED FROM PYTHON SOURCE LINES 226-229
 
 .. image:: ../_static/tutorial_04_localizer.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 230-233
+.. GENERATED FROM PYTHON SOURCE LINES 231-234
 
 Sliding time window model comparison (pial - white matter)
 ----------------------------------------------------------
 Now we can run sliding time window model comparison between source models based on the pial and white matter surfaces using free energy. Specifically, we'll look at the difference in free energy between the two models (pial - white matter), in sliding and overlapping windows of 16ms. The free energy difference (pial - white matter) should be positive (more model evidence for the pial surface model) because we simulated activity on the pial surface.
 
-.. GENERATED FROM PYTHON SOURCE LINES 233-256
+.. GENERATED FROM PYTHON SOURCE LINES 234-257
 
 .. code-block:: default
 
@@ -344,11 +345,11 @@ Now we can run sliding time window model comparison between source models based 
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 257-258
+.. GENERATED FROM PYTHON SOURCE LINES 258-259
 
 Plot difference in free energy over time (pial minus white) - this should be positive
 
-.. GENERATED FROM PYTHON SOURCE LINES 258-262
+.. GENERATED FROM PYTHON SOURCE LINES 259-263
 
 .. code-block:: default
 
@@ -357,19 +358,19 @@ Plot difference in free energy over time (pial minus white) - this should be pos
     plt.ylabel(r'$\Delta$F')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 263-266
+.. GENERATED FROM PYTHON SOURCE LINES 264-267
 
 .. image:: ../_static/tutorial_04_pial_sim_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 268-271
+.. GENERATED FROM PYTHON SOURCE LINES 269-272
 
 White matter surface simulation with pial - white matter sliding time window model comparison
 ---------------------------------------------------------------------------------------------
 Let's simulate the same pattern of activity, in the same location, but on the white matter surface. This time, sliding time window model comparison should yield greater model evidence for the white matter surface, and therefore the difference in free energy (pial - white matter) should be negative.
 
-.. GENERATED FROM PYTHON SOURCE LINES 271-303
+.. GENERATED FROM PYTHON SOURCE LINES 272-304
 
 .. code-block:: default
 
@@ -406,11 +407,11 @@ Let's simulate the same pattern of activity, in the same location, but on the wh
     )
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 304-305
+.. GENERATED FROM PYTHON SOURCE LINES 305-306
 
 Plot difference in free energy over time (pial minus white) - this should be negative
 
-.. GENERATED FROM PYTHON SOURCE LINES 305-309
+.. GENERATED FROM PYTHON SOURCE LINES 306-310
 
 .. code-block:: default
 
@@ -419,19 +420,19 @@ Plot difference in free energy over time (pial minus white) - this should be neg
     plt.ylabel(r'$\Delta$F')
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 310-313
+.. GENERATED FROM PYTHON SOURCE LINES 311-314
 
 .. image:: ../_static/tutorial_04_white_sim_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 316-319
+.. GENERATED FROM PYTHON SOURCE LINES 317-320
 
 Simulation in each layer with sliding time window model comparison across layers
 --------------------------------------------------------------------------------
 That was sliding time window model comparison with two candidate models: one based on the white matter surface, and one on the pial. Let's now simulate on each layer, and for each simulation, run sliding time window model comparison across all layers. We'll turn off SPM visualization here.
 
-.. GENERATED FROM PYTHON SOURCE LINES 319-357
+.. GENERATED FROM PYTHON SOURCE LINES 320-358
 
 .. code-block:: default
 
@@ -474,11 +475,11 @@ That was sliding time window model comparison with two candidate models: one bas
     all_layerF = np.squeeze(np.array(all_layerF))
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 358-359
+.. GENERATED FROM PYTHON SOURCE LINES 359-360
 
 For each simulation, we can plot the free energy for all models relative to the worst model within a central time window. The layer model with the highest free energy should correspond to the layer that the activity was simulated in.
 
-.. GENERATED FROM PYTHON SOURCE LINES 359-394
+.. GENERATED FROM PYTHON SOURCE LINES 360-395
 
 .. code-block:: default
 
@@ -518,13 +519,13 @@ For each simulation, we can plot the free energy for all models relative to the 
     plt.tight_layout()
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 395-398
+.. GENERATED FROM PYTHON SOURCE LINES 396-399
 
 .. image:: ../_static/tutorial_04_results.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 398-419
+.. GENERATED FROM PYTHON SOURCE LINES 399-420
 
 .. code-block:: default
 
@@ -550,13 +551,13 @@ For each simulation, we can plot the free energy for all models relative to the 
     cb.set_label(r'$\Delta F$', fontsize=14)
 
 
-.. GENERATED FROM PYTHON SOURCE LINES 420-423
+.. GENERATED FROM PYTHON SOURCE LINES 421-424
 
 .. image:: ../_static/tutorial_04_results_matrix.png
    :width: 800
    :alt:
 
-.. GENERATED FROM PYTHON SOURCE LINES 425-430
+.. GENERATED FROM PYTHON SOURCE LINES 426-431
 
 .. code-block:: default
 

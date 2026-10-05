@@ -394,16 +394,17 @@ document.write(`
 <li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.invert_sliding_window_ebb_layer"><code class="docutils literal notranslate"><span class="pre">invert_sliding_window_ebb_layer()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.invert_sliding_window_msp"><code class="docutils literal notranslate"><span class="pre">invert_sliding_window_msp()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.load_forward_model_vertices"><code class="docutils literal notranslate"><span class="pre">load_forward_model_vertices()</span></code></a></li>
-<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.load_source_time_series"><code class="docutils literal notranslate"><span class="pre">load_source_time_series()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.invert.opm_headmodel"><code class="docutils literal notranslate"><span class="pre">opm_headmodel()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg.laminar">lameg.laminar module</a><ul>
 <li class="toctree-l3"><a class="reference internal" href="lameg.html#key-functionalities">Key functionalities</a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.laminar.compute_bigbrain_laminar_weights"><code class="docutils literal notranslate"><span class="pre">compute_bigbrain_laminar_weights()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.laminar.compute_csd"><code class="docutils literal notranslate"><span class="pre">compute_csd()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.laminar.model_comparison"><code class="docutils literal notranslate"><span class="pre">model_comparison()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.laminar.roi_power_comparison"><code class="docutils literal notranslate"><span class="pre">roi_power_comparison()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.laminar.sliding_window_model_comparison"><code class="docutils literal notranslate"><span class="pre">sliding_window_model_comparison()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.laminar.surface_to_laminae"><code class="docutils literal notranslate"><span class="pre">surface_to_laminae()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg.postinstall">lameg.postinstall module</a><ul>
@@ -418,6 +419,40 @@ document.write(`
 <li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.simulate.run_current_density_simulation"><code class="docutils literal notranslate"><span class="pre">run_current_density_simulation()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.simulate.run_dipole_simulation"><code class="docutils literal notranslate"><span class="pre">run_dipole_simulation()</span></code></a></li>
 <li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.simulate.setup_opm_simulation"><code class="docutils literal notranslate"><span class="pre">setup_opm_simulation()</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg.source">lameg.source module</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.__init__"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.__init__()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.axis_order"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.axis_order</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.bigbrain_edges"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.bigbrain_edges</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.bigbrain_valid_columns"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.bigbrain_valid_columns</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.bigbrain_weights"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.bigbrain_weights</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.close"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.close()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.closed"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.closed</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.dtype"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.dtype</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.has_bigbrain_mapping"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.has_bigbrain_mapping</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.has_trials"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.has_trials</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.lamina"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.lamina()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.laminae"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.laminae</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.layer"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.layer()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.layer_depth"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.layer_depth</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.n_columns"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.n_columns</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.n_laminae"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.n_laminae</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.n_layers"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.n_layers</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.n_times"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.n_times</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.n_trials"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.n_trials</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.shape"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.shape</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.time"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.time</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.time_values"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.time_values()</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.vertices"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.vertices</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.window_count"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.window_count</span></code></a></li>
+<li class="toctree-l4"><a class="reference internal" href="lameg.html#lameg.source.LaminarSourceData.woi"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.woi</span></code></a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.source.add_bigbrain_mapping"><code class="docutils literal notranslate"><span class="pre">add_bigbrain_mapping()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.source.export_source_time_series_hdf5"><code class="docutils literal notranslate"><span class="pre">export_source_time_series_hdf5()</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="lameg.html#lameg.source.load_source_time_series"><code class="docutils literal notranslate"><span class="pre">load_source_time_series()</span></code></a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="lameg.html#module-lameg.surf">lameg.surf module</a><ul>
