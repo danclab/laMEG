@@ -10,11 +10,20 @@ import os
 import h5py
 import numpy as np
 
+from pkg_resources import (
+    DistributionNotFound,
+    get_distribution,
+)
+
 from lameg._source_io import (
     _ensure_m_orientation,
     _indices_for_woi,
     _load_inverse_components,
     _make_window_matrix_loaders,
+)
+from lameg._source_schema import (
+    LAYER_DEPTH_CONVENTION,
+    SOURCE_SCHEMA_VERSION,
 )
 from lameg.invert import (
     check_inversion_exists,
@@ -23,13 +32,23 @@ from lameg.invert import (
 from lameg.util import load_meg_sensor_data
 
 
+def _get_lameg_version():
+    """Return the installed laMEG package version."""
+    try:
+        return get_distribution("lameg").version
+    except DistributionNotFound:
+        return "unknown"
+
+
 # pylint: disable=too-many-branches,too-many-statements
 def export_source_time_series_hdf5(
     data_fname,
     out_fname,
+    surf_set,
     inv_fname=None,
     inversion_idx=0,
-    n_layers=11,
+    orientation="link_vector",
+    fixed=True,
     block_size=512,
     dtype="float32",
     compression="lzf",
@@ -56,12 +75,20 @@ def export_source_time_series_hdf5(
         SPM-compatible M/EEG dataset containing the sensor data.
     out_fname : str
         HDF5 file to create.
+    surf_set : LayerSurfaceSet
+        Laminar surface hierarchy used to construct the forward model.
+        The number of layers, number of cortical columns, and normalized
+        cortical-depth coordinates are derived from this object.
     inv_fname : str, optional
         File containing the inverse. Defaults to ``data_fname``.
     inversion_idx : int, optional
         Zero-based inversion index.
-    n_layers : int, optional
-        Number of laminar source surfaces. Default is 11.
+    orientation : str, optional
+        Orientation variant of the downsampled multilayer surface.
+        Default is ``"link_vector"``.
+    fixed : bool, optional
+        Whether the forward model used fixed source orientations.
+        Default is True.
     block_size : int, optional
         Cortical columns per block for the low-memory fallback path.
     dtype : str or numpy dtype, optional
@@ -108,8 +135,47 @@ def export_source_time_series_hdf5(
             "Pass overwrite=True to replace it."
         )
 
-    if not isinstance(n_layers, (int, np.integer)) or n_layers < 1:
-        raise ValueError("`n_layers` must be a positive integer.")
+    n_layers = int(surf_set.n_layers)
+
+    if n_layers < 1:
+        raise ValueError("`surf_set.n_layers` must be a positive integer.")
+
+    layer_spacing = np.asarray(surf_set.layer_spacing, dtype=float)
+
+    if layer_spacing.ndim != 1 or layer_spacing.size != n_layers:
+        raise ValueError(
+            "`surf_set.layer_spacing` must contain "
+            "one value per reconstructed layer."
+        )
+
+    layer_depth = 1.0 - layer_spacing
+
+    if np.any(~np.isfinite(layer_depth)):
+        raise ValueError("`surf_set.layer_spacing` produced non-finite cortical depths.")
+
+    if np.any((layer_depth < 0.0) | (layer_depth > 1.0)):
+        raise ValueError("Derived cortical depths must lie between 0 and 1.")
+
+    if layer_depth.size > 1 and np.any(np.diff(layer_depth) <= 0):
+        raise ValueError(
+            "Derived cortical depths must increase "
+            "from pial (0) to white matter (1)."
+        )
+
+    if not np.isclose(layer_depth[0], 0.0):
+        raise ValueError("The first reconstructed surface must correspond to pial depth 0.")
+
+    if not np.isclose(layer_depth[-1], 1.0):
+        raise ValueError(
+            "The final reconstructed surface must "
+            "correspond to white-matter depth 1."
+        )
+
+    n_columns = int(surf_set.get_vertices_per_layer(orientation=orientation, fixed=fixed))
+
+    if n_columns < 1:
+        raise ValueError("`surf_set` contains no cortical columns.")
+
     if not isinstance(block_size, (int, np.integer)) or block_size < 1:
         raise ValueError("`block_size` must be a positive integer.")
     if float(max_memory_gb) <= 0:
@@ -132,11 +198,7 @@ def export_source_time_series_hdf5(
     # Build full-matrix and row-selective loaders.
     # External filenames are resolved once, not once per block/window.
     # ------------------------------------------------------------------
-    loaders = _make_window_matrix_loaders(
-        invc,
-        inv_fname,
-        data_fname,
-    )
+    loaders = _make_window_matrix_loaders(invc, inv_fname, data_fname)
     n_windows = loaders["n_windows"]
     n_sources_total = loaders["n_sources"]
     load_full = loaders["load_full"]
@@ -148,13 +210,17 @@ def export_source_time_series_hdf5(
             f"`woi` has {woi.shape[0]} rows."
         )
 
-    if n_sources_total % n_layers != 0:
+    expected_sources = n_layers * n_columns
+
+    if n_sources_total != expected_sources:
         raise ValueError(
-            f"Total source count ({n_sources_total}) is not divisible by "
-            f"n_layers ({n_layers})."
+            "Source geometry mismatch: "
+            f"inverse contains {n_sources_total} sources, "
+            f"but the supplied LayerSurfaceSet defines "
+            f"{n_layers} layers x {n_columns} columns "
+            f"= {expected_sources} sources."
         )
 
-    n_columns = n_sources_total // n_layers
     win_indices = [_indices_for_woi(time_ms, window) for window in woi]
 
     # Source-independent overlap count.
@@ -212,7 +278,26 @@ def export_source_time_series_hdf5(
         )
 
     with h5py.File(out_fname, mode) as out_file:
+
+        out_file.attrs["lameg_schema_version"] = SOURCE_SCHEMA_VERSION
+        out_file.attrs["lameg_version"] = _get_lameg_version()
+        out_file.attrs["subject_id"] = str(surf_set.subj_id)
+        out_file.attrs["orientation_method"] = str(orientation)
+        out_file.attrs["fixed_orientation"] = bool(fixed)
+        out_file.attrs["source_geometry"] = "LayerSurfaceSet"
+
         source_ds = out_file.create_dataset("source_ts", **create_kwargs)
+
+        layer_ds = out_file.create_dataset(
+            "layer_depth",
+            data=layer_depth.astype(
+                np.float64,
+                copy=False
+            )
+        )
+        layer_ds.attrs["axis_order"] = "layer"
+        layer_ds.attrs["depth_convention"] = LAYER_DEPTH_CONVENTION
+
         out_file.create_dataset("time_ms", data=np.asarray(time_ms, dtype=np.float64))
         out_file.create_dataset("woi_ms", data=woi.astype(np.float64, copy=False))
         out_file.create_dataset("window_count", data=count)
@@ -232,30 +317,52 @@ def export_source_time_series_hdf5(
             "window-major" if use_fast_path else "blockwise"
         )
 
-        # Preserve source coordinates when available.
+        # Store the SPM forward-model vertices in layer-major order.
+        # These are tess_mni coordinates; they correspond one-to-one with
+        # the LayerSurfaceSet vertices but are not numerically identical
+        # to the GIFTI coordinates.
         try:
             vertices = np.asarray(
                 load_forward_model_vertices(
-                    data_fname, inversion_idx=inversion_idx
-                )
+                    inv_fname,
+                    inversion_idx=inversion_idx,
+                ),
+                dtype=float,
             )
-            if vertices.ndim == 2 and vertices.shape == (n_sources_total, 3):
-                vertex_kwargs = {
-                    "shape": (n_layers, n_columns, 3),
-                    "dtype": np.float32,
-                    "chunks": (1, min(1024, n_columns), 3),
-                }
-                if compression is not None:
-                    vertex_kwargs["compression"] = compression
-                    if compression == "gzip":
-                        vertex_kwargs["compression_opts"] = compression_opts
-                        vertex_kwargs["shuffle"] = True
-                    elif compression == "lzf":
-                        vertex_kwargs["shuffle"] = True
-                vertex_ds = out_file.create_dataset("source_vertices", **vertex_kwargs)
-                vertex_ds[...] = vertices.reshape(n_layers, n_columns, 3)
-        except (KeyError, OSError, TypeError, ValueError):
-            pass
+        except (
+                KeyError,
+                OSError,
+                TypeError,
+        ) as exc:
+            raise ValueError(
+                "Could not recover forward-model "
+                "vertices for source export."
+            ) from exc
+
+        expected_vertex_shape = (expected_sources, 3)
+
+        if vertices.shape != expected_vertex_shape:
+            raise ValueError(
+                "Forward-model vertex geometry does not "
+                "match the LayerSurfaceSet: "
+                f"expected {expected_vertex_shape}, "
+                f"got {vertices.shape}."
+            )
+
+        vertex_kwargs = {
+            "shape": (n_layers, n_columns, 3),
+            "dtype": np.float32,
+            "chunks": (1, min(1024, n_columns), 3),
+        }
+        if compression is not None:
+            vertex_kwargs["compression"] = compression
+            if compression == "gzip":
+                vertex_kwargs["compression_opts"] = compression_opts
+                vertex_kwargs["shuffle"] = True
+            elif compression == "lzf":
+                vertex_kwargs["shuffle"] = True
+        vertex_ds = out_file.create_dataset("source_vertices", **vertex_kwargs)
+        vertex_ds[...] = vertices.reshape(n_layers, n_columns, 3)
 
         if use_fast_path:
             # ----------------------------------------------------------
