@@ -2,7 +2,7 @@
 
 Toolbox for laminar inference with MEG, powered by `FreeSurfer <https://surfer.nmr.mgh.harvard.edu/fswiki>`_ and `SPM <https://github.com/spm/>`_
 
-|PyPI version| |Unit tests| |Coverage| |Linting| |Python| |License| |Repo size| |PyPI downloads|
+|PyPI version| |DOI| |Unit tests| |Coverage| |Linting| |Python| |License| |Repo size| |PyPI downloads|
 
 Operating system
 ================
@@ -104,6 +104,10 @@ Funding
 .. |PyPI version| image:: https://badge.fury.io/py/lameg.svg?cache-control=no-cache
    :target: https://badge.fury.io/py/lameg
    :alt: PyPI version
+
+.. |DOI| image:: https://zenodo.org/badge/DOI/10.5281/zenodo.21637876.svg
+   :target: https://doi.org/10.5281/zenodo.21637876
+   :alt: DOI
 
 .. |Unit tests| image:: https://github.com/danclab/laMEG/actions/workflows/python-package-conda.yml/badge.svg
    :target: https://github.com/danclab/laMEG/actions/workflows/python-package-conda.yml
