@@ -1,0 +1,1138 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Source data and HDF5 schema &#8212; laMEG 0.1.4 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="_static/jupyter-sphinx.css" />
+    <link rel="stylesheet" type="text/css" href="_static/thebelab.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="_static/sg_gallery-rendered-html.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="./" id="documentation_options" src="_static/documentation_options.js"></script>
+    <script src="_static/jquery.js"></script>
+    <script src="_static/underscore.js"></script>
+    <script src="_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="_static/doctools.js"></script>
+    <script src="_static/sphinx_highlight.js"></script>
+    <script src="_static/thebelab-helper.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.3.4/require.min.js"></script>
+    <script src="https://unpkg.com/@jupyter-widgets/html-manager@^0.20.1/dist/embed-amd.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'source_data';</script>
+    <link rel="canonical" href="https://danclab.github.io/laMEG/source_data.html" />
+    <link rel="shortcut icon" href="_static/favicon.ico"/>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Tutorials gallery" href="auto_tutorials/index.html" />
+    <link rel="prev" title="laMEG: laminar inference with MEG" href="index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="_static/logo.png" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="_static/logo.png" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+    <p class="title logo__title">lameg</p>
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="#">
+                        Source data and HDF5 schema
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="auto_tutorials/index.html">
+                        Tutorials gallery
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://github.com/danclab/laMEG">
+                    GitHub
+                  </a>
+                </li>
+                
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/danclab/laMEG" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/danc_labo" title="Twitter" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-twitter"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="#">
+                        Source data and HDF5 schema
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="auto_tutorials/index.html">
+                        Tutorials gallery
+                      </a>
+                    </li>
+                
+
+                <li class="nav-item">
+                  <a class="nav-link nav-external" href="https://github.com/danclab/laMEG">
+                    GitHub
+                  </a>
+                </li>
+                
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/danclab/laMEG" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/danc_labo" title="Twitter" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-twitter"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+<nav aria-label="Breadcrumbs">
+  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    <li class="breadcrumb-item active" aria-current="page">Source data and HDF5 schema</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <section id="source-data-and-hdf5-schema">
+<h1>Source data and HDF5 schema<a class="headerlink" href="#source-data-and-hdf5-schema" title="Permalink to this heading">#</a></h1>
+<p>This page documents the analysis-ready source-data interface used by laMEG.
+It describes the public API, the HDF5 file format, and the distinction between
+reconstructed cortical-depth layers and BigBrain-informed laminar estimates.</p>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading">#</a></h2>
+<p>Sliding-window source reconstructions can be exported to a self-describing
+HDF5 file with
+<a class="reference internal" href="#lameg.source.export_source_time_series_hdf5" title="lameg.source.export_source_time_series_hdf5"><code class="xref py py-func docutils literal notranslate"><span class="pre">lameg.source.export_source_time_series_hdf5()</span></code></a>.</p>
+<p>The resulting file can be accessed with
+<a class="reference internal" href="#lameg.source.LaminarSourceData" title="lameg.source.LaminarSourceData"><code class="xref py py-class docutils literal notranslate"><span class="pre">lameg.source.LaminarSourceData</span></code></a> without loading the complete source
+array into memory.</p>
+<p>The main source dataset has one of two axis orders:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">layer</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">time</span>
+</pre></div>
+</div>
+<p>or:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">layer</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">time</span><span class="p">,</span> <span class="n">trial</span>
+</pre></div>
+</div>
+<p>Here, <code class="docutils literal notranslate"><span class="pre">layer</span></code> denotes one surface in the reconstructed multilayer cortical
+geometry and <code class="docutils literal notranslate"><span class="pre">column</span></code> denotes corresponding vertices across those surfaces.</p>
+</section>
+<section id="exporting-source-data">
+<h2>Exporting source data<a class="headerlink" href="#exporting-source-data" title="Permalink to this heading">#</a></h2>
+<p>The exporter derives the number of reconstructed layers, number of cortical
+columns, and normalized cortical-depth coordinates from a
+<a class="reference internal" href="_source/lameg.html#lameg.surf.LayerSurfaceSet" title="lameg.surf.LayerSurfaceSet"><code class="xref py py-class docutils literal notranslate"><span class="pre">lameg.surf.LayerSurfaceSet</span></code></a>.</p>
+<p>For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lameg.source</span> <span class="kn">import</span> <span class="n">export_source_time_series_hdf5</span>
+<span class="kn">from</span> <span class="nn">lameg.surf</span> <span class="kn">import</span> <span class="n">LayerSurfaceSet</span>
+
+<span class="n">surf_set</span> <span class="o">=</span> <span class="n">LayerSurfaceSet</span><span class="p">(</span><span class="s2">&quot;sub-001&quot;</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
+
+<span class="n">source_fname</span> <span class="o">=</span> <span class="n">export_source_time_series_hdf5</span><span class="p">(</span>
+    <span class="n">data_fname</span><span class="o">=</span><span class="s2">&quot;spm_data.mat&quot;</span><span class="p">,</span>
+    <span class="n">out_fname</span><span class="o">=</span><span class="s2">&quot;sub-001_source.h5&quot;</span><span class="p">,</span>
+    <span class="n">surf_set</span><span class="o">=</span><span class="n">surf_set</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>The exporter verifies that the source geometry in the inverse solution is
+consistent with the supplied <code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet</span></code>.</p>
+<p>The cortical-depth convention used throughout the source format is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">0</span> <span class="o">=</span> <span class="n">pial</span> <span class="n">boundary</span>
+<span class="mi">1</span> <span class="o">=</span> <span class="n">grey</span><span class="o">/</span><span class="n">white</span> <span class="n">boundary</span>
+</pre></div>
+</div>
+<p>Consequently, <code class="docutils literal notranslate"><span class="pre">layer_depth</span></code> increases from the pial surface towards white
+matter.</p>
+</section>
+<section id="reading-source-data">
+<h2>Reading source data<a class="headerlink" href="#reading-source-data" title="Permalink to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">LaminarSourceData</span></code> should normally be used as a context manager so that the
+underlying HDF5 file is closed automatically:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lameg.source</span> <span class="kn">import</span> <span class="n">LaminarSourceData</span>
+
+<span class="k">with</span> <span class="n">LaminarSourceData</span><span class="p">(</span><span class="s2">&quot;sub-001_source.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">source</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">axis_order</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">layer_depth</span><span class="p">)</span>
+
+    <span class="c1"># All reconstructed layers for one cortical column.</span>
+    <span class="n">column_data</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">layer</span><span class="p">(</span><span class="n">column</span><span class="o">=</span><span class="mi">6620</span><span class="p">)</span>
+
+    <span class="c1"># One reconstructed layer over a selected time interval.</span>
+    <span class="n">layer_data</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">layer</span><span class="p">(</span>
+        <span class="n">layer</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+        <span class="n">time</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">75</span><span class="p">,</span> <span class="o">-</span><span class="mi">25</span><span class="p">),</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p>Selections are read directly from the HDF5 file. Integer selectors remove
+their corresponding axis, whereas slices and <code class="docutils literal notranslate"><span class="pre">None</span></code> preserve it.</p>
+<p>For files containing an explicit trial axis, a trial can be selected with the
+<code class="docutils literal notranslate"><span class="pre">trial</span></code> argument.</p>
+</section>
+<section id="layers-and-laminae">
+<h2>Layers and laminae<a class="headerlink" href="#layers-and-laminae" title="Permalink to this heading">#</a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">layer</span></code> and <code class="docutils literal notranslate"><span class="pre">lamina</span></code> have deliberately different meanings in the laMEG
+source API.</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">layer</span></code></dt><dd><p>A surface in the reconstructed multilayer cortical geometry. Layers are
+depth samples on which the electromagnetic inverse solution is defined.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">lamina</span></code></dt><dd><p>A BigBrain-informed histological compartment obtained by transforming
+reconstructed cortical-depth activity using column-specific laminar
+weights.</p>
+</dd>
+</dl>
+<p>A BigBrain mapping can be added to an existing source file without repeating
+the source reconstruction:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lameg.source</span> <span class="kn">import</span> <span class="n">add_bigbrain_mapping</span>
+<span class="kn">from</span> <span class="nn">lameg.surf</span> <span class="kn">import</span> <span class="n">LayerSurfaceSet</span>
+
+<span class="n">surf_set</span> <span class="o">=</span> <span class="n">LayerSurfaceSet</span><span class="p">(</span><span class="s2">&quot;sub-001&quot;</span><span class="p">,</span> <span class="mi">11</span><span class="p">)</span>
+
+<span class="n">add_bigbrain_mapping</span><span class="p">(</span>
+    <span class="s2">&quot;sub-001_source.h5&quot;</span><span class="p">,</span>
+    <span class="n">surf_set</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Mapped activity can then be accessed on demand:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lameg.source</span> <span class="kn">import</span> <span class="n">LaminarSourceData</span>
+
+<span class="k">with</span> <span class="n">LaminarSourceData</span><span class="p">(</span><span class="s2">&quot;sub-001_source.h5&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">source</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">laminae</span><span class="p">)</span>
+
+    <span class="n">valid_columns</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">bigbrain_valid_columns</span>
+
+    <span class="n">lamina_v</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">lamina</span><span class="p">(</span>
+        <span class="n">lamina</span><span class="o">=</span><span class="s2">&quot;V&quot;</span><span class="p">,</span>
+        <span class="n">column</span><span class="o">=</span><span class="mi">6620</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.lamina()</span></code> does not represent a direct measurement of
+cytoarchitectonic cortical layers. It applies a BigBrain-informed
+transformation to reconstructed cortical-depth activity. The
+interpretability of lamina-specific estimates therefore depends on the
+spatial information available in the MEG or OPM-MEG data, the forward
+model, cortical geometry, and the assumptions of the source reconstruction.</p>
+</div>
+</section>
+<section id="hdf5-schema">
+<h2>HDF5 schema<a class="headerlink" href="#hdf5-schema" title="Permalink to this heading">#</a></h2>
+<p>The current source-data schema version is <code class="docutils literal notranslate"><span class="pre">1.0</span></code>.</p>
+<p>The schema version is stored independently of the laMEG package version in
+the root attribute:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">lameg_schema_version</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">LaminarSourceData</span></code> validates the schema when a file is opened and rejects
+unsupported schema versions rather than silently interpreting them.</p>
+<section id="required-root-attributes">
+<h3>Required root attributes<a class="headerlink" href="#required-root-attributes" title="Permalink to this heading">#</a></h3>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">lameg_schema_version</span></code></dt><dd><p>Version of the laMEG source-data schema.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">lameg_version</span></code></dt><dd><p>Version of laMEG that created the file.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">axis_order</span></code></dt><dd><p>Either <code class="docutils literal notranslate"><span class="pre">layer,column,time</span></code> or <code class="docutils literal notranslate"><span class="pre">layer,column,time,trial</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">source_order</span></code></dt><dd><p>Ordering of sources in the original inverse representation. Schema v1
+requires <code class="docutils literal notranslate"><span class="pre">layer-major</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">n_layers</span></code></dt><dd><p>Number of reconstructed cortical-depth surfaces.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">n_columns</span></code></dt><dd><p>Number of corresponding cortical columns.</p>
+</dd>
+</dl>
+<p>Files produced by <code class="docutils literal notranslate"><span class="pre">export_source_time_series_hdf5</span></code> also contain provenance
+information including <code class="docutils literal notranslate"><span class="pre">subject_id</span></code>, <code class="docutils literal notranslate"><span class="pre">orientation_method</span></code>,
+<code class="docutils literal notranslate"><span class="pre">fixed_orientation</span></code>, <code class="docutils literal notranslate"><span class="pre">source_geometry</span></code>, <code class="docutils literal notranslate"><span class="pre">n_windows</span></code>, <code class="docutils literal notranslate"><span class="pre">inversion_idx</span></code>,
+<code class="docutils literal notranslate"><span class="pre">overlap_combination</span></code>, and <code class="docutils literal notranslate"><span class="pre">export_strategy</span></code>.</p>
+</section>
+<section id="core-datasets">
+<h3>Core datasets<a class="headerlink" href="#core-datasets" title="Permalink to this heading">#</a></h3>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">source_ts</span></code></dt><dd><p>Shape <code class="docutils literal notranslate"><span class="pre">(layer,</span> <span class="pre">column,</span> <span class="pre">time)</span></code> or
+<code class="docutils literal notranslate"><span class="pre">(layer,</span> <span class="pre">column,</span> <span class="pre">time,</span> <span class="pre">trial)</span></code>. Contains the reconstructed source time
+series.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">time_ms</span></code></dt><dd><p>Shape <code class="docutils literal notranslate"><span class="pre">(time,)</span></code>. Strictly increasing sample times in milliseconds.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">layer_depth</span></code></dt><dd><p>Shape <code class="docutils literal notranslate"><span class="pre">(layer,)</span></code>. Normalized reconstructed cortical depths using the
+convention <code class="docutils literal notranslate"><span class="pre">0=pial,1=white</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">source_vertices</span></code></dt><dd><p>Shape <code class="docutils literal notranslate"><span class="pre">(layer,</span> <span class="pre">column,</span> <span class="pre">3)</span></code>, when present. Source coordinates associated
+with the SPM forward model.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">woi_ms</span></code></dt><dd><p>Shape <code class="docutils literal notranslate"><span class="pre">(window,</span> <span class="pre">2)</span></code>, when present. Sliding inversion windows in
+milliseconds.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">window_count</span></code></dt><dd><p>Shape <code class="docutils literal notranslate"><span class="pre">(time,)</span></code>, when present. Number of inversion windows contributing
+to each reconstructed time sample.</p>
+</dd>
+</dl>
+</section>
+<section id="bigbrain-mapping">
+<h3>BigBrain mapping<a class="headerlink" href="#bigbrain-mapping" title="Permalink to this heading">#</a></h3>
+<p>When a BigBrain mapping has been added, the file contains a <code class="docutils literal notranslate"><span class="pre">bigbrain</span></code>
+group.</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">bigbrain/edges</span></code></dt><dd><p>Shape <code class="docutils literal notranslate"><span class="pre">(column,</span> <span class="pre">7)</span></code>. Column-specific normalized boundaries defining
+laminae I–VI.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bigbrain/weights</span></code></dt><dd><p>Shape <code class="docutils literal notranslate"><span class="pre">(column,</span> <span class="pre">6,</span> <span class="pre">layer)</span></code>. Linear transformation weights from
+reconstructed cortical-depth samples to BigBrain-informed laminar means.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bigbrain/labels</span></code></dt><dd><p>The labels <code class="docutils literal notranslate"><span class="pre">I</span></code>, <code class="docutils literal notranslate"><span class="pre">II</span></code>, <code class="docutils literal notranslate"><span class="pre">III</span></code>, <code class="docutils literal notranslate"><span class="pre">IV</span></code>, <code class="docutils literal notranslate"><span class="pre">V</span></code>, and <code class="docutils literal notranslate"><span class="pre">VI</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">bigbrain/valid_columns</span></code></dt><dd><p>Shape <code class="docutils literal notranslate"><span class="pre">(column,)</span></code>. Boolean mask identifying cortical columns for which a
+valid BigBrain mapping is available.</p>
+</dd>
+</dl>
+<p>Columns for which the anatomical mapping cannot be computed are explicitly
+marked invalid rather than being assigned a neighbouring or population-average
+mapping. Analyses using BigBrain-informed laminar estimates should therefore
+inspect <code class="docutils literal notranslate"><span class="pre">bigbrain_valid_columns</span></code>.</p>
+</section>
+</section>
+<section id="api-reference">
+<h2>API reference<a class="headerlink" href="#api-reference" title="Permalink to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lameg.source.</span></span><span class="sig-name descname"><span class="pre">LaminarSourceData</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.source.LaminarSourceData" title="Permalink to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Reader for analysis-ready laminar source HDF5 files.</p>
+<p>Files are expected to contain <code class="docutils literal notranslate"><span class="pre">source_ts</span></code> with axis order
+<code class="docutils literal notranslate"><span class="pre">layer,</span> <span class="pre">column,</span> <span class="pre">time</span></code> or <code class="docutils literal notranslate"><span class="pre">layer,</span> <span class="pre">column,</span> <span class="pre">time,</span> <span class="pre">trial</span></code> and a
+corresponding <code class="docutils literal notranslate"><span class="pre">time_ms</span></code> dataset.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>fname</strong> (<em>str</em><em> or </em><em>path-like</em>) – Path to an HDF5 file created by <code class="docutils literal notranslate"><span class="pre">export_source_time_series_hdf5</span></code>.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p><code class="docutils literal notranslate"><span class="pre">layer</span></code> refers to the reconstructed layered surfaces. <code class="docutils literal notranslate"><span class="pre">lamina</span></code>
+refers to a BigBrain-defined histological compartment. Files without an
+added BigBrain mapping can still be read normally, but <code class="docutils literal notranslate"><span class="pre">lamina()</span></code> is
+available only after <code class="docutils literal notranslate"><span class="pre">add_bigbrain_mapping</span></code> has been run.</p>
+<dl class="py method">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.source.LaminarSourceData.__init__" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.axis_order">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">axis_order</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.axis_order" title="Permalink to this definition">#</a></dt>
+<dd><p>Stored source axis-order description.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.bigbrain_edges">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">bigbrain_edges</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.bigbrain_edges" title="Permalink to this definition">#</a></dt>
+<dd><p>BigBrain laminar boundaries as column x boundary, if stored.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.bigbrain_valid_columns">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">bigbrain_valid_columns</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.bigbrain_valid_columns" title="Permalink to this definition">#</a></dt>
+<dd><p>Boolean mask of cortical columns with valid BigBrain mappings.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.bigbrain_weights">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">bigbrain_weights</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.bigbrain_weights" title="Permalink to this definition">#</a></dt>
+<dd><p>Full BigBrain mapping weights as column x lamina x layer, if stored.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.close">
+<span class="sig-name descname"><span class="pre">close</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#lameg.source.LaminarSourceData.close" title="Permalink to this definition">#</a></dt>
+<dd><p>Close the underlying HDF5 file.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.closed">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">closed</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.closed" title="Permalink to this definition">#</a></dt>
+<dd><p>Whether the underlying HDF5 file is closed.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.dtype">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">dtype</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.dtype" title="Permalink to this definition">#</a></dt>
+<dd><p>On-disk datatype of <code class="docutils literal notranslate"><span class="pre">source_ts</span></code>.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.has_bigbrain_mapping">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">has_bigbrain_mapping</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.has_bigbrain_mapping" title="Permalink to this definition">#</a></dt>
+<dd><p>Whether a complete BigBrain mapping is stored in the source file.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.has_trials">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">has_trials</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.has_trials" title="Permalink to this definition">#</a></dt>
+<dd><p>Whether <code class="docutils literal notranslate"><span class="pre">source_ts</span></code> has an explicit trial axis.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.lamina">
+<span class="sig-name descname"><span class="pre">lamina</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lamina</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trial</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.source.LaminarSourceData.lamina" title="Permalink to this definition">#</a></dt>
+<dd><p>Read BigBrain-mapped laminar source activity on demand.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lamina</strong> (<em>{&quot;I&quot;</em><em>, </em><em>&quot;II&quot;</em><em>, </em><em>&quot;III&quot;</em><em>, </em><em>&quot;IV&quot;</em><em>, </em><em>&quot;V&quot;</em><em>, </em><em>&quot;VI&quot;}</em><em>, </em><em>int</em><em>, </em><em>slice</em><em>, or </em><em>None</em><em>, </em><em>optional</em>) – BigBrain lamina to return. String labels are matched
+case-insensitively. Integer indices are zero-based. An integer or
+string removes the lamina axis from the returned array; a slice or
+None preserves it.</p></li>
+<li><p><strong>column</strong> (<em>int</em><em>, </em><em>slice</em><em>, or </em><em>None</em><em>, </em><em>optional</em>) – Zero-based cortical-column index. An integer removes the column
+axis from the returned array. A slice or None preserves it.</p></li>
+<li><p><strong>time</strong> (<em>(</em><em>float</em><em>, </em><em>float</em><em>) or </em><em>None</em><em>, </em><em>optional</em>) – Inclusive time interval <code class="docutils literal notranslate"><span class="pre">(start_ms,</span> <span class="pre">stop_ms)</span></code>. If None, all time
+samples are returned.</p></li>
+<li><p><strong>trial</strong> (<em>int</em><em>, </em><em>slice</em><em>, or </em><em>None</em><em>, </em><em>optional</em>) – Zero-based trial index for files with an explicit trial axis. An
+integer removes the trial axis. If the file has no trial axis,
+<code class="docutils literal notranslate"><span class="pre">trial</span></code> must be None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>BigBrain-mapped source activity. With no scalar selections, the
+axis order is <code class="docutils literal notranslate"><span class="pre">lamina</span> <span class="pre">x</span> <span class="pre">column</span> <span class="pre">x</span> <span class="pre">time</span></code> or
+<code class="docutils literal notranslate"><span class="pre">lamina</span> <span class="pre">x</span> <span class="pre">column</span> <span class="pre">x</span> <span class="pre">time</span> <span class="pre">x</span> <span class="pre">trial</span></code>.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Laminar activity is not stored redundantly. The requested layer-space
+source data and column-specific BigBrain weights are read from HDF5 and
+combined on demand using <code class="docutils literal notranslate"><span class="pre">surface_to_laminae</span></code>.</p>
+<p class="rubric">Examples</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">src.lamina(column=6620,</span> <span class="pre">time=(-300,</span> <span class="pre">100))</span></code></dt><dd><p>Returns <code class="docutils literal notranslate"><span class="pre">lamina</span> <span class="pre">x</span> <span class="pre">selected_time</span></code> for one cortical column.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">src.lamina(lamina=&quot;V&quot;,</span> <span class="pre">time=(-75,</span> <span class="pre">-25))</span></code></dt><dd><p>Returns <code class="docutils literal notranslate"><span class="pre">column</span> <span class="pre">x</span> <span class="pre">selected_time</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">src.lamina(lamina=&quot;V&quot;,</span> <span class="pre">column=6620)</span></code></dt><dd><p>Returns one laminar time series.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.laminae">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">laminae</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.laminae" title="Permalink to this definition">#</a></dt>
+<dd><p>Stored BigBrain lamina labels, or None if no mapping is present.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.layer">
+<span class="sig-name descname"><span class="pre">layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">column</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trial</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.source.LaminarSourceData.layer" title="Permalink to this definition">#</a></dt>
+<dd><p>Read layer-space source data without loading the full HDF5 array.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<em>int</em><em>, </em><em>slice</em><em>, or </em><em>None</em><em>, </em><em>optional</em>) – Zero-based reconstructed layer index. An integer removes the layer
+axis from the returned array. A slice or None preserves it.</p></li>
+<li><p><strong>column</strong> (<em>int</em><em>, </em><em>slice</em><em>, or </em><em>None</em><em>, </em><em>optional</em>) – Zero-based cortical-column index. An integer removes the column
+axis from the returned array. A slice or None preserves it.</p></li>
+<li><p><strong>time</strong> (<em>(</em><em>float</em><em>, </em><em>float</em><em>) or </em><em>None</em><em>, </em><em>optional</em>) – Inclusive time interval <code class="docutils literal notranslate"><span class="pre">(start_ms,</span> <span class="pre">stop_ms)</span></code>. If None, all time
+samples are returned. Time selection is converted to a contiguous
+HDF5 slice using <code class="docutils literal notranslate"><span class="pre">numpy.searchsorted</span></code>.</p></li>
+<li><p><strong>trial</strong> (<em>int</em><em>, </em><em>slice</em><em>, or </em><em>None</em><em>, </em><em>optional</em>) – Zero-based trial index for files with an explicit trial axis. An
+integer removes the trial axis. If the file has no trial axis,
+<code class="docutils literal notranslate"><span class="pre">trial</span></code> must be None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Requested source data. Integer selectors remove their corresponding
+axes, while unselected/sliced axes are retained.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>numpy.ndarray</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">src.layer(column=6620)</span></code></dt><dd><p>Returns <code class="docutils literal notranslate"><span class="pre">layer</span> <span class="pre">x</span> <span class="pre">time</span></code> for a file without a trial axis.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">src.layer(layer=4,</span> <span class="pre">time=(-75,</span> <span class="pre">-25))</span></code></dt><dd><p>Returns <code class="docutils literal notranslate"><span class="pre">column</span> <span class="pre">x</span> <span class="pre">selected_time</span></code>.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">src.layer(layer=4,</span> <span class="pre">column=6620)</span></code></dt><dd><p>Returns one time series.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.layer_depth">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">layer_depth</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.layer_depth" title="Permalink to this definition">#</a></dt>
+<dd><p>Reconstructed depths, with 0=pial and 1=white, if stored.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.n_columns">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n_columns</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.n_columns" title="Permalink to this definition">#</a></dt>
+<dd><p>Number of cortical columns.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.n_laminae">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n_laminae</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.n_laminae" title="Permalink to this definition">#</a></dt>
+<dd><p>Number of stored BigBrain laminae, or 0 if no mapping is present.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.n_layers">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n_layers</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.n_layers" title="Permalink to this definition">#</a></dt>
+<dd><p>Number of reconstructed layered surfaces.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.n_times">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n_times</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.n_times" title="Permalink to this definition">#</a></dt>
+<dd><p>Number of time samples.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.n_trials">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">n_trials</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.n_trials" title="Permalink to this definition">#</a></dt>
+<dd><p>Number of trials, or 1 if no explicit trial axis exists.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.shape">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">shape</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.shape" title="Permalink to this definition">#</a></dt>
+<dd><p>Shape of <code class="docutils literal notranslate"><span class="pre">source_ts</span></code>.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.time">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">time</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.time" title="Permalink to this definition">#</a></dt>
+<dd><p>Stored time vector in milliseconds.</p>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.time_values">
+<span class="sig-name descname"><span class="pre">time_values</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">time</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.source.LaminarSourceData.time_values" title="Permalink to this definition">#</a></dt>
+<dd><p>Return the stored time samples within a millisecond interval.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.vertices">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">vertices</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.vertices" title="Permalink to this definition">#</a></dt>
+<dd><p>Source vertex coordinates as layer x column x xyz, if stored.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.window_count">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">window_count</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.window_count" title="Permalink to this definition">#</a></dt>
+<dd><p>Number of inversion windows contributing to each time sample.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="lameg.source.LaminarSourceData.woi">
+<em class="property"><span class="pre">property</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">woi</span></span><a class="headerlink" href="#lameg.source.LaminarSourceData.woi" title="Permalink to this definition">#</a></dt>
+<dd><p>Sliding inversion windows in milliseconds, if stored.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.source.export_source_time_series_hdf5">
+<span class="sig-prename descclassname"><span class="pre">lameg.source.</span></span><span class="sig-name descname"><span class="pre">export_source_time_series_hdf5</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inversion_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block_size</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">512</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'float32'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compression</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lzf'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compression_opts</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">4</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_memory_gb</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">16.0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.source.export_source_time_series_hdf5" title="Permalink to this definition">#</a></dt>
+<dd><p>Reconstruct a sliding-window inverse to an analysis-ready HDF5 file.</p>
+<p>The output source dataset is stored as <code class="docutils literal notranslate"><span class="pre">layer</span> <span class="pre">x</span> <span class="pre">cortical_column</span> <span class="pre">x</span> <span class="pre">time</span></code>
+(or <code class="docutils literal notranslate"><span class="pre">layer</span> <span class="pre">x</span> <span class="pre">cortical_column</span> <span class="pre">x</span> <span class="pre">time</span> <span class="pre">x</span> <span class="pre">trial</span></code> for multi-trial data).</p>
+<p>For typical single-trial/averaged EBBlayer datasets this function uses a
+fast window-major reconstruction: each window-specific <code class="docutils literal notranslate"><span class="pre">M</span></code> matrix is
+opened exactly once, source activity is reconstructed for that window, and
+the overlapping estimates are accumulated in RAM.  This is substantially
+faster than repeatedly reopening every <code class="docutils literal notranslate"><span class="pre">M</span></code> file for small cortical
+blocks.  If the full accumulator would exceed <code class="docutils literal notranslate"><span class="pre">max_memory_gb</span></code>, the
+function automatically falls back to the lower-memory blockwise strategy.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_fname</strong> (<em>str</em>) – SPM-compatible M/EEG dataset containing the sensor data.</p></li>
+<li><p><strong>out_fname</strong> (<em>str</em>) – HDF5 file to create.</p></li>
+<li><p><strong>surf_set</strong> (<a class="reference internal" href="_source/lameg.html#lameg.surf.LayerSurfaceSet" title="lameg.surf.LayerSurfaceSet"><em>LayerSurfaceSet</em></a>) – Laminar surface hierarchy used to construct the forward model.
+The number of layers, number of cortical columns, and normalized
+cortical-depth coordinates are derived from this object.</p></li>
+<li><p><strong>inv_fname</strong> (<em>str</em><em>, </em><em>optional</em>) – File containing the inverse. Defaults to <code class="docutils literal notranslate"><span class="pre">data_fname</span></code>.</p></li>
+<li><p><strong>inversion_idx</strong> (<em>int</em><em>, </em><em>optional</em>) – Zero-based inversion index.</p></li>
+<li><p><strong>orientation</strong> (<em>str</em><em>, </em><em>optional</em>) – Orientation variant of the downsampled multilayer surface.
+Default is <code class="docutils literal notranslate"><span class="pre">&quot;link_vector&quot;</span></code>.</p></li>
+<li><p><strong>fixed</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether the forward model used fixed source orientations.
+Default is True.</p></li>
+<li><p><strong>block_size</strong> (<em>int</em><em>, </em><em>optional</em>) – Cortical columns per block for the low-memory fallback path.</p></li>
+<li><p><strong>dtype</strong> (<em>str</em><em> or </em><em>numpy dtype</em><em>, </em><em>optional</em>) – On-disk source datatype. Accumulation is performed in float64.</p></li>
+<li><p><strong>compression</strong> (<em>{&quot;lzf&quot;</em><em>, </em><em>&quot;gzip&quot;</em><em>, </em><em>None}</em><em>, </em><em>optional</em>) – HDF5 compression filter. <code class="docutils literal notranslate"><span class="pre">lzf</span></code> is the default because it is much
+faster than gzip for floating-point source data. Use <code class="docutils literal notranslate"><span class="pre">None</span></code> for the
+fastest export and largest file.</p></li>
+<li><p><strong>compression_opts</strong> (<em>int</em><em>, </em><em>optional</em>) – Gzip compression level. Ignored for LZF/None.</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em><em>, </em><em>optional</em>) – Replace an existing output file when True.</p></li>
+<li><p><strong>max_memory_gb</strong> (<em>float</em><em>, </em><em>optional</em>) – Maximum RAM allocated to the full source accumulator before falling
+back to blockwise export. Default is 16 GB.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Absolute path to the created HDF5 file.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Source ordering is assumed to be layer-major, matching the multilayer SPM
+meshes used by laMEG: all columns from layer 0, followed by all columns
+from layer 1, and so on.</p>
+<p>For each inversion window the reconstruction uses associativity to avoid
+constructing the large <code class="docutils literal notranslate"><span class="pre">M</span> <span class="pre">&#64;</span> <span class="pre">U</span></code> matrix explicitly:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">M</span> <span class="o">@</span> <span class="n">U</span><span class="p">)</span> <span class="o">@</span> <span class="n">Y</span> <span class="o">==</span> <span class="n">M</span> <span class="o">@</span> <span class="p">(</span><span class="n">U</span> <span class="o">@</span> <span class="n">Y</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This is mathematically equivalent (up to floating-point rounding) and is
+much cheaper because the window contains far fewer time samples than there
+are sensors.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.source.add_bigbrain_mapping">
+<span class="sig-prename descclassname"><span class="pre">lameg.source.</span></span><span class="sig-name descname"><span class="pre">add_bigbrain_mapping</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">surf_set</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">overwrite</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compression</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'lzf'</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.source.add_bigbrain_mapping" title="Permalink to this definition">#</a></dt>
+<dd><p>Add a BigBrain laminar mapping to an exported source HDF5 file.</p>
+<p>The mapping is stored independently of the source time series so that an
+existing source reconstruction does not need to be regenerated when the
+anatomical laminar mapping is added or updated.</p>
+<p>The resulting HDF5 layout is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">/</span><span class="n">layer_depth</span>
+    <span class="p">(</span><span class="n">layer</span><span class="p">,)</span>
+
+<span class="o">/</span><span class="n">bigbrain</span><span class="o">/</span><span class="n">edges</span>
+    <span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="mi">7</span><span class="p">)</span>
+
+<span class="o">/</span><span class="n">bigbrain</span><span class="o">/</span><span class="n">weights</span>
+    <span class="p">(</span><span class="n">column</span><span class="p">,</span> <span class="mi">6</span><span class="p">,</span> <span class="n">layer</span><span class="p">)</span>
+
+<span class="o">/</span><span class="n">bigbrain</span><span class="o">/</span><span class="n">labels</span>
+    <span class="p">[</span><span class="s2">&quot;I&quot;</span><span class="p">,</span> <span class="s2">&quot;II&quot;</span><span class="p">,</span> <span class="s2">&quot;III&quot;</span><span class="p">,</span> <span class="s2">&quot;IV&quot;</span><span class="p">,</span> <span class="s2">&quot;V&quot;</span><span class="p">,</span> <span class="s2">&quot;VI&quot;</span><span class="p">]</span>
+
+<span class="o">/</span><span class="n">bigbrain</span><span class="o">/</span><span class="n">valid_columns</span>
+    <span class="p">(</span><span class="n">column</span><span class="p">,)</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">weights[column]</span></code> is the linear transformation from reconstructed layer
+activity to mean activity in BigBrain laminae I-VI for that cortical
+column.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>source_fname</strong> (<em>str</em><em> or </em><em>path-like</em>) – HDF5 source file created by <code class="docutils literal notranslate"><span class="pre">export_source_time_series_hdf5</span></code>.</p></li>
+<li><p><strong>surf_set</strong> (<a class="reference internal" href="_source/lameg.html#lameg.surf.LayerSurfaceSet" title="lameg.surf.LayerSurfaceSet"><em>LayerSurfaceSet</em></a>) – Surface set corresponding to the source reconstruction.</p></li>
+<li><p><strong>overwrite</strong> (<em>bool</em><em>, </em><em>optional</em>) – Replace an existing <code class="docutils literal notranslate"><span class="pre">layer_depth</span></code>/<code class="docutils literal notranslate"><span class="pre">bigbrain</span></code> mapping when True.
+Default is False.</p></li>
+<li><p><strong>compression</strong> (<em>{&quot;lzf&quot;</em><em>, </em><em>&quot;gzip&quot;</em><em>, </em><em>None}</em><em>, </em><em>optional</em>) – HDF5 compression used for <code class="docutils literal notranslate"><span class="pre">edges</span></code> and <code class="docutils literal notranslate"><span class="pre">weights</span></code>. Default is
+<code class="docutils literal notranslate"><span class="pre">&quot;lzf&quot;</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Absolute path to the modified source HDF5 file.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>The depth convention used throughout the stored mapping is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">0</span> <span class="o">=</span> <span class="n">pial</span> <span class="n">boundary</span>
+<span class="mi">1</span> <span class="o">=</span> <span class="n">grey</span><span class="o">/</span><span class="n">white</span> <span class="n">boundary</span>
+</pre></div>
+</div>
+<p>Reconstructed layer depths are stored in the same coordinate system as
+the BigBrain cumulative laminar boundaries.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="lameg.source.load_source_time_series">
+<span class="sig-prename descclassname"><span class="pre">lameg.source.</span></span><span class="sig-name descname"><span class="pre">load_source_time_series</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mu_matrix</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inv_fname</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inversion_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.source.load_source_time_series" title="Permalink to this definition">#</a></dt>
+<dd><p>Load or compute source-space time series from MEG data.</p>
+<p>This function reconstructs source-level activity either from precomputed inverse solutions
+(stored in the MEG data file or an external inversion file) or directly from a provided
+forward/inverse matrix (<cite>mu_matrix</cite>). Optionally, the reconstruction can be restricted to a
+subset of vertices.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+                </article>
+              
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title"> <code class="docutils literal notranslate"><span class="pre">laMEG</span></code>: laminar inference with MEG</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="auto_tutorials/index.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Tutorials gallery</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#overview">Overview</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#exporting-source-data">Exporting source data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#reading-source-data">Reading source data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#layers-and-laminae">Layers and laminae</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hdf5-schema">HDF5 schema</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#required-root-attributes">Required root attributes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#core-datasets">Core datasets</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bigbrain-mapping">BigBrain mapping</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#api-reference">API reference</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.__init__"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.__init__()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.axis_order"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.axis_order</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.bigbrain_edges"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.bigbrain_edges</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.bigbrain_valid_columns"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.bigbrain_valid_columns</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.bigbrain_weights"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.bigbrain_weights</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.close"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.close()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.closed"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.closed</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.dtype"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.dtype</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.has_bigbrain_mapping"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.has_bigbrain_mapping</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.has_trials"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.has_trials</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.lamina"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.lamina()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.laminae"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.laminae</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.layer"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.layer()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.layer_depth"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.layer_depth</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.n_columns"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.n_columns</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.n_laminae"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.n_laminae</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.n_layers"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.n_layers</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.n_times"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.n_times</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.n_trials"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.n_trials</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.shape"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.shape</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.time"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.time</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.time_values"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.time_values()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.vertices"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.vertices</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.window_count"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.window_count</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.LaminarSourceData.woi"><code class="docutils literal notranslate"><span class="pre">LaminarSourceData.woi</span></code></a></li>
+</ul>
+</li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.export_source_time_series_hdf5"><code class="docutils literal notranslate"><span class="pre">export_source_time_series_hdf5()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.add_bigbrain_mapping"><code class="docutils literal notranslate"><span class="pre">add_bigbrain_mapping()</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.source.load_source_time_series"><code class="docutils literal notranslate"><span class="pre">load_source_time_series()</span></code></a></li>
+</ul>
+</li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/danclab/laMEG/edit/master/docs/source_data.rst">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+  <div class="sidebar-secondary-item">
+  <div class="tocsection sourcelink">
+    <a href="_sources/source_data.rst.txt">
+      <i class="fa-solid fa-file-lines"></i> Show Source
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item">
+  <p class="copyright">
+    
+      © Copyright 2024, DANC lab.
+      <br/>
+    
+  </p>
+</div>
+      
+        <div class="footer-item">
+  <p class="sphinx-version">
+    Created using <a href="https://www.sphinx-doc.org/">Sphinx</a> 5.3.0.
+    <br/>
+  </p>
+</div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

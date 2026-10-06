@@ -35,6 +35,17 @@ Here is a list of the modules available in ``laMEG``:
    ~lameg.util
    ~lameg.viz
 
+Source data format
+------------------
+
+The analysis-ready source-data API and HDF5 schema are documented here:
+
+.. toctree::
+   :maxdepth: 1
+
+   source_data
+```
+
 Tutorials
 ----------------
 
