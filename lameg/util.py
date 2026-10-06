@@ -140,15 +140,19 @@ def init_spm_parallel_pool(spm, n_workers):
     spm.spm_standalone(
         "eval",
         f"""
-            try
+        try
+            if usejava('jvm')
                 p = gcp('nocreate');
-    
+
                 if isempty(p)
                     parpool({n_workers}, 'IdleTimeout', Inf);
                 end
-            catch ME
-                disp(getReport(ME));
+            else
+                spm_get_defaults('use_parfor', false);
             end
+        catch ME
+            disp(getReport(ME));
+        end
         """,
         nargout=0
     )
@@ -197,6 +201,9 @@ def batch(cfg, viz=True, spm_instance=None) -> None:
             f"""
             load('{name}'); 
             spm('defaults', 'EEG');
+            if ~usejava('jvm')
+                spm_get_defaults('use_parfor', false);
+            end
             spm_get_defaults('cmdline',{int(not viz)}); 
             spm_jobman('run', matlabbatch);
             """,

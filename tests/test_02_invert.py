@@ -99,7 +99,7 @@ def test_coregister(spm):
         stage='ds',
         orientation='link_vector',
         fixed=True,
-        viz=True,
+        viz=False,
         spm_instance=spm
     )
 
@@ -357,6 +357,7 @@ def test_invert_sliding_window_msp(spm):
         stage='ds',
         orientation='link_vector',
         fixed=True,
+        viz=False,
         spm_instance=spm
     )
 
@@ -371,6 +372,7 @@ def test_invert_sliding_window_msp(spm):
         fixed=True,
         n_spatial_modes=60,
         win_size=16,
+        viz=False,
         spm_instance=spm
     )
 
@@ -393,6 +395,7 @@ def test_invert_sliding_window_msp(spm):
         fixed=True,
         n_spatial_modes='all',
         win_size=16,
+        viz=False,
         spm_instance=spm
     )
 
@@ -415,6 +418,7 @@ def test_invert_sliding_window_msp(spm):
         n_spatial_modes='all',
         win_size=16,
         win_overlap=False,
+        viz=False,
         spm_instance=spm
     )
 

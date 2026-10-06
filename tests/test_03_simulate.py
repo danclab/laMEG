@@ -184,6 +184,7 @@ def test_run_current_density_simulation(spm):
         dipole_moment,
         sim_patch_size,
         snr,
+        viz=False,
         spm_instance=spm
     )
 
@@ -209,6 +210,7 @@ def test_run_current_density_simulation(spm):
         sim_patch_size,
         snr,
         average_trials=True,
+        viz=False,
         spm_instance=spm
     )
 

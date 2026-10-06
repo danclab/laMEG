@@ -8,6 +8,12 @@ import spm_standalone
 from tests.source_test_utils import make_source_file
 
 
+@pytest.fixture(scope="session", autouse=True)
+def matlab_runtime():
+    """Initialize MATLAB Runtime without the JVM for automated tests."""
+    spm_standalone.initialize_runtime(["-nojvm"])
+
+
 @pytest.fixture(scope="session")
 def spm():
     """
@@ -34,6 +40,7 @@ def spm():
     spm_instance = spm_standalone.initialize()
     yield spm_instance
     spm_instance.terminate()
+
 
 @pytest.fixture
 def source_file(tmp_path):

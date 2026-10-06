@@ -74,23 +74,49 @@ def test_spm_context():
     assert terminated
 
 
-def test_batch():
-    """
-    Test the spm batch functionality
-    """
-    surf_set = LayerSurfaceSet('sub-104',2)
+def test_batch(tmp_path):
+    """Test SPM batch execution with a non-graphical operation."""
+    surf_set = LayerSurfaceSet("sub-104", 2)
 
-    with spm_context() as spm:
-        cfg = {
-            "spm": {
-                "util": {
-                    "checkreg": {
-                        "data": np.asarray([f'{surf_set.mri_file},1'], dtype="object")
-                    }
+    input_file = surf_set.mri_file
+    output_name = "test_imcalc.nii"
+
+    # Empty MATLAB struct array with fields expected by imcalc.var
+    empty_var = np.empty(
+        (0,),
+        dtype=[("name", object), ("value", object)],
+    )
+
+    cfg = {
+        "spm": {
+            "util": {
+                "imcalc": {
+                    "input": np.asarray(
+                        [f"{input_file},1"],
+                        dtype=object,
+                    ),
+                    "output": output_name,
+                    "outdir": np.asarray(
+                        [str(tmp_path)],
+                        dtype=object,
+                    ),
+                    "expression": "i1",
+                    "var": empty_var,
+                    "options": {
+                        "dmtx": 0.0,
+                        "mask": 0.0,
+                        "interp": 1.0,
+                        "dtype": 4.0,
+                    },
                 }
             }
         }
-        batch(cfg, spm_instance=spm)
+    }
+
+    with spm_context() as spm:
+        batch(cfg, viz=False, spm_instance=spm)
+
+    assert (tmp_path / output_name).exists()
 
 
 def test_load_meg_sensor_data():
