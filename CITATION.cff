@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: "If you use laMEG in your research, please cite the software and the methodological publication(s) relevant to the analyses you use."
+title: "laMEG: a toolbox for laminar inference with MEG"
+type: software
+
+authors:
+  - family-names: "Bonaiuto"
+    given-names: "James J."
+
+abstract: >-
+  laMEG is an open-source Python toolbox for depth-resolved and laminar
+  inference from magnetoencephalography (MEG) data. It provides tools for
+  constructing multilayer cortical surface models, MEG and OPM-MEG forward
+  modelling, laminar source reconstruction and model comparison, simulation,
+  source-data export, and analysis of cortical-depth-resolved activity.
+
+keywords:
+  - magnetoencephalography
+  - MEG
+  - OPM-MEG
+  - laminar neuroimaging
+  - cortical depth
+  - source reconstruction
+  - neuroimaging
+  - neuroscience
+
+license: GPL-3.0-only
+doi: 10.5281/zenodo.21637876
+repository-code: "https://github.com/danclab/laMEG"
+repository-artifact: "https://pypi.org/project/lameg/"
+url: "https://danclab.github.io/laMEG/"
