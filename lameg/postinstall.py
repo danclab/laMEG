@@ -21,72 +21,112 @@ variables take effect:
 
 import logging
 import os
-import shutil
 import subprocess
+import sys
+import tempfile
+
+DANC_SPM_VERSION = "v0.1.0"
+DANC_SPM_REPO = "https://github.com/danclab/DANC_spm_python.git"
 
 # Set up logging to both the console and a log file in the user's home directory
-import sys
-
-home_dir = os.path.expanduser("~")  # Get the user's home directory
-log_file = os.path.join(home_dir, 'laMEG_postinstallation.log')
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
+home_dir = os.path.expanduser("~")
+log_file = os.path.join(home_dir, "laMEG_postinstallation.log")
+logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(message)s")
 
 # Create a file handler for logging to a file
 file_handler = logging.FileHandler(log_file)
 file_handler.setLevel(logging.INFO)
-file_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
+file_handler.setFormatter(logging.Formatter("%(asctime)s - %(message)s"))
 
 # Create a console handler for logging to the console
 console_handler = logging.StreamHandler()
 console_handler.setLevel(logging.INFO)
-console_handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
+console_handler.setFormatter(logging.Formatter("%(asctime)s - %(message)s"))
 
 # Add both handlers to the root logger
 logging.getLogger().addHandler(file_handler)
 logging.getLogger().addHandler(console_handler)
 
 
-def clone_and_install_spm():
-    """
-    Clones the SPM repository and installs it.
-    """
-    repo_url = "https://github.com/danclab/DANC_spm_python.git"
-    clone_dir = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'DANC_spm_python')
+def install_spm():
+    """Install the tested DANC SPM Python release."""
+    logging.info(
+        "Installing DANC SPM Python %s...",
+        DANC_SPM_VERSION,
+    )
 
-    if not os.path.exists(clone_dir):
-        logging.info("Cloning SPM repository from %s...", repo_url)
-        subprocess.check_call(['git', 'clone', repo_url, clone_dir])
-    else:
-        logging.info("SPM repository already exists, skipping cloning.")
+    with tempfile.TemporaryDirectory() as temp_dir:
+        clone_dir = os.path.join(temp_dir, "DANC_spm_python")
 
-    logging.info("Installing SPM package...")
-    try:
-        # Capture output from the pip install command
-        result = subprocess.run([sys.executable, '-m', 'pip', 'install', '-v', clone_dir],
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                                check=True)
+        try:
+            logging.info(
+                "Downloading DANC SPM Python %s...",
+                DANC_SPM_VERSION,
+            )
 
-        # Log the detailed output from pip install
-        logging.info(result.stdout)
-        logging.error(result.stderr)  # Errors go to the error log
+            subprocess.check_call(
+                [
+                    "git",
+                    "clone",
+                    "--depth",
+                    "1",
+                    "--branch",
+                    DANC_SPM_VERSION,
+                    "--single-branch",
+                    DANC_SPM_REPO,
+                    clone_dir,
+                ]
+            )
 
-        if result.returncode == 0:
-            logging.info("SPM package installed successfully.")
-        else:
-            logging.error("SPM installation failed with return code %d", result.returncode)
-            raise subprocess.CalledProcessError(result.returncode, result.args)
-    except subprocess.CalledProcessError as err:
-        logging.error("Failed to install SPM package. Error: %s", err)
-        raise
-    shutil.rmtree(clone_dir)
+            logging.info("Installing SPM package...")
+
+            result = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    "-v",
+                    clone_dir,
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                check=True,
+            )
+
+            logging.info(result.stdout)
+
+            if result.stderr:
+                logging.info(result.stderr)
+
+            logging.info(
+                "DANC SPM Python %s installed successfully.",
+                DANC_SPM_VERSION,
+            )
+
+        except subprocess.CalledProcessError as err:
+            logging.error(
+                "Failed to install DANC SPM Python %s.",
+                DANC_SPM_VERSION,
+            )
+
+            if getattr(err, "stdout", None):
+                logging.error("stdout:\n%s", err.stdout)
+
+            if getattr(err, "stderr", None):
+                logging.error("stderr:\n%s", err.stderr)
+
+            raise
 
 
 def setup_jupyter_extensions():
     """
-    Sets up Jupyter notebook extensions.
+    Set up Jupyter notebook extensions.
 
-    This method creates a script to install and enable the Jupyter `k3d` extension for the
-    environment. The script will be executed when the environment is activated.
+    This method creates a script to install and enable the Jupyter `k3d`
+    extension for the environment. The script will be executed when the
+    environment is activated.
     """
     conda_env_path = os.path.dirname(os.path.dirname(sys.executable))
     activate_script_dir = os.path.join(conda_env_path, "etc", "conda", "activate.d")
@@ -101,16 +141,18 @@ def setup_jupyter_extensions():
         # Marker file to prevent re-running the setup
         marker_file = os.path.join(conda_env_path, ".jupyter_setup_done")
         out_file.write(f'MARKER_FILE="{marker_file}"\n')
-        out_file.write("if [ ! -f \"$MARKER_FILE\" ]; then\n")
+        out_file.write('if [ ! -f "$MARKER_FILE" ]; then\n')
         out_file.write("    echo 'Setting up Jupyter extensions...'\n")
         out_file.write("    if command -v jupyter &> /dev/null; then\n")
         out_file.write("        jupyter nbextension install --py --user k3d\n")
         out_file.write("        jupyter nbextension enable --py --user k3d\n")
         out_file.write("        echo 'Jupyter extensions setup completed.'\n")
-        out_file.write("        touch \"$MARKER_FILE\"\n")
+        out_file.write('        touch "$MARKER_FILE"\n')
         out_file.write("    else\n")
-        out_file.write("        echo 'Jupyter is not installed. Please install Jupyter and try "
-                       "again.'\n")
+        out_file.write(
+            "        echo 'Jupyter is not installed. "
+            "Please install Jupyter and try again.'\n"
+        )
         out_file.write("    fi\n")
         out_file.write("fi\n")
 
@@ -122,8 +164,10 @@ def setup_jupyter_extensions():
 def run_postinstall():
     """Run all laMEG post-installation setup tasks."""
     logging.info("Running laMEG post-installation setup...")
-    clone_and_install_spm()
+
+    install_spm()
     setup_jupyter_extensions()
+
     logging.info("laMEG post-installation setup completed successfully.")
 
     # Detect if we're running inside a conda environment
@@ -131,21 +175,27 @@ def run_postinstall():
     if conda_env:
         print(
             f"Detected conda environment: '{conda_env}'.\n"
-            "Before using laMEG, please deactivate and reactivate your environment\n"
+            "Before using laMEG, please deactivate and reactivate "
+            "your environment\n"
             "so that environment variable changes take effect:\n\n"
-            f"    conda deactivate\n"
+            "    conda deactivate\n"
             f"    conda activate {conda_env}\n"
         )
 
-    # ----------------------------------------------------------------------
-    # Create marker file so that __init__.py knows postinstall has been run
-    # ----------------------------------------------------------------------
+    # ------------------------------------------------------------------
+    # Create marker file so that __init__.py knows postinstall has run
+    # ------------------------------------------------------------------
     marker_path = os.path.join(os.path.expanduser("~"), ".lameg_postinstall")
+
     try:
         with open(marker_path, "w", encoding="utf-8") as file:
             file.write("Post-installation completed successfully.\n")
     except OSError as err:
-        print(f"Warning: could not create postinstall marker file ({marker_path}): {err}")
+        print(
+            "Warning: could not create postinstall marker file "
+            f"({marker_path}): {err}"
+        )
+
 
 if __name__ == "__main__":
     run_postinstall()
