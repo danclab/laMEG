@@ -1,11 +1,11 @@
 # BigBrain mapping validation
 
 This directory contains validation analyses for laMEG's mapping from
-reconstructed cortical-depth surfaces to BigBrain-defined cortical laminae.
+cortical-depth surface layers to BigBrain-defined cortical laminae.
 
 These scripts are intended to quantify the numerical accuracy and robustness 
 of the layer-to-lamina transformation under realistic analysis conditions using 
-the test subject.
+the test subject data.
 
 ## 1. Finite-depth sampling
 
@@ -50,7 +50,7 @@ Outputs are written to:
 validation/bigbrain_mapping/results/sampling/
 ```
 
-The principal outputs are:
+The outputs are:
 
 - `global_summary.csv`
 - `depth_summary.csv`
@@ -134,7 +134,7 @@ Outputs are written to:
 validation/bigbrain_mapping/results/layer_to_lamina_mapping/
 ```
 
-Principal outputs include:
+Outputs are:
 
 - `layer_to_lamina_mapping_summary.csv`
 - `layer_to_lamina_mapping_repeats.csv`
@@ -168,23 +168,7 @@ For broader profiles, uncertainty in the laminar boundaries becomes the dominant
 source of error as boundary displacement increases.
 
 Dominant-lamina errors under boundary perturbation are predominantly between
-adjacent laminae rather than large jumps across cortical depth.
-
-### Choice of surface count
-
-The sampling analysis supports the use of 11 reconstructed surfaces as a practical
-default. At this resolution, sampling error is already small for moderately broad
-depth profiles and becomes negligible for broader profiles. Increasing the number
-of surfaces mainly improves recovery of extremely narrow profiles, whose spatial
-extent is smaller than the spacing between the 11 reconstructed surfaces.
-
-For broader profiles, uncertainty in the BigBrain-derived laminar boundaries
-becomes comparable to or larger than the residual sampling error at 11 surfaces.
-Increasing the number of reconstructed surfaces therefore provides diminishing
-returns for typical laminar inference and cannot compensate for anatomical
-boundary uncertainty.
-
-laMEG therefore uses 11 surfaces as a reasonable accuracy/complexity trade-off.
+adjacent laminae rather than large jumps across cortical depth. laMEG therefore uses 11 surfaces as a reasonable accuracy/complexity trade-off.
 Higher surface counts may still be useful for analyses specifically targeting very
 focal cortical-depth profiles, in which case a surface-count sensitivity analysis
 is recommended.
