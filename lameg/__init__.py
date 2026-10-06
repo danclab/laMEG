@@ -15,7 +15,7 @@ if not os.path.exists(_marker):
 # ----------------------------------------------------------------------
 # Lazy import of submodules (prevents circular import before SPM install)
 # ----------------------------------------------------------------------
-__all__ = ["invert", "laminar", "surf", "util", "viz"]
+__all__ = ["invert", "laminar", "simulate", "source", "surf", "util", "viz"]
 
 # Load all submodules eagerly when building docs
 if os.environ.get("SPHINX_BUILD") == "1":

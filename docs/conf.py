@@ -12,6 +12,7 @@
 #
 import os
 import sys
+from pkg_resources import get_distribution
 
 # import matplotlib as mpl
 
@@ -30,7 +31,8 @@ import lameg # noqa
 project = 'laMEG'
 copyright = '2024, DANC lab'
 author = 'DANC lab'
-release = "0.1.3"
+release = get_distribution("lameg").version
+version = release
 
 # release = lameg.__release__
 
