@@ -46,11 +46,6 @@ jobs:
         tar -xzf ${{ github.workspace }}/test_data.tar.gz -C ${{ github.workspace }}
         rm ${{ github.workspace }}/test_data.tar.gz
         stdbuf -oL -eL pytest -v -s --color=yes --cov=lameg --cov-report=xml
-        code=$?
-        # Fail only on nonzero codes other than segfault (139)
-        if [ $code -ne 0 ] && [ $code -ne 139 ]; then
-          exit $code
-        fi
       shell: bash -l {0}
 
     - name: Upload coverage to Codecov
