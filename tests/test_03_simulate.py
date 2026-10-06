@@ -90,6 +90,7 @@ def test_run_dipole_simulation(spm):
         sim_patch_size,
         snr,
         average_trials=True,
+        viz=False,
         spm_instance=spm
     )
 
