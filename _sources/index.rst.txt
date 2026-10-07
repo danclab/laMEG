@@ -44,7 +44,6 @@ The analysis-ready source-data API and HDF5 schema are documented here:
    :maxdepth: 1
 
    source_data
-```
 
 Tutorials
 ----------------
