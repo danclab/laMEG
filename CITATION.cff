@@ -2,6 +2,8 @@ cff-version: 1.2.0
 message: "If you use laMEG in your research, please cite the software and the methodological publication(s) relevant to the analyses you use."
 title: "laMEG: a toolbox for laminar inference with MEG"
 type: software
+version: "0.2.0"
+date-released: "2026-10-07"
 
 authors:
   - family-names: "Bonaiuto"
