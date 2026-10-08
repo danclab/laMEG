@@ -66,8 +66,6 @@ Requirements
 * `FreeSurfer v6.0 <https://surfer.nmr.mgh.harvard.edu/fswiki/rel6downloads>`_
 * Python version 3.7
 * Anaconda (or miniconda)
-* git
-* curl
 
 Upgrade Notice (v0.1.0)
 =======================
@@ -98,25 +96,21 @@ After conversion, you can validate the new structure::
 
 Installation
 ============
-1. Install git and curl if needed::
-
-       sudo apt-get install git curl
-
-2. Create a conda environment::
+1. Create a conda environment::
 
        conda create -n <env name> python=3.7
 
    replacing ``<env name>`` with the name of the environment you would like to create (i.e. 'lameg', or the name of your project)
 
-3. Activate the environment::
+2. Activate the environment::
 
        conda activate <env name>
 
    replacing ``<env name>`` with name of the environment you created.
 
-4. Install FreeSurfer, following the instructions `on this page <https://github.com/danclab/laMEG/blob/main/freesurfer_instructions.md>`_
+3. Install FreeSurfer, following the instructions `on this page <https://github.com/danclab/laMEG/blob/main/freesurfer_instructions.md>`_
 
-5. To install ``laMEG``, run::
+4. To install ``laMEG``, run::
 
        pip install lameg
 
@@ -126,12 +120,12 @@ Installation
 
    This installs SPM standalone and Matlab runtime, which can take some time depending on your connection speed.
 
-6. Before using, deactivate and reactivate the environment for changes to environment variables to take effect::
+5. Before using, deactivate and reactivate the environment for changes to environment variables to take effect::
 
        conda deactivate
        conda activate <env name>
 
-7. If you want to run the tutorials, download and extract the `test data <https://osf.io/x4zd3/download>`_
+6. If you want to run the tutorials, download and extract the `test data <https://osf.io/x4zd3/download>`_
 
 Indices and tables
 ------------------

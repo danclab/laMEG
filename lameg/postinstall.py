@@ -23,10 +23,12 @@ import logging
 import os
 import subprocess
 import sys
-import tempfile
 
-DANC_SPM_VERSION = "v0.1.0"
-DANC_SPM_REPO = "https://github.com/danclab/DANC_spm_python.git"
+DANC_SPM_VERSION = "v0.1.2"
+DANC_SPM_ARCHIVE = (
+    "https://github.com/danclab/DANC_spm_python/"
+    f"archive/refs/tags/{DANC_SPM_VERSION}.zip"
+)
 
 # Set up logging to both the console and a log file in the user's home directory
 home_dir = os.path.expanduser("~")
@@ -49,75 +51,52 @@ logging.getLogger().addHandler(console_handler)
 
 
 def install_spm():
-    """Install the tested DANC SPM Python release."""
+    """Install DANC SPM Python from its pinned release archive."""
     logging.info(
         "Installing DANC SPM Python %s...",
         DANC_SPM_VERSION,
     )
 
-    with tempfile.TemporaryDirectory() as temp_dir:
-        clone_dir = os.path.join(temp_dir, "DANC_spm_python")
+    try:
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "pip",
+                "install",
+                "--no-cache-dir",
+                "-v",
+                DANC_SPM_ARCHIVE,
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=True,
+        )
 
-        try:
-            logging.info(
-                "Downloading DANC SPM Python %s...",
-                DANC_SPM_VERSION,
-            )
+        logging.info(result.stdout)
 
-            subprocess.check_call(
-                [
-                    "git",
-                    "clone",
-                    "--depth",
-                    "1",
-                    "--branch",
-                    DANC_SPM_VERSION,
-                    "--single-branch",
-                    DANC_SPM_REPO,
-                    clone_dir,
-                ]
-            )
+        if result.stderr:
+            logging.info(result.stderr)
 
-            logging.info("Installing SPM package...")
+        logging.info(
+            "DANC SPM Python %s installed successfully.",
+            DANC_SPM_VERSION,
+        )
 
-            result = subprocess.run(
-                [
-                    sys.executable,
-                    "-m",
-                    "pip",
-                    "install",
-                    "-v",
-                    clone_dir,
-                ],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                text=True,
-                check=True,
-            )
+    except subprocess.CalledProcessError as err:
+        logging.error(
+            "Failed to install DANC SPM Python %s.",
+            DANC_SPM_VERSION,
+        )
 
-            logging.info(result.stdout)
+        if err.stdout:
+            logging.error("stdout:\n%s", err.stdout)
 
-            if result.stderr:
-                logging.info(result.stderr)
+        if err.stderr:
+            logging.error("stderr:\n%s", err.stderr)
 
-            logging.info(
-                "DANC SPM Python %s installed successfully.",
-                DANC_SPM_VERSION,
-            )
-
-        except subprocess.CalledProcessError as err:
-            logging.error(
-                "Failed to install DANC SPM Python %s.",
-                DANC_SPM_VERSION,
-            )
-
-            if getattr(err, "stdout", None):
-                logging.error("stdout:\n%s", err.stdout)
-
-            if getattr(err, "stderr", None):
-                logging.error("stderr:\n%s", err.stderr)
-
-            raise
+        raise
 
 
 def setup_jupyter_extensions():
