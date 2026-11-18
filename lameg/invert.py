@@ -198,11 +198,11 @@ def coregister(fid_coords, data_fname, surf_set, layer_name=None, stage='ds',
     batch(cfg, viz=viz, spm_instance=spm_instance)
 
 
-def opm_headmodel(data_fname, surf_set, coordsystem_fname=None, mri_fname=None,
-                   layer_name=None, stage='ds',orientation='link_vector',
-                   fixed=True, iskull_fname=None, oskull_fname=None,
-                   scalp_fname=None,voltype='Single Shell', meshres=2,
-                   lead=False, viz=True, spm_instance=None):
+def opm_headmodel(data_fname, surf_set, coordsystem_fname=None,
+                  layer_name=None, stage='ds',orientation='link_vector',
+                  fixed=True,  iskull_fname=None, oskull_fname=None,
+                  scalp_fname=None, voltype='Single Shell', meshres=2,
+                  lead=False, viz=True, spm_instance=None):
 
     """
     Compute an OPM forward model via SPM's spm_opm_headmodel, using a laminar
@@ -222,8 +222,6 @@ def opm_headmodel(data_fname, surf_set, coordsystem_fname=None, mri_fname=None,
     coordsystem_fname : str or None
         Path to a BIDS coordsystem.json (real-data fiducial registration).
         Leave None for simulated data.
-    mri_fname : str or None
-        Subject MRI path.
     layer_name : str or None, optional
         Surface layer to use for inversion (e.g., 'pial', 'white', or a fractional layer).
         If None, the full multilayer surface is used.
@@ -255,7 +253,7 @@ def opm_headmodel(data_fname, surf_set, coordsystem_fname=None, mri_fname=None,
         directory.
     """
     mesh_fname = surf_set.get_mesh_path(layer_name=layer_name, stage=stage,
-                                         orientation=orientation, fixed=fixed)
+                                        orientation=orientation, fixed=fixed)
 
     if iskull_fname is None:
         iskull_fname = ''
@@ -266,15 +264,11 @@ def opm_headmodel(data_fname, surf_set, coordsystem_fname=None, mri_fname=None,
     if coordsystem_fname is None:
         coordsystem_fname = ''
     headshape_fname = ''
-    if not mri_fname:
-        raise ValueError(
-            "opm_headmodel requires mri_fname."
-        )
 
     config = {
         'D': data_fname,
         'coordsystem': coordsystem_fname,
-        'sMRI': mri_fname,
+        'sMRI': surf_set.mri_file,
         'template': float(0),
         'headshape': headshape_fname,
         'cortex': mesh_fname,
@@ -287,14 +281,6 @@ def opm_headmodel(data_fname, surf_set, coordsystem_fname=None, mri_fname=None,
     }
 
     with spm_context(spm_instance) as spm:
-        spm.spm_standalone(
-            "eval",
-            f"""
-            spm('defaults', 'EEG');
-            spm_get_defaults('cmdline',{int(not viz)});
-            """,
-            nargout=0
-        )
         spm.spm_opm_headmodel(config, nargout=0)
 
     lead_field = None

@@ -593,10 +593,6 @@ def test_opm_headmodel(spm):
         spm_instance=spm
     )
 
-    # mri_fname is required
-    with pytest.raises(ValueError):
-        opm_headmodel(opm_fname, surf_set, mri_fname=None, spm_instance=spm)
-
     n_verts = surf_set.load(
         layer_name=layer_names[0],
         stage='ds',
@@ -608,7 +604,6 @@ def test_opm_headmodel(spm):
     lead_field = opm_headmodel(
         opm_fname,
         surf_set,
-        mri_fname=surf_set.mri_file,
         layer_name=layer_names[0],
         lead=True,
         viz=False,
@@ -625,7 +620,6 @@ def test_opm_headmodel(spm):
     lead_field = opm_headmodel(
         opm_fname,
         surf_set,
-        mri_fname=surf_set.mri_file,
         layer_name=layer_names[-1],
         lead=False,
         viz=False,

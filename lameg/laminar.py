@@ -134,9 +134,6 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
                        **forward_kwargs)
 
     elif device == 'opm':
-        if not forward_kwargs.get('mri_fname'):
-            raise ValueError("device='opm' requires forward_kwargs={'mri_fname': ...}.")
-
         def build_forward(layer_name):
             opm_headmodel(data_fname,
                           surf_set,
@@ -285,9 +282,6 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
                        **forward_kwargs)
 
     elif device == 'opm':
-        if not forward_kwargs.get('mri_fname'):
-            raise ValueError("device='opm' requires forward_kwargs={'mri_fname': ...}.")
-
         def build_forward(layer_name):
             opm_headmodel(data_fname,
                           surf_set,

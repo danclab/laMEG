@@ -455,17 +455,11 @@ def test_model_comparison_device_errors():
 
     with pytest.raises(ValueError, match='fid_coords'):
         model_comparison(None, data_fname, surf_set, device='squid')
-    with pytest.raises(ValueError, match='mri_fname'):
-        model_comparison(None, data_fname, surf_set, device='opm')
-    with pytest.raises(ValueError, match='mri_fname'):
-        model_comparison(None, data_fname, surf_set, device='opm', forward_kwargs={})
     with pytest.raises(ValueError, match='Unknown device'):
         model_comparison(None, data_fname, surf_set, device='eeg')
 
     with pytest.raises(ValueError, match='fid_coords'):
         sliding_window_model_comparison(24588, None, data_fname, surf_set, device='squid')
-    with pytest.raises(ValueError, match='mri_fname'):
-        sliding_window_model_comparison(24588, None, data_fname, surf_set, device='opm')
     with pytest.raises(ValueError, match='Unknown device'):
         sliding_window_model_comparison(24588, None, data_fname, surf_set, device='eeg')
 
@@ -489,7 +483,7 @@ def test_model_comparison_opm(spm):
     """
     surf_set = LayerSurfaceSet('sub-104', 2)
     opm_fname = make_opm_dataset(spm, surf_set, 'opm_model_comparison_test')
-    forward_kwargs = {'mri_fname': surf_set.mri_file}
+    forward_kwargs = {}
     patch_size = 5
     n_temp_modes = 4
 
@@ -556,7 +550,6 @@ def test_model_comparison_opm(spm):
         viz=False,
         spm_instance=spm,
         forward_kwargs={
-            'mri_fname': surf_set.mri_file,
             'voltype': 'Single Shell',
             'meshres': 2,
         }
@@ -605,7 +598,6 @@ def test_sliding_window_model_comparison_opm(spm):
         device='opm',
         viz=False,
         spm_instance=spm,
-        forward_kwargs={'mri_fname': surf_set.mri_file},
         invert_kwargs={
             'patch_size': patch_size,
             'n_temp_modes': sliding_n_temp_modes,
