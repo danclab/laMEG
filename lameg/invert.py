@@ -281,6 +281,14 @@ def opm_headmodel(data_fname, surf_set, coordsystem_fname=None,
     }
 
     with spm_context(spm_instance) as spm:
+        spm.spm_standalone(
+            "eval",
+            f"""
+            spm('defaults', 'EEG');
+            spm_get_defaults('cmdline',{int(not viz)});
+            """,
+            nargout=0
+        )
         spm.spm_opm_headmodel(config, nargout=0)
 
     lead_field = None
