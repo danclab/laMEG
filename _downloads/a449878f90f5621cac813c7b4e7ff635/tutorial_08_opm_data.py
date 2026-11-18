@@ -90,14 +90,6 @@ patch_size = 5
 # Number of temporal modes to use for EBB inversion
 n_temp_modes = 4
 
-# Coregister data to multilayer mesh
-coregister(
-    fid_coords,
-    base_fname,
-    surf_set,
-    spm_instance=spm
-)
-
 # Run inversion
 [_,_] = invert_ebb(
     base_fname,
@@ -187,6 +179,7 @@ pial_sim_fname = run_current_density_simulation(
     fid_coords,
     pial_sim_fname,
     surf_set_bilam,
+    device='opm',
     spm_instance=spm,
     invert_kwargs={
         'patch_size': patch_size,
@@ -227,6 +220,7 @@ white_sim_fname = run_current_density_simulation(
     fid_coords,
     white_sim_fname,
     surf_set_bilam,
+    device='opm',
     spm_instance=spm,
     invert_kwargs={
         'patch_size': patch_size,
@@ -272,6 +266,7 @@ for l in range(surf_set.n_layers):
         l_sim_fname,
         surf_set,
         viz=False,
+        device='opm',
         spm_instance=spm,
         invert_kwargs={
             'patch_size': patch_size,

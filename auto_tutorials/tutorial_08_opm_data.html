@@ -497,14 +497,6 @@ compute the forward model that will be used in the simulations</p>
 <span class="c1"># Number of temporal modes to use for EBB inversion</span>
 <span class="n">n_temp_modes</span> <span class="o">=</span> <span class="mi">4</span>
 
-<span class="c1"># Coregister data to multilayer mesh</span>
-<span class="n">coregister</span><span class="p">(</span>
-    <span class="n">fid_coords</span><span class="p">,</span>
-    <span class="n">base_fname</span><span class="p">,</span>
-    <span class="n">surf_set</span><span class="p">,</span>
-    <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm</span>
-<span class="p">)</span>
-
 <span class="c1"># Run inversion</span>
 <span class="p">[</span><span class="n">_</span><span class="p">,</span><span class="n">_</span><span class="p">]</span> <span class="o">=</span> <span class="n">invert_ebb</span><span class="p">(</span>
     <span class="n">base_fname</span><span class="p">,</span>
@@ -584,6 +576,7 @@ This should be positive (more model evidence for the pial surface model) because
     <span class="n">fid_coords</span><span class="p">,</span>
     <span class="n">pial_sim_fname</span><span class="p">,</span>
     <span class="n">surf_set_bilam</span><span class="p">,</span>
+    <span class="n">device</span><span class="o">=</span><span class="s1">&#39;opm&#39;</span><span class="p">,</span>
     <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm</span><span class="p">,</span>
     <span class="n">invert_kwargs</span><span class="o">=</span><span class="p">{</span>
         <span class="s1">&#39;patch_size&#39;</span><span class="p">:</span> <span class="n">patch_size</span><span class="p">,</span>
@@ -624,6 +617,7 @@ the difference in free energy (pial - white matter) should be negative.</p>
     <span class="n">fid_coords</span><span class="p">,</span>
     <span class="n">white_sim_fname</span><span class="p">,</span>
     <span class="n">surf_set_bilam</span><span class="p">,</span>
+    <span class="n">device</span><span class="o">=</span><span class="s1">&#39;opm&#39;</span><span class="p">,</span>
     <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm</span><span class="p">,</span>
     <span class="n">invert_kwargs</span><span class="o">=</span><span class="p">{</span>
         <span class="s1">&#39;patch_size&#39;</span><span class="p">:</span> <span class="n">patch_size</span><span class="p">,</span>
@@ -669,6 +663,7 @@ We’ll turn off SPM visualization here.</p>
         <span class="n">l_sim_fname</span><span class="p">,</span>
         <span class="n">surf_set</span><span class="p">,</span>
         <span class="n">viz</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">device</span><span class="o">=</span><span class="s1">&#39;opm&#39;</span><span class="p">,</span>
         <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm</span><span class="p">,</span>
         <span class="n">invert_kwargs</span><span class="o">=</span><span class="p">{</span>
             <span class="s1">&#39;patch_size&#39;</span><span class="p">:</span> <span class="n">patch_size</span><span class="p">,</span>
