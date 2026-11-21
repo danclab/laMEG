@@ -11,7 +11,7 @@ import h5py
 import numpy as np
 from scipy.io import loadmat, savemat
 
-from .forward import _cache_hash, _identity
+from .forward import _cache_hash, _identity, _mat_string
 from .util import spm_context
 
 
@@ -224,7 +224,6 @@ _MEG_TYPES = {'MEG', 'MEGMAG', 'MEGGRAD', 'MEGPLANAR'}
 
 def _h5_good_labels(header):
     """Return labels selected by SPM for magnetic channels, including an active montage."""
-    from .forward import _mat_string  # pylint: disable=import-outside-toplevel
     channels = header['D/channels']
     montage = int(np.asarray(header.get('D/montage/Mind', 0)).item())
     if montage:
@@ -264,10 +263,6 @@ def _gain_channel_labels(cache, _file_identity):
 @lru_cache(maxsize=64)
 def _gain_registration(path, _file_identity, inversion_idx):
     """Read only slot metadata from HDF5. Cache legacy MAT's monolithic header read."""
-    # _source_io also uses inversion routines; defer the import to avoid a cycle.
-    # pylint: disable-next=import-outside-toplevel
-    from ._source_io import _decode_matlab_char_array, _h5_read_string
-
     if h5py.is_hdf5(path):
         with h5py.File(path, 'r') as header:
             slots = header.get('D/other/inv')
@@ -285,9 +280,9 @@ def _gain_registration(path, _file_identity, inversion_idx):
                 marker = slot.get('lameg_external_gain')
                 if not isinstance(marker, h5py.Group):
                     return None
-                return (_h5_read_string(header, slot['gainmat']),
-                        _h5_read_string(header, marker['file']),
-                        _h5_read_string(header, marker['sha256']))
+                return (_mat_string(slot['gainmat']),
+                        _mat_string(marker['file']),
+                        _mat_string(marker['sha256']))
             selected = _selected_registration(read_slot, active, inversion_idx)
             return selected + (_h5_good_labels(header),) if selected else None
 
@@ -302,8 +297,7 @@ def _gain_registration(path, _file_identity, inversion_idx):
         marker = getattr(slots[index], 'lameg_external_gain', None)
         if marker is None:
             return None
-        return tuple(_decode_matlab_char_array(item) for item in
-                     (getattr(slots[index], 'gainmat', ''), marker.file, marker.sha256))
+        return getattr(slots[index], 'gainmat', ''), marker.file, marker.sha256
 
     selected = _selected_registration(read_legacy_slot, active, inversion_idx)
     return selected + (_legacy_good_labels(dataset),) if selected else None
