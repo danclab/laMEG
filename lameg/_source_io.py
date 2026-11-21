@@ -14,8 +14,8 @@ import numpy as np
 from scipy.io import loadmat
 from scipy.sparse import csc_matrix, issparse
 
+from lameg._mat_sparse import h5_to_csc, is_h5_sparse, sparse_shape
 from lameg.invert import (
-    _h5_to_csc,
     _mat_to_csc,
     check_inversion_exists,
 )
@@ -253,7 +253,7 @@ def _load_hdf5_inverse_components(inv_fname, inversion_idx):
         u_ref = inv_root["U"][0][0]
         u_obj = file[u_ref]
         if isinstance(u_obj, h5py.Group):
-            u_matrix = _h5_to_csc(u_obj)
+            u_matrix = h5_to_csc(u_obj)
         else:
             u_matrix = np.asarray(u_obj)
 
@@ -750,8 +750,8 @@ def _h5_matrix_rows_from_object(obj, rows, n_spatial_modes):
     if np.any(rows < 0):
         raise IndexError("Source row indices must be non-negative.")
 
-    if isinstance(obj, h5py.Group) and all(k in obj for k in ("data", "ir", "jc")):
-        matrix = _ensure_m_orientation(_h5_to_csc(obj), n_spatial_modes)
+    if is_h5_sparse(obj):
+        matrix = _ensure_m_orientation(h5_to_csc(obj), n_spatial_modes)
         if rows.max() >= matrix.shape[0]:
             raise IndexError("Source row index exceeds inverse matrix dimensions.")
         return matrix[rows, :]
@@ -797,21 +797,23 @@ def _h5_matrix_shape_by_path(file_name, object_path, n_spatial_modes):
 
 def _h5_matrix_shape_from_object(obj, n_spatial_modes):
     """Return logical ``(n_sources, n_spatial_modes)`` for a v7.3 matrix."""
-    if isinstance(obj, h5py.Group) and all(k in obj for k in ("data", "ir", "jc")):
-        matrix = _ensure_m_orientation(_h5_to_csc(obj), n_spatial_modes)
-        return matrix.shape
-
-    if not isinstance(obj, h5py.Dataset) or obj.ndim != 2:
+    if is_h5_sparse(obj):
+        shape = sparse_shape(obj)
+    elif isinstance(obj, h5py.Dataset) and obj.ndim == 2:
+        shape = obj.shape
+    else:
         raise TypeError(f"Unsupported HDF5 MATLAB matrix object: {type(obj)!r}")
+    return shape[::-1] if _m_needs_transpose(shape, n_spatial_modes) else shape
 
-    if obj.shape[1] == n_spatial_modes:
-        return obj.shape
-    if obj.shape[0] == n_spatial_modes:
-        return (obj.shape[1], obj.shape[0])
 
+def _m_needs_transpose(shape, n_spatial_modes):
+    if shape[1] == n_spatial_modes:
+        return False
+    if shape[0] == n_spatial_modes:
+        return True
     raise ValueError(
         "Window inverse matrix is incompatible with inverse.U: "
-        f"stored shape={obj.shape}, expected one dimension to equal "
+        f"stored shape={shape}, expected one dimension to equal "
         f"{n_spatial_modes} spatial modes."
     )
 
@@ -825,17 +827,9 @@ def _ensure_m_orientation(m_matrix, n_spatial_modes):
     if m_matrix.ndim != 2:
         raise ValueError(f"Expected a 2-D inverse matrix, got shape {m_matrix.shape}.")
 
-    if m_matrix.shape[1] == n_spatial_modes:
-        return m_matrix
-
-    if m_matrix.shape[0] == n_spatial_modes:
+    if _m_needs_transpose(m_matrix.shape, n_spatial_modes):
         return m_matrix.T.tocsc() if issparse(m_matrix) else m_matrix.T
-
-    raise ValueError(
-        "Window inverse matrix is incompatible with inverse.U: "
-        f"M shape={m_matrix.shape}, expected one dimension to equal "
-        f"{n_spatial_modes} spatial modes."
-    )
+    return m_matrix
 
 def _load_h5_matrix(file_name, object_name):
     """Load one dense/sparse matrix from a MATLAB v7.3 HDF5 file."""
@@ -883,8 +877,8 @@ def _resolve_m_win_file(stored_path, inv_fname, data_fname):
 
 def _h5_matrix_from_object(obj):
     """Convert a MATLAB v7.3 dense/sparse matrix object to NumPy/SciPy."""
-    if isinstance(obj, h5py.Group) and all(k in obj for k in ("data", "ir", "jc")):
-        return _h5_to_csc(obj)
+    if is_h5_sparse(obj):
+        return h5_to_csc(obj)
     if isinstance(obj, h5py.Dataset):
         return np.asarray(obj[()])
     raise TypeError(f"Unsupported HDF5 MATLAB matrix object: {type(obj)!r}")

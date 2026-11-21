@@ -11,7 +11,9 @@ import h5py
 import numpy as np
 from scipy.io import loadmat, savemat
 
-from .forward import _cache_hash, _identity, _mat_string
+from ._gain_cache import (active_slot_index, cache_hash, cell_strings, file_identity,
+                          gain_reference, inversion_slot, mat_string, open_spm_header,
+                          verified_gain)
 from .util import spm_context
 
 
@@ -182,7 +184,7 @@ def attach_spm_gain(data_fname, gain, channel_names, source_positions_m, source_
                                  channel_units, requested_positions_m, sensor_geometry,
                                  provenance)
     cache = path.with_name(name)
-    before = _identity(path)
+    before = file_identity(path)
     with TemporaryDirectory(dir=path.parent) as temp:
         folder = Path(temp)
         staged = folder/name
@@ -191,7 +193,7 @@ def attach_spm_gain(data_fname, gain, channel_names, source_positions_m, source_
         config = folder/'settings.mat'
         savemat(staged, fields)
         actual = cache if cache.is_file() else staged
-        file_digest = _cache_hash(actual, _identity(actual))
+        file_digest = cache_hash(actual, file_identity(actual))
         payload = {'dataset': str(path), 'cache_name': cache.name, 'slot': slot + 1,
                    'read_cache': str(actual.relative_to(path.parent)), 'file_digest': file_digest,
                    'staged_gain': str(staged), 'staged_header': str(header),
@@ -205,7 +207,7 @@ def attach_spm_gain(data_fname, gain, channel_names, source_positions_m, source_
         error = np.asarray(loadmat(status, squeeze_me=True)['message'])
         if error.size:
             raise ValueError(f'SPM external gain validation failed: {error.item()}')
-        if _identity(path) != before:
+        if file_identity(path) != before:
             raise RuntimeError('SPM dataset changed while attaching the gain.')
         os.chmod(header, path.stat().st_mode)
         if actual == staged:
@@ -213,7 +215,7 @@ def attach_spm_gain(data_fname, gain, channel_names, source_positions_m, source_
             try:
                 os.link(staged, cache)
             except FileExistsError as exc:
-                if _cache_hash(cache, _identity(cache)) != file_digest:
+                if cache_hash(cache, file_identity(cache)) != file_digest:
                     raise RuntimeError('Conflicting gain cache publication.') from exc
         os.replace(header, path)
     return cache
@@ -237,8 +239,8 @@ def _h5_good_labels(header):
             return [read(header[ref]) for ref in field[()].ravel()]
         return [read(field)]
 
-    names = values('label', _mat_string)
-    types = values('type', _mat_string)
+    names = values('label', mat_string)
+    types = values('type', mat_string)
     bad = values('bad', lambda item: item[()].item())
     return tuple(name for name, kind, flag in zip(names, types, bad)
                  if not flag and kind.upper() in _MEG_TYPES)
@@ -257,77 +259,36 @@ def _gain_channel_labels(cache, _file_identity):
     # Only read the small MATLAB cell array. The separately verified SHA-256
     # binds those labels to the complete physical gain that native SPM read.
     cells = loadmat(cache, variable_names=['label'])['label']
-    return frozenset(str(np.asarray(value).item()) for value in cells.ravel())
+    return frozenset(cell_strings(cells))
 
 
 @lru_cache(maxsize=64)
 def _gain_registration(path, _file_identity, inversion_idx):
     """Read only slot metadata from HDF5. Cache legacy MAT's monolithic header read."""
-    if h5py.is_hdf5(path):
-        with h5py.File(path, 'r') as header:
-            slots = header.get('D/other/inv')
-            if not isinstance(slots, h5py.Dataset) or h5py.check_dtype(ref=slots.dtype) is None:
-                return None
-            active = int(np.asarray(header.get('D/other/val', 1)).item()) - 1
-            refs = slots[()].ravel()
+    with open_spm_header(path) as header:
+        def read_registration(index):
+            return gain_reference(inversion_slot(header, index), external_only=True)
 
-            def read_slot(index):
-                if index < 0 or index >= len(refs) or not refs[index]:
-                    return None
-                slot = header[refs[index]]
-                if not isinstance(slot, h5py.Group):
-                    return None
-                marker = slot.get('lameg_external_gain')
-                if not isinstance(marker, h5py.Group):
-                    return None
-                return (_mat_string(slot['gainmat']),
-                        _mat_string(marker['file']),
-                        _mat_string(marker['sha256']))
-            selected = _selected_registration(read_slot, active, inversion_idx)
-            return selected + (_h5_good_labels(header),) if selected else None
-
-    dataset = loadmat(path, variable_names=['D'], struct_as_record=False, squeeze_me=True)['D']
-    other = getattr(dataset, 'other', None)
-    active = int(getattr(other, 'val', 1)) - 1
-    slots = np.atleast_1d(getattr(other, 'inv', [])).ravel()
-
-    def read_legacy_slot(index):
-        if not 0 <= index < len(slots):
+        active = active_slot_index(header)
+        registration = read_registration(active)
+        if inversion_idx is not None and inversion_idx != active:
+            if registration is not None or read_registration(inversion_idx) is not None:
+                raise ValueError('The active SPM slot differs from the requested external slot.')
+        if registration is None:
             return None
-        marker = getattr(slots[index], 'lameg_external_gain', None)
-        if marker is None:
-            return None
-        return getattr(slots[index], 'gainmat', ''), marker.file, marker.sha256
-
-    selected = _selected_registration(read_legacy_slot, active, inversion_idx)
-    return selected + (_legacy_good_labels(dataset),) if selected else None
-
-
-def _selected_registration(read_slot, active, requested):
-    registration = read_slot(active)
-    if requested is not None and requested != active:
-        if registration is not None or read_slot(requested) is not None:
-            raise ValueError('The active SPM slot differs from the requested external gain slot.')
-    return registration
+        read_labels = _h5_good_labels if isinstance(header, h5py.File) else _legacy_good_labels
+        return registration + (read_labels(header),)
 
 
 def check_spm_gain_cache(data_fname, inversion_idx=None):
     """Reject missing, unselected or altered external gains before SPM prepares modes."""
     path = Path(data_fname).resolve(strict=True)
-    registration = _gain_registration(path, _identity(path), inversion_idx)
+    registration = _gain_registration(path, file_identity(path), inversion_idx)
     if registration is None:
         return
-    # Native headers returned None above; marked headers always supply this four-tuple.
-    # pylint: disable-next=unpacking-non-sequence
-    selected, recorded, digest, good_channels = registration
-    if selected != recorded or not recorded or Path(recorded).name != recorded:
-        raise ValueError('The registered external gain cache is not selected.')
+    recorded, digest, good_channels = registration
     cache = path.parent / recorded
-    if not cache.is_file():
-        raise FileNotFoundError(f'The registered external gain cache is missing: {cache}')
-    identity = _identity(cache)
-    if _cache_hash(cache, identity) != digest:
-        raise ValueError(f'The registered external gain cache has changed: {cache}')
-    missing = set(good_channels).difference(_gain_channel_labels(cache, identity))
+    with verified_gain(cache, digest) as identity:
+        missing = set(good_channels).difference(_gain_channel_labels(cache, identity))
     if missing:
         raise ValueError(f'Good MEG channels missing from the external gain: {sorted(missing)}')

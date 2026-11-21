@@ -45,12 +45,15 @@ Notes
 # pylint: disable=C0302
 # pylint: disable=duplicate-code
 import os
+from pathlib import Path
 import h5py
 import numpy as np
 from scipy.io import savemat, loadmat
 from scipy.sparse import csc_matrix, issparse
 
-from lameg.forward import _mat_string
+from lameg._mat_sparse import h5_to_csc as _h5_to_csc, is_h5_sparse
+from lameg._gain_cache import (gain_reference, inversion_slot, open_spm_header,
+                               validate_slot_index, verified_gain)
 from lameg._spm_gain import check_spm_gain_cache
 from lameg.util import load_meg_sensor_data, spm_context, batch
 import matlab # pylint: disable=wrong-import-order,import-error
@@ -1455,8 +1458,7 @@ def _read_inversion_results(data_fname, inversion_idx=0, return_mu_matrix=False)
             u_ref = inv_struct['U'][0][0]
             u_obj = file[u_ref]
 
-            if isinstance(u_obj, h5py.Group) and \
-                    all(k in u_obj for k in ('data', 'ir', 'jc')):
+            if is_h5_sparse(u_obj):
                 data_reduction_mat = _h5_to_csc(u_obj)
             else:
                 data_reduction_mat = np.array(u_obj)
@@ -1813,42 +1815,18 @@ def load_forward_model_vertices(data_file, inversion_idx=0):
     return verts
 
 
-def _recorded_gain_path(data_file, inversion_idx):
+def _rms_gain_cache(data_file, inversion_idx):
     """Resolve the gain selected on one SPM inversion slot, including older headers."""
-    if (isinstance(inversion_idx, (bool, np.bool_))
-            or not isinstance(inversion_idx, (int, np.integer)) or inversion_idx < 0):
-        raise ValueError("inversion_idx must be a nonnegative integer.")
-    missing = "Source inversion has not been run in the requested slot."
-    if h5py.is_hdf5(data_file):
-        with h5py.File(data_file, 'r') as header:
-            slots = header.get('D/other/inv')
-            if slots is None or inversion_idx >= slots.size:
-                raise KeyError(missing)
-            slot = slots[()].ravel()[inversion_idx]
-            if not slot or not isinstance(header[slot], h5py.Group):
-                raise KeyError(missing)
-            name = header[slot].get('gainmat')
-            recorded = ''
-            if name is not None and not name.attrs.get('MATLAB_empty', False):
-                recorded = _mat_string(name)
-    else:
-        data = loadmat(data_file, variable_names=['D'], struct_as_record=False, squeeze_me=True)
-        slots = np.atleast_1d(getattr(getattr(data['D'], 'other', None), 'inv', [])).ravel()
-        if inversion_idx >= slots.size:
-            raise KeyError(missing)
-        if not hasattr(slots[inversion_idx], '_fieldnames'):
-            raise KeyError(missing)
-        name = getattr(slots[inversion_idx], 'gainmat', '')
-        # scipy decodes MATLAB character vectors to strings with squeeze_me=True.
-        recorded = str(name) if np.size(name) else ''
-
-    directory, basename = os.path.split(data_file)
+    validate_slot_index(inversion_idx)
+    with open_spm_header(data_file) as header:
+        slot = inversion_slot(header, inversion_idx)
+        if slot is None:
+            raise KeyError("Source inversion has not been run in the requested slot.")
+        recorded, digest = gain_reference(slot)
+    path = Path(data_file)
     if not recorded:
-        recorded = f'SPMgainmatrix_{os.path.splitext(basename)[0]}_{inversion_idx + 1}.mat'
-    path = os.path.join(directory, recorded.replace('\\', '/'))
-    if not os.path.isfile(path):
-        raise FileNotFoundError(f"SPM gain cache does not exist: {path}")
-    return path
+        recorded = f'SPMgainmatrix_{path.stem}_{inversion_idx + 1}.mat'
+    return path.parent / recorded.replace('\\', '/'), digest
 
 
 def get_lead_field_rms_diff(data_file, surf_set, inversion_idx=0):
@@ -1856,13 +1834,14 @@ def get_lead_field_rms_diff(data_file, surf_set, inversion_idx=0):
 
     The selected zero-based SPM inversion slot identifies the gain cache. Older
     slots without a recorded cache name use SPM's conventional dataset-relative
-    filename. MATLAB v5 and v7.3 caches are supported. Results preserve the
+    filename. Registered external caches must match their stored checksum.
+    MATLAB v5 and v7.3 caches are supported. Results preserve the
     cache's stored units and conditioning. Gain columns must cover all vertices
     of all layers in the surface set, in contiguous layer-major order.
 
     Returns one value per cortical column, in the original within-layer order.
     """
-    path = _recorded_gain_path(data_file, inversion_idx)
+    path, digest = _rms_gain_cache(data_file, inversion_idx)
     n_vertices = surf_set.get_vertices_per_layer()
     n_layers = surf_set.n_layers
     if n_vertices < 1 or n_layers < 1:
@@ -1878,19 +1857,11 @@ def get_lead_field_rms_diff(data_file, surf_set, inversion_idx=0):
                             dtype=np.float64)
         return np.sqrt(np.mean(np.square(delta, out=delta), axis=1))
 
-    if h5py.is_hdf5(path):
-        with h5py.File(path, 'r') as cache:
-            return endpoint_rms(cache['G'])
-    return endpoint_rms(loadmat(path, variable_names=['G'])['G'].T)
-
-
-def _h5_to_csc(group):
-    data = group["data"][()]
-    ir_vals = group["ir"][()]
-    jc_vals = group["jc"][()]
-    n_rows = int(ir_vals.max()) + 1 if ir_vals.size else 0
-    n_cols = len(jc_vals) - 1
-    return csc_matrix((data, ir_vals, jc_vals), shape=(n_rows, n_cols))
+    with verified_gain(path, digest):
+        if h5py.is_hdf5(path):
+            with h5py.File(path, 'r') as cache:
+                return endpoint_rms(cache['G'])
+        return endpoint_rms(loadmat(path, variable_names=['G'])['G'].T)
 
 
 def _mat_to_csc(mat):
