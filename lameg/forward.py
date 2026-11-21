@@ -1,8 +1,6 @@
 """Fixed-orientation MEG forward operators on laMEG surface vertices."""
 
 from dataclasses import dataclass, replace
-from functools import lru_cache
-import hashlib
 import json
 from pathlib import Path
 import re
@@ -12,7 +10,10 @@ import h5py
 import nibabel as nib
 import numpy as np
 from scipy.io import loadmat
-from scipy.sparse import csc_matrix
+
+from ._gain_cache import (cell_strings, gain_reference, inversion_slot, mat_string,
+                          validate_slot_index, verified_gain)
+from ._mat_sparse import h5_to_csc
 
 
 def _labels(values, name, unique=True):
@@ -217,9 +218,7 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
         single-shell and sphere models, the saved source positions provide
         an additional independent check of MRI coordinates.
         """
-        if (not isinstance(inversion_idx, (int, np.integer))
-                or isinstance(inversion_idx, (bool, np.bool_)) or inversion_idx < 0):
-            raise ValueError("inversion_idx must be a nonnegative integer.")
+        validate_slot_index(inversion_idx)
         layers = _labels(layer_names, 'layer_names')
         points, faces, normals = _mesh_arrays(mesh_fname)
         if len(points) % len(layers) or normals.shape != points.shape:
@@ -230,7 +229,8 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
         cache = Path(data_fname).parent / cache_name if gain_fname is None else Path(gain_fname)
         if cache.name != cache_name:
             raise ValueError("Gain cache basename differs from the selected inversion's cache.")
-        gain, cache_labels, fields = _read_gain_cache(cache, expected_hash)
+        with verified_gain(cache, expected_hash):
+            gain, cache_labels, fields = _read_gain_cache(cache, expected_hash)
         rows = _index_labels(cache_labels, metadata['channel_names'])
         if gain.shape != (len(cache_labels), len(points)):
             raise ValueError("SPM gain shape differs from the cortical mesh or channel labels.")
@@ -248,10 +248,10 @@ def _spm_source_coordinates(inversion, mesh_fname, points, faces, normals):
     forward = inversion['forward']
     registered = inversion['datareg']
     mesh = inversion['mesh']
-    if (_mat_string(forward['modality']) != 'MEG' or _mat_string(registered['modality']) != 'MEG'
+    if (mat_string(forward['modality']) != 'MEG' or mat_string(registered['modality']) != 'MEG'
             or forward['siunits'][()].item() != 1):
         raise ValueError("A single MEG registration with physical sensor units is required.")
-    recorded = Path(_mat_string(mesh['tess_ctx']).replace('\\', '/'))
+    recorded = Path(mat_string(mesh['tess_ctx']).replace('\\', '/'))
     if recorded.name != Path(mesh_fname).name:
         raise ValueError("GIfTI basename differs from the dataset's recorded source mesh.")
     if recorded.is_file() and not recorded.samefile(mesh_fname):
@@ -268,7 +268,7 @@ def _spm_source_coordinates(inversion, mesh_fname, points, faces, normals):
 def _spm_sensors(header, forward, labels):
     sensors = forward['sensors']
     rows = _index_labels(_mat_strings(header, sensors['label']), labels)
-    if _mat_string(sensors['unit']) != 'm':
+    if mat_string(sensors['unit']) != 'm':
         raise ValueError("Expected SPM's physical sensor coil coordinates in metres.")
     sensor_units = _mat_strings(header, sensors['chanunit'])
     if any(sensor_units[i] not in ('T', 'T/m') for i in rows):
@@ -283,10 +283,9 @@ def _spm_sensors(header, forward, labels):
 
 def _spm_registration(data_fname, inversion_idx, mesh_fname, points, faces, normals):
     with h5py.File(data_fname, 'r') as header:
-        slots = np.asarray(header['D/other/inv']).ravel()
-        if inversion_idx >= len(slots):
+        inversion = inversion_slot(header, inversion_idx)
+        if inversion is None:
             raise ValueError("Requested inversion_idx is absent from the SPM header.")
-        inversion = header[slots[inversion_idx]]
         forward = inversion['forward']
         affine, effective = _spm_source_coordinates(inversion, mesh_fname, points, faces, normals)
         labels = _mat_strings(header, forward['channels'])
@@ -294,12 +293,11 @@ def _spm_registration(data_fname, inversion_idx, mesh_fname, points, faces, norm
         scale = float(forward['scale'][()].item())
         if not np.isfinite(scale) or scale <= 0:
             raise ValueError("Invalid SPM forward conditioning scale.")
-        cache_name = Path(_mat_string(inversion['gainmat']).replace('\\', '/')).name
+        recorded, expected_hash = gain_reference(inversion)
+        cache_name = Path(recorded.replace('\\', '/')).name
         if not cache_name:
             raise ValueError("No SPM gain cache is recorded for this inversion.")
-        solver = _mat_string(forward['voltype'])
-        external = inversion.get('lameg_external_gain')
-        expected_hash = _registered_hash(external, cache_name)
+        solver = mat_string(forward['voltype'])
         if expected_hash is None and solver in (
                 'Single Shell', 'Single Sphere', 'MEG Local Spheres'):
             requested = points @ affine[:3, :3].T + affine[:3, 3]
@@ -313,21 +311,12 @@ def _spm_registration(data_fname, inversion_idx, mesh_fname, points, faces, norm
     return metadata, cache_name, scale, expected_hash
 
 
-def _registered_hash(external, cache_name):
-    if external is None:
-        return None
-    if ('sha256' not in external or int(external['format_version'][()].item()) != 1
-            or _mat_string(external['file']) != cache_name):
-        raise ValueError("Invalid external-gain registration in the SPM inversion slot.")
-    return _mat_string(external['sha256'])
-
-
 def _restore_external(fields, metadata, rows, scale, points):
     # The retained headmodel identifies the registration template; the
     # attached cache carries the solver used for the actual lead field.
     if scale != 1 or int(fields['format_version'].item()) != 1:
         raise ValueError("Unexpected external-gain cache version or conditioning.")
-    units = _cell_strings(fields['channel_units'])
+    units = cell_strings(fields['channel_units'])
     if tuple(units[i] for i in rows) != metadata['channel_units']:
         raise ValueError("External gain channel units differ from the SPM dataset.")
     affine = metadata['mri_to_head_mm']
@@ -348,15 +337,8 @@ def _restore_external(fields, metadata, rows, scale, points):
                                        'tra': fields['tra'][rows]}
 
 
-def _mat_string(dataset):
-    chars = dataset[()]
-    if chars.dtype.kind not in 'ui':
-        raise ValueError("Expected a single MATLAB character vector in the SPM header.")
-    return ''.join(chr(c) for c in chars.ravel()).rstrip('\x00 ')
-
-
 def _mat_strings(header, cells):
-    return tuple(_mat_string(header[ref]) for ref in cells[()].ravel())
+    return tuple(mat_string(header[ref]) for ref in cells[()].ravel())
 
 
 def _index_labels(available, required):
@@ -366,31 +348,7 @@ def _index_labels(available, required):
     return [lookup[name] for name in required]
 
 
-def _cell_strings(cells):
-    # scipy.io.loadmat preserves MAT cell and character dimensions.
-    return tuple(str(np.asarray(value).item()) for value in cells.ravel())
-
-
-@lru_cache(maxsize=128)
-def _cache_hash(path, _file_identity):
-    digest = hashlib.sha256()
-    with path.open('rb') as stream:
-        for chunk in iter(lambda: stream.read(1024 * 1024), b''):
-            digest.update(chunk)
-    return digest.hexdigest()
-
-
-def _identity(path):
-    stat = path.stat()
-    return stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns
-
-
 def _read_gain_cache(cache, expected_hash):
-    identity = None
-    if expected_hash is not None:
-        identity = _identity(cache)
-        if _cache_hash(cache, identity) != expected_hash:
-            raise ValueError("External gain cache checksum differs from its SPM registration.")
     if h5py.is_hdf5(str(cache)):
         with h5py.File(str(cache), 'r') as header:
             if expected_hash is not None:
@@ -401,14 +359,10 @@ def _read_gain_cache(cache, expected_hash):
         keys += ['requested_m', 'positions_m', 'normals', 'provenance', 'channel_units',
                  'coilpos', 'coilori', 'tra', 'format_version']
     fields = loadmat(str(cache), variable_names=keys)
-    if identity is not None and _identity(cache) != identity:
-        raise ValueError("External gain cache changed during import.")
-    return fields.pop('G'), _cell_strings(fields.pop('label')), fields
+    return fields.pop('G'), cell_strings(fields.pop('label')), fields
 
 
 def _mat_matrix(node):
     if isinstance(node, h5py.Dataset):
         return node[()].T
-    shape = (int(node.attrs['MATLAB_sparse']), len(node['jc']) - 1)
-    return csc_matrix((node['data'][()].ravel(), node['ir'][()].ravel(), node['jc'][()].ravel()),
-                      shape=shape).toarray()
+    return h5_to_csc(node).toarray()
