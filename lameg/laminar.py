@@ -32,7 +32,10 @@ import elephant
 import neo
 import quantities as pq
 
+from lameg.forward import ForwardOperator
+from lameg._spm_gain import attach_spm_gain
 from lameg.invert import (
+    _prior_indices,
     coregister,
     invert_ebb,
     invert_msp,
@@ -44,9 +47,55 @@ from lameg._source_io import load_source_time_series
 from lameg.util import ttest_rel_corrected
 
 
+def _prepare_layer_forwards(operator, surfaces, layers, stage, orientation, fixed, device,
+                            forward_kwargs, invert_kwargs, method):
+    if not isinstance(operator, ForwardOperator):
+        raise TypeError("forward_operator must be a ForwardOperator.")
+    if set(operator.layer_names) != set(layers):
+        raise ValueError("Forward operator layer names must match the surface set.")
+    if method not in ('EBB', 'MSP'):
+        raise ValueError("A supplied forward operator requires method='EBB' or 'MSP'.")
+
+    slot = forward_kwargs.get('inversion_idx', invert_kwargs.get('inversion_idx', 0))
+    if (isinstance(slot, (bool, np.bool_)) or not isinstance(slot, (int, np.integer))
+            or slot < 0 or slot != invert_kwargs.get('inversion_idx', slot)):
+        raise ValueError("Setup and inversion require the same nonnegative inversion_idx.")
+    if device == 'opm':
+        if slot != 0:
+            raise ValueError("OPM head-model setup requires inversion_idx=0.")
+        forward_kwargs.pop('inversion_idx', None)
+    else:
+        forward_kwargs['inversion_idx'] = int(slot)
+    invert_kwargs['inversion_idx'] = int(slot)
+
+    priors = invert_kwargs.get('priors') if method == 'MSP' else None
+    indices = _prior_indices(priors)
+    if np.any(indices >= operator.n_columns):
+        raise ValueError("An MSP prior is outside the layer mesh.")
+    for name in layers:
+        mesh = surfaces.get_mesh_path(layer_name=name, stage=stage, orientation=orientation,
+                                     fixed=fixed)
+        operator.validate_mesh(name, mesh)
+        if indices.size and not np.all(operator.layer(name).orientation_defined[indices]):
+            raise ValueError(f"An MSP prior has an undefined direction in layer {name!r}.")
+    return int(slot)
+
+
+def _attach_layer_forward(data_fname, layer_operator, inversion_idx, spm_instance):
+    transform = layer_operator.mri_to_head_mm
+    requested_head_mm = layer_operator.requested_mri_mm @ transform[:3, :3].T + transform[:3, 3]
+    attach_spm_gain(
+        data_fname, layer_operator.gain, layer_operator.channel_names,
+        layer_operator.effective_head_mm / 1000, layer_operator.orientations_head,
+        layer_operator.channel_units, inversion_idx=inversion_idx, spm_instance=spm_instance,
+        requested_positions_m=requested_head_mm / 1000,
+        sensor_geometry=layer_operator.sensor_geometry, provenance=layer_operator.provenance,
+    )
+
+
 def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='link_vector',
                      fixed=True, method='EBB', device='squid', viz=True, spm_instance=None,
-                     forward_kwargs=None, invert_kwargs=None):
+                     forward_kwargs=None, invert_kwargs=None, forward_operator=None):
     """
     Perform laminar model comparison by evaluating free energy and/or cross-validation error across
     cortical surfaces.
@@ -62,7 +111,7 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
     fid_coords : dict
         Dictionary of fiducial landmark coordinates, e.g.:
         ``{'nas': [x, y, z], 'lpa': [x, y, z], 'rpa': [x, y, z]}``
-        Values must be expressed in MEG headspace coordinates (millimeters).
+        Values must be expressed in native MRI coordinates (millimeters).
         Required for device='squid'; ignored (None) for device='opm'.
     data_fname : str
         Path to the MEG dataset (SPM-compatible .mat file).
@@ -94,6 +143,11 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
         execution.
     invert_kwargs : dict, optional
         Additional keyword arguments passed to `invert_ebb()` or `invert_msp()`.
+    forward_operator : lameg.forward.ForwardOperator, optional
+        Precomputed, signed MEG gain with named layers. After device-specific setup,
+        each inversion uses the matching block of columns. The requested surface
+        geometry and the recording's sensors must match the operator. Smoothing
+        and MSP prior indices refer to the requested anatomical surface.
 
     Returns
     -------
@@ -112,8 +166,7 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
       values indicating better model evidence.
 
     """
-    if invert_kwargs is None:
-        invert_kwargs = {}
+    invert_kwargs = dict(invert_kwargs or {})
     forward_kwargs = dict(forward_kwargs or {})
 
     device = device.lower()
@@ -151,8 +204,16 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
     cv_errs = []
     layer_names = surf_set.get_layer_names()
 
+    if forward_operator is not None:
+        slot = _prepare_layer_forwards(forward_operator, surf_set, layer_names, stage,
+                                       orientation, fixed, device, forward_kwargs,
+                                       invert_kwargs, method)
+
     for layer_name in layer_names:
         build_forward(layer_name)
+        if forward_operator is not None:
+            _attach_layer_forward(data_fname, forward_operator.layer(layer_name),
+                                  slot, spm_instance)
 
         f_val = np.nan
         cv_err = np.nan
@@ -213,7 +274,7 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
     fid_coords : dict
         Dictionary of fiducial landmark coordinates, e.g.:
         ``{'nas': [x, y, z], 'lpa': [x, y, z], 'rpa': [x, y, z]}``
-        Values must be expressed in MEG headspace coordinates (millimeters).
+        Values must be expressed in native MRI coordinates (millimeters).
     data_fname : str
         Path to the MEG dataset (SPM-compatible .mat file).
     surf_set : LayerSurfaceSet

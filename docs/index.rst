@@ -24,9 +24,12 @@ Here is a list of the modules available in ``laMEG``:
 .. toctree::
    :maxdepth: 1
 
+   precomputed_forwards
+
 .. autosummary::
    :caption: laMEG
 
+   ~lameg.forward
    ~lameg.invert
    ~lameg.laminar
    ~lameg.simulate
