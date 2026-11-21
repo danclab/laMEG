@@ -4,6 +4,14 @@ lameg package
 Submodules
 ----------
 
+lameg.forward module
+--------------------
+
+.. automodule:: lameg.forward
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 lameg.invert module
 -------------------
 

@@ -55,7 +55,7 @@
     <link rel="shortcut icon" href="_static/favicon.ico"/>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Source data and HDF5 schema" href="source_data.html" />
+    <link rel="next" title="Comparing layers with a precomputed MEG forward" href="precomputed_forwards.html" />
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="docsearch:language" content="en"/>
   </head>
@@ -145,6 +145,13 @@
   </p>
   <ul class="bd-navbar-elements navbar-nav">
     
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="precomputed_forwards.html">
+                        Comparing layers with a precomputed MEG forward
+                      </a>
+                    </li>
+                
+
                     <li class="nav-item">
                       <a class="nav-link nav-internal" href="source_data.html">
                         Source data and HDF5 schema
@@ -271,6 +278,13 @@ document.write(`
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item">
+                      <a class="nav-link nav-internal" href="precomputed_forwards.html">
+                        Comparing layers with a precomputed MEG forward
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
                       <a class="nav-link nav-internal" href="source_data.html">
                         Source data and HDF5 schema
                       </a>
@@ -380,28 +394,34 @@ document.write(`
 <h2>Available modules<a class="headerlink" href="#available-modules" title="Permalink to this heading">#</a></h2>
 <p>Here is a list of the modules available in <code class="docutils literal notranslate"><span class="pre">laMEG</span></code>:</p>
 <div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="precomputed_forwards.html">Comparing layers with a precomputed MEG forward</a></li>
+</ul>
 </div>
 <table class="autosummary longtable table autosummary">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.invert" title="lameg.invert"><code class="xref py py-obj docutils literal notranslate"><span class="pre">invert</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.forward" title="lameg.forward"><code class="xref py py-obj docutils literal notranslate"><span class="pre">forward</span></code></a></p></td>
+<td><p>Fixed-orientation MEG forward operators on laMEG surface vertices.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.invert" title="lameg.invert"><code class="xref py py-obj docutils literal notranslate"><span class="pre">invert</span></code></a></p></td>
 <td><p>Laminar source inversion, sliding-window inference, and MEG-MRI coregistration tools using SPM.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.laminar" title="lameg.laminar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">laminar</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.laminar" title="lameg.laminar"><code class="xref py py-obj docutils literal notranslate"><span class="pre">laminar</span></code></a></p></td>
 <td><p>Laminar analysis tools for MEG source reconstruction and depth-resolved model comparison.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.simulate" title="lameg.simulate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">simulate</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.simulate" title="lameg.simulate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">simulate</span></code></a></p></td>
 <td><p>Simulation tools for MEG data generation using SPM.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.source" title="lameg.source"><code class="xref py py-obj docutils literal notranslate"><span class="pre">source</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.source" title="lameg.source"><code class="xref py py-obj docutils literal notranslate"><span class="pre">source</span></code></a></p></td>
 <td><p>Source reconstruction, HDF5 access, and BigBrain mapping utilities.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.surf" title="lameg.surf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">surf</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.surf" title="lameg.surf"><code class="xref py py-obj docutils literal notranslate"><span class="pre">surf</span></code></a></p></td>
 <td><p>Tools for generating, managing, and postprocessing laminar cortical surfaces.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.util" title="lameg.util"><code class="xref py py-obj docutils literal notranslate"><span class="pre">util</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.util" title="lameg.util"><code class="xref py py-obj docutils literal notranslate"><span class="pre">util</span></code></a></p></td>
 <td><p>Utility functions for SPM, MEG sensor data management, and neuroanatomical processing.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.viz" title="lameg.viz"><code class="xref py py-obj docutils literal notranslate"><span class="pre">viz</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="_source/lameg.html#module-lameg.viz" title="lameg.viz"><code class="xref py py-obj docutils literal notranslate"><span class="pre">viz</span></code></a></p></td>
 <td><p>Visualization and color mapping utilities for laminar and cortical surface data.</p></td>
 </tr>
 </tbody>
@@ -528,11 +548,11 @@ Older surfaces must be converted before they can be loaded with the new LayerSur
     <div class="footer-article-item"><!-- Previous / next buttons -->
 <div class="prev-next-area">
     <a class="right-next"
-       href="source_data.html"
+       href="precomputed_forwards.html"
        title="next page">
       <div class="prev-next-info">
         <p class="prev-next-subtitle">next</p>
-        <p class="prev-next-title">Source data and HDF5 schema</p>
+        <p class="prev-next-title">Comparing layers with a precomputed MEG forward</p>
       </div>
       <i class="fa-solid fa-angle-right"></i>
     </a>

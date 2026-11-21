@@ -147,6 +147,13 @@
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item">
+                      <a class="nav-link nav-internal" href="precomputed_forwards.html">
+                        Comparing layers with a precomputed MEG forward
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
                       <a class="nav-link nav-internal" href="source_data.html">
                         Source data and HDF5 schema
                       </a>
@@ -268,6 +275,13 @@ document.write(`
   <ul class="bd-navbar-elements navbar-nav">
     
                     <li class="nav-item">
+                      <a class="nav-link nav-internal" href="precomputed_forwards.html">
+                        Comparing layers with a precomputed MEG forward
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
                       <a class="nav-link nav-internal" href="source_data.html">
                         Source data and HDF5 schema
                       </a>
@@ -372,6 +386,7 @@ document.write(`
  | <a href="#C"><strong>C</strong></a>
  | <a href="#D"><strong>D</strong></a>
  | <a href="#E"><strong>E</strong></a>
+ | <a href="#F"><strong>F</strong></a>
  | <a href="#G"><strong>G</strong></a>
  | <a href="#H"><strong>H</strong></a>
  | <a href="#I"><strong>I</strong></a>
@@ -391,9 +406,11 @@ document.write(`
 <h2 id="_">_</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="_source/lameg.html#lameg.source.LaminarSourceData.__init__">__init__() (lameg.source.LaminarSourceData method)</a>, <a href="source_data.html#lameg.source.LaminarSourceData.__init__">[1]</a>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.__init__">__init__() (lameg.forward.ForwardOperator method)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.__init__">[1]</a>
 
       <ul>
+        <li><a href="_source/lameg.html#lameg.source.LaminarSourceData.__init__">(lameg.source.LaminarSourceData method)</a>, <a href="source_data.html#lameg.source.LaminarSourceData.__init__">[1]</a>
+</li>
         <li><a href="_source/lameg.html#lameg.surf.LayerSurfaceSet.__init__">(lameg.surf.LayerSurfaceSet method)</a>
 </li>
       </ul></li>
@@ -407,6 +424,8 @@ document.write(`
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.allow_undefined_gain">allow_undefined_gain (lameg.forward.ForwardOperator attribute)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.allow_undefined_gain">[1]</a>
+</li>
       <li><a href="_source/lameg.html#lameg.source.LaminarSourceData.axis_order">axis_order (lameg.source.LaminarSourceData property)</a>, <a href="source_data.html#lameg.source.LaminarSourceData.axis_order">[1]</a>
 </li>
   </ul></td>
@@ -435,6 +454,10 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="_source/lameg.html#lameg.util.calc_prop">calc_prop() (in module lameg.util)</a>
 </li>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.channel_names">channel_names (lameg.forward.ForwardOperator attribute)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.channel_names">[1]</a>
+</li>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.channel_units">channel_units (lameg.forward.ForwardOperator attribute)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.channel_units">[1]</a>
+</li>
       <li><a href="_source/lameg.html#lameg.util.check_freesurfer_setup">check_freesurfer_setup() (in module lameg.util)</a>
 </li>
       <li><a href="_source/lameg.html#lameg.invert.check_inversion_exists">check_inversion_exists() (in module lameg.invert)</a>
@@ -447,10 +470,10 @@ document.write(`
 </li>
       <li><a href="_source/lameg.html#lameg.viz.color_map">color_map() (in module lameg.viz)</a>
 </li>
-      <li><a href="_source/lameg.html#lameg.laminar.compute_bigbrain_laminar_weights">compute_bigbrain_laminar_weights() (in module lameg.laminar)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_source/lameg.html#lameg.laminar.compute_bigbrain_laminar_weights">compute_bigbrain_laminar_weights() (in module lameg.laminar)</a>
+</li>
       <li><a href="_source/lameg.html#lameg.laminar.compute_csd">compute_csd() (in module lameg.laminar)</a>
 </li>
       <li><a href="_source/lameg.html#lameg.surf.LayerSurfaceSet.compute_dipole_orientations">compute_dipole_orientations() (lameg.surf.LayerSurfaceSet method)</a>
@@ -487,7 +510,25 @@ document.write(`
 <h2 id="E">E</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.effective_head_mm">effective_head_mm (lameg.forward.ForwardOperator attribute)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.effective_head_mm">[1]</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="_source/lameg.html#lameg.source.export_source_time_series_hdf5">export_source_time_series_hdf5() (in module lameg.source)</a>, <a href="source_data.html#lameg.source.export_source_time_series_hdf5">[1]</a>
+</li>
+  </ul></td>
+</tr></table>
+
+<h2 id="F">F</h2>
+<table style="width: 100%" class="indextable genindextable"><tr>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.faces">faces (lameg.forward.ForwardOperator attribute)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.faces">[1]</a>
+</li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator">ForwardOperator (class in lameg.forward)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator">[1]</a>
+</li>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.from_spm">from_spm() (lameg.forward.ForwardOperator class method)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.from_spm">[1]</a>
 </li>
   </ul></td>
 </tr></table>
@@ -495,6 +536,8 @@ document.write(`
 <h2 id="G">G</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.gain">gain (lameg.forward.ForwardOperator attribute)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.gain">[1]</a>
+</li>
       <li><a href="_source/lameg.html#lameg.surf.LayerSurfaceSet.get_bigbrain_layer_boundaries">get_bigbrain_layer_boundaries() (lameg.surf.LayerSurfaceSet method)</a>
 </li>
       <li><a href="_source/lameg.html#lameg.surf.LayerSurfaceSet.get_cortical_thickness">get_cortical_thickness() (lameg.surf.LayerSurfaceSet method)</a>
@@ -581,6 +624,13 @@ document.write(`
 </li>
       </ul></li>
       <li>
+    lameg.forward
+
+      <ul>
+        <li><a href="_source/lameg.html#module-lameg.forward">module</a>
+</li>
+      </ul></li>
+      <li>
     lameg.invert
 
       <ul>
@@ -646,9 +696,15 @@ document.write(`
 </li>
       <li><a href="_source/lameg.html#lameg.source.LaminarSourceData">LaminarSourceData (class in lameg.source)</a>, <a href="source_data.html#lameg.source.LaminarSourceData">[1]</a>
 </li>
-      <li><a href="_source/lameg.html#lameg.source.LaminarSourceData.layer">layer() (lameg.source.LaminarSourceData method)</a>, <a href="source_data.html#lameg.source.LaminarSourceData.layer">[1]</a>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.layer">layer() (lameg.forward.ForwardOperator method)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.layer">[1]</a>
+
+      <ul>
+        <li><a href="_source/lameg.html#lameg.source.LaminarSourceData.layer">(lameg.source.LaminarSourceData method)</a>, <a href="source_data.html#lameg.source.LaminarSourceData.layer">[1]</a>
 </li>
+      </ul></li>
       <li><a href="_source/lameg.html#lameg.source.LaminarSourceData.layer_depth">layer_depth (lameg.source.LaminarSourceData property)</a>, <a href="source_data.html#lameg.source.LaminarSourceData.layer_depth">[1]</a>
+</li>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.layer_names">layer_names (lameg.forward.ForwardOperator attribute)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.layer_names">[1]</a>
 </li>
       <li><a href="_source/lameg.html#lameg.surf.LayerSurfaceSet.layer_spacing">layer_spacing (lameg.surf.LayerSurfaceSet attribute)</a>
 </li>
@@ -684,6 +740,8 @@ document.write(`
       <ul>
         <li><a href="_source/lameg.html#module-lameg">lameg</a>
 </li>
+        <li><a href="_source/lameg.html#module-lameg.forward">lameg.forward</a>
+</li>
         <li><a href="_source/lameg.html#module-lameg.invert">lameg.invert</a>
 </li>
         <li><a href="_source/lameg.html#module-lameg.laminar">lameg.laminar</a>
@@ -705,24 +763,30 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="_source/lameg.html#lameg.surf.LayerSurfaceSet.mri_file">mri_file (lameg.surf.LayerSurfaceSet attribute)</a>
 </li>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.mri_to_head_mm">mri_to_head_mm (lameg.forward.ForwardOperator attribute)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.mri_to_head_mm">[1]</a>
+</li>
   </ul></td>
 </tr></table>
 
 <h2 id="N">N</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="_source/lameg.html#lameg.source.LaminarSourceData.n_columns">n_columns (lameg.source.LaminarSourceData property)</a>, <a href="source_data.html#lameg.source.LaminarSourceData.n_columns">[1]</a>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.n_columns">n_columns (lameg.forward.ForwardOperator property)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.n_columns">[1]</a>
+
+      <ul>
+        <li><a href="_source/lameg.html#lameg.source.LaminarSourceData.n_columns">(lameg.source.LaminarSourceData property)</a>, <a href="source_data.html#lameg.source.LaminarSourceData.n_columns">[1]</a>
 </li>
+      </ul></li>
       <li><a href="_source/lameg.html#lameg.source.LaminarSourceData.n_laminae">n_laminae (lameg.source.LaminarSourceData property)</a>, <a href="source_data.html#lameg.source.LaminarSourceData.n_laminae">[1]</a>
 </li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="_source/lameg.html#lameg.source.LaminarSourceData.n_layers">n_layers (lameg.source.LaminarSourceData property)</a>, <a href="source_data.html#lameg.source.LaminarSourceData.n_layers">[1]</a>
 
       <ul>
         <li><a href="_source/lameg.html#lameg.surf.LayerSurfaceSet.n_layers">(lameg.surf.LayerSurfaceSet attribute)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="_source/lameg.html#lameg.source.LaminarSourceData.n_times">n_times (lameg.source.LaminarSourceData property)</a>, <a href="source_data.html#lameg.source.LaminarSourceData.n_times">[1]</a>
 </li>
       <li><a href="_source/lameg.html#lameg.source.LaminarSourceData.n_trials">n_trials (lameg.source.LaminarSourceData property)</a>, <a href="source_data.html#lameg.source.LaminarSourceData.n_trials">[1]</a>
@@ -736,6 +800,12 @@ document.write(`
       <li><a href="_source/lameg.html#lameg.invert.opm_headmodel">opm_headmodel() (in module lameg.invert)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.orientation_defined">orientation_defined (lameg.forward.ForwardOperator property)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.orientation_defined">[1]</a>
+</li>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.orientations_head">orientations_head (lameg.forward.ForwardOperator attribute)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.orientations_head">[1]</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="P">P</h2>
@@ -744,11 +814,17 @@ document.write(`
       <li><a href="_source/lameg.html#lameg.viz.plot_csd">plot_csd() (in module lameg.viz)</a>
 </li>
   </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.provenance">provenance (lameg.forward.ForwardOperator attribute)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.provenance">[1]</a>
+</li>
+  </ul></td>
 </tr></table>
 
 <h2 id="R">R</h2>
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.requested_mri_mm">requested_mri_mm (lameg.forward.ForwardOperator attribute)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.requested_mri_mm">[1]</a>
+</li>
       <li><a href="_source/lameg.html#lameg.viz.rgbtoint">rgbtoint() (in module lameg.viz)</a>
 </li>
       <li><a href="_source/lameg.html#lameg.laminar.roi_power_comparison">roi_power_comparison() (in module lameg.laminar)</a>
@@ -769,6 +845,8 @@ document.write(`
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="_source/lameg.html#lameg.surf.LayerSurfaceSet.save">save() (lameg.surf.LayerSurfaceSet method)</a>
 </li>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.sensor_geometry">sensor_geometry (lameg.forward.ForwardOperator attribute)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.sensor_geometry">[1]</a>
+</li>
       <li><a href="_source/lameg.html#lameg.postinstall.setup_jupyter_extensions">setup_jupyter_extensions() (in module lameg.postinstall)</a>
 </li>
       <li><a href="_source/lameg.html#lameg.simulate.setup_opm_simulation">setup_opm_simulation() (in module lameg.simulate)</a>
@@ -777,10 +855,10 @@ document.write(`
 </li>
       <li><a href="_source/lameg.html#lameg.viz.show_surface">show_surface() (in module lameg.viz)</a>
 </li>
-      <li><a href="_source/lameg.html#lameg.laminar.sliding_window_model_comparison">sliding_window_model_comparison() (in module lameg.laminar)</a>
-</li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="_source/lameg.html#lameg.laminar.sliding_window_model_comparison">sliding_window_model_comparison() (in module lameg.laminar)</a>
+</li>
       <li><a href="_source/lameg.html#lameg.util.spm_context">spm_context() (in module lameg.util)</a>
 </li>
       <li><a href="_source/lameg.html#lameg.surf.LayerSurfaceSet.subj_dir">subj_dir (lameg.surf.LayerSurfaceSet attribute)</a>
@@ -822,6 +900,8 @@ document.write(`
 <table style="width: 100%" class="indextable genindextable"><tr>
   <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="_source/lameg.html#lameg.surf.LayerSurfaceSet.validate">validate() (lameg.surf.LayerSurfaceSet method)</a>
+</li>
+      <li><a href="_source/lameg.html#lameg.forward.ForwardOperator.validate_mesh">validate_mesh() (lameg.forward.ForwardOperator method)</a>, <a href="precomputed_forwards.html#lameg.forward.ForwardOperator.validate_mesh">[1]</a>
 </li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
