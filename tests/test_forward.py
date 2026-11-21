@@ -147,7 +147,8 @@ def test_spm_labels_units_scale(native_files, operator):
 
 
 
-def test_external_cache_reexport(native_files, operator):
+@pytest.mark.parametrize('nominal_ctf', [False, True])
+def test_external_cache_reexport(native_files, operator, nominal_ctf):
     """Preserve a relocated external gain when its native template is single shell."""
     data, mesh, cache = native_files
     faces = np.r_[operator.faces, operator.faces + 3]
@@ -168,6 +169,8 @@ def test_external_cache_reexport(native_files, operator):
         'normals': operator.orientations_head, 'coilpos': operator.sensor_geometry['coilpos'],
         'coilori': operator.sensor_geometry['coilori'],
         'tra': operator.sensor_geometry['tra'][::-1]}
+    if nominal_ctf:
+        fields['allow_nominal_ctf_coils'] = True
     savemat(str(cache), fields)
     with h5py.File(data, 'a') as header:
         _char(header['entry/lameg_external_gain'], 'sha256',
@@ -179,6 +182,8 @@ def test_external_cache_reexport(native_files, operator):
     np.testing.assert_array_equal(reexported.sensor_geometry['tra'],
                                   operator.sensor_geometry['tra'])
     assert reexported.provenance == 'custom solver'
+    assert reexported.allow_nominal_ctf_coils is nominal_ctf
+    assert reexported.layer('white').allow_nominal_ctf_coils is nominal_ctf
     alternate = cache.parent / 'moved' / cache.name
     alternate.parent.mkdir()
     alternate.write_bytes(cache.read_bytes())

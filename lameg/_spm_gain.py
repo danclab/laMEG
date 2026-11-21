@@ -67,15 +67,32 @@ try
         pa = sens.coilpos(ca,:); pb = op.coilpos(cb,:);
         oa = sens.coilori(ca,:); ob = op.coilori(cb,:);
         a = a(:,ca); b = b(:,cb);
+        nominal = isfield(op,'allow_nominal_ctf_coils') && op.allow_nominal_ctf_coils;
+        if nominal
+            assert(isfield(sens,'type') && strncmpi(sens.type,'ctf',3), ...
+                'Nominal CTF pickup coils require a CTF recipient.');
+        end
         done_a = false(size(pa,1),1); done_b = false(size(pb,1),1);
         for i=1:size(pa,1)
             if done_a(i), continue; end
             ia = ~done_a & max(abs(bsxfun(@minus,pa,pa(i,:))),[],2) <= 1e-7;
-            ib = ~done_b & max(abs(bsxfun(@minus,pb,pa(i,:))),[],2) <= 1e-7;
+            delta = bsxfun(@minus,pb,pa(i,:));
+            if nominal
+                % MNE uses nominal CTF baselines; SPM can carry measured centers.
+                ib = sum(delta.^2,2) <= (0.15e-3)^2;
+                assert(~any(done_b & ib),'Ambiguous nominal CTF pickup position.');
+            else
+                ib = ~done_b & max(abs(delta),[],2) <= 1e-7;
+            end
             assert(any(ib),'MEG coil positions differ.');
             ta = a(:,ia)*oa(ia,:); tb = b(:,ib)*ob(ib,:);
-            assert(all(abs(ta(:)-tb(:)) <= 1e-9 + 1e-7*abs(ta(:))), ...
-                'MEG coil orientations or channel compensation differ.');
+            if nominal
+                % Compare each channel's full signed vector, including reference weights.
+                agrees = sqrt(sum((ta-tb).^2,2)) <= 1e-9 + 1e-5*sqrt(sum(ta.^2,2));
+            else
+                agrees = abs(ta(:)-tb(:)) <= 1e-9 + 1e-7*abs(ta(:));
+            end
+            assert(all(agrees),'MEG coil orientations or channel compensation differ.');
             done_a(ia)=true; done_b(ib)=true;
         end
         assert(all(done_b),'Unexpected active coils in external gain.');
@@ -126,7 +143,8 @@ def _finite_real(value, name):
 
 
 def _gain_payload(gain, channel_names, source_positions_m, source_normals, channel_units,
-                  requested_positions_m, sensor_geometry, provenance):
+                  requested_positions_m, sensor_geometry, provenance,
+                  allow_nominal_ctf_coils=False):
     names, units = tuple(channel_names), tuple(channel_units)
     if (not names or len(set(names)) != len(names) or len(units) != len(names)
             or not all(isinstance(x, str) and x.strip() for x in (*names, *units))):
@@ -153,6 +171,12 @@ def _gain_payload(gain, channel_names, source_positions_m, source_normals, chann
         if (fields['coilpos'].shape != (n_coils, 3) or fields['coilori'].shape != (n_coils, 3)
                 or fields['tra'].shape != (len(names), n_coils) or not n_coils):
             raise ValueError('Invalid MEG coil geometry or channel transfer matrix.')
+    if not isinstance(allow_nominal_ctf_coils, (bool, np.bool_)):
+        raise ValueError('allow_nominal_ctf_coils must be a boolean.')
+    if allow_nominal_ctf_coils:
+        if sensor_geometry is None:
+            raise ValueError('Nominal CTF pickup matching requires coil geometry.')
+        fields['allow_nominal_ctf_coils'] = np.array([[1]], dtype=np.uint8)
     digest = hashlib.sha256(json.dumps([names, units, meta]).encode())
     for key, array in fields.items():
         digest.update(key.encode())
@@ -165,7 +189,8 @@ def _gain_payload(gain, channel_names, source_positions_m, source_normals, chann
 
 def attach_spm_gain(data_fname, gain, channel_names, source_positions_m, source_normals,
                     channel_units, *, inversion_idx=0, spm_instance=None,
-                    requested_positions_m=None, sensor_geometry=None, provenance=None):
+                    requested_positions_m=None, sensor_geometry=None, provenance=None,
+                    allow_nominal_ctf_coils=False):
     """Select an external MEG gain on an already coregistered, single-layer SPM dataset.
 
     Columns follow the target mesh. Positions and signed unit directions are in
@@ -182,7 +207,7 @@ def attach_spm_gain(data_fname, gain, channel_names, source_positions_m, source_
         raise ValueError('inversion_idx must be nonnegative.')
     fields, name = _gain_payload(gain, channel_names, source_positions_m, source_normals,
                                  channel_units, requested_positions_m, sensor_geometry,
-                                 provenance)
+                                 provenance, allow_nominal_ctf_coils)
     cache = path.with_name(name)
     before = file_identity(path)
     with TemporaryDirectory(dir=path.parent) as temp:

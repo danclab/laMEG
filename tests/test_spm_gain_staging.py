@@ -1,4 +1,5 @@
 """Check physical-unit conversion, MAT serialization and failed-attachment behavior."""
+from dataclasses import replace
 from pathlib import Path
 from unittest.mock import Mock
 import re
@@ -55,6 +56,10 @@ def test_attachment_stages_signed_physical_gain_and_two_geometries(tmp_path):
         np.testing.assert_allclose(staged['positions_m'], source.effective_head_mm / 1000.)
         for key in ('coilpos', 'coilori', 'tra'):
             np.testing.assert_array_equal(staged[key], source.sensor_geometry[key])
+        if source.allow_nominal_ctf_coils:
+            assert staged['allow_nominal_ctf_coils'] == 1
+        else:
+            assert 'allow_nominal_ctf_coils' not in staged
         caches.append(config['cache_name'])
         # Simulate a successful verified MATLAB save; native acceptance is covered separately.
         Path(config['staged_header']).write_bytes(b'validated new header')
@@ -64,9 +69,12 @@ def test_attachment_stages_signed_physical_gain_and_two_geometries(tmp_path):
     runtime.spm_standalone.side_effect = stage
     for _ in range(2):
         _attach_layer_forward(str(dataset), source, 2, runtime)
+    source = replace(source, allow_nominal_ctf_coils=True)
+    _attach_layer_forward(str(dataset), source, 2, runtime)
     assert dataset.read_bytes() == b'validated new header'
     assert caches[0] == caches[1]
-    assert len(list(tmp_path.glob('lameg_gain_*.mat'))) == 1
+    assert caches[2] != caches[0]
+    assert len(list(tmp_path.glob('lameg_gain_*.mat'))) == 2
 
 
 def test_rejected_runtime_attachment_preserves_header(tmp_path):

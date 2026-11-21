@@ -1,5 +1,6 @@
 """Fixed-orientation MEG forward operators on laMEG surface vertices."""
 
+from collections.abc import Mapping
 from dataclasses import dataclass, replace
 import json
 from pathlib import Path
@@ -39,6 +40,18 @@ def _numeric(value, shape, name):
     return view
 
 
+def _affine_mm(value, name, rigid=False):
+    affine = _numeric(value, (4, 4), name)
+    rotation = affine[:3, :3]
+    if (not np.allclose(affine[3], [0, 0, 0, 1], atol=1e-10, rtol=0)
+            or np.linalg.matrix_rank(rotation) != 3):
+        raise ValueError(f"{name} must be an invertible homogeneous affine.")
+    if rigid and (not np.allclose(rotation.T @ rotation, np.eye(3), atol=1e-6, rtol=0)
+                  or np.linalg.det(rotation) < 0):
+        raise ValueError(f"{name} must be a rigid transform with a proper rotation.")
+    return affine
+
+
 def _directions(native, mri_to_head_mm):
     vectors = np.asarray(native, dtype=float) @ np.linalg.inv(mri_to_head_mm[:3, :3])
     lengths = np.linalg.norm(vectors, axis=1, keepdims=True)
@@ -75,6 +88,14 @@ def _local_faces(faces, n_columns, n_layers):
     return reference
 
 
+def _layer_mesh(path, layers):
+    points, faces, normals = _mesh_arrays(path)
+    if len(points) % len(layers) or normals.shape != points.shape:
+        raise ValueError("Mesh has unequal layer sizes or unmatched source orientations.")
+    local_faces = _local_faces(faces, len(points) // len(layers), len(layers))
+    return points, faces, normals, local_faces
+
+
 @dataclass(frozen=True, eq=False)
 class ForwardOperator:  # pylint: disable=too-many-instance-attributes
     """Unprojected channels × sources gain in each channel's physical units per nA m.
@@ -97,6 +118,8 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
     directions. `orientation_defined` identifies sources usable for
     oriented-source comparisons. Input arrays are shared; treat them as
     immutable for the lifetime of this operator and its layer views.
+    `allow_nominal_ctf_coils` opts into matching nominal CTF pickup coils
+    to measured coils from the same acquisition when attaching to SPM.
     """
 
     gain: np.ndarray
@@ -111,11 +134,14 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
     sensor_geometry: dict
     provenance: str
     allow_undefined_gain: bool = False
+    allow_nominal_ctf_coils: bool = False
 
     def __post_init__(self):
         def set_field(key, value):
             object.__setattr__(self, key, value)
 
+        if not isinstance(self.allow_nominal_ctf_coils, (bool, np.bool_)):
+            raise ValueError("allow_nominal_ctf_coils must be a boolean.")
         names = _labels(self.channel_names, 'channel_names')
         units = _labels(self.channel_units, 'channel_units', unique=False)
         if len(units) != len(names) or any(
@@ -137,11 +163,7 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
             raise ValueError("Source orientations must be signed unit vectors or exactly zero.")
         if not self.allow_undefined_gain and np.any(gain[:, ~valid] != 0):
             raise ValueError("Nonzero gain at an undefined orientation; verify source convention.")
-        affine = _numeric(self.mri_to_head_mm, (4, 4), 'mri_to_head_mm')
-        if (not np.allclose(affine[3], [0, 0, 0, 1], atol=1e-10, rtol=0)
-                or np.linalg.matrix_rank(affine[:3, :3]) != 3):
-            raise ValueError("mri_to_head_mm must be an invertible homogeneous affine.")
-        set_field('mri_to_head_mm', affine)
+        set_field('mri_to_head_mm', _affine_mm(self.mri_to_head_mm, 'mri_to_head_mm'))
         faces = _numeric(self.faces, (None, 3), 'faces')
         if faces.dtype.kind not in 'iu' or faces.min() < 0 or faces.max() >= self.n_columns:
             raise ValueError("faces must index a single cortical layer, starting at zero.")
@@ -220,10 +242,7 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
         """
         validate_slot_index(inversion_idx)
         layers = _labels(layer_names, 'layer_names')
-        points, faces, normals = _mesh_arrays(mesh_fname)
-        if len(points) % len(layers) or normals.shape != points.shape:
-            raise ValueError("Mesh has unequal layer sizes or unmatched source orientations.")
-        local_faces = _local_faces(faces, len(points) // len(layers), len(layers))
+        points, faces, normals, local_faces = _layer_mesh(mesh_fname, layers)
         metadata, cache_name, scale, expected_hash = _spm_registration(
             data_fname, inversion_idx, mesh_fname, points, faces, normals)
         cache = Path(data_fname).parent / cache_name if gain_fname is None else Path(gain_fname)
@@ -242,6 +261,56 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
             gain = gain / scale
         return cls(gain=gain, layer_names=layers, requested_mri_mm=points, faces=local_faces,
                    allow_undefined_gain=allow_undefined_gain, **metadata)
+
+    @classmethod
+    def from_mne(cls, forwards, mesh_fname, *, vertices, channel_units,
+                 mri_to_head_mm, mne_head_to_head_mm, info=None, ignore_ref=None,
+                 allow_nominal_ctf_coils=False):
+        """Import precomputed MNE-Python MEG forwards on an oriented laMEG GIfTI.
+
+        `forwards` maps layer names in GIfTI block order to MNE Forward objects
+        or FIF paths. `vertices` maps each within-layer GIfTI vertex to an
+        integer (MNE source-space index, vertex ID) pair. Pass a single
+        (n_columns, 2) array or one array per layer keyed by name. Every
+        requested position must be present; extra MNE sources may be omitted.
+
+        `channel_units` maps the recipient's good MEG labels to physical units
+        in the desired row order. For compensated forwards supply the complete
+        acquisition `info` and explicitly confirm the original solve used
+        `ignore_ref=False`. The FIF does not record this setting.
+        Free-orientation gains are projected onto the signed GIfTI directions.
+        Fixed-orientation gains require collinear dipoles at defined vertices.
+
+        Supply the GIfTI MRI-to-recipient-head affine and the rigid MNE-head-
+        to-recipient-head transform explicitly. Both map millimetres to
+        millimetres. The latter applies to both sources and sensor coils.
+        For matching CTF acquisitions, `allow_nominal_ctf_coils=True`
+        permits small differences between nominal and measured coil geometry
+        during SPM attachment (see the precomputed forwards guide).
+        """
+        # SPM-only readers do not need to initialize MNE.
+        from ._mne_forward import read_layers  # pylint: disable=import-outside-toplevel
+
+        if not isinstance(forwards, Mapping) or not isinstance(channel_units, Mapping):
+            raise TypeError("forwards and channel_units must be mappings.")
+        layers = _labels(forwards, 'layer_names')
+        names = _labels(channel_units, 'channel_names')
+        units = _labels(channel_units.values(), 'channel_units', unique=False)
+        if isinstance(vertices, Mapping) and set(vertices) != set(layers):
+            raise ValueError("Per-layer vertex mappings must match the forward layer names.")
+        points, _, normals, faces = _layer_mesh(mesh_fname, layers)
+        affine = _affine_mm(mri_to_head_mm, 'mri_to_head_mm')
+        head = _affine_mm(mne_head_to_head_mm, 'mne_head_to_head_mm', rigid=True)
+        requested = points @ affine[:3, :3].T + affine[:3, 3]
+        orientations = _directions(normals, affine)
+        gain, effective, sensors, provenance = read_layers(
+            forwards, vertices, names, units, head, requested, orientations, info, ignore_ref,
+            allow_nominal_ctf_coils)
+        return cls(gain=gain, channel_names=names, channel_units=units, layer_names=layers,
+                   requested_mri_mm=points, effective_head_mm=effective,
+                   orientations_head=orientations, mri_to_head_mm=affine, faces=faces,
+                   sensor_geometry=sensors, provenance=provenance,
+                   allow_nominal_ctf_coils=allow_nominal_ctf_coils)
 
 
 def _spm_source_coordinates(inversion, mesh_fname, points, faces, normals):
@@ -332,6 +401,10 @@ def _restore_external(fields, metadata, rows, scale, points):
     if not isinstance(source, str):
         source = json.dumps(source, sort_keys=True)
     metadata['provenance'] = source
+    if 'allow_nominal_ctf_coils' in fields:
+        if fields['allow_nominal_ctf_coils'].item() != 1:
+            raise ValueError('Invalid nominal CTF coil marker in gain cache.')
+        metadata['allow_nominal_ctf_coils'] = True
     if all(k in fields for k in ('coilpos', 'coilori', 'tra')):
         metadata['sensor_geometry'] = {'coilpos': fields['coilpos'], 'coilori': fields['coilori'],
                                        'tra': fields['tra'][rows]}
@@ -357,7 +430,7 @@ def _read_gain_cache(cache, expected_hash):
     keys = ['G', 'label']
     if expected_hash is not None:
         keys += ['requested_m', 'positions_m', 'normals', 'provenance', 'channel_units',
-                 'coilpos', 'coilori', 'tra', 'format_version']
+                 'coilpos', 'coilori', 'tra', 'format_version', 'allow_nominal_ctf_coils']
     fields = loadmat(str(cache), variable_names=keys)
     return fields.pop('G'), cell_strings(fields.pop('label')), fields
 

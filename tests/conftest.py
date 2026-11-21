@@ -5,6 +5,7 @@ This module creates an spm instance fixture so other tests can use it
 import pytest
 import spm_standalone
 
+from tests.forward_test_utils import prepare_registration
 from tests.source_test_utils import make_source_file
 
 
@@ -14,8 +15,8 @@ def matlab_runtime():
     spm_standalone.initialize_runtime(["-nojvm"])
 
 
-@pytest.fixture(scope="session")
-def spm():
+@pytest.fixture(name="spm", scope="session")
+def make_spm_instance():
     """
     A pytest fixture that initializes a shared instance of the SPM standalone interface for use
     across all tests in a session.
@@ -62,3 +63,9 @@ def trial_source_file(tmp_path):
         with_trials=True,
     )
     return fname, expected
+
+
+@pytest.fixture(scope='session')
+def forward_registration(tmp_path_factory, spm):
+    """Use the same sub-104 registration across native and MNE forward tests."""
+    return prepare_registration(tmp_path_factory.mktemp('registered'), spm)

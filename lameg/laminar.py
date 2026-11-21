@@ -90,6 +90,7 @@ def _attach_layer_forward(data_fname, layer_operator, inversion_idx, spm_instanc
         layer_operator.channel_units, inversion_idx=inversion_idx, spm_instance=spm_instance,
         requested_positions_m=requested_head_mm / 1000,
         sensor_geometry=layer_operator.sensor_geometry, provenance=layer_operator.provenance,
+        allow_nominal_ctf_coils=layer_operator.allow_nominal_ctf_coils,
     )
 
 
