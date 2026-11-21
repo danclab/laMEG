@@ -6,7 +6,7 @@ import numpy as np
 from scipy.sparse import issparse
 
 from lameg.forward import ForwardOperator
-from lameg.invert import coregister, invert_ebb_layer
+from lameg.invert import coregister, invert_ebb_layer, invert_sliding_window_ebb_layer
 from lameg.laminar import sliding_window_model_comparison
 from tests.forward_test_utils import separate_dataset
 
@@ -16,8 +16,8 @@ def test_multilayer_ebb_uses_signed_supplied_gain(tmp_path, spm, forward_registr
     source, fids, surfaces, _, operator = forward_registration
     dataset = separate_dataset(source, tmp_path / 'multilayer')
     coregister(fids, dataset, surfaces, viz=False, spm_instance=spm)
-    opts = {'woi': [100., 200.], 'n_spatial_modes': 'all', 'sum_pair_topk': 1,
-            'diff_pair_topk': 1, 'return_mu_matrix': True, 'spm_instance': spm, 'viz': False}
+    opts = {'woi': [100., 200.], 'n_spatial_modes': 'all', 'return_mu_matrix': True,
+            'spm_instance': spm, 'viz': False}
     # return_mu_matrix=True adds a third item to each result.
     # pylint: disable=unbalanced-tuple-unpacking
     native_f, native_cv, native_mu = invert_ebb_layer(dataset, surfaces, **opts)
@@ -33,6 +33,13 @@ def test_multilayer_ebb_uses_signed_supplied_gain(tmp_path, spm, forward_registr
     supplied_mu = supplied_mu.toarray() if issparse(supplied_mu) else supplied_mu
     assert np.linalg.norm(native_mu) > 0
     np.testing.assert_allclose(supplied_mu, -native_mu, rtol=1e-6, atol=1e-10)
+    # With one matching time window, sliding and static EBBlayer fit the same model.
+    windows = [[100., 200.]]
+    window_f, returned_windows = invert_sliding_window_ebb_layer(
+        dataset, surfaces, wois=windows, n_temp_modes=4, n_spatial_modes='all',
+        hann_windowing=False, spm_instance=spm, viz=False, forward_operator=flipped)
+    np.testing.assert_array_equal(returned_windows, windows)
+    np.testing.assert_allclose(window_f, supplied_f, rtol=0, atol=1e-4)
     installed = ForwardOperator.from_spm(
         dataset, surfaces.get_mesh_path(), surfaces.get_layer_names(), allow_undefined_gain=True)
     np.testing.assert_array_equal(installed.gain, flipped.gain)

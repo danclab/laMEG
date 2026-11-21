@@ -412,17 +412,15 @@ def invert_ebb(data_fname, surf_set, layer_name=None, stage='ds',
 def invert_ebb_layer(data_fname, surf_set, layer_name=None, stage='ds',
                      orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=4,
                      n_spatial_modes='auto', foi=None, woi=None, hann_windowing=False, n_folds=1,
-                     ideal_pc_test=0, diag_vertex=None, sum_pair_topk=2, diff_pair_topk=2,
+                     ideal_pc_test=0, diag_vertex=None, sum_pair_topk=None, diff_pair_topk=None,
                      inversion_idx=0, viz=True, return_mu_matrix=False, spm_instance=None,
                      forward_operator=None):
     """
     Perform laminar Empirical Bayesian Beamformer (EBBlayer) source inversion on MEG data.
 
     This function runs a laminar extension of the Empirical Bayesian Beamformer (EBB)
-    implemented in SPM. The method operates on either a single cortical surface or a
-    multilayer mesh representing cortical depth. When a multilayer surface is used,
-    the inversion employs a modified EBB formulation ("EBBlayer") that models potential
-    correlated activity across layers within the same cortical column.
+    implemented in SPM. The method uses a multilayer mesh to model correlated
+    activity across layers within the same cortical column.
 
     The EBBlayer model combines three spatial source-prior families using
     Restricted Maximum Likelihood (ReML):
@@ -456,9 +454,8 @@ def invert_ebb_layer(data_fname, surf_set, layer_name=None, stage='ds',
         Path to the MEG dataset (SPM-compatible `.mat` file).
     surf_set : LayerSurfaceSet
         Subject-specific surface set containing laminar meshes.
-    layer_name : str or None, optional
-        Surface layer to use for inversion (e.g., 'pial', 'white', or a fractional
-        layer). If None, the full multilayer surface is used.
+    layer_name : None, optional
+        Use the full registered mesh with at least two layers.
     stage : str, optional
         Processing stage of the surface mesh (default: 'ds').
     orientation : str, optional
@@ -488,12 +485,12 @@ def invert_ebb_layer(data_fname, surf_set, layer_name=None, stage='ds',
     diag_vertex : int or None, optional
         Original zero-based within-layer vertex index at which to save EBBlayer pair-score
         diagnostics. If None, diagnostic pair-score output is disabled.
-    sum_pair_topk : int, optional
-        Number of highest-scoring eligible continuous-interior SUM pair hypotheses
-        retained independently at each cortical column (default: 2).
-    diff_pair_topk : int, optional
-        Number of highest-scoring fixed DIFF pair hypotheses retained independently
-        at each cortical column (default: 2).
+    sum_pair_topk : int or None, optional
+        Maximum number of eligible SUM layer pairs retained per cortical column.
+        By default, one pair is retained for two layers and up to two for larger meshes.
+    diff_pair_topk : int or None, optional
+        Maximum number of DIFF layer pairs retained per cortical column, with
+        the same default as SUM. Each explicit count must fit the available pairs.
     inversion_idx : int, optional
         Index of the inversion within the SPM data object (default: 0).
     viz : bool, optional
@@ -505,7 +502,7 @@ def invert_ebb_layer(data_fname, surf_set, layer_name=None, stage='ds',
         Active standalone SPM instance. If None, a temporary instance is created
         and closed after execution.
     forward_operator : ForwardOperator, optional
-        Signed MEG gain for the registered surface set or selected layer. The
+        Signed MEG gain for the registered multilayer surface set. The
         operator is installed in `inversion_idx` before spatial modes are computed.
 
     Returns
@@ -789,16 +786,13 @@ def invert_sliding_window_ebb_layer(data_fname, surf_set, layer_name=None, stage
                                     n_temp_modes=1, n_spatial_modes='auto', wois=None, win_size=50,
                                     win_overlap=True, foi=None, hann_windowing=True,
                                     inversion_idx=0, viz=True, spm_instance=None,
-                                    forward_operator=None):
+                                    forward_operator=None, sum_pair_topk=None, diff_pair_topk=None):
     """
     Perform sliding-window laminar Empirical Bayesian Beamformer (EBBlayer) source inversion.
 
     This function applies a laminar extension of the Empirical Bayesian Beamformer (EBB)
-    within successive time windows, enabling time-resolved source inversion on either a
-    single cortical surface or a multilayer mesh. When a multilayer surface is used,
-    the inversion employs the EBBlayer model, which augments classic EBB with additional
-    spatial priors that capture correlated activity across cortical layers within the
-    same cortical column.
+    within successive time windows on a multilayer mesh. Its spatial priors
+    capture correlated activity across cortical layers within the same column.
 
     For multilayer meshes, the source prior includes three components:
 
@@ -830,9 +824,8 @@ def invert_sliding_window_ebb_layer(data_fname, surf_set, layer_name=None, stage
         Path to the MEG dataset (SPM-compatible `.mat` file).
     surf_set : LayerSurfaceSet
         Subject-specific surface set containing laminar meshes.
-    layer_name : str or None, optional
-        Surface layer to use for inversion (e.g., 'pial', 'white', or a fractional
-        layer). If None, the full multilayer surface is used.
+    layer_name : None, optional
+        Use the full registered mesh with at least two layers.
     stage : str, optional
         Processing stage of the surface mesh (default: 'ds').
     orientation : str, optional
@@ -871,8 +864,14 @@ def invert_sliding_window_ebb_layer(data_fname, surf_set, layer_name=None, stage
         Active standalone SPM instance. If None, a temporary instance is created
         and closed after execution.
     forward_operator : ForwardOperator, optional
-        Signed MEG gain for the registered surface set or selected layer. The
+        Signed MEG gain for the registered multilayer surface set. The
         operator is installed in `inversion_idx` before spatial modes are computed.
+    sum_pair_topk : int or None, optional
+        Maximum number of eligible SUM layer pairs retained per cortical column.
+        By default, one pair is retained for two layers and up to two for larger meshes.
+    diff_pair_topk : int or None, optional
+        Maximum number of DIFF layer pairs retained per cortical column, with
+        the same default as SUM. Each explicit count must fit the available pairs.
 
     Returns
     -------
@@ -913,7 +912,9 @@ def invert_sliding_window_ebb_layer(data_fname, surf_set, layer_name=None, stage
         viz=viz,
         spm_instance=spm_instance,
         forward_operator=forward_operator,
-        layerwise=True
+        layerwise=True,
+        ebblayer_sum_pair_topk=sum_pair_topk,
+        ebblayer_diff_pair_topk=diff_pair_topk
     )
 
 
@@ -1546,6 +1547,26 @@ def _read_sliding_window_free_energy(data_fname, inversion_idx=0):
         return free_energy
 
 
+def _ebblayer_pair_options(n_layers, sum_pair_topk, diff_pair_topk):
+    """Determine how many SUM and DIFF pairs SPM can retain for a multilayer mesh."""
+    if n_layers < 2:
+        raise ValueError("EBBlayer requires a multilayer surface with at least two layers.")
+    n_pairs = n_layers * (n_layers - 1) // 2
+    options = {}
+    for key, value in (('ebblayer_sum_pair_topk', sum_pair_topk),
+                       ('ebblayer_diff_pair_topk', diff_pair_topk)):
+        if value is None:
+            value = min(2, n_pairs)
+        elif (isinstance(value, (bool, np.bool_))
+              or not isinstance(value, (int, float, np.integer, np.floating))
+              or not np.isfinite(value) or int(value) != value or value < 1):
+            raise ValueError(f"`{key}` must be a positive integer.")
+        if value > n_pairs:
+            raise ValueError(f"`{key}` exceeds the number of available layer pairs ({n_pairs}).")
+        options[key] = int(value)
+    return options
+
+
 def _invert_ebb_base(data_fname, surf_set, layer_name=None, stage='ds',
                      orientation='link_vector', fixed=True, patch_size=5,
                      n_temp_modes=4, n_spatial_modes=None, foi=None, woi=None,
@@ -1553,8 +1574,8 @@ def _invert_ebb_base(data_fname, surf_set, layer_name=None, stage='ds',
                      inversion_idx=0, viz=True, return_mu_matrix=False,
                      spm_instance=None, layerwise=False,
                      ebblayer_diag_vertex=None,
-                     ebblayer_sum_pair_topk=2,
-                     ebblayer_diff_pair_topk=2, forward_operator=None):
+                     ebblayer_sum_pair_topk=None,
+                     ebblayer_diff_pair_topk=None, forward_operator=None):
     """
     Internal implementation for EBB inversion.
 
@@ -1574,39 +1595,8 @@ def _invert_ebb_base(data_fname, surf_set, layer_name=None, stage='ds',
         diagnostic = _prior_indices([ebblayer_diag_vertex])
         ebblayer_diag_vertex = int(map_surface_vertices(surf_set, diagnostic)[0])
 
-    for name, value in (
-        ("ebblayer_sum_pair_topk", ebblayer_sum_pair_topk),
-        ("ebblayer_diff_pair_topk", ebblayer_diff_pair_topk),
-    ):
-        if (
-            not np.isfinite(value)
-            or int(value) != value
-            or value < 1
-        ):
-            raise ValueError(f"`{name}` must be a positive integer.")
-
-    ebblayer_sum_pair_topk = int(ebblayer_sum_pair_topk)
-    ebblayer_diff_pair_topk = int(ebblayer_diff_pair_topk)
-
-    if layerwise:
-        n_layer_pairs = n_layers * (n_layers - 1) // 2
-
-        if n_layer_pairs < 1:
-            raise ValueError(
-                "EBBlayer requires a multilayer surface with at least two layers."
-            )
-
-        if ebblayer_sum_pair_topk > n_layer_pairs:
-            raise ValueError(
-                "`ebblayer_sum_pair_topk` exceeds the number of available "
-                f"layer pairs ({n_layer_pairs})."
-            )
-
-        if ebblayer_diff_pair_topk > n_layer_pairs:
-            raise ValueError(
-                "`ebblayer_diff_pair_topk` exceeds the number of available "
-                f"layer pairs ({n_layer_pairs})."
-            )
+    pair_options = _ebblayer_pair_options(
+        n_layers, ebblayer_sum_pair_topk, ebblayer_diff_pair_topk) if layerwise else {}
 
     norm = _normalize_inversion_inputs(
         foi=foi,
@@ -1638,8 +1628,7 @@ def _invert_ebb_base(data_fname, surf_set, layer_name=None, stage='ds',
         n_folds=n_folds,
         n_layers=n_layers if layerwise else None,
         ebblayer_diag_vertex=ebblayer_diag_vertex,
-        ebblayer_sum_pair_topk=ebblayer_sum_pair_topk,
-        ebblayer_diff_pair_topk=ebblayer_diff_pair_topk
+        **pair_options
     )
 
     batch(cfg, viz=viz, spm_instance=spm_instance)
@@ -1657,7 +1646,8 @@ def _invert_sliding_window_ebb_base(
         n_temp_modes=1, win_size=50, win_overlap=True,
         n_spatial_modes=None, foi=None, wois=None,
         hann_windowing=False, inversion_idx=0, viz=True,
-        spm_instance=None, layerwise=False, forward_operator=None):
+        spm_instance=None, layerwise=False, forward_operator=None,
+        ebblayer_sum_pair_topk=None, ebblayer_diff_pair_topk=None):
     """
     Internal implementation for sliding-window EBB inversion.
 
@@ -1675,6 +1665,9 @@ def _invert_sliding_window_ebb_base(
     """
 
     n_layers = surf_set.n_layers if layer_name is None else 1
+
+    pair_options = _ebblayer_pair_options(
+        n_layers, ebblayer_sum_pair_topk, ebblayer_diff_pair_topk) if layerwise else {}
 
     wois = _compute_wois(
         data_fname=data_fname,
@@ -1710,7 +1703,8 @@ def _invert_sliding_window_ebb_base(
         hann_windowing=hann_windowing,
         pctest=0,
         n_folds=1,
-        n_layers=n_layers if layerwise else None
+        n_layers=n_layers if layerwise else None,
+        **pair_options
     )
 
     batch(cfg, viz=viz, spm_instance=spm_instance)

@@ -145,3 +145,47 @@ def test_direct_invalid_operator_or_prior_leaves_slot_untouched(monkeypatch, cor
                           inversion_idx=-1 if invalid == 'bad_slot' else 0)
     install.assert_not_called()
     prepare.assert_not_called()
+
+
+@pytest.mark.parametrize('sliding', [False, True], ids=['static', 'sliding'])
+@pytest.mark.parametrize('n_layers, pair_options, expected', [
+    (2, {}, (1, 1)),
+    (3, {}, (2, 2)),
+    (3, {'sum_pair_topk': 3, 'diff_pair_topk': 1}, (3, 1)),
+])
+def test_ebblayer_pair_counts_in_spm_job(monkeypatch, sliding, n_layers, pair_options, expected):
+    """Both EBBlayer entry points use only available pairs and honor independent overrides."""
+    run = Mock()
+    monkeypatch.setattr(invert, '_prepare_spatial_modes', Mock(return_value=('modes.mat', 2, 0.)))
+    monkeypatch.setattr(invert, 'batch', run)
+    monkeypatch.setattr(invert, '_read_inversion_results', Mock(return_value=[0., 0.]))
+    monkeypatch.setattr(invert, '_read_sliding_window_free_energy', Mock(return_value=[0., 0.]))
+    surfaces = SimpleNamespace(n_layers=n_layers)
+    if sliding:
+        invert.invert_sliding_window_ebb_layer('data.mat', surfaces, wois=[[0, 10], [10, 20]],
+                                               **pair_options)
+    else:
+        invert.invert_ebb_layer('data.mat', surfaces, **pair_options)
+    job = run.call_args[0][0]['spm']['meeg']['source']['invertiter']['isstandard']['custom']
+    assert job['invtype'] == 'EBBlayer' and job['nlayers'] == n_layers
+    assert (job['ebblayer_sum_pair_topk'], job['ebblayer_diff_pair_topk']) == expected
+
+
+@pytest.mark.parametrize('sliding', [False, True], ids=['static', 'sliding'])
+@pytest.mark.parametrize('layer, pair_options', [
+    ('pial', {}), (None, {'sum_pair_topk': 2}), (None, {'diff_pair_topk': 2}),
+    (None, {'sum_pair_topk': 0}), (None, {'diff_pair_topk': -1}),
+    (None, {'sum_pair_topk': 0.5}),
+])
+def test_ebblayer_invalid_pair_counts_stop_before_spm(monkeypatch, sliding, layer, pair_options):
+    """Reject impossible layer pairs before attaching a gain or creating spatial modes."""
+    prepare = Mock(side_effect=AssertionError('invalid pair counts reached mode preparation'))
+    monkeypatch.setattr(invert, '_prepare_spatial_modes', prepare)
+    surfaces = SimpleNamespace(n_layers=2)
+    with pytest.raises(ValueError, match='layer|pair'):
+        if sliding:
+            invert.invert_sliding_window_ebb_layer('data.mat', surfaces, layer_name=layer,
+                                                   wois=[[0, 10]], **pair_options)
+        else:
+            invert.invert_ebb_layer('data.mat', surfaces, layer_name=layer, **pair_options)
+    prepare.assert_not_called()

@@ -280,7 +280,6 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
     - Free energy serves as a model comparison metric across both depth and time; higher values
       indicate better model evidence.
     - The `prior` index is internally adjusted to match MATLAB's 1-based indexing convention.
-    - Requires prior MEG-MRI coregistration via `coregister()`.
     - Typically used to examine how laminar model evidence evolves during task-related dynamics.
     """
 

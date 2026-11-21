@@ -89,8 +89,7 @@ internally for each candidate layer.
         coregister(fids, working_copy, prepared.surfaces, spm_instance=spm, viz=False)
         return invert_ebb_layer(
             working_copy, prepared.surfaces, forward_operator=prepared.operator,
-            sum_pair_topk=1, diff_pair_topk=1, woi=[-25, 25], spm_instance=spm,
-            return_mu_matrix=True, viz=False,
+            woi=[-25, 25], spm_instance=spm, return_mu_matrix=True, viz=False,
         )
 
 The call returns free energy, cross-validation error, and the source
