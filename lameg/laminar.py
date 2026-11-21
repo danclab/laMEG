@@ -56,10 +56,13 @@ def _prepare_layer_forwards(operator, surfaces, layers, stage, orientation, fixe
     if method not in ('EBB', 'MSP'):
         raise ValueError("A supplied forward operator requires method='EBB' or 'MSP'.")
 
+    # Registration, gain selection and inversion must all address one SPM slot.
+    # Accept a slot specified through either public options dictionary.
     slot = forward_kwargs.get('inversion_idx', invert_kwargs.get('inversion_idx', 0))
     if (isinstance(slot, (bool, np.bool_)) or not isinstance(slot, (int, np.integer))
             or slot < 0 or slot != invert_kwargs.get('inversion_idx', slot)):
         raise ValueError("Setup and inversion require the same nonnegative inversion_idx.")
+    # OPM head-model setup creates the first slot and has no slot argument.
     if device == 'opm':
         if slot != 0:
             raise ValueError("OPM head-model setup requires inversion_idx=0.")

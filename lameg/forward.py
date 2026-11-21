@@ -35,6 +35,8 @@ def _numeric(value, shape, name):
             or 0 in array.shape or array.dtype.kind not in 'iuf'
             or not np.isfinite(array).all()):
         raise ValueError(f"Invalid {name}: expected finite, real data of shape {shape}.")
+    # Layer views share potentially large gain matrices. Mark this view read-only so that
+    # an in-place edit through one layer cannot change the operator used by another.
     view = array.view()
     view.setflags(write=False)
     return view
@@ -53,7 +55,10 @@ def _affine_mm(value, name, rigid=False):
 
 
 def _directions(native, mri_to_head_mm):
+    # SPM transforms GIfTI normals with the inverse transpose of the MRI-to-head linear
+    # transform. Here normals are row vectors, so they multiply the inverse on the right.
     vectors = np.asarray(native, dtype=float) @ np.linalg.inv(mri_to_head_mm[:3, :3])
+    # Normalization preserves the mesh polarity. An exactly zero input remains undefined.
     lengths = np.linalg.norm(vectors, axis=1, keepdims=True)
     return np.divide(vectors, lengths, out=np.zeros_like(vectors), where=lengths > 0)
 
@@ -75,12 +80,15 @@ def _local_faces(faces, n_columns, n_layers):
     if (faces.dtype.kind not in 'iu' or faces.min() < 0
             or faces.max() >= n_columns * n_layers):
         raise ValueError("Mesh faces must be zero-based triangle indices in the source space.")
+    # Combined meshes concatenate whole layers. Dividing a vertex ID by the layer size
+    # gives the layer it belongs to. Each triangle must lie entirely within one layer.
     blocks = faces // n_columns
     if np.any(blocks != blocks[:, :1]):
         raise ValueError("Triangles cross cortical layer blocks.")
     reference = faces[blocks[:, 0] == 0]
     if reference.size == 0:
         raise ValueError("Empty first-layer topology.")
+    # Subtract each layer offset to compare its connectivity in the same anatomical index space.
     for index in range(1, n_layers):
         layer = faces[blocks[:, 0] == index] - index * n_columns
         if not np.array_equal(layer, reference):
@@ -155,6 +163,8 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
         set_field('channel_units', units)
         set_field('layer_names', layers)
         set_field('gain', gain)
+        # Row j of each array describes gain column j. If a solver evaluates the dipole at
+        # a displaced position, the original MRI vertex still identifies its cortical patch.
         for key in ('requested_mri_mm', 'effective_head_mm', 'orientations_head'):
             set_field(key, _numeric(getattr(self, key), (gain.shape[1], 3), key))
         direction_norm = np.linalg.norm(self.orientations_head, axis=1)
@@ -173,6 +183,8 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
         coilori = _numeric(geo['coilori'], coils.shape, 'coilori')
         if not np.allclose(np.linalg.norm(coilori, axis=1), 1, atol=1e-5, rtol=0):
             raise ValueError("Sensor coil orientations must be unit vectors.")
+        # A channel can combine several physical pickups, including reference coils with signed
+        # weights. Each row of tra must describe the same channel as its corresponding gain row.
         tra = _numeric(geo['tra'], (len(names), len(coils)), 'tra')
         if not np.all(np.any(tra != 0, axis=1)):
             raise ValueError("Each sensor channel must have a nonzero coil weight.")
@@ -197,6 +209,8 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
             raise ValueError(f"Unknown layer {name!r}; available layers: {self.layer_names}.")
         if len(self.layer_names) == 1:
             return self
+        # Select the same layer block from the gain and its source metadata. Sensor rows and
+        # the single-layer face indices already apply to every layer.
         start = self.layer_names.index(name) * self.n_columns
         columns = slice(start, start + self.n_columns)
         return replace(self, gain=self.gain[:, columns], layer_names=(name,),
@@ -242,6 +256,8 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
         """
         validate_slot_index(inversion_idx)
         layers = _labels(layer_names, 'layer_names')
+        # The surface specifies the source order. The selected SPM slot supplies the channel
+        # order, sensor response, registration, and identity of the gain computed on that mesh.
         points, faces, normals, local_faces = _layer_mesh(mesh_fname, layers)
         metadata, cache_name, scale, expected_hash = _spm_registration(
             data_fname, inversion_idx, mesh_fname, points, faces, normals)
@@ -250,6 +266,8 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
             raise ValueError("Gain cache basename differs from the selected inversion's cache.")
         with verified_gain(cache, expected_hash):
             gain, cache_labels, fields = _read_gain_cache(cache, expected_hash)
+        # Use labels to recover the physical channel represented by each row, even when the
+        # cache and recording contain the same number of channels in different orders.
         rows = _index_labels(cache_labels, metadata['channel_names'])
         if gain.shape != (len(cache_labels), len(points)):
             raise ValueError("SPM gain shape differs from the cortical mesh or channel labels.")
@@ -257,6 +275,8 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
             gain = gain[rows]
         if expected_hash is not None:
             _restore_external(fields, metadata, rows, scale, points)
+        # SPM may condition its native gain before saving it. Undo that factor exactly once
+        # to recover gain in the recorded channel units per nA m.
         if scale != 1:
             gain = gain / scale
         return cls(gain=gain, layer_names=layers, requested_mri_mm=points, faces=local_faces,
@@ -301,6 +321,8 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
         points, _, normals, faces = _layer_mesh(mesh_fname, layers)
         affine = _affine_mm(mri_to_head_mm, 'mri_to_head_mm')
         head = _affine_mm(mne_head_to_head_mm, 'mne_head_to_head_mm', rigid=True)
+        # The registered GIfTI points and signed directions provide the anatomical targets
+        # for checking MNE source positions and projecting the dipoles in head coordinates.
         requested = points @ affine[:3, :3].T + affine[:3, 3]
         orientations = _directions(normals, affine)
         gain, effective, sensors, provenance = read_layers(
@@ -329,6 +351,8 @@ def _spm_source_coordinates(inversion, mesh_fname, points, faces, normals):
             raise ValueError("Supplied GIfTI differs from the original source mesh.")
     if not np.array_equal(forward['mesh/face'][()].T, faces.astype(np.int64) + 1):
         raise ValueError("Original and saved forward meshes have different face indices.")
+    # Compose the native MRI-to-MNI and MNI-to-head transforms. MATLAB v7.3 datasets
+    # have their axes reversed in h5py. SPM stores effective head positions in metres.
     affine = registered['fromMNI'][()].T @ mesh['Affine'][()].T
     effective = forward['mesh/vert'][()].T * 1000
     return affine, effective
@@ -344,6 +368,8 @@ def _spm_sensors(header, forward, labels):
         raise ValueError("Expected SI-calibrated MEG sensor coil weights.")
     geometry = {'coilpos': sensors['coilpos'][()].T, 'coilori': sensors['coilori'][()].T,
                 'tra': _mat_matrix(sensors['tra'])[rows, :]}
+    # The forward sensor table describes SI pickup geometry. Recorded data can be in fT
+    # or other physical units. Retrieve these units independently by channel label.
     channels = header['D/channels']
     data_rows = _index_labels(_mat_strings(header, channels['label']), labels)
     units = _mat_strings(header, channels['units'])
@@ -390,6 +416,8 @@ def _restore_external(fields, metadata, rows, scale, points):
         raise ValueError("External gain channel units differ from the SPM dataset.")
     affine = metadata['mri_to_head_mm']
     requested = points @ affine[:3, :3].T + affine[:3, 3]
+    # An attached cache carries its own geometry. Check intended and actual head positions
+    # independently so the cache can preserve a solver displacement across re-import.
     for key, target, atol in [('requested_m', requested / 1000, 1e-6),
                               ('positions_m', metadata['effective_head_mm'] / 1000, 1e-9),
                               ('normals', metadata['orientations_head'], 1e-5)]:

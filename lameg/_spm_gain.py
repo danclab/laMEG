@@ -18,8 +18,8 @@ from .util import spm_context
 
 
 # Keep this in the package so the same code runs in SPM standalone and MATLAB.
-# The gain cache lives next to D; patch smoothing continues to use the original
-# per-layer GIfTI. SPM's physical gains are divided by forward.scale in simulation.
+# SPM reads the gain from the dataset directory. Patch smoothing still uses the
+# registered GIfTI, including its anatomical connectivity and vertex order.
 _ATTACH = """
 try
     cfg = load(config_file);
@@ -30,6 +30,8 @@ try
     original = D.inv{slot};
     fw = original.forward;
     assert(isscalar(fw) && strcmp(fw.modality, 'MEG'), 'One MEG forward is required.');
+    % Labels and physical units come from the recipient's active montage. Map each
+    % good sensor to its row in G so a different channel order preserves the topography.
     channels = D.indchantype({'MEG','MEGPLANAR'},'GOOD');
     labels = D.chanlabels(channels);
     units = D.units(channels);
@@ -45,6 +47,8 @@ try
         'Registered source positions or vertex order differ (metres).');
     assert(isequal(double(ctx.faces), double(fw.mesh.face)), 'Surface topology differs.');
     if isfield(ctx, 'normals')
+        % For row vectors the inverse-transpose normal transform is right division
+        % by the linear part of M. Keep undefined (zero) directions zero.
         normals = double(ctx.normals) / M(1:3,1:3);
         lengths = sqrt(sum(normals.^2,2));
         defined = lengths > 0;
@@ -63,6 +67,8 @@ try
         % The physical channel response for colocated coils is the weighted
         % sum of their orientation vectors. This handles compensation, coil
         % permutations, triaxial sensors and equivalent sign conventions.
+        % Keep reference pickups whenever they contribute to a good sensor. Their
+        % signed coefficients are part of that sensor's response after compensation.
         ca = any(a~=0,1); cb = any(b~=0,1);
         pa = sens.coilpos(ca,:); pb = op.coilpos(cb,:);
         oa = sens.coilori(ca,:); ob = op.coilori(cb,:);
@@ -78,7 +84,8 @@ try
             ia = ~done_a & max(abs(bsxfun(@minus,pa,pa(i,:))),[],2) <= 1e-7;
             delta = bsxfun(@minus,pb,pa(i,:));
             if nominal
-                % MNE uses nominal CTF baselines; SPM can carry measured centers.
+                % MNE's nominal CTF baselines can differ from measured centers. Each
+                % nominal pickup must be within 0.15 mm of exactly one measured group.
                 ib = sum(delta.^2,2) <= (0.15e-3)^2;
                 assert(~any(done_b & ib),'Ambiguous nominal CTF pickup position.');
             else
@@ -105,15 +112,20 @@ try
     clear disk
     D.val = slot;
     original.gainmat = cfg.read_cache;
+    % Preserve the anatomical mesh for priors. Forward calculations use the solver's
+    % effective positions and the gain is already in recorded channel units per nA m.
     original.forward.mesh.vert = op.positions_m;
     original.forward.scale = 1;
     original.lameg_external_gain = struct('file',cfg.cache_name, ...
         'provenance',op.provenance,'format_version',1,'sha256',cfg.file_digest, ...
         'units','channel units / nA m');
+    % Estimates and contrasts in this slot were fitted with the previous gain.
     for field={'inverse','contrast'}
         if isfield(original,field{1}), original=rmfield(original,field{1}); end
     end
     D.inv{slot} = original;
+    % Exercise SPM's own loader before committing. Verify it returned every signed
+    % coefficient in sensor order and kept the selected cache as its gain source.
     [L,D] = spm_eeg_lgainmat(D, [], labels);
     assert(strcmp(D.inv{slot}.gainmat,cfg.read_cache) && isequal(L,op.G(rows,:)), ...
         'SPM did not use the supplied fixed-orientation gain.');
@@ -177,6 +189,8 @@ def _gain_payload(gain, channel_names, source_positions_m, source_normals, chann
         if sensor_geometry is None:
             raise ValueError('Nominal CTF pickup matching requires coil geometry.')
         fields['allow_nominal_ctf_coils'] = np.array([[1]], dtype=np.uint8)
+    # Name the cache by the physical operator. The same numbers with different units,
+    # vertex positions or channel ordering describe a different forward model.
     digest = hashlib.sha256(json.dumps([names, units, meta]).encode())
     for key, array in fields.items():
         digest.update(key.encode())
@@ -217,8 +231,13 @@ def attach_spm_gain(data_fname, gain, channel_names, source_positions_m, source_
         status = folder/'status.mat'
         config = folder/'settings.mat'
         savemat(staged, fields)
+        # MATLAB files can encode the same arrays with different bytes. If a cache
+        # already exists, validate its arrays against the staged payload in MATLAB and
+        # record the checksum of the actual file SPM reads.
         actual = cache if cache.is_file() else staged
         file_digest = cache_hash(actual, file_identity(actual))
+        # MATLAB indexes D.inv cells from one. read_cache locates the file for the
+        # trial load, while cache_name is the basename to persist in the dataset.
         payload = {'dataset': str(path), 'cache_name': cache.name, 'slot': slot + 1,
                    'read_cache': str(actual.relative_to(path.parent)), 'file_digest': file_digest,
                    'staged_gain': str(staged), 'staged_header': str(header),
@@ -232,6 +251,8 @@ def attach_spm_gain(data_fname, gain, channel_names, source_positions_m, source_
         error = np.asarray(loadmat(status, squeeze_me=True)['message'])
         if error.size:
             raise ValueError(f'SPM external gain validation failed: {error.item()}')
+        # The validated header was derived from the initial dataset. Discard it if
+        # the on-disk header has changed while MATLAB was working.
         if file_identity(path) != before:
             raise RuntimeError('SPM dataset changed while attaching the gain.')
         os.chmod(header, path.stat().st_mode)
@@ -242,6 +263,7 @@ def attach_spm_gain(data_fname, gain, channel_names, source_positions_m, source_
             except FileExistsError as exc:
                 if cache_hash(cache, file_identity(cache)) != file_digest:
                     raise RuntimeError('Conflicting gain cache publication.') from exc
+        # Install the header last so that its selected gain file already exists.
         os.replace(header, path)
     return cache
 
@@ -296,6 +318,8 @@ def _gain_registration(path, _file_identity, inversion_idx):
 
         active = active_slot_index(header)
         registration = read_registration(active)
+        # Spatial-mode preparation reads the active slot in SPM. Using it with an
+        # external gain assigned to another slot could mix two forward models.
         if inversion_idx is not None and inversion_idx != active:
             if registration is not None or read_registration(inversion_idx) is not None:
                 raise ValueError('The active SPM slot differs from the requested external slot.')

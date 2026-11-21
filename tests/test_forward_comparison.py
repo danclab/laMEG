@@ -133,6 +133,8 @@ def test_supplied_gain_attaches_after_setup_before_each_inversion(
     runtime = object()
     attached = {}
     fids = {'nas': [0, 1, 0], 'lpa': [-1, 0, 0], 'rpa': [1, 0, 0]}
+    # Exercise both places where callers can specify an SPM slot. Registration
+    # and inversion must end up targeting the same slot in either case.
     native_kwargs = {'inversion_idx': slot} if specified_in in ('both', 'forward') else {}
     inverse_kwargs = {'patch_size': 5}
     if specified_in in ('both', 'inverse'):
@@ -185,6 +187,8 @@ def test_invalid_second_layer_fails_before_any_dataset_change(monkeypatch, input
     surfaces, operator = input_forward
     path = surfaces.get_mesh_path('white')
     mesh = nib.load(path)
+    # Only the second layer is wrong. Checking meshes inside the inversion loop
+    # would already have overwritten the slot for pial before discovering this.
     mesh.darrays[0].data[1] += [0., 3., 0.]
     nib.save(mesh, path)
     setup = Mock(side_effect=AssertionError('a bad mesh must fail before native setup'))
@@ -227,6 +231,8 @@ def test_seeded_msp_requires_a_defined_column_on_every_layer(
     """Reject an invalid explicit patch prior before building any forward model."""
     surfaces, operator = input_forward
     normals = operator.orientations_head.copy()
+    # An archived operator can carry a nonzero gain with a missing orientation.
+    # Such a column cannot define the sign of a seeded MSP patch.
     normals[4] = 0  # White vertex 1 only.
     operator = replace(operator, orientations_head=normals, allow_undefined_gain=True)
     white = surfaces.get_mesh_path('white')

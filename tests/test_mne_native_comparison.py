@@ -17,13 +17,20 @@ from tests.forward_test_utils import separate_dataset
 def _bem_forwards(surfaces, info, registration, work):
     """Compute a one-compartment BEM on the participant's registered inner skull."""
     mri = Path(surfaces.mri_file).parent
+    # The GIfTIs use native MRI coordinates. Go through the MRI voxel indices to
+    # express those same points in FreeSurfer's surface RAS frame, in millimetres.
     tkr = nib.load(str(mri / 'orig.mgz')).header.get_vox2ras_tkr()
     native_to_surface_ras = tkr @ np.linalg.inv(nib.load(surfaces.mri_file).affine)
+    # SPM's registration maps native MRI to CTF head. MNE needs surface RAS to
+    # MNE head. Compose these affine transforms in millimetres, reading right to
+    # left in the matrix product, then convert the resulting translation to metres.
     mne_to_ctf = np.linalg.inv(info['ctf_head_t']['trans'])
     mne_to_ctf[:3, 3] *= 1000
     mri_to_mne = np.linalg.inv(mne_to_ctf) @ registration @ np.linalg.inv(native_to_surface_ras)
     mri_to_mne[:3, 3] /= 1000
 
+    # Use the subject's MRI-derived inner-skull boundary for this single-compartment
+    # BEM. Transform it with the same affine as the dipoles to keep them registered.
     skull = nib.load(str(mri / 'origiskull_2562.surf.gii'))
     points = skull.get_arrays_from_intent('NIFTI_INTENT_POINTSET')[0].data
     faces = skull.get_arrays_from_intent('NIFTI_INTENT_TRIANGLE')[0].data
@@ -38,9 +45,13 @@ def _bem_forwards(surfaces, info, registration, work):
     meshes = [nib.load(surfaces.get_mesh_path(layer_name=name)) for name in layers]
     for name, mesh in zip(layers, meshes):
         positions = apply_trans(native_to_surface_ras, mesh.darrays[0].data) / 1000
-        # MNE computes all three Cartesian components for each discrete source.
+        # The discrete source space retains the GIfTI's vertex numbering. MNE computes
+        # all three Cartesian gain components per active source. The z unit vector
+        # satisfies the source-space API. laMEG projects onto the signed GIfTI direction.
         source_space = mne.setup_volume_source_space(
             pos={'rr': positions, 'nn': np.tile([0., 0., 1.], (len(positions), 1))})
+        # Zero minimum distance permits sources right up to the inner skull. MNE still
+        # excludes exterior points. Include the acquisition's CTF reference sensors.
         forwards[name] = mne.make_forward_solution(
             info, Transform('mri', 'head', mri_to_mne), source_space, bem,
             meg=True, eeg=False, mindist=0., ignore_ref=False)
@@ -77,9 +88,14 @@ def test_ctf_bem_layer_comparison(tmp_path, spm, forward_registration):
 
     layers = [operator.layer(name) for name in surfaces.get_layer_names()]
     defined = np.flatnonzero(np.logical_and.reduce([layer.orientation_defined for layer in layers]))
+    # Drive three known dipoles with unequal, mixed-sign currents. A swapped source
+    # column or lost direction sign changes the resulting channel-by-channel prediction.
     patch = defined[[0, len(defined) // 2, -1]]
     amplitudes = np.array([0.73, -1., 1.1])  # signed nA m
     for layer, forward in zip(layers, forwards.values()):
+        # Invert the rotation for row vectors to express currents in MNE head axes.
+        # MNE uses A m and T here. The imported gain uses recorded fT per nA m.
+        # patch addresses compact columns, while common[patch] indexes the MNE sources.
         vectors = (layer.orientations_head[patch] @ head[:3, :3]) * amplitudes[:, None] * 1e-9
         stc = mne.VolVectorSourceEstimate(vectors[:, :, None], [common[patch]], tmin=0., tstep=.01)
         predicted = mne.apply_forward(forward, stc, info).pick_channels(list(layer.channel_names),

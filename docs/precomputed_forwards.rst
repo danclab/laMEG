@@ -23,6 +23,8 @@ Use a separate dataset directory for each simultaneous run. Keep the generated
     from lameg.laminar import model_comparison
 
     def compare_saved_forward(donor, working_copy, surfaces, fids, vertex, spm):
+        # Read the gain referenced by the donor, including its channel order and
+        # dipole signs, before selecting the matching layer for each inversion.
         operator = ForwardOperator.from_spm(
             donor, surfaces.get_mesh_path(), surfaces.get_layer_names()
         )

@@ -14,12 +14,16 @@ def _row_scale(channel, unit):
     if match is None:
         raise ValueError(f"Unsupported MEG channel unit {unit!r}.")
     prefix, length = match.groups()
+    # Use the recorded physical unit to distinguish field from field gradient. CTF axial
+    # gradiometers can report the difference between pickups in field units.
     expected = FIFF.FIFF_UNIT_T if length is None else FIFF.FIFF_UNIT_T_M
     if channel['unit'] != expected:
         raise ValueError(f"Unit {unit!r} differs in dimension from {channel['ch_name']}.")
     field_unit = {'': 1, 'm': 1e-3, 'u': 1e-6, 'µ': 1e-6, 'μ': 1e-6,
                   'n': 1e-9, 'p': 1e-12, 'f': 1e-15}[prefix]
     length_unit = {None: 1, 'm': 1, 'cm': 1e-2, 'mm': 1e-3}[length]
+    # A 1 nA m source has a moment of 1e-9 A m. Express its predicted SI field in the
+    # recording's unit: for fT/cm a gradient in T/m is multiplied by 1e15 times 0.01.
     return 1e-9 * length_unit / field_unit
 
 
@@ -33,6 +37,8 @@ def _device_to_head(info):
 
 def _compare_infos(recorded, acquisition, names):
     """Check geometry and calibration shared by a light forward Info and acquisition Info."""
+    # Identical labels can occur in different recordings. Check the head pose as well as
+    # each primary coil before using reference metadata from the supplied acquisition.
     if not np.allclose(_device_to_head(recorded)['trans'], _device_to_head(acquisition)['trans'],
                        rtol=0, atol=1e-7):
         raise ValueError("Acquisition Info and forward have different device-to-head transforms.")
@@ -58,6 +64,8 @@ def _compensated_rows(recorded, acquisition, rows, grade, ignore_ref):
                          "with reference MEG channels and compensation coefficients.")
     if get_current_comp(acquisition) != grade:
         raise ValueError("Acquisition Info and forward have different compensation grades.")
+    # Each selected row maps the full set of uncompensated acquisition channels to one
+    # compensated signal. Keep the reference columns and their signed coefficients.
     weights = make_compensator(acquisition, 0, grade)[rows]
     # In-memory forwards can retain some coefficients; FIF generally drops them.
     for comp in recorded.get('comps', ()):
@@ -102,6 +110,8 @@ def mne_channel_geometry(fwd, channel_names, channel_units, head_transform, info
     """
     recorded = fwd['info']
     acquisition = recorded if info is None else info
+    # The gain, the acquisition Info and the recipient recording may have different
+    # channel orders. Gain rows are selected by label in the recipient's order.
     row_names = list(fwd['sol']['row_names'])
     if len(row_names) != fwd['sol']['data'].shape[0]:
         raise ValueError("The MNE gain row count differs from its channel labels.")
@@ -120,11 +130,14 @@ def mne_channel_geometry(fwd, channel_names, channel_units, head_transform, info
         rows.append(row_names.index(name))
     if info is not None:
         _compare_infos(recorded, acquisition, channel_names)
+    # Compensation coefficients use acquisition indices. The rows returned to the caller
+    # index the gain instead, so look up the same channels in both places.
     selected = [acquisition['ch_names'].index(name) for name in channel_names]
     grade = get_current_comp(recorded)
     if grade:
         mixing = _compensated_rows(recorded, acquisition, selected, grade, ignore_ref)
     else:
+        # At grade zero each output takes its own primary channel with weight one.
         mixing = np.zeros((len(rows), len(acquisition['chs'])))
         mixing[np.arange(len(rows)), selected] = 1
 
@@ -136,8 +149,13 @@ def mne_channel_geometry(fwd, channel_names, channel_units, head_transform, info
     channels = [acquisition['chs'][idx] for idx in active]
     if any(ch['coord_frame'] != FIFF.FIFFV_COORD_DEVICE for ch in channels):
         raise ValueError("Expected MEG coil locations in MNE device coordinates.")
+    # Expand each active channel into its physical pickup centres and axes in MNE head
+    # coordinates. A single gradiometer channel, for example, contributes two pickups.
     coils = _create_meg_coils(channels, FWD.COIL_ACCURACY_POINT, _device_to_head(acquisition))
     rotation = head_transform[:3, :3]
+    # Translate only the positions; a coil's signed sensitivity axis undergoes rotation.
+    # For each pickup, multiply its within-channel weight by that channel's contribution
+    # to each recorded signal. The resulting tra has one row per output and one column per pickup.
     geometry = {
         'coilpos': np.vstack([c['rmag'] for c in coils]) @ rotation.T + head_transform[:3, 3],
         'coilori': np.vstack([c['cosmag'] for c in coils]) @ rotation.T,
