@@ -68,4 +68,6 @@ def trial_source_file(tmp_path):
 @pytest.fixture(scope='session')
 def forward_registration(tmp_path_factory, spm):
     """Use the same sub-104 registration across native and MNE forward tests."""
+    # Share the fiducial fit, meshes and native operator as the reference for every
+    # comparison. Each inversion test writes its outputs to a separate recording copy.
     return prepare_registration(tmp_path_factory.mktemp('registered'), spm)

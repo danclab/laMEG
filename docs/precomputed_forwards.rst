@@ -30,6 +30,8 @@ including the reference channels used to compute the compensated forwards.
 
     def compare_solver_windows(forwards, surfaces, reference, info, output_dir,
                                bem_copy, native_copy, fids, vertex, spm):
+        # Take the intersection across layers once. Both solvers will then use the same
+        # cortical locations, even if the BEM excluded a vertex from only one layer.
         prepared = prepare_mne_forward(
             forwards, surfaces, output_dir, reference=reference, info=info,
             ignore_ref=False, allow_nominal_ctf_coils=True,
@@ -38,10 +40,14 @@ including the reference channels used to compute the compensated forwards.
             spm_instance=spm, viz=False,
             invert_kwargs=dict(wois=[[-50, -25], [-25, 0], [0, 25]], patch_size=5),
         )
+        # vertex is the original within-layer ID. Each call maps it to the kept
+        # vertex before running MSP in the specified windows.
         bem = sliding_window_model_comparison(
             vertex, fids, bem_copy, prepared.surfaces,
             forward_operator=prepared.operator, **options,
         )
+        # Use SPM's native gain on the same prepared surfaces and an independent copy
+        # of the recording so that this run preserves the BEM inversion on bem_copy.
         single_shell = sliding_window_model_comparison(
             vertex, fids, native_copy, prepared.surfaces, **options,
         )
@@ -86,7 +92,10 @@ internally for each candidate layer.
     from lameg.invert import coregister, invert_ebb_layer
 
     def fit_multilayer_ebb(working_copy, prepared, fids, spm):
+        # Register the combined mesh to this recording before fitting across layers.
         coregister(fids, working_copy, prepared.surfaces, spm_instance=spm, viz=False)
+        # Rows of the returned reconstruction matrix follow the kept vertices of
+        # each layer in order. prepared.manifest records their original IDs.
         return invert_ebb_layer(
             working_copy, prepared.surfaces, forward_operator=prepared.operator,
             woi=[-25, 25], spm_instance=spm, return_mu_matrix=True, viz=False,
@@ -119,6 +128,8 @@ gain cache beside its header.
     from lameg.laminar import model_comparison
 
     def compare_saved_forward(donor, working_copy, surfaces, fids, vertex, spm):
+        # Read the gain referenced by the donor, including its channel order and
+        # dipole signs, before selecting the matching layer for each inversion.
         operator = ForwardOperator.from_spm(
             donor, surfaces.get_mesh_path(), surfaces.get_layer_names()
         )

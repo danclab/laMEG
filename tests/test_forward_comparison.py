@@ -134,6 +134,8 @@ def test_supplied_gain_attaches_after_setup_before_each_inversion(
     runtime = object()
     attached = {}
     fids = {'nas': [0, 1, 0], 'lpa': [-1, 0, 0], 'rpa': [1, 0, 0]}
+    # Exercise both places where callers can specify an SPM slot. Registration
+    # and inversion must end up targeting the same slot in either case.
     native_kwargs = {'inversion_idx': slot} if specified_in in ('both', 'forward') else {}
     inverse_kwargs = {'patch_size': 5}
     if specified_in in ('both', 'inverse'):
@@ -187,6 +189,8 @@ def test_invalid_second_layer_fails_before_any_dataset_change(monkeypatch, input
     surfaces, operator = input_forward
     path = surfaces.get_mesh_path('white')
     mesh = nib.load(path)
+    # Only the second layer is wrong. Checking meshes inside the inversion loop
+    # would already have overwritten the slot for pial before discovering this.
     mesh.darrays[0].data[1] += [0., 3., 0.]
     nib.save(mesh, path)
     setup = Mock(side_effect=AssertionError('a bad mesh must fail before native setup'))
@@ -230,6 +234,8 @@ def test_seeded_msp_requires_a_defined_column_on_every_layer(
     """Reject an invalid explicit patch prior before building any forward model."""
     surfaces, operator = input_forward
     normals = operator.orientations_head.copy()
+    # An archived operator can carry a nonzero gain with a missing orientation.
+    # Such a column cannot define the sign of a seeded MSP patch.
     normals[4] = 0  # White vertex 1 only.
     operator = replace(operator, orientations_head=normals, allow_undefined_gain=True)
     white = surfaces.get_mesh_path('white')
@@ -265,6 +271,8 @@ def test_sliding_uses_named_gain_once_for_all_windows(monkeypatch, input_forward
     windows = np.array([[-10., 10.], [10., 30.]])
     events = []
     attached = {}
+    # Preflight checks vertex 41 at its compact index 1. The public inverse
+    # must still receive 41 so it can map the original anatomical ID itself.
     original_prior = 41
     support = Mock()
     support.map_indices.return_value = np.array([1])
@@ -301,6 +309,8 @@ def test_sliding_uses_named_gain_once_for_all_windows(monkeypatch, input_forward
     assert call_options == {'multilayer': False}
     assert events == [('setup', 'pial'), ('attach', 'pial'), ('invert', 'pial'),
                       ('setup', 'white'), ('attach', 'white'), ('invert', 'white')]
+    # The mock inverse uses signed sensor values as distinct window scores.
+    # Local vertex 1 has global gain columns 1 and 4 in the two layer blocks.
     np.testing.assert_array_equal(evidence, operator.gain[:, [1, 4]].T)
     np.testing.assert_array_equal(actual_windows, windows)
     assert options == {'inversion_idx': slot}
@@ -309,6 +319,8 @@ def test_sliding_uses_named_gain_once_for_all_windows(monkeypatch, input_forward
 def test_sliding_rejects_window_misalignment(monkeypatch):
     """Model evidence from different time intervals cannot share a result column."""
     windows = np.array([[5., 15.], [15., 25.]])
+    # Reversed intervals keep the array shape unchanged while assigning the
+    # second layer's scores to the wrong times.
     mock = Mock(side_effect=[([1., 2.], windows), ([3., 4.], windows[::-1])])
     monkeypatch.setattr(laminar, 'coregister', Mock())
     monkeypatch.setattr(laminar, 'invert_sliding_window_msp', mock)
@@ -321,6 +333,8 @@ def test_excluded_original_prior_stops_native_comparison_before_setup(monkeypatc
     """The native solver must respect the common anatomical support too."""
     surfaces = TwoLayerSurfaces()
     surfaces.forward_support = Mock()
+    # A native single-shell run can reuse surfaces restricted for BEM. Both
+    # solvers must reject the same excluded seed before either modifies the slot.
     surfaces.forward_support.map_indices.side_effect = ValueError("Vertex 3 excluded from pial.")
     setup = Mock(side_effect=AssertionError('a missing prior must fail before registration'))
     monkeypatch.setattr(laminar, 'coregister', setup)

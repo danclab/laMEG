@@ -35,10 +35,14 @@ def _support_data(mne_example, tmp_path):
     combined = nib.load(str(full_path))
     nib.save(combined, surfaces.get_mesh_path())
     xyz, faces, normals = (a.data for a in combined.darrays)
+    # This fixture has eight vertices per layer in a deliberately shuffled GIfTI
+    # order. Save both per-layer surfaces for the same registration checks SPM uses.
     for index, key in enumerate(surfaces.get_layer_names()):
         selection = slice(8 * index, 8 * (index + 1))
         layer_faces = faces[faces[:, 0] // 8 == index] - 8 * index
         _mesh(surfaces.get_mesh_path(key), xyz[selection], layer_faces, normals[selection])
+    # Keep vertex 0 in different hemispheres at the two depths. Both gains have
+    # seven sources, but only six anatomical locations are available at both depths.
     restricted = {}
     for key, spaces in [('white', [np.arange(4), np.arange(1, 4)]),
                         ('pial', [np.arange(1, 4), np.arange(4)])]:
@@ -51,6 +55,8 @@ def test_common_support_vertices(support_data, tmp_path):
     """Map reordered hemisphere/vertex IDs and independent omissions across both layers."""
     surfaces, restricted, options = support_data
     original = Path(surfaces.get_mesh_path()).read_bytes()
+    # These known (hemisphere, vertex) pairs give an independent expected answer.
+    # The first call receives only the forwards and registration to recover that map.
     keys = options['vertices']
     keep = np.flatnonzero(keys[:, 1] != 0)
     inputs = {k: v for k, v in options.items() if k != 'vertices'}
@@ -61,12 +67,18 @@ def test_common_support_vertices(support_data, tmp_path):
     assert Path(surfaces.get_mesh_path()).read_bytes() == original
     report = json.loads(prepared.manifest.read_text(encoding='utf-8'))
     assert report['original_vertices'] == keep.tolist()
+    # The omissions are reported as original GIfTI IDs despite MNE's use of
+    # local vertex 0 in each hemisphere.
     assert report['excluded_by_layer'] == {'pial': [6], 'white': [1]}
     np.testing.assert_array_equal(prepared.support.map_indices(keep), np.arange(6))
+    # The second layer starts at index 8 on the original mesh and 6 on the
+    # prepared mesh. Original index 14 therefore refers to excluded local vertex 6.
     np.testing.assert_array_equal(prepared.support.map_indices(8 + keep, multilayer=True),
                                   6 + np.arange(6))
     with pytest.raises(ValueError, match='vertex 6.*pial'):
         prepared.support.map_indices([14], multilayer=True)
+    # Compare every gain column with a direct import using the known correspondences.
+    # Agreement also checks that filtering kept the original signed source directions.
     native_order = ForwardOperator.from_mne(
         {k: restricted[k] for k in ('pial', 'white')}, prepared.surfaces.get_mesh_path(),
         vertices=keys[keep], **inputs)
@@ -95,6 +107,8 @@ def test_unknown_and_ambiguous_grid(support_data, tmp_path):
     destination = tmp_path / 'output'
     with pytest.raises(ValueError, match='Ambiguous'):
         prepare_mne_forward(restricted, surfaces, destination, **options)
+    # A 1 mm translation moves these mesh points away from the full MNE source
+    # grid. Treating them as BEM exclusions would hide a registration error.
     transform = options['mri_to_head_mm'].copy()
     transform[0, 3] += 1.
     with pytest.raises(ValueError, match='absent from the full MNE source'):

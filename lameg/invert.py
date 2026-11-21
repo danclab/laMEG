@@ -636,6 +636,9 @@ def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
     - Spatial mode preparation and cross-validation use `spm_eeg_inv_prep_modes_xval`.
     """
 
+    # The caller names the seed on the original GIfTI. After a BEM exclusion, the
+    # same integer can refer to a different vertex on the smaller inversion mesh.
+    # For a combined mesh the mapping also converts the offset of each layer.
     indices = map_surface_vertices(surf_set, _prior_indices(priors),
                                   multilayer=layer_name is None)
     norm = _normalize_inversion_inputs(
@@ -653,6 +656,8 @@ def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
         forward_operator=forward_operator, priors=indices
     )
 
+    # Validating the gain uses zero-based Python indices. SPM's patch file is the
+    # first place that needs one-based indices. An empty list selects random patches.
     patchfilename = None
     if indices.size:
         data_dir = os.path.dirname(data_fname)
@@ -1007,6 +1012,8 @@ def invert_sliding_window_msp(prior, data_fname, surf_set, layer_name=None, stag
         n_temp_modes=n_temp_modes
     )
 
+    # Every time window tests the same anatomical seed. Map it once and use that
+    # mesh index for both gain validation and the patch file shared by the windows.
     indices = map_surface_vertices(surf_set, _prior_indices([prior]),
                                   multilayer=layer_name is None)
     norm = _normalize_inversion_inputs(
@@ -1057,6 +1064,8 @@ def _prior_indices(priors):
     """Validate zero-based MSP vertex indices used on the selected cortical mesh."""
     if priors is None:
         return np.array([], dtype=int)
+    # Some callers store whole-number IDs in a float array. Verify those values
+    # before casting so a fractional seed cannot move to a neighboring vertex.
     indices = np.asarray(priors)
     if not np.issubdtype(indices.dtype, np.integer):
         if (indices.dtype.kind != 'f' or not np.isfinite(indices).all()
@@ -1200,9 +1209,13 @@ def _prepare_spatial_modes(data_fname, surf_set, layer_name, stage, orientation,
     mesh_fname = surf_set.get_mesh_path(layer_name=layer_name, stage=stage,
                                        orientation=orientation, fixed=fixed)
     n_layers = surf_set.n_layers if layer_name is None else 1
+    # A layer comparison may already have installed an external gain. Verify that
+    # cache before computing modes. A native SPM slot has no external checksum.
     if forward_operator is None:
         check_spm_gain_cache(data_fname, inversion_idx=inversion_idx)
     else:
+        # A direct inversion can select one named block or all blocks in mesh order.
+        # Check that correspondence and any MSP seeds before changing the SPM dataset.
         names = surf_set.get_layer_names() if layer_name is None else (layer_name,)
         forward_operator = validate_inversion_forward(
             forward_operator, mesh_fname, names, inversion_idx, priors=priors)
@@ -1212,7 +1225,11 @@ def _prepare_spatial_modes(data_fname, surf_set, layer_name, stage, orientation,
 
     with spm_context(spm_instance) as spm:
         if forward_operator is not None:
+            # SPM's mode routine loads the gain from D.val, the active inversion
+            # slot. Attachment selects that slot and verifies the gain through SPM.
             attach_forward_operator(data_fname, forward_operator, inversion_idx, spm, mesh_fname)
+        # Smoothing follows the registered surface topology. The spatial-mode
+        # calculation below uses the corresponding gain at the solver's positions.
         print(f'Smoothing {mesh_fname}')
         spm.spm_eeg_smoothmesh_multilayer_mm(
             mesh_fname,
@@ -1475,6 +1492,9 @@ def _read_inversion_results(data_fname, inversion_idx=0, return_mu_matrix=False)
             if not return_mu_matrix:
                 return [free_energy, cv_err]
 
+            # SPM can leave trailing source rows empty, e.g. outside an MSP patch.
+            # The shared decoder respects the declared row count so each row of
+            # M @ U still identifies its registered source.
             weighting_mat = _h5_to_csc(inv_struct['M'])
 
             u_ref = inv_struct['U'][0][0]
@@ -1551,10 +1571,14 @@ def _ebblayer_pair_options(n_layers, sum_pair_topk, diff_pair_topk):
     """Determine how many SUM and DIFF pairs SPM can retain for a multilayer mesh."""
     if n_layers < 2:
         raise ValueError("EBBlayer requires a multilayer surface with at least two layers.")
+    # Each unordered pair of depths contributes a SUM candidate and a DIFF
+    # candidate at one cortical location. Two layers therefore offer one of each.
     n_pairs = n_layers * (n_layers - 1) // 2
     options = {}
     for key, value in (('ebblayer_sum_pair_topk', sum_pair_topk),
                        ('ebblayer_diff_pair_topk', diff_pair_topk)):
+        # Adapt the default to the geometry. An explicit count specifies which
+        # model to fit, so reject it if it exceeds the available layer pairs.
         if value is None:
             value = min(2, n_pairs)
         elif (isinstance(value, (bool, np.bool_))
@@ -1592,6 +1616,8 @@ def _invert_ebb_base(data_fname, surf_set, layer_name=None, stage='ds',
     if ebblayer_diag_vertex is not None:
         if not layerwise:
             raise ValueError("`ebblayer_diag_vertex` is only valid for EBBlayer.")
+        # Pair diagnostics refer to one anatomical column across all layers.
+        # Its ID uses within-layer numbering even on a combined multilayer mesh.
         diagnostic = _prior_indices([ebblayer_diag_vertex])
         ebblayer_diag_vertex = int(map_surface_vertices(surf_set, diagnostic)[0])
 
@@ -1613,6 +1639,8 @@ def _invert_ebb_base(data_fname, surf_set, layer_name=None, stage='ds',
         forward_operator=forward_operator
     )
 
+    # EBBlayer pairs corresponding sources in the layer-major gain. Passing
+    # nlayers tells SPM how to recover the separate layers from the combined mesh.
     cfg = _build_invertiter_cfg(
         data_fname=data_fname,
         inversion_idx=inversion_idx,
@@ -1690,6 +1718,8 @@ def _invert_sliding_window_ebb_base(
         forward_operator=forward_operator
     )
 
+    # SPM fits all requested windows in one batch. Each window uses the same
+    # installed gain, source order, layer pairing and spatial-mode file.
     cfg = _build_invertiter_cfg(
         data_fname=data_fname,
         inversion_idx=inversion_idx,
@@ -1816,9 +1846,13 @@ def _rms_gain_cache(data_file, inversion_idx):
         slot = inversion_slot(header, inversion_idx)
         if slot is None:
             raise KeyError("Source inversion has not been run in the requested slot.")
+        # RMS can be requested for a different slot from D.val. Read the selected
+        # filename and its checksum together from that slot.
         recorded, digest = gain_reference(slot)
     path = Path(data_file)
     if not recorded:
+        # Older native headers omit the cache name. SPM's filename embeds the
+        # one-based slot number even though callers use zero-based indexing.
         recorded = f'SPMgainmatrix_{path.stem}_{inversion_idx + 1}.mat'
     return path.parent / recorded.replace('\\', '/'), digest
 
@@ -1851,6 +1885,9 @@ def get_lead_field_rms_diff(data_file, surf_set, inversion_idx=0):
                             dtype=np.float64)
         return np.sqrt(np.mean(np.square(delta, out=delta), axis=1))
 
+    # External registration binds the comparison to the original gain bytes.
+    # The v7.3 HDF5 view has sources along axis 0; the v5 reader returns channels
+    # along axis 0, so transpose it before using the same endpoint calculation.
     with verified_gain(path, digest):
         if h5py.is_hdf5(path):
             with h5py.File(path, 'r') as cache:

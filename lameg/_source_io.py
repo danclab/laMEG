@@ -253,6 +253,8 @@ def _load_hdf5_inverse_components(inv_fname, inversion_idx):
         u_ref = inv_root["U"][0][0]
         u_obj = file[u_ref]
         if isinstance(u_obj, h5py.Group):
+            # U maps sensors to spatial modes. A sparse U can still have an
+            # all-zero final mode, so use the row count saved by MATLAB.
             u_matrix = h5_to_csc(u_obj)
         else:
             u_matrix = np.asarray(u_obj)
@@ -751,6 +753,8 @@ def _h5_matrix_rows_from_object(obj, rows, n_spatial_modes):
         raise IndexError("Source row indices must be non-negative.")
 
     if is_h5_sparse(obj):
+        # A requested vertex indexes a source, even when its entire row of
+        # weights is zero. Recover the full shape before selecting vertices.
         matrix = _ensure_m_orientation(h5_to_csc(obj), n_spatial_modes)
         if rows.max() >= matrix.shape[0]:
             raise IndexError("Source row index exceeds inverse matrix dimensions.")
@@ -762,6 +766,8 @@ def _h5_matrix_rows_from_object(obj, rows, n_spatial_modes):
     if obj.ndim != 2:
         raise ValueError(f"Expected a 2-D inverse matrix, got shape {obj.shape}.")
 
+    # h5py requires increasing, unique indices. Read each source once, then
+    # restore the caller's order and any repeated vertices with inverse_idx.
     unique_rows, inverse_idx = np.unique(rows, return_inverse=True)
 
     if obj.shape[1] == n_spatial_modes:
@@ -798,6 +804,8 @@ def _h5_matrix_shape_by_path(file_name, object_path, n_spatial_modes):
 def _h5_matrix_shape_from_object(obj, n_spatial_modes):
     """Return logical ``(n_sources, n_spatial_modes)`` for a v7.3 matrix."""
     if is_h5_sparse(obj):
+        # Native MATLAB sparse groups store their dimensions separately from
+        # their weights, so a shape query can skip reading the coefficients.
         shape = sparse_shape(obj)
     elif isinstance(obj, h5py.Dataset) and obj.ndim == 2:
         shape = obj.shape
@@ -807,6 +815,8 @@ def _h5_matrix_shape_from_object(obj, n_spatial_modes):
 
 
 def _m_needs_transpose(shape, n_spatial_modes):
+    # M must multiply U as (sources × modes) @ (modes × sensors). U gives
+    # us the mode count. For square M both axes match, so keep the stored order.
     if shape[1] == n_spatial_modes:
         return False
     if shape[0] == n_spatial_modes:

@@ -21,11 +21,16 @@ def test_multilayer_ebb_uses_signed_supplied_gain(tmp_path, spm, forward_registr
     # return_mu_matrix=True adds a third item to each result.
     # pylint: disable=unbalanced-tuple-unpacking
     native_f, native_cv, native_mu = invert_ebb_layer(dataset, surfaces, **opts)
+    # Changing G to -G leaves the modelled sensor covariance G Q G.T invariant for
+    # source covariance Q. The inverse projector contains one signed gain factor,
+    # so its sign reveals which gain the solver actually used.
     flipped = replace(operator, gain=-operator.gain, provenance='EBBlayer polarity test')
     supplied_f, supplied_cv, supplied_mu = invert_ebb_layer(
         dataset, surfaces, forward_operator=flipped, **opts)
     # pylint: enable=unbalanced-tuple-unpacking
 
+    # G maps source currents to sensors (channels x sources). The projector reverses
+    # that mapping (sources x channels), retaining a row for each vertex in each layer.
     assert np.isfinite(native_f).all() and native_mu.shape == operator.gain.T.shape
     np.testing.assert_allclose(supplied_f, native_f, rtol=0, atol=1e-4)
     np.testing.assert_allclose(supplied_cv, native_cv)
@@ -33,13 +38,17 @@ def test_multilayer_ebb_uses_signed_supplied_gain(tmp_path, spm, forward_registr
     supplied_mu = supplied_mu.toarray() if issparse(supplied_mu) else supplied_mu
     assert np.linalg.norm(native_mu) > 0
     np.testing.assert_allclose(supplied_mu, -native_mu, rtol=1e-6, atol=1e-10)
-    # With one matching time window, sliding and static EBBlayer fit the same model.
+    # Test the windowed entry point against the static fit on the same samples. Match
+    # its temporal and spatial modes and explicitly disable its default Hann taper.
+    # With two layers only one layer pair exists for the EBBlayer source priors.
     windows = [[100., 200.]]
     window_f, returned_windows = invert_sliding_window_ebb_layer(
         dataset, surfaces, wois=windows, n_temp_modes=4, n_spatial_modes='all',
         hann_windowing=False, spm_instance=spm, viz=False, forward_operator=flipped)
     np.testing.assert_array_equal(returned_windows, windows)
     np.testing.assert_allclose(window_f, supplied_f, rtol=0, atol=1e-4)
+    # Reopen the persistent SPM slot. The saved matrix and provenance must identify
+    # the deliberately sign-flipped operator even after the windowed inversion.
     installed = ForwardOperator.from_spm(
         dataset, surfaces.get_mesh_path(), surfaces.get_layer_names(), allow_undefined_gain=True)
     np.testing.assert_array_equal(installed.gain, flipped.gain)
@@ -50,6 +59,8 @@ def test_sliding_model_comparison_roundtrip(tmp_path, spm, forward_registration)
     """Native and supplied gains give matching free energies for each named layer and window."""
     source, fids, surfaces, _, operator = forward_registration
     layers = [operator.layer(name) for name in surfaces.get_layer_names()]
+    # Score each anatomical site by its weaker layer's sensor norm. This picks a
+    # reproducible seed with a measurable response in both layers and a known polarity.
     defined = np.logical_and.reduce([layer.orientation_defined for layer in layers])
     magnitude = np.minimum.reduce([np.linalg.norm(layer.gain, axis=0) for layer in layers])
     prior = int(np.argmax(np.where(defined, magnitude, 0)))
@@ -63,9 +74,14 @@ def test_sliding_model_comparison_roundtrip(tmp_path, spm, forward_registration)
     supplied_f, supplied_windows = sliding_window_model_comparison(
         prior, fids, supplied, surfaces, forward_operator=operator, **opts)
 
+    # Rows follow cortical layers and columns follow windows in milliseconds. Require
+    # a nonzero layer contrast, then compare the full matrix element by element to
+    # catch a layer swap, a time-window swap or reuse of the previous layer's gain.
     assert native_f.shape == (len(layers), len(windows)) and np.isfinite(native_f).all()
     assert np.ptp(native_f, axis=0).max() > 1e-4
     np.testing.assert_array_equal(native_windows, windows)
     np.testing.assert_array_equal(supplied_windows, windows)
     np.testing.assert_allclose(supplied_f, native_f, rtol=0, atol=1e-4)
+    # Reuse a layer's gain across time windows. The number of saved caches consequently
+    # follows the number of layer models, independent of how many windows were fitted.
     assert len(list(Path(supplied).parent.glob('lameg_gain_*.mat'))) == len(layers)

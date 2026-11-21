@@ -59,12 +59,15 @@ def _prepare_layer_forwards(operator, surfaces, layers, mesh_kwargs, device,
     if method not in ('EBB', 'MSP'):
         raise ValueError("A supplied forward operator requires method='EBB' or 'MSP'.")
 
+    # Registration, gain selection and inversion must all address one SPM slot.
+    # Accept a slot specified through either public options dictionary.
     slot = forward_kwargs.get('inversion_idx', invert_kwargs.get('inversion_idx', 0))
     inverse_slot = invert_kwargs.get('inversion_idx', slot)
     validate_slot_index(slot)
     validate_slot_index(inverse_slot)
     if slot != inverse_slot:
         raise ValueError("Setup and inversion require the same nonnegative inversion_idx.")
+    # OPM head-model setup creates the first slot and has no slot argument.
     if device == 'opm':
         if slot != 0:
             raise ValueError("OPM head-model setup requires inversion_idx=0.")
@@ -73,6 +76,8 @@ def _prepare_layer_forwards(operator, surfaces, layers, mesh_kwargs, device,
         forward_kwargs['inversion_idx'] = int(slot)
     invert_kwargs['inversion_idx'] = int(slot)
 
+    # Check every layer before the first coregistration overwrites the slot.
+    # Keep each validated gain block with the exact GIfTI used to check it.
     validated = {}
     for name in layers:
         mesh = surfaces.get_mesh_path(layer_name=name, **mesh_kwargs)
@@ -101,6 +106,9 @@ def _comparison_layers(fid_coords, data_fname, surf_set, mesh_kwargs, device, vi
         raise ValueError("Pass forward_operator directly to the comparison.")
     invert_kwargs.setdefault('n_spatial_modes', 'all')
     layers = surf_set.get_layer_names()
+    # A layer comparison fits one mesh at a time. Validate the anatomical seed
+    # on the shared within-layer support, including when comparing a native solver
+    # on surfaces already restricted by an external solver.
     indices = map_surface_vertices(surf_set, _prior_indices(priors), multilayer=False)
     options = dict(forward_kwargs or {})
     if operator is not None:
@@ -112,6 +120,8 @@ def _comparison_layers(fid_coords, data_fname, surf_set, mesh_kwargs, device, vi
             layer, mesh = validated[name]
             attach_forward_operator(data_fname, layer, invert_kwargs['inversion_idx'],
                                     spm_instance, mesh_fname=mesh)
+        # Yield only after registration and any gain attachment. The caller runs
+        # this layer's inverse before the generator prepares the next layer in D.
         yield name
 
 
@@ -203,6 +213,8 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
     f_vals, cv_errs = [], []
     for name in layers:
         f_val, cv_err = np.nan, np.nan
+        # The selected gain is now in the slot. Pass the original anatomical
+        # priors to the inverse, which maps them when writing its patch file.
         if inverse is not None:
             f_val, cv_err = inverse(data_fname, surf_set, layer_name=name, **mesh_kwargs,
                                     viz=viz, spm_instance=spm_instance, **invert_kwargs)
@@ -294,11 +306,16 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
         evidence, layer_wois = invert_sliding_window_msp(
             prior, data_fname, surf_set, layer_name=name, **mesh_kwargs, viz=viz,
             spm_instance=spm_instance, **invert_kwargs)
+        # Use the first layer's actual window edges for all subsequent fits.
+        # Equal numbers of windows alone would allow different time intervals
+        # to be compared in the same column of the returned array.
         if wois is None:
             wois = layer_wois
             invert_kwargs['wois'] = wois
         elif not np.array_equal(wois, layer_wois):
             raise ValueError(f"Sliding windows differ for layer {name!r}.")
+        # The SPM reader squeezes a single window to a scalar. Retain a
+        # length-one time axis so stacking always produces layer × window.
         row = np.atleast_1d(evidence)
         if row.shape != (len(wois),):
             raise ValueError(f"Expected one free energy per window for layer {name!r}.")

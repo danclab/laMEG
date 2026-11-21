@@ -40,6 +40,8 @@ def inversion_slot(header, index):
         if (not isinstance(cells, h5py.Dataset) or h5py.check_dtype(ref=cells.dtype) is None
                 or not 0 <= index < cells.size):
             return None
+        # In v7.3 each cell refers to an HDF5 object. An unpopulated inversion
+        # may refer to a MATLAB-empty dataset where a completed slot has a struct group.
         ref = cells[()].ravel()[index]
         slot = header[ref] if ref else None
         return slot if isinstance(slot, h5py.Group) else None
@@ -60,6 +62,8 @@ def mat_string(dataset):
 def good_meg_channels(header, with_units=False):
     """Read good MEG labels, optionally paired with units, from the active data montage."""
     meg_types = {'MEG', 'MEGMAG', 'MEGGRAD', 'MEGPLANAR'}
+    # SPM uses Mind=0 for the acquisition channels. A positive Mind selects a
+    # one-based montage with its own channel names, units and bad-channel flags.
     if not isinstance(header, h5py.File):
         montage = getattr(header, 'montage', None)
         active = int(getattr(montage, 'Mind', 0))
@@ -75,6 +79,8 @@ def good_meg_channels(header, with_units=False):
         if isinstance(channels, h5py.Dataset):
             channels = header[channels[()].ravel()[active - 1]]
 
+    # MATLAB struct-array fields contain object references for multiple channels.
+    # A single-channel struct can store the field directly.
     def values(key, read):
         field = channels[key]
         if h5py.check_dtype(ref=field.dtype) is not None:
@@ -117,6 +123,8 @@ def gain_reference(slot, external_only=False):
     digest = _text_field(marker, 'sha256')
     if version.size != 1 or version.item() != 1 or not digest:
         raise ValueError("Invalid external-gain registration in the SPM inversion slot.")
+    # The marker records which gain was verified at attachment. Require the same
+    # basename in gainmat even when a dataset moves between Windows and Unix.
     if not name or PureWindowsPath(name).name != name or name != _text_field(marker, 'file'):
         raise ValueError("The registered external gain cache is not selected.")
     return name, digest
@@ -124,6 +132,8 @@ def gain_reference(slot, external_only=False):
 
 def file_identity(path):
     """Identify the file version used for memoized metadata and checksums."""
+    # Paths survive replacement. The inode and timestamps let the memoized readers
+    # notice when a new file occupies a familiar dataset or gain-cache path.
     stat = path.stat()
     return stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns
 
@@ -141,6 +151,8 @@ def cache_hash(path, _file_identity):
 @contextmanager
 def verified_gain(path, expected_hash):
     """Verify a registered cache before use and detect replacement during the read."""
+    # Native SPM headers may provide only a filename. For an external gain, the
+    # marker lets us check the exact file and detect changes during the read.
     if expected_hash is None:
         if not path.is_file():
             raise FileNotFoundError(f"SPM gain cache does not exist: {path}")

@@ -26,6 +26,8 @@ def example_operator():
                     [0, 0, 0], [0, 1, 0], [1, 0, 0]], float)
     affine = np.array([[0, -1, 0, 10], [1, 0, 0, 2], [0, 0, 1, 1], [0, 0, 0, 1]], float)
     used = xyz @ affine[:3, :3].T + affine[:3, 3]
+    # Move only the solver positions for the three pial dipoles. Their anatomical vertex
+    # IDs still refer to the points in xyz throughout import and layer selection.
     used[:3, 2] -= 0.6
     return ForwardOperator(np.arange(12.0).reshape(2, 6), ('L', 'R'), ('fT', 'fT'),
                            ('pial', 'white'), xyz, used, np.tile([0, 1, 0], (6, 1)), affine,
@@ -39,6 +41,8 @@ def test_source_identity(tmp_path, operator):
     white = operator.layer('white')
     np.testing.assert_array_equal(white.gain, operator.gain[:, 3:])
     mesh_file = tmp_path / 'white.gii'
+    # The fixture rotates native +x to head +y. Reversing the MRI vector changes
+    # the sign of the predicted signal for the same positive current.
     directions = np.tile([1, 0, 0], (3, 1))
     _mesh(mesh_file, white.requested_mri_mm, white.faces, directions)
     operator.validate_mesh('white', mesh_file)
@@ -89,6 +93,8 @@ def make_native_files(tmp_path, operator):
     faces = np.r_[operator.faces, operator.faces + 3]
     _mesh(mesh, operator.requested_mri_mm, faces, np.tile([1, 0, 0], (6, 1)))
 
+    # Reverse the gain rows, store the matrix in MATLAB axis order and multiply by
+    # SPM's scale. A correct import must undo all three conventions independently.
     with h5py.File(cache, 'w') as header:
         _strings(header, 'label', ['R', 'L'])
         header['G'] = 10 * operator.gain[::-1].T
@@ -113,6 +119,8 @@ def make_native_files(tmp_path, operator):
         _strings(fwd, 'channels', ['L', 'R'])
         fwd['siunits'], fwd['scale'] = 1, 10.
         forward_mesh = fwd.create_group('mesh')
+        # SPM saves one-based triangle indices and source positions in head metres.
+        # The GIfTI uses zero-based connectivity and MRI millimetres.
         forward_mesh['face'] = (faces + 1).T
         forward_mesh['vert'] = operator.effective_head_mm.T / 1000.
         sens = fwd.create_group('sensors')
@@ -189,6 +197,8 @@ def test_external_cache_reexport(native_files, operator, nominal_ctf):
     alternate.write_bytes(cache.read_bytes())
     moved = ForwardOperator.from_spm(data, mesh, operator.layer_names, gain_fname=alternate)
     np.testing.assert_array_equal(moved.gain, operator.gain)
+    # Negating G preserves every dimension and RMS amplitude but changes the forward
+    # prediction. The stored checksum detects that the moved cache was replaced.
     fields['G'] = -fields['G']
     savemat(str(alternate), fields)
     with pytest.raises(ValueError, match='checksum'):

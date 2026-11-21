@@ -13,6 +13,8 @@ def _bem_and_recording(subjects_dir):
     """Build a closed triangular conductor and an uncompensated MEG recording."""
     bem_dir = subjects_dir / 'example' / 'bem'
     bem_dir.mkdir(parents=True)
+    # The six poles form a closed octahedron around all sources. Eight triangular faces
+    # keep this an independently computed BEM small enough for the unit tests.
     poles = np.array([[1, 0, 0], [0, 1, 0], [-1, 0, 0], [0, -1, 0], [0, 0, 1], [0, 0, -1]])
     triangles = [[j, (j + 1) % 4, 4] for j in range(4)]
     triangles += [[(j + 1) % 4, j, 5] for j in range(4)]
@@ -34,6 +36,8 @@ def make_mne_example(tmp_path_factory):
     surf_dir = root / 'example' / 'surf'
     surf_dir.mkdir()
     corners = np.array([[1., 1., 1.], [-1., -1., 1.], [-1., 1., -1.], [1., -1., -1.]])
+    # Stretch the tetrahedra so their radial link directions and fitted surface normals can
+    # differ. This makes an accidental fixed-normal projection visible.
     corners *= [1., 1.4, 0.75]
     faces = np.array([[0, 2, 1], [0, 1, 3], [0, 3, 2], [1, 2, 3]])
     # Native MRI -> MNE head (metres), then MNE head -> recipient head (mm).
@@ -61,10 +65,14 @@ def make_mne_example(tmp_path_factory):
     # Reorder both hemispheres and within-hemisphere vertices in the laMEG mesh.
     order = np.array([5, 4, 7, 6, 2, 3, 0, 1])
     directions = np.tile(corners / np.linalg.norm(corners, axis=1, keepdims=True), (2, 1))
+    # The inverse permutation gives the new number of every old mesh vertex. Apply it to
+    # the triangles so that changing vertex order preserves anatomical connectivity.
     local_faces = np.argsort(order)[np.r_[faces, faces + 4]]
     mesh = root / 'multilayer.gii'
     _mesh(mesh, np.concatenate([points[order] for points in model_points]),
           np.r_[local_faces, local_faces + 8], np.tile(directions[order], (2, 1)))
+    # With four vertices per hemisphere, division by four identifies the source space
+    # and the remainder gives the vertex ID within it. The target channel order is reversed.
     options = {'vertices': np.column_stack((order // 4, order % 4)),
                'channel_units': {'MEG0112': 'fT/cm', 'MEG0111': 'fT'},
                'mri_to_head_mm': head_head @ mri_head_mm, 'mne_head_to_head_mm': head_head}
@@ -87,6 +95,8 @@ def test_mne_signed_bem_prediction(mne_example, tmp_path):
     # The separate pulses identify each source. The final sample drives a bipolar patch.
     weights = np.array([1., -2., 3., -4., -5., 6., -7., 8.])
     moments = np.column_stack((np.diag(weights), weights))  # nA m, in MNE vertex order
+    # MNE takes Cartesian currents in A m, with axes (source, component, time). Using
+    # apply_forward on those vectors provides an independent sensor-space reference.
     vector_am = mne_directions[:, :, None] * moments[:, None, :] * 1e-9
     currents = mne.VectorSourceEstimate(vector_am, [np.arange(4), np.arange(4)], 0., 0.001)
     for name, forward in forwards.items():
@@ -96,6 +106,8 @@ def test_mne_signed_bem_prediction(mne_example, tmp_path):
 
 def _assert_sensor_prediction(operator, moments, expected):
     # MNE outputs T/m for the planar gradiometer and T for the magnetometer.
+    # Put the planar channel first in fT/cm (1e15 times 0.01), then the magnetometer in fT.
+    # The MNE input currents already included the nA m to A m conversion.
     converted = expected.data[[1, 0]] * np.array([[1e13], [1e15]])
     assert np.all(np.linalg.norm(converted, axis=1) > 0.)
     np.testing.assert_allclose(operator.gain @ moments, converted, rtol=2e-6, atol=1e-8)
@@ -107,6 +119,8 @@ def test_fixed_bem_opposite_directions(mne_example, tmp_path):
     fixed = mne.convert_forward_solution(forwards['pial'], force_fixed=True, use_cps=False,
                                          verbose=False)
     points, faces = (part.data for part in nib.load(str(mesh)).darrays[:2])
+    # Reverse just some link directions. A scalar current in the saved MNE orientation
+    # then needs the matching sign change to describe the same physical dipole.
     signs = np.array([1., -1., 1., -1., -1., 1., -1., 1.])
     signed_head = fixed['source_nn'] * signs[:, None]
     native = signed_head @ fixed['mri_head_t']['trans'][:3, :3]
@@ -131,6 +145,8 @@ def test_mri_coordinate_forward(mne_example):
     native['source_rr'] = np.vstack([space['rr'][space['vertno']] for space in native['src']])
     gain = head['sol']['data']
     rotation = head['mri_head_t']['trans'][:3, :3]
+    # A current expressed in MRI axes must be rotated to head axes before applying the
+    # head-frame gain. Right-multiplying each three-column block gives that MRI-frame gain.
     native['sol']['data'] = (gain.reshape(len(gain), -1, 3) @ rotation).reshape(gain.shape)
     reference = ForwardOperator.from_mne(forwards, mesh, **options)
     converted = ForwardOperator.from_mne(dict(forwards, pial=native), mesh, **options)

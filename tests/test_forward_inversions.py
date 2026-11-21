@@ -20,6 +20,8 @@ def make_cortex(tmp_path):
     names = ('pial', '0.500', 'white')
     requested = np.vstack([white.requested_mri_mm + [0, 0, depth] for depth in (2, 1, 0)])
     effective = np.vstack([white.effective_head_mm + [0, 0, depth] for depth in (2, 1, 0)])
+    # Distinct amplitudes and polarities identify each layer's gain even when
+    # its channels, triangle topology and within-layer ordering match the others.
     operator = replace(white, layer_names=names, requested_mri_mm=requested,
                        effective_head_mm=effective, orientations_head=np.tile(
                            white.orientations_head, (len(names), 1)),
@@ -27,6 +29,8 @@ def make_cortex(tmp_path):
     paths = {name: str(tmp_path / ((name or 'combined') + '.gii')) for name in (*names, None)}
     for name, path in paths.items():
         layer = operator if name is None else operator.layer(name)
+        # Each face indexes vertices in its own layer. In the concatenated GIfTI
+        # shift each copy by a full layer so no triangle connects two depths.
         triangles = np.vstack([layer.faces + i * layer.n_columns for i in range(
             len(layer.layer_names))])
         _mesh(path, layer.requested_mri_mm, triangles,
@@ -49,6 +53,9 @@ def _check_job(cfg, method, sliding, windows):
     if method == 'MSP':
         path = custom['isfixedpatch']['fixedpatch']['fixedfile'][0]
         # Combined MSP priors can address any layer block.
+        # With four original vertices per layer, ID 10 is white vertex 2.
+        # Keeping [0, 2, 3] gives a white offset of 6 plus local index 1,
+        # so SPM should read Ip=8 after conversion to one-based indexing.
         np.testing.assert_array_equal(loadmat(path)['Ip'].ravel(), [3] if sliding else [8, 2])
 
 
@@ -93,6 +100,8 @@ def test_direct_operator_precedes_spatial_modes(monkeypatch, cortex, tmp_path, i
         _check_job(cfg, method, sliding, windows)
         events.append('batch')
 
+    # Record the values SPM would receive while keeping mesh validation,
+    # layer selection, source remapping and construction of the batch real.
     monkeypatch.setattr(_spm_gain, 'attach_spm_gain', install)
     runtime.spm_eeg_inv_prep_modes_xval.side_effect = modes
     runtime.spm_eeg_smoothmesh_multilayer_mm.side_effect = lambda *_args, **_kw: events.append(
@@ -110,6 +119,8 @@ def test_direct_operator_precedes_spatial_modes(monkeypatch, cortex, tmp_path, i
         options['diag_vertex'] = 2
     result = inversion(**options, **({'wois': windows} if sliding else {'return_mu_matrix': True}))
 
+    # Two time windows still require just one gain installation and one set
+    # of spatial modes. Preparing those modes earlier would use the old gain.
     assert events == ['attach', 'smooth', 'modes', 'batch']
     runtime.spm_eeg_inv_prep_modes_xval.assert_called_once()
     if sliding:
@@ -137,6 +148,8 @@ def test_direct_invalid_operator_or_prior_leaves_slot_untouched(monkeypatch, cor
     monkeypatch.setattr(_spm_gain, 'attach_spm_gain', install)
     monkeypatch.setattr(invert, 'spm_context', prepare)
     layer = 'pial' if invalid == 'layer_prior' else None
+    # Original combined ID 9 is white vertex 1. Losing that cortical location
+    # on pial also removes it from the shared support on white.
     prior = {'combined_layer_order': 0, 'layer_prior': 3, 'combined_prior': 9,
              'excluded_prior': 9, 'bad_slot': 0}[invalid]
     with pytest.raises(ValueError):
@@ -166,6 +179,8 @@ def test_ebblayer_pair_counts_in_spm_job(monkeypatch, sliding, n_layers, pair_op
                                                **pair_options)
     else:
         invert.invert_ebb_layer('data.mat', surfaces, **pair_options)
+    # Inspect the actual batch fields consumed by compiled SPM. A two-layer fit
+    # that requests two pairs fails there even if the call accepts its arguments.
     job = run.call_args[0][0]['spm']['meeg']['source']['invertiter']['isstandard']['custom']
     assert job['invtype'] == 'EBBlayer' and job['nlayers'] == n_layers
     assert (job['ebblayer_sum_pair_topk'], job['ebblayer_diff_pair_topk']) == expected

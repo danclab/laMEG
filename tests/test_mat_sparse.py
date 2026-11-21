@@ -16,9 +16,12 @@ def _store(parent, name, array, declared=True):
     """Store the row count and CSC vectors as written by MATLAB."""
     matrix = csc_matrix(array)
     group = parent.create_group(name)
+    # jc gives the boundaries between columns, including empty columns. Only
+    # the MATLAB_sparse attribute records the full number of rows.
     group['jc'] = matrix.indptr
     if declared:
         group.attrs['MATLAB_sparse'] = np.uint64(matrix.shape[0])
+    # MATLAB can omit both coefficient arrays when the matrix is all zero.
     if matrix.nnz or not declared:
         group['data'], group['ir'] = matrix.data, matrix.indices
     return group
@@ -27,6 +30,8 @@ def _store(parent, name, array, declared=True):
 def test_native_inverse_and_coils(tmp_path):
     """Native sparse M, U and coil transfer retain trailing rows and physical axes."""
     path = tmp_path / 'inverse.mat'
+    # M has two silent sources at the end and U has an unused final mode.
+    # Losing either dimension would give the wrong shape for M @ U.
     weighting = np.array([[0, 2, 0], [1, 0, 0], [0, 0, 0], [0, 0, 0]])
     reduction = np.array([[1, 2], [3, 4], [0, 0]])
     with h5py.File(path, 'w') as file:
@@ -38,6 +43,8 @@ def test_native_inverse_and_coils(tmp_path):
         _store(inverse, 'M', weighting)
         modes = inverse.create_dataset('U', (1, 1), dtype=h5py.ref_dtype)
         modes[0, 0] = _store(file, 'reduction', reduction).ref
+        # The same coil transfer should decode identically from sparse or
+        # dense MATLAB storage. h5py exposes the dense array axes in reverse.
         sparse_tra = _store(file, 'sparse_tra', reduction)
         dense_tra = file.create_dataset('dense_tra', data=reduction.T)
         np.testing.assert_array_equal(_mat_matrix(sparse_tra), _mat_matrix(dense_tra))
@@ -67,6 +74,8 @@ def test_malformed_sparse(tmp_path):
     """Missing coefficients must not silently produce an all-zero matrix."""
     with h5py.File(tmp_path / 'bad.mat', 'w') as file:
         group = _store(file, 'sparse', [[0, 5], [0, 0]])
+        # This group promises one coefficient in jc. Neither an impossible
+        # row count nor missing coefficient arrays describes a valid zero matrix.
         group.attrs['MATLAB_sparse'] = 0
         with pytest.raises(ValueError):
             _mat_sparse.h5_to_csc(group)
@@ -83,6 +92,8 @@ def test_legacy_missing_dimensions(tmp_path):
     with h5py.File(tmp_path / 'legacy.mat', 'w') as file:
         for array in ([[1., 0], [0, 2], [0, 0]], [[0., 0], [0, 0], [0, 0]]):
             group = _store(file, 'matrix', array, declared=False)
+            # Without a declared row count we can only recover rows up to the
+            # last stored nonzero. The column boundaries still give both columns.
             rows = 2 if np.any(array) else 0
             assert _mat_sparse.sparse_shape(group) == (rows, 2)
             np.testing.assert_array_equal(_mat_sparse.h5_to_csc(group).toarray(),
@@ -96,6 +107,8 @@ def test_boundaries_and_selection(tmp_path, monkeypatch, transpose):
     original = np.arange(10.).reshape(5, 2)
     original[-2:] = 0
     storage = original.T if transpose else original
+    # Request a silent vertex and a repeated vertex, out of order. Sparse
+    # and dense reads must both return them in exactly this sequence.
     rows = [4, 0, 2, 0]
     with h5py.File(tmp_path / 'window.mat', 'w') as file:
         sparse = _store(file, 'M', storage)
@@ -107,6 +120,8 @@ def test_boundaries_and_selection(tmp_path, monkeypatch, transpose):
             return read(dataset, selection)
 
         monkeypatch.setattr(h5py.Dataset, '__getitem__', track_read)
+        # A shape lookup should touch only metadata. A dense selection should
+        # read just the unique vertices in one operation, on the correct axis.
         assert _h5_matrix_shape_from_object(sparse, 2) == original.shape
         assert not reads
         selected = _h5_matrix_rows_from_object(dense, rows, 2)
