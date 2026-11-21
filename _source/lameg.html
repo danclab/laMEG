@@ -673,7 +673,8 @@ surface.</p></li>
 <dd><p>Compute the sensor RMS difference between matching pial and white gain columns.</p>
 <p>The selected zero-based SPM inversion slot identifies the gain cache. Older
 slots without a recorded cache name use SPM’s conventional dataset-relative
-filename. MATLAB v5 and v7.3 caches are supported. Results preserve the
+filename. Registered external caches must match their stored checksum.
+MATLAB v5 and v7.3 caches are supported. Results preserve the
 cache’s stored units and conditioning. Gain columns must cover all vertices
 of all layers in the surface set, in contiguous layer-major order.</p>
 <p>Returns one value per cortical column, in the original within-layer order.</p>
