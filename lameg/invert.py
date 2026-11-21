@@ -50,6 +50,8 @@ import numpy as np
 from scipy.io import savemat, loadmat
 from scipy.sparse import csc_matrix, issparse
 
+from lameg.forward import _mat_string
+from lameg._spm_gain import check_spm_gain_cache
 from lameg.util import load_meg_sensor_data, spm_context, batch
 import matlab # pylint: disable=wrong-import-order,import-error
 
@@ -639,7 +641,7 @@ def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
         norm['n_spatial_modes'],
         n_folds=n_folds,
         ideal_pc_test=ideal_pc_test,
-        spm_instance=spm_instance
+        inversion_idx=inversion_idx, spm_instance=spm_instance
     )
 
     patchfilename = None
@@ -998,7 +1000,7 @@ def invert_sliding_window_msp(prior, data_fname, surf_set, layer_name=None, stag
         n_layers,
         patch_size,
         norm['n_spatial_modes'],
-        spm_instance=spm_instance
+        inversion_idx=inversion_idx, spm_instance=spm_instance
     )
 
     data_dir = os.path.dirname(data_fname)
@@ -1032,6 +1034,20 @@ def invert_sliding_window_msp(prior, data_fname, surf_set, layer_name=None, stag
 
 
 # pylint: disable=R0912
+def _prior_indices(priors):
+    """Validate zero-based MSP vertex indices used on the selected cortical mesh."""
+    if priors is None:
+        return np.array([], dtype=int)
+    indices = np.asarray(priors)
+    if not np.issubdtype(indices.dtype, np.integer):
+        if not np.all(indices == np.floor(indices)):
+            raise TypeError("`priors` must contain integer indices")
+        indices = indices.astype(int)
+    if np.any(indices < 0):
+        raise ValueError("`priors` must be non-negative")
+    return indices
+
+
 def _normalize_inversion_inputs(foi=None, woi=None, wois=None,
                                 n_spatial_modes=None, priors=None):
     """
@@ -1094,22 +1110,7 @@ def _normalize_inversion_inputs(foi=None, woi=None, wois=None,
         if n_spatial_modes_norm <= 0:
             raise ValueError("`n_spatial_modes` must be > 0")
 
-    # ---- priors ----
-    if priors is None:
-        priors_norm = []
-    else:
-        priors_arr = np.asarray(priors)
-
-        if not np.issubdtype(priors_arr.dtype, np.integer):
-            if not np.all(priors_arr == np.floor(priors_arr)):
-                raise TypeError("`priors` must contain integer indices")
-            priors_arr = priors_arr.astype(int)
-
-        if np.any(priors_arr < 0):
-            raise ValueError("`priors` must be non-negative")
-
-        # convert Python (0-based) -> MATLAB (1-based)
-        priors_norm = (priors_arr + 1).tolist()
+    priors_norm = (_prior_indices(priors) + 1).tolist()
 
     return {
         'foi': foi_arr,
@@ -1122,7 +1123,7 @@ def _normalize_inversion_inputs(foi=None, woi=None, wois=None,
 
 def _prepare_spatial_modes(data_fname, mesh_fname, n_layers, patch_size,
                            n_spatial_modes, n_folds=1, ideal_pc_test=0,
-                           spm_instance=None):
+                           spm_instance=None, inversion_idx=0):
     """
     Prepare spatial modes for SPM source inversion.
 
@@ -1160,6 +1161,10 @@ def _prepare_spatial_modes(data_fname, mesh_fname, n_layers, patch_size,
         Existing MATLAB engine running SPM. If None, a new SPM context is
         created internally.
 
+    inversion_idx : int, optional
+        Zero-based target slot. If it uses a supplied gain, verify the active
+        slot and cached gain before computing the spatial modes.
+
     Returns
     -------
     spatialmodename : str
@@ -1177,6 +1182,7 @@ def _prepare_spatial_modes(data_fname, mesh_fname, n_layers, patch_size,
     step uses `spm_eeg_smoothmesh_multilayer_mm` to enforce the desired patch
     size on the cortical surface before inversion.
     """
+    check_spm_gain_cache(data_fname, inversion_idx=inversion_idx)
     data_dir, fname_with_ext = os.path.split(data_fname)
     fname, _ = os.path.splitext(fname_with_ext)
     spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
@@ -1602,7 +1608,7 @@ def _invert_ebb_base(data_fname, surf_set, layer_name=None, stage='ds',
         norm['n_spatial_modes'],
         n_folds=n_folds,
         ideal_pc_test=ideal_pc_test,
-        spm_instance=spm_instance
+        inversion_idx=inversion_idx, spm_instance=spm_instance
     )
 
     cfg = _build_invertiter_cfg(
@@ -1686,7 +1692,7 @@ def _invert_sliding_window_ebb_base(
         n_layers,
         patch_size,
         norm['n_spatial_modes'],
-        spm_instance=spm_instance
+        inversion_idx=inversion_idx, spm_instance=spm_instance
     )
 
     cfg = _build_invertiter_cfg(
@@ -1807,64 +1813,75 @@ def load_forward_model_vertices(data_file, inversion_idx=0):
     return verts
 
 
+def _recorded_gain_path(data_file, inversion_idx):
+    """Resolve the gain selected on one SPM inversion slot, including older headers."""
+    if (isinstance(inversion_idx, (bool, np.bool_))
+            or not isinstance(inversion_idx, (int, np.integer)) or inversion_idx < 0):
+        raise ValueError("inversion_idx must be a nonnegative integer.")
+    missing = "Source inversion has not been run in the requested slot."
+    if h5py.is_hdf5(data_file):
+        with h5py.File(data_file, 'r') as header:
+            slots = header.get('D/other/inv')
+            if slots is None or inversion_idx >= slots.size:
+                raise KeyError(missing)
+            slot = slots[()].ravel()[inversion_idx]
+            if not slot or not isinstance(header[slot], h5py.Group):
+                raise KeyError(missing)
+            name = header[slot].get('gainmat')
+            recorded = ''
+            if name is not None and not name.attrs.get('MATLAB_empty', False):
+                recorded = _mat_string(name)
+    else:
+        data = loadmat(data_file, variable_names=['D'], struct_as_record=False, squeeze_me=True)
+        slots = np.atleast_1d(getattr(getattr(data['D'], 'other', None), 'inv', [])).ravel()
+        if inversion_idx >= slots.size:
+            raise KeyError(missing)
+        if not hasattr(slots[inversion_idx], '_fieldnames'):
+            raise KeyError(missing)
+        name = getattr(slots[inversion_idx], 'gainmat', '')
+        # scipy decodes MATLAB character vectors to strings with squeeze_me=True.
+        recorded = str(name) if np.size(name) else ''
+
+    directory, basename = os.path.split(data_file)
+    if not recorded:
+        recorded = f'SPMgainmatrix_{os.path.splitext(basename)[0]}_{inversion_idx + 1}.mat'
+    path = os.path.join(directory, recorded.replace('\\', '/'))
+    if not os.path.isfile(path):
+        raise FileNotFoundError(f"SPM gain cache does not exist: {path}")
+    return path
+
+
 def get_lead_field_rms_diff(data_file, surf_set, inversion_idx=0):
+    """Compute the sensor RMS difference between matching pial and white gain columns.
+
+    The selected zero-based SPM inversion slot identifies the gain cache. Older
+    slots without a recorded cache name use SPM's conventional dataset-relative
+    filename. MATLAB v5 and v7.3 caches are supported. Results preserve the
+    cache's stored units and conditioning. Gain columns must cover all vertices
+    of all layers in the surface set, in contiguous layer-major order.
+
+    Returns one value per cortical column, in the original within-layer order.
     """
-    Compute vertex-wise RMS difference of lead field vectors across cortical depths
-    relative to the superficial (pial) layer.
+    path = _recorded_gain_path(data_file, inversion_idx)
+    n_vertices = surf_set.get_vertices_per_layer()
+    n_layers = surf_set.n_layers
+    if n_vertices < 1 or n_layers < 1:
+        raise ValueError("The surface set must contain at least one layer and vertex.")
 
-    This function loads the forward model (gain matrix) generated by SPM and
-    quantifies how the lead field topographies change with cortical depth.
-    For each vertex, it computes the root-mean-square (RMS) difference between the
-    superficial (layer 1) lead field and the corresponding lead fields at deeper
-    layers, returning the RMS difference for the deepest layer.
+    def endpoint_rms(source_by_channel):
+        if (source_by_channel.ndim != 2 or source_by_channel.shape[0] != n_vertices * n_layers
+                or not source_by_channel.shape[1] or source_by_channel.dtype.kind not in 'fiu'):
+            raise ValueError("Gain size must match the surface set's layer and vertex counts.")
+        # SPM caches store contiguous layer blocks. Intermediate layers are
+        # irrelevant to this contrast and can remain on disk for v7.3 files.
+        delta = np.subtract(source_by_channel[-n_vertices:], source_by_channel[:n_vertices],
+                            dtype=np.float64)
+        return np.sqrt(np.mean(np.square(delta, out=delta), axis=1))
 
-    Parameters
-    ----------
-    data_file : str or pathlib.Path
-        Path to the SPM-compatible MEG dataset (.mat) for which the inversion was run.
-        The corresponding gain matrix file (e.g., ``SPMgainmatrix_<data_base>_1.mat``)
-        is expected in the same directory.
-    surf_set : LayerSurfaceSet
-        The subject's laminar surface set used for forward modeling. Provides the
-        number of layers and vertices per layer.
-    inversion_idx: int, optional
-        Index of the forward model to load within the SPM data object (default: 0).
-
-    Returns
-    -------
-    rms_dff : numpy.ndarray, shape (n_vertices,)
-        Vertex-wise RMS difference between the deepest and superficial layer lead fields.
-        Values reflect how much lead field topography changes with depth.
-
-    Notes
-    -----
-    - The gain matrix ('G') is assumed to be depth-ordered, with all vertices from
-      layer 1 first, followed by subsequent layers.
-    - RMSE is computed as the Euclidean distance between lead field vectors, averaged
-      across sensors.
-    - The function requires a valid SPM inversion; otherwise, it will not execute.
-    - Useful for assessing layer-wise forward model sensitivity and laminar
-      discriminability.
-    """
-    check_inversion_exists(data_file, inversion_idx=inversion_idx)
-
-    data_path, data_file_name = os.path.split(data_file)
-    data_base = os.path.splitext(data_file_name)[0]
-
-    gainmat_fname = os.path.join(data_path, f'SPMgainmatrix_{data_base}_{inversion_idx+1}.mat')
-    with h5py.File(gainmat_fname, 'r') as file:
-        lf_mat = np.array(file['G'][()])
-
-    verts_per_layer = surf_set.get_vertices_per_layer()
-    layer_lf_mat = np.zeros((verts_per_layer, surf_set.n_layers, lf_mat.shape[1]))
-    diff_layer_lf_mat = np.zeros((verts_per_layer, surf_set.n_layers))
-    for i in range(surf_set.n_layers):
-        layer_lf_mat[:, i, :] = lf_mat[i * verts_per_layer:(i + 1) * verts_per_layer, :]
-    for j in range(verts_per_layer):
-        for i in range(surf_set.n_layers):
-            lf_diff = layer_lf_mat[j, i, :] - layer_lf_mat[j, 0, :]
-            diff_layer_lf_mat[j, i] = np.sqrt(np.mean((lf_diff) ** 2))
-    return diff_layer_lf_mat[:, -1]
+    if h5py.is_hdf5(path):
+        with h5py.File(path, 'r') as cache:
+            return endpoint_rms(cache['G'])
+    return endpoint_rms(loadmat(path, variable_names=['G'])['G'].T)
 
 
 def _h5_to_csc(group):
