@@ -37,7 +37,8 @@ def write_header(path, external, version, active=2, bad_extra=True):
                 native.create_dataset('gainmat', data=text(external['file']))
                 marker = native.create_group('lameg_external_gain')
                 for key, value in external.items():
-                    marker.create_dataset(key, data=text(value) if isinstance(value, str) else value)
+                    stored = text(value) if isinstance(value, str) else value
+                    marker.create_dataset(key, data=stored)
             slots[:, 0] = [empty.ref, native.ref]
     else:
         slots = np.empty((1, 2), dtype=object)
