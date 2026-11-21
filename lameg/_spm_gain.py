@@ -7,13 +7,13 @@ import os
 from pathlib import Path
 from tempfile import TemporaryDirectory
 
-import h5py
 import numpy as np
 from scipy.io import loadmat, savemat
 
 from ._gain_cache import (active_slot_index, cache_hash, cell_strings, file_identity,
-                          gain_reference, inversion_slot, mat_string, open_spm_header,
-                          verified_gain)
+                          gain_reference, good_meg_channels, inversion_slot, open_spm_header,
+                          validate_slot_index, verified_gain)
+from .forward import ForwardOperator
 from .util import spm_context
 
 
@@ -38,6 +38,11 @@ try
     assert(isequal(units(:), op.channel_units(rows)), 'MEG channel units differ.');
 
     ctx = gifti(original.mesh.tess_ctx);
+    if isfield(cfg,'input_mesh')
+        input_mesh = gifti(cfg.input_mesh);
+        assert(isequal(double(input_mesh.faces),double(ctx.faces)), ...
+            'Inversion mesh topology differs from the registered mesh.');
+    end
     M = fw.fromMNI * original.mesh.Affine;
     requested = spm_eeg_inv_transform_points(M, double(ctx.vertices));
     assert(isequal(size(requested),size(op.requested_m)), 'Different source count.');
@@ -187,11 +192,46 @@ def _gain_payload(gain, channel_names, source_positions_m, source_normals, chann
     return fields, f'lameg_gain_{digest.hexdigest()}.mat'
 
 
+def validate_inversion_forward(forward_operator, mesh_fname, layer_names, inversion_idx, *,
+                               priors=()):
+    """Validate the source space and any zero-based MSP priors before installing the gain."""
+    validate_slot_index(inversion_idx)
+    if not isinstance(forward_operator, ForwardOperator):
+        raise TypeError("forward_operator must be a ForwardOperator.")
+    layers = tuple(layer_names)
+    selected = forward_operator.layer(layers[0]) if len(layers) == 1 else forward_operator
+    if layers != selected.layer_names:
+        raise ValueError("The forward operator must match the combined mesh's layer order.")
+    selected.validate_mesh(None, mesh_fname)
+    indices = np.asarray(priors)
+    if indices.size:
+        if (indices.dtype.kind not in 'iu' or np.any(indices < 0)
+                or np.any(indices >= selected.gain.shape[1])):
+            raise ValueError("An MSP prior is outside the requested mesh.")
+        if not np.all(selected.orientation_defined[indices]):
+            raise ValueError("An MSP prior has an undefined direction in the forward operator.")
+    return selected
+
+
+def attach_forward_operator(data_fname, forward_operator, inversion_idx, spm_instance,
+                            mesh_fname=None):
+    """Install the selected operator on a registered dataset with matching source geometry."""
+    transform = forward_operator.mri_to_head_mm
+    requested = forward_operator.requested_mri_mm @ transform[:3, :3].T + transform[:3, 3]
+    return attach_spm_gain(
+        data_fname, forward_operator.gain, forward_operator.channel_names,
+        forward_operator.effective_head_mm / 1000, forward_operator.orientations_head,
+        forward_operator.channel_units, inversion_idx=inversion_idx, spm_instance=spm_instance,
+        requested_positions_m=requested / 1000, sensor_geometry=forward_operator.sensor_geometry,
+        provenance=forward_operator.provenance, mesh_fname=mesh_fname,
+        allow_nominal_ctf_coils=forward_operator.allow_nominal_ctf_coils)
+
+
 def attach_spm_gain(data_fname, gain, channel_names, source_positions_m, source_normals,
                     channel_units, *, inversion_idx=0, spm_instance=None,
                     requested_positions_m=None, sensor_geometry=None, provenance=None,
-                    allow_nominal_ctf_coils=False):
-    """Select an external MEG gain on an already coregistered, single-layer SPM dataset.
+                    allow_nominal_ctf_coils=False, mesh_fname=None):
+    """Select an external MEG gain on an already coregistered SPM source space.
 
     Columns follow the target mesh. Positions and signed unit directions are in
     the SPM MEG head frame. Explicit zero directions identify undefined columns.
@@ -223,6 +263,8 @@ def attach_spm_gain(data_fname, gain, channel_names, source_positions_m, source_
                    'read_cache': str(actual.relative_to(path.parent)), 'file_digest': file_digest,
                    'staged_gain': str(staged), 'staged_header': str(header),
                    'status_file': str(status)}
+        if mesh_fname is not None:
+            payload['input_mesh'] = str(Path(mesh_fname).resolve(strict=True))
         savemat(config, payload)
         config_literal = str(config).replace("'", "''")
         with spm_context(spm_instance) as spm:
@@ -244,39 +286,6 @@ def attach_spm_gain(data_fname, gain, channel_names, source_positions_m, source_
                     raise RuntimeError('Conflicting gain cache publication.') from exc
         os.replace(header, path)
     return cache
-
-
-_MEG_TYPES = {'MEG', 'MEGMAG', 'MEGGRAD', 'MEGPLANAR'}
-
-
-def _h5_good_labels(header):
-    """Return labels selected by SPM for magnetic channels, including an active montage."""
-    channels = header['D/channels']
-    montage = int(np.asarray(header.get('D/montage/Mind', 0)).item())
-    if montage:
-        channels = header['D/montage/M/channels']
-        if isinstance(channels, h5py.Dataset):
-            channels = header[channels[()].ravel()[montage - 1]]
-
-    def values(key, read):
-        field = channels[key]
-        if h5py.check_dtype(ref=field.dtype) is not None:
-            return [read(header[ref]) for ref in field[()].ravel()]
-        return [read(field)]
-
-    names = values('label', mat_string)
-    types = values('type', mat_string)
-    bad = values('bad', lambda item: item[()].item())
-    return tuple(name for name, kind, flag in zip(names, types, bad)
-                 if not flag and kind.upper() in _MEG_TYPES)
-
-
-def _legacy_good_labels(dataset):
-    montage = getattr(dataset, 'montage', None)
-    active = int(getattr(montage, 'Mind', 0))
-    model = np.atleast_1d(montage.M).ravel()[active - 1] if active else dataset
-    return tuple(row.label for row in np.atleast_1d(model.channels).ravel()
-                 if not row.bad and row.type.upper() in _MEG_TYPES)
 
 
 @lru_cache(maxsize=128)
@@ -301,8 +310,7 @@ def _gain_registration(path, _file_identity, inversion_idx):
                 raise ValueError('The active SPM slot differs from the requested external slot.')
         if registration is None:
             return None
-        read_labels = _h5_good_labels if isinstance(header, h5py.File) else _legacy_good_labels
-        return registration + (read_labels(header),)
+        return registration + (good_meg_channels(header),)
 
 
 def check_spm_gain_cache(data_fname, inversion_idx=None):

@@ -33,7 +33,9 @@ import neo
 import quantities as pq
 
 from lameg.forward import ForwardOperator
-from lameg._spm_gain import attach_spm_gain
+from lameg._gain_cache import validate_slot_index
+from lameg._spm_gain import attach_forward_operator, validate_inversion_forward
+from lameg._forward_support import map_surface_vertices
 from lameg.invert import (
     _prior_indices,
     coregister,
@@ -47,8 +49,9 @@ from lameg._source_io import load_source_time_series
 from lameg.util import ttest_rel_corrected
 
 
-def _prepare_layer_forwards(operator, surfaces, layers, stage, orientation, fixed, device,
-                            forward_kwargs, invert_kwargs, method):
+def _prepare_layer_forwards(operator, surfaces, layers, mesh_kwargs, device,
+                            forward_kwargs, invert_kwargs, method, indices):
+    """Validate all gains and priors before changing the dataset for the first layer."""
     if not isinstance(operator, ForwardOperator):
         raise TypeError("forward_operator must be a ForwardOperator.")
     if set(operator.layer_names) != set(layers):
@@ -57,8 +60,10 @@ def _prepare_layer_forwards(operator, surfaces, layers, stage, orientation, fixe
         raise ValueError("A supplied forward operator requires method='EBB' or 'MSP'.")
 
     slot = forward_kwargs.get('inversion_idx', invert_kwargs.get('inversion_idx', 0))
-    if (isinstance(slot, (bool, np.bool_)) or not isinstance(slot, (int, np.integer))
-            or slot < 0 or slot != invert_kwargs.get('inversion_idx', slot)):
+    inverse_slot = invert_kwargs.get('inversion_idx', slot)
+    validate_slot_index(slot)
+    validate_slot_index(inverse_slot)
+    if slot != inverse_slot:
         raise ValueError("Setup and inversion require the same nonnegative inversion_idx.")
     if device == 'opm':
         if slot != 0:
@@ -68,30 +73,50 @@ def _prepare_layer_forwards(operator, surfaces, layers, stage, orientation, fixe
         forward_kwargs['inversion_idx'] = int(slot)
     invert_kwargs['inversion_idx'] = int(slot)
 
-    priors = invert_kwargs.get('priors') if method == 'MSP' else None
-    indices = _prior_indices(priors)
-    if np.any(indices >= operator.n_columns):
-        raise ValueError("An MSP prior is outside the layer mesh.")
+    validated = {}
     for name in layers:
-        mesh = surfaces.get_mesh_path(layer_name=name, stage=stage, orientation=orientation,
-                                     fixed=fixed)
-        operator.validate_mesh(name, mesh)
-        if indices.size and not np.all(operator.layer(name).orientation_defined[indices]):
-            raise ValueError(f"An MSP prior has an undefined direction in layer {name!r}.")
-    return int(slot)
+        mesh = surfaces.get_mesh_path(layer_name=name, **mesh_kwargs)
+        try:
+            layer = validate_inversion_forward(operator, mesh, (name,), slot, priors=indices)
+        except ValueError as exc:
+            raise ValueError(f"Cannot use the supplied forward on layer {name!r}: {exc}") from exc
+        validated[name] = (layer, mesh)
+    return validated
 
 
-def _attach_layer_forward(data_fname, layer_operator, inversion_idx, spm_instance):
-    transform = layer_operator.mri_to_head_mm
-    requested_head_mm = layer_operator.requested_mri_mm @ transform[:3, :3].T + transform[:3, 3]
-    attach_spm_gain(
-        data_fname, layer_operator.gain, layer_operator.channel_names,
-        layer_operator.effective_head_mm / 1000, layer_operator.orientations_head,
-        layer_operator.channel_units, inversion_idx=inversion_idx, spm_instance=spm_instance,
-        requested_positions_m=requested_head_mm / 1000,
-        sensor_geometry=layer_operator.sensor_geometry, provenance=layer_operator.provenance,
-        allow_nominal_ctf_coils=layer_operator.allow_nominal_ctf_coils,
-    )
+def _comparison_layers(fid_coords, data_fname, surf_set, mesh_kwargs, device, viz, spm_instance,
+                       forward_kwargs, invert_kwargs, operator, method, priors):
+    """Register each layer and install its selected gain once, before inversion."""
+    device = device.lower()
+    if device == 'squid':
+        if fid_coords is None:
+            raise ValueError("device='squid' requires fid_coords.")
+        setup, args = coregister, (fid_coords, data_fname, surf_set)
+    elif device == 'opm':
+        setup, args = opm_headmodel, (data_fname, surf_set)
+    else:
+        raise ValueError(f"Unknown device '{device}'; expected 'squid' or 'opm'.")
+
+    if 'forward_operator' in invert_kwargs:
+        raise ValueError("Pass forward_operator directly to the comparison.")
+    invert_kwargs.setdefault('n_spatial_modes', 'all')
+    layers = surf_set.get_layer_names()
+    indices = map_surface_vertices(surf_set, _prior_indices(priors), multilayer=False)
+    options = dict(forward_kwargs or {})
+    if operator is not None:
+        validated = _prepare_layer_forwards(operator, surf_set, layers, mesh_kwargs, device,
+                                            options, invert_kwargs, method, indices)
+    for name in layers:
+        setup(*args, layer_name=name, viz=viz, spm_instance=spm_instance, **mesh_kwargs, **options)
+        if operator is not None:
+            layer, mesh = validated[name]
+            attach_forward_operator(data_fname, layer, invert_kwargs['inversion_idx'],
+                                    spm_instance, mesh_fname=mesh)
+        yield name
+
+
+# Historical import used by callers of the low-level attachment helper.
+_attach_layer_forward = attach_forward_operator
 
 
 def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='link_vector',
@@ -148,7 +173,8 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
         Precomputed, signed MEG gain with named layers. After device-specific setup,
         each inversion uses the matching block of columns. The requested surface
         geometry and the recording's sensors must match the operator. Smoothing
-        and MSP prior indices refer to the requested anatomical surface.
+        and MSP priors refer to the requested anatomical surface. On a prepared
+        surface set, priors keep their original zero-based vertex numbering.
 
     Returns
     -------
@@ -168,96 +194,28 @@ def model_comparison(fid_coords, data_fname, surf_set, stage='ds', orientation='
 
     """
     invert_kwargs = dict(invert_kwargs or {})
-    forward_kwargs = dict(forward_kwargs or {})
-
-    device = device.lower()
-    if device == 'squid':
-        if fid_coords is None:
-            raise ValueError("device='squid' requires fid_coords.")
-
-        def build_forward(layer_name):
-            coregister(fid_coords,
-                       data_fname,
-                       surf_set,
-                       layer_name=layer_name,
-                       stage=stage,
-                       orientation=orientation,
-                       fixed=fixed,
-                       viz=viz,
-                       spm_instance=spm_instance,
-                       **forward_kwargs)
-
-    elif device == 'opm':
-        def build_forward(layer_name):
-            opm_headmodel(data_fname,
-                          surf_set,
-                          layer_name=layer_name,
-                          stage=stage,
-                          orientation=orientation,
-                          fixed=fixed, viz=viz,
-                          spm_instance=spm_instance,
-                          **forward_kwargs)
-
-    else:
-        raise ValueError(f"Unknown device '{device}'; expected 'squid' or 'opm'.")
-
-    f_vals = []
-    cv_errs = []
-    layer_names = surf_set.get_layer_names()
-
-    if forward_operator is not None:
-        slot = _prepare_layer_forwards(forward_operator, surf_set, layer_names, stage,
-                                       orientation, fixed, device, forward_kwargs,
-                                       invert_kwargs, method)
-
-    for layer_name in layer_names:
-        build_forward(layer_name)
-        if forward_operator is not None:
-            _attach_layer_forward(data_fname, forward_operator.layer(layer_name),
-                                  slot, spm_instance)
-
-        f_val = np.nan
-        cv_err = np.nan
-        if method == 'EBB':
-            [f_val, cv_err] = invert_ebb(
-                data_fname,
-                surf_set,
-                layer_name=layer_name,
-                stage=stage,
-                orientation=orientation,
-                fixed=fixed,
-                n_spatial_modes='all',
-                viz=viz,
-                spm_instance=spm_instance,
-                **invert_kwargs
-            )
-        elif method == 'MSP':
-            [f_val, cv_err] = invert_msp(
-                data_fname,
-                surf_set,
-                layer_name=layer_name,
-                stage=stage,
-                orientation=orientation,
-                fixed=fixed,
-                n_spatial_modes='all',
-                viz=viz,
-                spm_instance=spm_instance,
-                **invert_kwargs
-            )
+    mesh_kwargs = {'stage': stage, 'orientation': orientation, 'fixed': fixed}
+    priors = invert_kwargs.get('priors') if method == 'MSP' else None
+    layers = _comparison_layers(fid_coords, data_fname, surf_set, mesh_kwargs, device, viz,
+                                spm_instance, forward_kwargs, invert_kwargs, forward_operator,
+                                method, priors)
+    inverse = {'EBB': invert_ebb, 'MSP': invert_msp}.get(method)
+    f_vals, cv_errs = [], []
+    for name in layers:
+        f_val, cv_err = np.nan, np.nan
+        if inverse is not None:
+            f_val, cv_err = inverse(data_fname, surf_set, layer_name=name, **mesh_kwargs,
+                                    viz=viz, spm_instance=spm_instance, **invert_kwargs)
         f_vals.append(f_val)
         cv_errs.append(cv_err)
-
-    f_vals = np.array(f_vals)
-    cv_errs = np.array(cv_errs)
-
-    return f_vals, cv_errs
+    return np.array(f_vals), np.array(cv_errs)
 
 
 
 def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, stage='ds',
-                                    orientation='link_vector', fixed=True, device ='squid',
+                                    orientation='link_vector', fixed=True, device='squid',
                                     viz=True, spm_instance=None, forward_kwargs=None,
-                                    invert_kwargs=None):
+                                    invert_kwargs=None, forward_operator=None):
     """
     Perform laminar model comparison over time using sliding-window MSP inversions.
 
@@ -302,6 +260,10 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
           'voltype', 'meshres', etc.
     invert_kwargs : dict, optional
         Additional keyword arguments passed to the `invert_sliding_window_msp()` function.
+    forward_operator : lameg.forward.ForwardOperator, optional
+        Signed gain for each named layer. The same layer gain and MSP prior are
+        used for every window. On a prepared surface set, give the prior in the
+        original surface's zero-based vertex numbering.
 
     Returns
     -------
@@ -322,66 +284,27 @@ def sliding_window_model_comparison(prior, fid_coords, data_fname, surf_set, sta
     - Typically used to examine how laminar model evidence evolves during task-related dynamics.
     """
 
-    if invert_kwargs is None:
-        invert_kwargs = {}
-    forward_kwargs = dict(forward_kwargs or {})
-
-    device = device.lower()
-    if device == 'squid':
-        if fid_coords is None:
-            raise ValueError("device='squid' requires fid_coords.")
-
-        def build_forward(layer_name):
-            coregister(fid_coords,
-                       data_fname,
-                       surf_set,
-                       layer_name=layer_name,
-                       stage=stage,
-                       orientation=orientation,
-                       fixed=fixed,
-                       viz=viz,
-                       spm_instance=spm_instance,
-                       **forward_kwargs)
-
-    elif device == 'opm':
-        def build_forward(layer_name):
-            opm_headmodel(data_fname,
-                          surf_set,
-                          layer_name=layer_name,
-                          stage=stage,
-                          orientation=orientation,
-                          fixed=fixed, viz=viz,
-                          spm_instance=spm_instance,
-                          **forward_kwargs)
-
-    else:
-        raise ValueError(f"Unknown device '{device}'; expected 'squid' or 'opm'.")
-
+    invert_kwargs = dict(invert_kwargs or {})
+    mesh_kwargs = {'stage': stage, 'orientation': orientation, 'fixed': fixed}
+    layers = _comparison_layers(fid_coords, data_fname, surf_set, mesh_kwargs, device, viz,
+                                spm_instance, forward_kwargs, invert_kwargs, forward_operator,
+                                'MSP', [prior])
     f_vals = []
-    wois = []
-    layer_names = surf_set.get_layer_names()
-
-    for layer_name in layer_names:
-        build_forward(layer_name)
-
-        [mesh_fvals, wois] = invert_sliding_window_msp(
-            prior,
-            data_fname,
-            surf_set,
-            layer_name=layer_name,
-            stage=stage,
-            orientation=orientation,
-            fixed=fixed,
-            n_spatial_modes='all',
-            viz=viz,
-            spm_instance=spm_instance,
-            **invert_kwargs
-        )
-        f_vals.append(mesh_fvals)
-
-    f_vals = np.vstack(f_vals)
-
-    return f_vals, wois
+    wois = None
+    for name in layers:
+        evidence, layer_wois = invert_sliding_window_msp(
+            prior, data_fname, surf_set, layer_name=name, **mesh_kwargs, viz=viz,
+            spm_instance=spm_instance, **invert_kwargs)
+        if wois is None:
+            wois = layer_wois
+            invert_kwargs['wois'] = wois
+        elif not np.array_equal(wois, layer_wois):
+            raise ValueError(f"Sliding windows differ for layer {name!r}.")
+        row = np.atleast_1d(evidence)
+        if row.shape != (len(wois),):
+            raise ValueError(f"Expected one free energy per window for layer {name!r}.")
+        f_vals.append(row)
+    return np.vstack(f_vals), wois
 
 
 def compute_csd(signal, thickness, sfreq, method='KCSD1D', smoothing=None, **kwargs):

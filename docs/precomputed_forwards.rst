@@ -1,21 +1,118 @@
-Comparing layers with a precomputed MEG forward
-===============================================
+Using a precomputed MEG forward
+===============================
 
-Pass a ``ForwardOperator`` to ``model_comparison`` to run EBB or MSP with signed,
-fixed-orientation lead fields computed by another solver. The operator holds
-one column per vertex, grouped by layer, and one row per named MEG channel.
-The results follow the layer order of the supplied ``LayerSurfaceSet``.
+Pass the same ``forward_operator`` to a direct inversion, a sliding-window
+inversion, or a layer comparison. It holds one gain row per named MEG channel
+and one signed column per vertex, grouped by layer. Each analysis writes to
+its SPM inversion slot. For comparisons between solvers, give each run its
+own writable copy of the same recording in a separate directory.
+
+MNE BEM and native single-shell on the same vertices
+----------------------------------------------------
+
+Use ``prepare_mne_forward`` with the original laMEG surfaces and one MNE
+forward per layer, supplied as a dictionary of layer names to MNE Forward
+objects or FIF paths. laMEG checks the registered source positions and prepares
+a surface set containing the anatomical locations retained at every depth. For example, if MNE excludes a pial vertex outside
+the inner skull, its matching white vertex is also omitted from the prepared
+surfaces. Use those surfaces for both solvers. For coincident positions that
+make matching ambiguous, supply the source-space and vertex IDs via ``vertices``.
+
+The example compares seeded MSP across layers and time windows for a CTF
+recording. ``reference`` is an SPM dataset already coregistered to the
+original multilayer mesh. ``info`` is the original MNE acquisition Info,
+including the reference channels used to compute the compensated forwards.
+
+.. code-block:: python
+
+    from lameg.forward import prepare_mne_forward
+    from lameg.laminar import sliding_window_model_comparison
+
+    def compare_solver_windows(forwards, surfaces, reference, info, output_dir,
+                               bem_copy, native_copy, fids, vertex, spm):
+        prepared = prepare_mne_forward(
+            forwards, surfaces, output_dir, reference=reference, info=info,
+            ignore_ref=False, allow_nominal_ctf_coils=True,
+        )
+        options = dict(
+            spm_instance=spm, viz=False,
+            invert_kwargs=dict(wois=[[-50, -25], [-25, 0], [0, 25]], patch_size=5),
+        )
+        bem = sliding_window_model_comparison(
+            vertex, fids, bem_copy, prepared.surfaces,
+            forward_operator=prepared.operator, **options,
+        )
+        single_shell = sliding_window_model_comparison(
+            vertex, fids, native_copy, prepared.surfaces, **options,
+        )
+        return bem, single_shell, prepared.manifest
+
+Each result is a pair containing the layer-by-window free energies and the
+window bounds in milliseconds. Rows follow ``surfaces.get_layer_names()``.
+Supply the seed using its zero-based
+within-layer vertex ID on the **original** mesh. If the seed is excluded,
+laMEG raises an error. It maps a retained seed to the corresponding row on
+the prepared mesh automatically. Direct inversions on the combined mesh
+accept MSP priors in original layer-major order. Use
+``prepared.support.original_vertices`` to map compact source rows within
+each layer back to anatomical vertex IDs. The JSON file at
+``prepared.manifest`` records the vertex correspondence and exclusions.
+
+For this example the SPM recipient uses CTF head coordinates. Preparation
+reads the MRI registration and channel units from the SPM header, and obtains
+the MNE-to-CTF head transform from the acquisition Info. For other coordinate
+frames, supply the measured transform explicitly. The example enables nominal
+CTF coil matching because MNE uses nominal pickup positions and this SPM file
+has measured positions for the same recording. Strict sensor matching is the
+default. With this option, each nominal pickup must match a unique group of
+measured coils within 0.15 mm. Each channel's signed response, including its
+reference weights, is compared at each group with absolute tolerance 1e-9 and
+relative tolerance 1e-5. For compensated CTF acquisitions, ``ignore_ref=False``
+must match the setting used to compute the forward.
+
+Direct inversions
+-----------------
+
+Direct inversions require a working dataset registered to the mesh you will
+invert, including any vertex exclusions. The example below registers
+``prepared.surfaces`` in the working dataset before fitting EBBlayer. The
+default ``layer_name=None`` selects the combined multilayer mesh. For an
+individual layer, pass the same layer name and inversion slot to both
+registration and inversion. The layer-comparison functions perform this step
+internally for each candidate layer.
+
+.. code-block:: python
+
+    from lameg.invert import coregister, invert_ebb_layer
+
+    def fit_multilayer_ebb(working_copy, prepared, fids, spm):
+        coregister(fids, working_copy, prepared.surfaces, spm_instance=spm, viz=False)
+        return invert_ebb_layer(
+            working_copy, prepared.surfaces, forward_operator=prepared.operator,
+            sum_pair_topk=1, diff_pair_topk=1, woi=[-25, 25], spm_instance=spm,
+            return_mu_matrix=True, viz=False,
+        )
+
+The call returns free energy, cross-validation error, and the source
+reconstruction matrix. To identify an original cortical location from row
+``r`` of the combined matrix, set ``ids = prepared.support.original_vertices``
+and compute ``layer_index, i = divmod(r, len(ids))``. The anatomical vertex
+is ``ids[i]`` on ``prepared.surfaces.get_layer_names()[layer_index]``. Keep
+``source_support.json`` with results exported for later analysis.
+
+The same ``forward_operator`` keyword works with ``invert_ebb``, ``invert_ebb_layer``, ``invert_msp``,
+and their three ``invert_sliding_window_*`` counterparts. A supplied operator
+is installed before spatial-mode preparation and is used for all time windows
+in that inversion. SPM keeps the attached gain in that slot. Keep its
+``lameg_gain_*.mat`` cache beside the dataset.
 
 Native SPM round trip
 ---------------------
 
 This example takes a donor SPM dataset with a previously computed multilayer gain
-and an independent working copy of the same recording. Both datasets must use
-the same head registration, sensor response and good MEG channels. Keep the
-donor's gain cache beside its header. As with native comparison, use a writable
-working copy because SPM updates its inversion slot for each candidate layer.
-Use a separate dataset directory for each simultaneous run. Keep the generated
-``lameg_gain_*.mat`` files with the dataset for subsequent use in SPM.
+and an independent working copy of the same recording. Both must use the same
+head registration, sensor response and good MEG channels. Keep the donor's
+gain cache beside its header.
 
 .. code-block:: python
 
@@ -38,78 +135,24 @@ preserves those columns. Use ``operator.layer(name).orientation_defined`` when
 selecting sites for oriented-source comparisons, including the vertices in a
 patch.
 
-MNE-Python BEM forwards
------------------------
+Importing MNE forwards with known vertex correspondence
+-------------------------------------------------------
 
-Compute one free-orientation MNE forward on each laMEG layer using the same MEG
-recording and head registration. The importer projects the three gain columns at
-each source onto the signed dipole direction stored in the GIfTI. This example
-compares layers for one CTF recording. The SPM dataset uses CTF head
-coordinates and measured pickup-coil positions. The MNE forwards and the
-acquisition ``Info`` come from that same recording.
+Use ``ForwardOperator.from_mne`` directly when all requested vertices are
+present and the correspondence is already known. Each row of ``vertices``
+gives the MNE source-space index and vertex ID for one vertex in single-layer
+GIfTI order. For example, ``(1, 42)`` identifies vertex 42 in the second source
+space. Supply a single array if the mapping is identical across layers, or a
+dictionary keyed by layer name if it differs. Pass the recording's good MEG
+channel names and physical units as an ordered mapping. The importer projects
+free-orientation gains onto the signed dipole directions in the GIfTI and
+scales each channel to its recorded unit per nA m.
 
-.. code-block:: python
-
-    from pathlib import Path
-
-    from mne.transforms import invert_transform
-    from lameg.forward import ForwardOperator
-    from lameg.laminar import model_comparison
-
-    def compare_ctf_bem(forward_dir, surfaces, vertices, channel_units,
-                        mri_to_head_mm, info, working_copy, fids, vertex, spm):
-        forwards = {
-            name: Path(forward_dir) / f'{name}-bem-fwd.fif'
-            for name in surfaces.get_layer_names()
-        }
-        mne_head_to_ctf_mm = invert_transform(info['ctf_head_t'])['trans'].copy()
-        mne_head_to_ctf_mm[:3, 3] *= 1000
-        operator = ForwardOperator.from_mne(
-            forwards, surfaces.get_mesh_path(), vertices=vertices,
-            channel_units=channel_units, mri_to_head_mm=mri_to_head_mm,
-            mne_head_to_head_mm=mne_head_to_ctf_mm, info=info, ignore_ref=False,
-            allow_nominal_ctf_coils=True,
-        )
-        return model_comparison(
-            fids, working_copy, surfaces, method='MSP', spm_instance=spm,
-            forward_operator=operator, viz=False,
-            invert_kwargs=dict(priors=[vertex], patch_size=5, woi=[-25, 25]),
-        )
-
-Keep the source correspondence when creating the MNE source spaces. Each row
-of ``vertices`` gives the zero-based MNE source-space index and vertex ID for
-one vertex in *single-layer GIfTI order*. For example, ``(1, 42)`` identifies
-vertex 42 in the second source space. Use a vertex ID from that space's
-``vertno`` array, even when decimation makes the IDs nonconsecutive. Supply a
-single array if the mapping is identical across layers, or a dictionary keyed
-by layer name if it differs. Each layer's mapped positions must agree with
-its GIfTI coordinates.
-
-Both transforms take and return points in millimetres. ``mri_to_head_mm``
-maps the native GIfTI coordinates into the recipient SPM head frame. An
-existing native operator for this registration provides this affine as
-``native.mri_to_head_mm``. ``mne_head_to_head_mm`` maps MNE head coordinates
-into that same frame. The CTF example inverts the acquisition's CTF-head to
-MNE-head transform and converts its translation to millimetres. For a
-different recipient head frame, supply the transform for that registration.
-
-Pass the recording's good MEG channel names and physical units in an ordered
-mapping. With the same native operator, use
+Both coordinate transforms take and return points in millimetres.
+``mri_to_head_mm`` maps native GIfTI MRI coordinates into the recipient SPM
+head frame. ``mne_head_to_head_mm`` maps MNE head coordinates into the same
+frame. A coregistered native operator provides ``native.mri_to_head_mm`` and
 ``dict(zip(native.channel_names, native.channel_units))``.
-The importer selects the named gain rows and scales each to its recorded unit
-per nA m. For CTF data with a nonzero compensation grade, set
-``ignore_ref=False`` in ``mne.make_forward_solution`` and pass the same setting
-and the original acquisition ``Info`` to the importer. A forward FIF alone cannot
-establish whether MNE applied reference compensation. Before inversion, laMEG
-checks the imported coil positions, directions and reference weights against
-the recipient SPM registration.
-
-By default laMEG requires strict sensor agreement. The example opts in to
-matching MNE's nominal CTF pickup coils to the measured coils from the same
-acquisition. Each nominal position must match exactly one group of measured
-pickup centres within 0.15 mm Euclidean distance. At each group, laMEG checks
-the combined signed response of each channel, including reference weights,
-with absolute tolerance 1e-9 and relative tolerance 1e-5.
 
 External solvers
 ----------------

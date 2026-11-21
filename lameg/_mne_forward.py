@@ -120,6 +120,15 @@ def _same_sensors(first, second):
         first[k], second[k], atol=atol, rtol=1e-7) for k, atol in tolerances.items())
 
 
+def load_forward(source, layer):
+    """Read a single layer while retaining the gain's origin for provenance."""
+    if isinstance(source, (str, PathLike)):
+        return mne.read_forward_solution(str(source), verbose=False), str(source)
+    if isinstance(source, mne.Forward):
+        return source, source['info'].get('command_line') or 'in-memory Forward'
+    raise TypeError(f"Expected an MNE Forward or FIF path for layer {layer!r}.")
+
+
 def read_layers(forwards, vertices, names, units, head_mm, requested, orientations, info,
                 ignore_ref, allow_nominal_ctf_coils):
     """Import and validate each layer, reading at most one FIF at a time."""
@@ -131,14 +140,7 @@ def read_layers(forwards, vertices, names, units, head_mm, requested, orientatio
     geometry = None
     descriptions = []
     for index, (name, source) in enumerate(forwards.items()):
-        if isinstance(source, (str, PathLike)):
-            forward = mne.read_forward_solution(str(source), verbose=False)
-            description = str(source)
-        elif isinstance(source, mne.Forward):
-            forward = source
-            description = source['info'].get('command_line') or 'in-memory Forward'
-        else:
-            raise TypeError(f"Expected an MNE Forward or FIF path for layer {name!r}.")
+        forward, description = load_forward(source, name)
         rows, scale, sensors = mne_channel_geometry(
             forward, names, units, head_m, info, ignore_ref, allow_nominal_ctf_coils)
         if geometry is None:
