@@ -1,4 +1,5 @@
 """Check physical-unit conversion, MAT serialization and failed-attachment behavior."""
+from dataclasses import replace
 from pathlib import Path
 from unittest.mock import Mock
 import re
@@ -14,6 +15,8 @@ from lameg.forward import ForwardOperator
 
 def source_model():
     """Three signed sources whose effective coordinates differ from their requested positions."""
+    # Rotation, translation, and a negative gain make frame and sign errors visible.
+    # A non-diagonal transfer matrix makes each channel sensitive to multiple coils.
     return ForwardOperator(
         gain=np.array([[-4., 9., 3.], [7., -3., 1.]]),
         channel_names=('MEG2', 'MEG1'), channel_units=('fT', 'T/m'), layer_names=('white',),
@@ -50,11 +53,17 @@ def test_attachment_stages_signed_physical_gain_and_two_geometries(tmp_path):
         assert staged['label'].tolist() == list(source.channel_names)
         assert staged['channel_units'].tolist() == list(source.channel_units)
         np.testing.assert_array_equal(staged['normals'], source.orientations_head)
+        # These are the anatomical vertices after rotation and translation, in
+        # head metres. The solver's displaced locations occupy a separate MAT field.
         expected = [[.013, .021, .031], [.010, .024, .034], [.011, .024, .035]]
         np.testing.assert_allclose(staged['requested_m'], expected)
         np.testing.assert_allclose(staged['positions_m'], source.effective_head_mm / 1000.)
         for key in ('coilpos', 'coilori', 'tra'):
             np.testing.assert_array_equal(staged[key], source.sensor_geometry[key])
+        if source.allow_nominal_ctf_coils:
+            assert staged['allow_nominal_ctf_coils'] == 1
+        else:
+            assert 'allow_nominal_ctf_coils' not in staged
         caches.append(config['cache_name'])
         # Simulate a successful verified MATLAB save; native acceptance is covered separately.
         Path(config['staged_header']).write_bytes(b'validated new header')
@@ -62,11 +71,16 @@ def test_attachment_stages_signed_physical_gain_and_two_geometries(tmp_path):
 
     runtime = Mock()
     runtime.spm_standalone.side_effect = stage
+    # Repeating the same attachment reuses its cache. Opting into nominal CTF coil
+    # matching changes validation metadata and therefore the persistent cache name.
     for _ in range(2):
         _attach_layer_forward(str(dataset), source, 2, runtime)
+    source = replace(source, allow_nominal_ctf_coils=True)
+    _attach_layer_forward(str(dataset), source, 2, runtime)
     assert dataset.read_bytes() == b'validated new header'
     assert caches[0] == caches[1]
-    assert len(list(tmp_path.glob('lameg_gain_*.mat'))) == 1
+    assert caches[2] != caches[0]
+    assert len(list(tmp_path.glob('lameg_gain_*.mat'))) == 2
 
 
 def test_rejected_runtime_attachment_preserves_header(tmp_path):
@@ -84,6 +98,7 @@ def test_rejected_runtime_attachment_preserves_header(tmp_path):
     runtime.spm_standalone.side_effect = reject
     with pytest.raises(ValueError, match='coil positions'):
         _attach_layer_forward(str(dataset), forward, 0, runtime)
+    # A failure reported by MATLAB must leave the previous selection usable on disk.
     assert dataset.read_bytes() == b'original header'
     assert not list(tmp_path.glob('lameg_gain_*.mat'))
 

@@ -47,6 +47,9 @@ def test_rms_uses_recorded_cache_and_selected_slot(tmp_path, hdf5_header, hdf5_c
     make_header(header, ['first.mat', 'selected.mat'], hdf5_header)
     # The old conventional gain remains on disk beside the explicitly selected one.
     savemat(tmp_path / 'SPMgainmatrix_subject_2.mat', {'G': np.zeros((2, 4))})
+    # Each row is a sensor. The first two columns are pial vertices and the next two
+    # are corresponding white vertices. White minus pial gives [3, 4] and [-4, 0]
+    # across sensors, with mean squares 12.5 and 8 for the two vertices.
     gain = np.array([[1., 4., 4., 0.], [2., 4., 6., 4.]])
     if hdf5_cache:
         with h5py.File(tmp_path / 'selected.mat', 'w') as cache:
@@ -87,6 +90,8 @@ def test_rms_requires_selected_external_gain_bytes(tmp_path, hdf5_header):
     cache = tmp_path / 'external.mat'
     gain = np.arange(8).reshape(2, 4)
     savemat(cache, {'G': gain})
+    # The saved digest ties this diagnostic to the gain actually attached for inversion.
+    # A polarity reversal later in the test leaves the RMS contrast itself unchanged.
     marker = {'file': cache.name, 'format_version': 1,
               'sha256': hashlib.sha256(cache.read_bytes()).hexdigest()}
     make_header(header, ['first.mat', cache.name], hdf5_header, marker)
@@ -115,5 +120,7 @@ def test_rms_legacy_relative_cache_path(tmp_path, hdf5_header):
     folder = tmp_path / 'gains'
     folder.mkdir()
     savemat(folder / 'nested.mat', {'G': np.arange(8).reshape(2, 4)})
+    # This Windows-style relative path models a dataset copied between machines. The
+    # lookup should still resolve the gain directory relative to the new header.
     make_header(header, [r'gains\nested.mat'], hdf5_header)
     np.testing.assert_allclose(get_lead_field_rms_diff(header, SURFACES), [2., 2.])

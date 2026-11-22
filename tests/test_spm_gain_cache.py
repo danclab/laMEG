@@ -11,6 +11,8 @@ from lameg._spm_gain import check_spm_gain_cache
 
 def write_header(path, external, version, active=2, bad_extra=True):
     """Set up two inversion slots, with a MATLAB-empty first cell."""
+    # A, B and C have gain rows. EOG is a good non-MEG channel and X is a MEG
+    # channel whose bad flag can change after the forward was computed.
     labels = ['A', 'B', 'C', 'EOG', 'X']
     kinds = ['MEGMAG', 'MEGGRAD', 'MEGPLANAR', 'EOG', 'MEG']
     if external:
@@ -20,6 +22,8 @@ def write_header(path, external, version, active=2, bad_extra=True):
         with h5py.File(path, 'w') as handle:
             other = handle.create_group('D/other')
             other.create_dataset('val', data=[[active]])
+            # Match MATLAB's v7.3 cell layout. SPM's val=2 selects the group
+            # referenced by the second cell (Python inversion_idx=1).
             slots = other.create_dataset('inv', (2, 1), dtype=h5py.ref_dtype)
             empty = handle.create_dataset('empty', data=np.zeros((2, 1), dtype=np.uint64))
             empty.attrs['MATLAB_empty'] = 1
@@ -62,6 +66,8 @@ def test_marked_cache_enforces_slot_and_exact_bytes(tmp_path, version):
     check_spm_gain_cache(header, inversion_idx=1)
     with pytest.raises(ValueError, match='active SPM slot'):
         check_spm_gain_cache(header, inversion_idx=0)
+    # Keep the header and filename fixed. Changing only the cache bytes should
+    # invalidate the earlier successful verification.
     cache.write_bytes(cache.read_bytes()[:-10])
     with pytest.raises(ValueError, match='has changed'):
         check_spm_gain_cache(header)

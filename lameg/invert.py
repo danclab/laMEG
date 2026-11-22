@@ -1041,6 +1041,8 @@ def _prior_indices(priors):
     """Validate zero-based MSP vertex indices used on the selected cortical mesh."""
     if priors is None:
         return np.array([], dtype=int)
+    # Some callers store whole-number IDs in a float array. Verify those values
+    # before casting so a fractional seed cannot move to a neighboring vertex.
     indices = np.asarray(priors)
     if not np.issubdtype(indices.dtype, np.integer):
         if not np.all(indices == np.floor(indices)):
@@ -1453,6 +1455,9 @@ def _read_inversion_results(data_fname, inversion_idx=0, return_mu_matrix=False)
             if not return_mu_matrix:
                 return [free_energy, cv_err]
 
+            # SPM can leave trailing source rows empty, e.g. outside an MSP patch.
+            # The shared decoder respects the declared row count so each row of
+            # M @ U still identifies its registered source.
             weighting_mat = _h5_to_csc(inv_struct['M'])
 
             u_ref = inv_struct['U'][0][0]
@@ -1613,6 +1618,8 @@ def _invert_ebb_base(data_fname, surf_set, layer_name=None, stage='ds',
         inversion_idx=inversion_idx, spm_instance=spm_instance
     )
 
+    # EBBlayer pairs corresponding sources in the layer-major gain. Passing
+    # nlayers tells SPM how to recover the separate layers from the combined mesh.
     cfg = _build_invertiter_cfg(
         data_fname=data_fname,
         inversion_idx=inversion_idx,
@@ -1697,6 +1704,8 @@ def _invert_sliding_window_ebb_base(
         inversion_idx=inversion_idx, spm_instance=spm_instance
     )
 
+    # SPM fits all requested windows in one batch. Each window uses the same
+    # installed gain, source order, layer pairing and spatial-mode file.
     cfg = _build_invertiter_cfg(
         data_fname=data_fname,
         inversion_idx=inversion_idx,
@@ -1822,9 +1831,13 @@ def _rms_gain_cache(data_file, inversion_idx):
         slot = inversion_slot(header, inversion_idx)
         if slot is None:
             raise KeyError("Source inversion has not been run in the requested slot.")
+        # RMS can be requested for a different slot from D.val. Read the selected
+        # filename and its checksum together from that slot.
         recorded, digest = gain_reference(slot)
     path = Path(data_file)
     if not recorded:
+        # Older native headers omit the cache name. SPM's filename embeds the
+        # one-based slot number even though callers use zero-based indexing.
         recorded = f'SPMgainmatrix_{path.stem}_{inversion_idx + 1}.mat'
     return path.parent / recorded.replace('\\', '/'), digest
 
@@ -1857,6 +1870,9 @@ def get_lead_field_rms_diff(data_file, surf_set, inversion_idx=0):
                             dtype=np.float64)
         return np.sqrt(np.mean(np.square(delta, out=delta), axis=1))
 
+    # External registration binds the comparison to the original gain bytes.
+    # The v7.3 HDF5 view has sources along axis 0; the v5 reader returns channels
+    # along axis 0, so transpose it before using the same endpoint calculation.
     with verified_gain(path, digest):
         if h5py.is_hdf5(path):
             with h5py.File(path, 'r') as cache:

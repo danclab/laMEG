@@ -15,6 +15,8 @@ if not os.path.exists(_marker):
 # ----------------------------------------------------------------------
 # Lazy import of submodules (prevents circular import before SPM install)
 # ----------------------------------------------------------------------
+# This exposes lameg.forward alongside lameg.invert. Importing lameg alone
+# does not need to load the code that reads MNE forwards or attaches SPM gains.
 __all__ = ["forward", "invert", "laminar", "simulate", "source", "surf", "util", "viz"]
 
 # Load all submodules eagerly when building docs
