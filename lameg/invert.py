@@ -54,7 +54,9 @@ from scipy.sparse import csc_matrix, issparse
 from lameg._mat_sparse import h5_to_csc as _h5_to_csc, is_h5_sparse
 from lameg._gain_cache import (gain_reference, inversion_slot, open_spm_header,
                                validate_slot_index, verified_gain)
-from lameg._spm_gain import check_spm_gain_cache
+from lameg._spm_gain import (attach_forward_operator, check_spm_gain_cache,
+                             validate_inversion_forward)
+from lameg._forward_support import map_surface_vertices
 from lameg.util import load_meg_sensor_data, spm_context, batch
 import matlab # pylint: disable=wrong-import-order,import-error
 
@@ -310,7 +312,7 @@ def invert_ebb(data_fname, surf_set, layer_name=None, stage='ds',
                orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=4,
                n_spatial_modes='auto', foi=None, woi=None, hann_windowing=False, n_folds=1,
                ideal_pc_test=0, inversion_idx=0, viz=True, return_mu_matrix=False,
-               spm_instance=None):
+               spm_instance=None, forward_operator=None):
     """
     Perform Empirical Bayesian Beamformer (EBB) source inversion on MEG data.
 
@@ -362,6 +364,9 @@ def invert_ebb(data_fname, surf_set, layer_name=None, stage='ds',
     spm_instance : spm_standalone, optional
         Active standalone SPM instance. If None, a temporary instance is created and closed after
         execution.
+    forward_operator : ForwardOperator, optional
+        Signed MEG gain for the registered surface set or selected layer. The
+        operator is installed in `inversion_idx` before spatial modes are computed.
 
     Returns
     -------
@@ -376,7 +381,7 @@ def invert_ebb(data_fname, surf_set, layer_name=None, stage='ds',
 
     Notes
     -----
-    - The forward model must be precomputed via `coregister()` before calling this function.
+    - Register the selected mesh in the target slot using `coregister()` or `opm_headmodel()`.
     - Mesh smoothing uses `spm_eeg_smoothmesh_multilayer_mm`.
     - Spatial mode preparation and cross-validation use `spm_eeg_inv_prep_modes_xval`.
     """
@@ -399,6 +404,7 @@ def invert_ebb(data_fname, surf_set, layer_name=None, stage='ds',
         viz=viz,
         return_mu_matrix=return_mu_matrix,
         spm_instance=spm_instance,
+        forward_operator=forward_operator,
         layerwise=False
     )
 
@@ -406,16 +412,15 @@ def invert_ebb(data_fname, surf_set, layer_name=None, stage='ds',
 def invert_ebb_layer(data_fname, surf_set, layer_name=None, stage='ds',
                      orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=4,
                      n_spatial_modes='auto', foi=None, woi=None, hann_windowing=False, n_folds=1,
-                     ideal_pc_test=0, diag_vertex=None, sum_pair_topk=2, diff_pair_topk=2,
-                     inversion_idx=0, viz=True, return_mu_matrix=False, spm_instance=None):
+                     ideal_pc_test=0, diag_vertex=None, sum_pair_topk=None, diff_pair_topk=None,
+                     inversion_idx=0, viz=True, return_mu_matrix=False, spm_instance=None,
+                     forward_operator=None):
     """
     Perform laminar Empirical Bayesian Beamformer (EBBlayer) source inversion on MEG data.
 
     This function runs a laminar extension of the Empirical Bayesian Beamformer (EBB)
-    implemented in SPM. The method operates on either a single cortical surface or a
-    multilayer mesh representing cortical depth. When a multilayer surface is used,
-    the inversion employs a modified EBB formulation ("EBBlayer") that models potential
-    correlated activity across layers within the same cortical column.
+    implemented in SPM. The method uses a multilayer mesh to model correlated
+    activity across layers within the same cortical column.
 
     The EBBlayer model combines three spatial source-prior families using
     Restricted Maximum Likelihood (ReML):
@@ -449,9 +454,8 @@ def invert_ebb_layer(data_fname, surf_set, layer_name=None, stage='ds',
         Path to the MEG dataset (SPM-compatible `.mat` file).
     surf_set : LayerSurfaceSet
         Subject-specific surface set containing laminar meshes.
-    layer_name : str or None, optional
-        Surface layer to use for inversion (e.g., 'pial', 'white', or a fractional
-        layer). If None, the full multilayer surface is used.
+    layer_name : None, optional
+        Use the full registered mesh with at least two layers.
     stage : str, optional
         Processing stage of the surface mesh (default: 'ds').
     orientation : str, optional
@@ -479,15 +483,15 @@ def invert_ebb_layer(data_fname, surf_set, layer_name=None, stage='ds',
     ideal_pc_test : float, optional
         Fraction of channels left out during cross-validation (default: 0).
     diag_vertex : int or None, optional
-        Zero-based within-layer vertex index at which to save EBBlayer pair-score
+        Original zero-based within-layer vertex index at which to save EBBlayer pair-score
         diagnostics. If None, diagnostic pair-score output is disabled.
-    sum_pair_topk : int, optional
-        Number of highest-scoring eligible continuous-interior SUM pair hypotheses
-        retained independently at each cortical column (default: 2).
-    diff_pair_topk : int, optional
-        Number of highest-scoring fixed DIFF pair hypotheses retained independently
-        at each cortical column (default: 2).
-inversion_idx : int, optional
+    sum_pair_topk : int or None, optional
+        Maximum number of eligible SUM layer pairs retained per cortical column.
+        By default, one pair is retained for two layers and up to two for larger meshes.
+    diff_pair_topk : int or None, optional
+        Maximum number of DIFF layer pairs retained per cortical column, with
+        the same default as SUM. Each explicit count must fit the available pairs.
+    inversion_idx : int, optional
         Index of the inversion within the SPM data object (default: 0).
     viz : bool, optional
         Display SPM inversion progress and diagnostic plots (default: True).
@@ -497,6 +501,9 @@ inversion_idx : int, optional
     spm_instance : spm_standalone, optional
         Active standalone SPM instance. If None, a temporary instance is created
         and closed after execution.
+    forward_operator : ForwardOperator, optional
+        Signed MEG gain for the registered multilayer surface set. The
+        operator is installed in `inversion_idx` before spatial modes are computed.
 
     Returns
     -------
@@ -512,7 +519,7 @@ inversion_idx : int, optional
 
     Notes
     -----
-    - The forward model must be computed beforehand using `coregister()`.
+    - Register the selected mesh in the target slot using `coregister()` or `opm_headmodel()`.
     - Mesh smoothing is performed with `spm_eeg_smoothmesh_multilayer_mm`.
     - Spatial modes and cross-validation are computed using
       `spm_eeg_inv_prep_modes_xval`.
@@ -538,6 +545,7 @@ inversion_idx : int, optional
         viz=viz,
         return_mu_matrix=return_mu_matrix,
         spm_instance=spm_instance,
+        forward_operator=forward_operator,
         layerwise=True,
         ebblayer_diag_vertex=diag_vertex,
         ebblayer_sum_pair_topk=sum_pair_topk,
@@ -549,7 +557,7 @@ def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
                orientation='link_vector', fixed=True, priors=None, patch_size=5, n_temp_modes=4,
                n_spatial_modes='auto', foi=None, woi=None, hann_windowing=False, n_folds=1,
                ideal_pc_test=0, inversion_idx=0, viz=True, return_mu_matrix=False,
-               spm_instance=None):
+               spm_instance=None, forward_operator=None):
     """
     Perform Multiple Sparse Priors (MSP) source inversion on MEG data.
 
@@ -575,7 +583,8 @@ def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
     fixed : bool, optional
         Whether to use fixed dipole orientations across layers (default: True).
     priors : list of int, optional
-        List of vertex indices to be used as MSP priors (0-based Python indexing).
+        Zero-based MSP vertex indices in the original mesh (layer-major for
+        a multilayer inversion). Prepared surfaces map them to retained vertices.
         If None or empty, random patches are used as priors.
     patch_size : float, optional
         Full-width at half-maximum (FWHM) of cortical patch smoothing in millimeters (default: 5).
@@ -604,6 +613,9 @@ def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
     spm_instance : spm_standalone, optional
         Active standalone SPM instance. If None, a temporary instance is created and closed after
         execution.
+    forward_operator : ForwardOperator, optional
+        Signed MEG gain for the registered surface set or selected layer. The
+        operator is installed in `inversion_idx` before spatial modes are computed.
 
     Returns
     -------
@@ -618,40 +630,39 @@ def invert_msp(data_fname, surf_set, layer_name=None, stage='ds',
 
     Notes
     -----
-    - The forward model must be precomputed via `coregister()` before calling this function.
+    - Register the selected mesh in the target slot using `coregister()` or `opm_headmodel()`.
     - If `priors` are provided, they are converted to 1-based indices to match MATLAB conventions.
     - Mesh smoothing uses `spm_eeg_smoothmesh_multilayer_mm`.
     - Spatial mode preparation and cross-validation use `spm_eeg_inv_prep_modes_xval`.
     """
-    mesh_fname = surf_set.get_mesh_path(layer_name=layer_name, stage=stage,
-                                        orientation=orientation, fixed=fixed)
-    n_layers = 1
-    if layer_name is None:
-        n_layers = surf_set.n_layers
 
+    # The caller names the seed on the original GIfTI. After a BEM exclusion, the
+    # same integer can refer to a different vertex on the smaller inversion mesh.
+    # For a combined mesh the mapping also converts the offset of each layer.
+    indices = map_surface_vertices(surf_set, _prior_indices(priors),
+                                  multilayer=layer_name is None)
     norm = _normalize_inversion_inputs(
         foi=foi,
         woi=woi,
-        n_spatial_modes=n_spatial_modes,
-        priors=priors
+        n_spatial_modes=n_spatial_modes
     )
 
     spatialmodename, nmodes, pctest = _prepare_spatial_modes(
-        data_fname,
-        mesh_fname,
-        n_layers,
-        patch_size,
-        norm['n_spatial_modes'],
+        data_fname, surf_set, layer_name, stage, orientation, fixed,
+        patch_size, norm['n_spatial_modes'],
         n_folds=n_folds,
         ideal_pc_test=ideal_pc_test,
-        inversion_idx=inversion_idx, spm_instance=spm_instance
+        inversion_idx=inversion_idx, spm_instance=spm_instance,
+        forward_operator=forward_operator, priors=indices
     )
 
+    # Validating the gain uses zero-based Python indices. SPM's patch file is the
+    # first place that needs one-based indices. An empty list selects random patches.
     patchfilename = None
-    if len(norm['priors']) > 0:
+    if indices.size:
         data_dir = os.path.dirname(data_fname)
         patchfilename = os.path.join(data_dir, f'patch_{inversion_idx}.mat')
-        savemat(patchfilename, {'Ip': norm['priors']})
+        savemat(patchfilename, {'Ip': indices + 1})
 
     cfg = _build_invertiter_cfg(
         data_fname=data_fname,
@@ -681,7 +692,7 @@ def invert_sliding_window_ebb(data_fname, surf_set, layer_name=None, stage='ds',
                               orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=1,
                               n_spatial_modes='auto', wois=None, win_size=50, win_overlap=True,
                               foi=None, hann_windowing=True, inversion_idx=0,
-                              viz=True, spm_instance=None):
+                              viz=True, spm_instance=None, forward_operator=None):
     """
     Perform Empirical Bayesian Beamformer (EBB) source inversion over sliding time windows.
 
@@ -732,6 +743,9 @@ def invert_sliding_window_ebb(data_fname, surf_set, layer_name=None, stage='ds',
     spm_instance : spm_standalone, optional
         Active standalone SPM instance. If None, a temporary instance is created and closed after
         execution.
+    forward_operator : ForwardOperator, optional
+        Signed MEG gain for the registered surface set or selected layer. The
+        operator is installed in `inversion_idx` before spatial modes are computed.
 
     Returns
     -------
@@ -743,7 +757,7 @@ def invert_sliding_window_ebb(data_fname, surf_set, layer_name=None, stage='ds',
             Time windows of interest in milliseconds.
     Notes
     -----
-    - The forward model must be precomputed via `coregister()` before calling this function.
+    - Register the selected mesh in the target slot using `coregister()` or `opm_headmodel()`.
     - Mesh smoothing uses `spm_eeg_smoothmesh_multilayer_mm`.
     - Spatial mode preparation uses `spm_eeg_inv_prep_modes_xval`.
     - Each windowed inversion uses the **Empirical Bayesian Beamformer (EBB)** algorithm in SPM.
@@ -767,6 +781,7 @@ def invert_sliding_window_ebb(data_fname, surf_set, layer_name=None, stage='ds',
         inversion_idx=inversion_idx,
         viz=viz,
         spm_instance=spm_instance,
+        forward_operator=forward_operator,
         layerwise=False
     )
 
@@ -775,16 +790,14 @@ def invert_sliding_window_ebb_layer(data_fname, surf_set, layer_name=None, stage
                                     orientation='link_vector', fixed=True, patch_size=5,
                                     n_temp_modes=1, n_spatial_modes='auto', wois=None, win_size=50,
                                     win_overlap=True, foi=None, hann_windowing=True,
-                                    inversion_idx=0, viz=True, spm_instance=None):
+                                    inversion_idx=0, viz=True, spm_instance=None,
+                                    forward_operator=None, sum_pair_topk=None, diff_pair_topk=None):
     """
     Perform sliding-window laminar Empirical Bayesian Beamformer (EBBlayer) source inversion.
 
     This function applies a laminar extension of the Empirical Bayesian Beamformer (EBB)
-    within successive time windows, enabling time-resolved source inversion on either a
-    single cortical surface or a multilayer mesh. When a multilayer surface is used,
-    the inversion employs the EBBlayer model, which augments classic EBB with additional
-    spatial priors that capture correlated activity across cortical layers within the
-    same cortical column.
+    within successive time windows on a multilayer mesh. Its spatial priors
+    capture correlated activity across cortical layers within the same column.
 
     For multilayer meshes, the source prior includes three components:
 
@@ -816,9 +829,8 @@ def invert_sliding_window_ebb_layer(data_fname, surf_set, layer_name=None, stage
         Path to the MEG dataset (SPM-compatible `.mat` file).
     surf_set : LayerSurfaceSet
         Subject-specific surface set containing laminar meshes.
-    layer_name : str or None, optional
-        Surface layer to use for inversion (e.g., 'pial', 'white', or a fractional
-        layer). If None, the full multilayer surface is used.
+    layer_name : None, optional
+        Use the full registered mesh with at least two layers.
     stage : str, optional
         Processing stage of the surface mesh (default: 'ds').
     orientation : str, optional
@@ -856,6 +868,15 @@ def invert_sliding_window_ebb_layer(data_fname, surf_set, layer_name=None, stage
     spm_instance : spm_standalone, optional
         Active standalone SPM instance. If None, a temporary instance is created
         and closed after execution.
+    forward_operator : ForwardOperator, optional
+        Signed MEG gain for the registered multilayer surface set. The
+        operator is installed in `inversion_idx` before spatial modes are computed.
+    sum_pair_topk : int or None, optional
+        Maximum number of eligible SUM layer pairs retained per cortical column.
+        By default, one pair is retained for two layers and up to two for larger meshes.
+    diff_pair_topk : int or None, optional
+        Maximum number of DIFF layer pairs retained per cortical column, with
+        the same default as SUM. Each explicit count must fit the available pairs.
 
     Returns
     -------
@@ -868,7 +889,7 @@ def invert_sliding_window_ebb_layer(data_fname, surf_set, layer_name=None, stage
 
     Notes
     -----
-    - The forward model must be computed beforehand using `coregister()`.
+    - Register the selected mesh in the target slot using `coregister()` or `opm_headmodel()`.
     - Mesh smoothing is performed with `spm_eeg_smoothmesh_multilayer_mm`.
     - Spatial modes are prepared using `spm_eeg_inv_prep_modes_xval`.
     - Each windowed inversion uses EBBlayer when a multilayer mesh is provided,
@@ -895,7 +916,10 @@ def invert_sliding_window_ebb_layer(data_fname, surf_set, layer_name=None, stage
         inversion_idx=inversion_idx,
         viz=viz,
         spm_instance=spm_instance,
-        layerwise=True
+        forward_operator=forward_operator,
+        layerwise=True,
+        ebblayer_sum_pair_topk=sum_pair_topk,
+        ebblayer_diff_pair_topk=diff_pair_topk
     )
 
 
@@ -903,7 +927,7 @@ def invert_sliding_window_msp(prior, data_fname, surf_set, layer_name=None, stag
                               orientation='link_vector', fixed=True, patch_size=5, n_temp_modes=1,
                               n_spatial_modes='auto', wois=None, win_size=50, win_overlap=True,
                               foi=None, hann_windowing=True, inversion_idx=0, viz=True,
-                              spm_instance=None):
+                              spm_instance=None, forward_operator=None):
     """
     Perform Multiple Sparse Priors (MSP) source inversion over sliding time windows.
 
@@ -916,7 +940,8 @@ def invert_sliding_window_msp(prior, data_fname, surf_set, layer_name=None, stag
     Parameters
     ----------
     prior : int
-        Index of the vertex to be used as the MSP prior (0-based Python indexing).
+        Zero-based MSP vertex index in the original mesh (layer-major for a
+        multilayer inversion). Prepared surfaces map it to a retained vertex.
     data_fname : str
         Path to the MEG dataset (SPM-compatible .mat file).
     surf_set : LayerSurfaceSet
@@ -957,6 +982,9 @@ def invert_sliding_window_msp(prior, data_fname, surf_set, layer_name=None, stag
     spm_instance : spm_standalone, optional
         Active standalone SPM instance. If None, a temporary instance is created and closed after
         execution.
+    forward_operator : ForwardOperator, optional
+        Signed MEG gain for the registered surface set or selected layer. The
+        operator is installed in `inversion_idx` before spatial modes are computed.
 
     Returns
     -------
@@ -969,18 +997,12 @@ def invert_sliding_window_msp(prior, data_fname, surf_set, layer_name=None, stag
 
     Notes
     -----
-    - The forward model must be precomputed via `coregister()` before calling this function.
+    - Register the selected mesh in the target slot using `coregister()` or `opm_headmodel()`.
     - The `prior` index is internally converted to 1-based indexing for MATLAB compatibility.
     - Mesh smoothing uses `spm_eeg_smoothmesh_multilayer_mm`.
     - Spatial mode preparation uses `spm_eeg_inv_prep_modes_xval`.
     - Each windowed inversion uses the **Multiple Sparse Priors (MSP)** algorithm in SPM.
     """
-
-    mesh_fname = surf_set.get_mesh_path(layer_name=layer_name, stage=stage,
-                                        orientation=orientation, fixed=fixed)
-    n_layers = 1
-    if layer_name is None:
-        n_layers = surf_set.n_layers
 
     wois = _compute_wois(
         data_fname=data_fname,
@@ -990,25 +1012,26 @@ def invert_sliding_window_msp(prior, data_fname, surf_set, layer_name=None, stag
         n_temp_modes=n_temp_modes
     )
 
+    # Every time window tests the same anatomical seed. Map it once and use that
+    # mesh index for both gain validation and the patch file shared by the windows.
+    indices = map_surface_vertices(surf_set, _prior_indices([prior]),
+                                  multilayer=layer_name is None)
     norm = _normalize_inversion_inputs(
         foi=foi,
         wois=wois,
-        n_spatial_modes=n_spatial_modes,
-        priors=[prior]
+        n_spatial_modes=n_spatial_modes
     )
 
     spatialmodename, nmodes, _ = _prepare_spatial_modes(
-        data_fname,
-        mesh_fname,
-        n_layers,
-        patch_size,
-        norm['n_spatial_modes'],
-        inversion_idx=inversion_idx, spm_instance=spm_instance
+        data_fname, surf_set, layer_name, stage, orientation, fixed,
+        patch_size, norm['n_spatial_modes'],
+        inversion_idx=inversion_idx, spm_instance=spm_instance,
+        forward_operator=forward_operator, priors=indices
     )
 
     data_dir = os.path.dirname(data_fname)
     patchfilename = os.path.join(data_dir, f'patch_{inversion_idx}.mat')
-    savemat(patchfilename, {'Ip': norm['priors']})
+    savemat(patchfilename, {'Ip': indices + 1})
 
     cfg = _build_invertiter_cfg(
         data_fname=data_fname,
@@ -1045,7 +1068,8 @@ def _prior_indices(priors):
     # before casting so a fractional seed cannot move to a neighboring vertex.
     indices = np.asarray(priors)
     if not np.issubdtype(indices.dtype, np.integer):
-        if not np.all(indices == np.floor(indices)):
+        if (indices.dtype.kind != 'f' or not np.isfinite(indices).all()
+                or not np.all(indices == np.floor(indices))):
             raise TypeError("`priors` must contain integer indices")
         indices = indices.astype(int)
     if np.any(indices < 0):
@@ -1054,7 +1078,7 @@ def _prior_indices(priors):
 
 
 def _normalize_inversion_inputs(foi=None, woi=None, wois=None,
-                                n_spatial_modes=None, priors=None):
+                                n_spatial_modes=None):
     """
     Normalize common inversion inputs for SPM source inversion.
 
@@ -1068,13 +1092,11 @@ def _normalize_inversion_inputs(foi=None, woi=None, wois=None,
         Multiple windows of interest (ms).
     n_spatial_modes : int or None
         Number of spatial modes. If 'all', returns matlab.double([]). If 'auto', returns 0
-    priors : sequence of int or None
-        Python 0-based vertex indices.
 
     Returns
     -------
     dict
-        Keys: 'foi', 'woi', 'wois', 'n_spatial_modes', 'priors'
+        Keys: 'foi', 'woi', 'wois', 'n_spatial_modes'
     """
 
     if woi is not None and wois is not None:
@@ -1115,20 +1137,17 @@ def _normalize_inversion_inputs(foi=None, woi=None, wois=None,
         if n_spatial_modes_norm <= 0:
             raise ValueError("`n_spatial_modes` must be > 0")
 
-    priors_norm = (_prior_indices(priors) + 1).tolist()
-
     return {
         'foi': foi_arr,
         'woi': woi_arr,
         'wois': wois_arr,
-        'n_spatial_modes': n_spatial_modes_norm,
-        'priors': priors_norm
+        'n_spatial_modes': n_spatial_modes_norm
     }
 
 
-def _prepare_spatial_modes(data_fname, mesh_fname, n_layers, patch_size,
-                           n_spatial_modes, n_folds=1, ideal_pc_test=0,
-                           spm_instance=None, inversion_idx=0):
+def _prepare_spatial_modes(data_fname, surf_set, layer_name, stage, orientation, fixed,
+                           patch_size, n_spatial_modes, n_folds=1, ideal_pc_test=0,
+                           spm_instance=None, inversion_idx=0, forward_operator=None, priors=()):
     """
     Prepare spatial modes for SPM source inversion.
 
@@ -1146,10 +1165,10 @@ def _prepare_spatial_modes(data_fname, mesh_fname, n_layers, patch_size,
     ----------
     data_fname : str
         Path to the SPM MEEG `.mat` dataset used for inversion.
-    mesh_fname : str
-        Path to the multilayer cortical mesh file used by SPM.
-    n_layers : int
-        Number of cortical layers in the mesh.
+    surf_set : LayerSurfaceSet
+        Registered surfaces. Layer, stage, orientation and fixed select the mesh.
+    priors : sequence of int
+        Explicit MSP seeds in zero-based indices of the selected mesh.
     patch_size : float
         Spatial smoothing kernel size in millimetres applied to the mesh
         before inversion.
@@ -1187,12 +1206,30 @@ def _prepare_spatial_modes(data_fname, mesh_fname, n_layers, patch_size,
     step uses `spm_eeg_smoothmesh_multilayer_mm` to enforce the desired patch
     size on the cortical surface before inversion.
     """
-    check_spm_gain_cache(data_fname, inversion_idx=inversion_idx)
+    mesh_fname = surf_set.get_mesh_path(layer_name=layer_name, stage=stage,
+                                       orientation=orientation, fixed=fixed)
+    n_layers = surf_set.n_layers if layer_name is None else 1
+    # A layer comparison may already have installed an external gain. Verify that
+    # cache before computing modes. A native SPM slot has no external checksum.
+    if forward_operator is None:
+        check_spm_gain_cache(data_fname, inversion_idx=inversion_idx)
+    else:
+        # A direct inversion can select one named block or all blocks in mesh order.
+        # Check that correspondence and any MSP seeds before changing the SPM dataset.
+        names = surf_set.get_layer_names() if layer_name is None else (layer_name,)
+        forward_operator = validate_inversion_forward(
+            forward_operator, mesh_fname, names, inversion_idx, priors=priors)
     data_dir, fname_with_ext = os.path.split(data_fname)
     fname, _ = os.path.splitext(fname_with_ext)
     spatialmodesname = os.path.join(data_dir, f'{fname}_testmodes.mat')
 
     with spm_context(spm_instance) as spm:
+        if forward_operator is not None:
+            # SPM's mode routine loads the gain from D.val, the active inversion
+            # slot. Attachment selects that slot and verifies the gain through SPM.
+            attach_forward_operator(data_fname, forward_operator, inversion_idx, spm, mesh_fname)
+        # Smoothing follows the registered surface topology. The spatial-mode
+        # calculation below uses the corresponding gain at the solver's positions.
         print(f'Smoothing {mesh_fname}')
         spm.spm_eeg_smoothmesh_multilayer_mm(
             mesh_fname,
@@ -1530,6 +1567,30 @@ def _read_sliding_window_free_energy(data_fname, inversion_idx=0):
         return free_energy
 
 
+def _ebblayer_pair_options(n_layers, sum_pair_topk, diff_pair_topk):
+    """Determine how many SUM and DIFF pairs SPM can retain for a multilayer mesh."""
+    if n_layers < 2:
+        raise ValueError("EBBlayer requires a multilayer surface with at least two layers.")
+    # Each unordered pair of depths contributes a SUM candidate and a DIFF
+    # candidate at one cortical location. Two layers therefore offer one of each.
+    n_pairs = n_layers * (n_layers - 1) // 2
+    options = {}
+    for key, value in (('ebblayer_sum_pair_topk', sum_pair_topk),
+                       ('ebblayer_diff_pair_topk', diff_pair_topk)):
+        # Adapt the default to the geometry. An explicit count specifies which
+        # model to fit, so reject it if it exceeds the available layer pairs.
+        if value is None:
+            value = min(2, n_pairs)
+        elif (isinstance(value, (bool, np.bool_))
+              or not isinstance(value, (int, float, np.integer, np.floating))
+              or not np.isfinite(value) or int(value) != value or value < 1):
+            raise ValueError(f"`{key}` must be a positive integer.")
+        if value > n_pairs:
+            raise ValueError(f"`{key}` exceeds the number of available layer pairs ({n_pairs}).")
+        options[key] = int(value)
+    return options
+
+
 def _invert_ebb_base(data_fname, surf_set, layer_name=None, stage='ds',
                      orientation='link_vector', fixed=True, patch_size=5,
                      n_temp_modes=4, n_spatial_modes=None, foi=None, woi=None,
@@ -1537,8 +1598,8 @@ def _invert_ebb_base(data_fname, surf_set, layer_name=None, stage='ds',
                      inversion_idx=0, viz=True, return_mu_matrix=False,
                      spm_instance=None, layerwise=False,
                      ebblayer_diag_vertex=None,
-                     ebblayer_sum_pair_topk=2,
-                     ebblayer_diff_pair_topk=2):
+                     ebblayer_sum_pair_topk=None,
+                     ebblayer_diff_pair_topk=None, forward_operator=None):
     """
     Internal implementation for EBB inversion.
 
@@ -1549,57 +1610,19 @@ def _invert_ebb_base(data_fname, surf_set, layer_name=None, stage='ds',
         the number of layers in the inversion config. If False, use standard
         EBB ('EBB').
     """
-    mesh_fname = surf_set.get_mesh_path(layer_name=layer_name, stage=stage,
-                                        orientation=orientation, fixed=fixed)
 
-    n_layers = 1
-    if layer_name is None:
-        n_layers = surf_set.n_layers
+    n_layers = surf_set.n_layers if layer_name is None else 1
 
     if ebblayer_diag_vertex is not None:
         if not layerwise:
             raise ValueError("`ebblayer_diag_vertex` is only valid for EBBlayer.")
-        if (
-            not np.isfinite(ebblayer_diag_vertex)
-            or int(ebblayer_diag_vertex) != ebblayer_diag_vertex
-            or ebblayer_diag_vertex < 0
-        ):
-            raise ValueError("`ebblayer_diag_vertex` must be a non-negative integer.")
-        ebblayer_diag_vertex = int(ebblayer_diag_vertex)
+        # Pair diagnostics refer to one anatomical column across all layers.
+        # Its ID uses within-layer numbering even on a combined multilayer mesh.
+        diagnostic = _prior_indices([ebblayer_diag_vertex])
+        ebblayer_diag_vertex = int(map_surface_vertices(surf_set, diagnostic)[0])
 
-    for name, value in (
-        ("ebblayer_sum_pair_topk", ebblayer_sum_pair_topk),
-        ("ebblayer_diff_pair_topk", ebblayer_diff_pair_topk),
-    ):
-        if (
-            not np.isfinite(value)
-            or int(value) != value
-            or value < 1
-        ):
-            raise ValueError(f"`{name}` must be a positive integer.")
-
-    ebblayer_sum_pair_topk = int(ebblayer_sum_pair_topk)
-    ebblayer_diff_pair_topk = int(ebblayer_diff_pair_topk)
-
-    if layerwise:
-        n_layer_pairs = n_layers * (n_layers - 1) // 2
-
-        if n_layer_pairs < 1:
-            raise ValueError(
-                "EBBlayer requires a multilayer surface with at least two layers."
-            )
-
-        if ebblayer_sum_pair_topk > n_layer_pairs:
-            raise ValueError(
-                "`ebblayer_sum_pair_topk` exceeds the number of available "
-                f"layer pairs ({n_layer_pairs})."
-            )
-
-        if ebblayer_diff_pair_topk > n_layer_pairs:
-            raise ValueError(
-                "`ebblayer_diff_pair_topk` exceeds the number of available "
-                f"layer pairs ({n_layer_pairs})."
-            )
+    pair_options = _ebblayer_pair_options(
+        n_layers, ebblayer_sum_pair_topk, ebblayer_diff_pair_topk) if layerwise else {}
 
     norm = _normalize_inversion_inputs(
         foi=foi,
@@ -1608,14 +1631,12 @@ def _invert_ebb_base(data_fname, surf_set, layer_name=None, stage='ds',
     )
 
     spatialmodename, nmodes, pctest = _prepare_spatial_modes(
-        data_fname,
-        mesh_fname,
-        n_layers,
-        patch_size,
-        norm['n_spatial_modes'],
+        data_fname, surf_set, layer_name, stage, orientation, fixed,
+        patch_size, norm['n_spatial_modes'],
         n_folds=n_folds,
         ideal_pc_test=ideal_pc_test,
-        inversion_idx=inversion_idx, spm_instance=spm_instance
+        inversion_idx=inversion_idx, spm_instance=spm_instance,
+        forward_operator=forward_operator
     )
 
     # EBBlayer pairs corresponding sources in the layer-major gain. Passing
@@ -1635,8 +1656,7 @@ def _invert_ebb_base(data_fname, surf_set, layer_name=None, stage='ds',
         n_folds=n_folds,
         n_layers=n_layers if layerwise else None,
         ebblayer_diag_vertex=ebblayer_diag_vertex,
-        ebblayer_sum_pair_topk=ebblayer_sum_pair_topk,
-        ebblayer_diff_pair_topk=ebblayer_diff_pair_topk
+        **pair_options
     )
 
     batch(cfg, viz=viz, spm_instance=spm_instance)
@@ -1654,7 +1674,8 @@ def _invert_sliding_window_ebb_base(
         n_temp_modes=1, win_size=50, win_overlap=True,
         n_spatial_modes=None, foi=None, wois=None,
         hann_windowing=False, inversion_idx=0, viz=True,
-        spm_instance=None, layerwise=False):
+        spm_instance=None, layerwise=False, forward_operator=None,
+        ebblayer_sum_pair_topk=None, ebblayer_diff_pair_topk=None):
     """
     Internal implementation for sliding-window EBB inversion.
 
@@ -1670,16 +1691,11 @@ def _invert_sliding_window_ebb_base(
     results : list
         [free_energy, wois]
     """
-    mesh_fname = surf_set.get_mesh_path(
-        layer_name=layer_name,
-        stage=stage,
-        orientation=orientation,
-        fixed=fixed
-    )
 
-    n_layers = 1
-    if layer_name is None:
-        n_layers = surf_set.n_layers
+    n_layers = surf_set.n_layers if layer_name is None else 1
+
+    pair_options = _ebblayer_pair_options(
+        n_layers, ebblayer_sum_pair_topk, ebblayer_diff_pair_topk) if layerwise else {}
 
     wois = _compute_wois(
         data_fname=data_fname,
@@ -1696,12 +1712,10 @@ def _invert_sliding_window_ebb_base(
     )
 
     spatialmodename, nmodes, _ = _prepare_spatial_modes(
-        data_fname,
-        mesh_fname,
-        n_layers,
-        patch_size,
-        norm['n_spatial_modes'],
-        inversion_idx=inversion_idx, spm_instance=spm_instance
+        data_fname, surf_set, layer_name, stage, orientation, fixed,
+        patch_size, norm['n_spatial_modes'],
+        inversion_idx=inversion_idx, spm_instance=spm_instance,
+        forward_operator=forward_operator
     )
 
     # SPM fits all requested windows in one batch. Each window uses the same
@@ -1719,7 +1733,8 @@ def _invert_sliding_window_ebb_base(
         hann_windowing=hann_windowing,
         pctest=0,
         n_folds=1,
-        n_layers=n_layers if layerwise else None
+        n_layers=n_layers if layerwise else None,
+        **pair_options
     )
 
     batch(cfg, viz=viz, spm_instance=spm_instance)

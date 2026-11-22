@@ -335,6 +335,49 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
                    allow_nominal_ctf_coils=allow_nominal_ctf_coils)
 
 
+def prepare_mne_forward(forwards, surfaces, output_dir, *, reference=None, channel_units=None,
+                        mri_to_head_mm=None, mne_head_to_head_mm=None, info=None, vertices=None,
+                        inversion_idx=0, stage='ds', orientation='link_vector', fixed=True,
+                        ignore_ref=None, allow_nominal_ctf_coils=False):
+    """Prepare one common source space for native or supplied MEG inversions.
+
+    Pass a mapping from layer name to MNE Forward or FIF path, the original
+    LayerSurfaceSet and an output directory. A registered SPM dataset in
+    `reference` provides recorded units and MRI registration. For CTF head
+    coordinates, the original acquisition `info` also supplies the MNE-to-CTF
+    head transform. Alternatively pass the explicit units and transforms used
+    by ForwardOperator.from_mne(). For a compensated solve also pass its
+    original `ignore_ref=False`; nominal CTF coil matching remains opt-in.
+
+    Every original anatomical point must coincide with a unique point in the
+    full MNE source space within 0.001 mm. If positions are ambiguous, pass
+    `vertices` in the original layer mesh order as for from_mne(). Cortical
+    locations active at every depth are retained, in original order.
+
+    Returns an object with `surfaces`, `operator`, `support` and `manifest`.
+    Prepared GIfTIs and source_support.json are written together in a new
+    subdirectory of output_dir. Use the returned surfaces for all models,
+    including native SPM. MSP prior IDs refer to the original meshes.
+    Output source rows follow support.original_vertices within each layer.
+    """
+    from ._forward_support import prepare_support  # pylint: disable=import-outside-toplevel
+    from ._forward_registration import mne_registration  # pylint: disable=import-outside-toplevel
+
+    # Resolve the recording geometry once so every layer uses the same physical units
+    # and the same transform from MNE head coordinates to the recipient head frame.
+    units, affine, head = mne_registration(reference, info, mri_to_head_mm, mne_head_to_head_mm,
+                                           channel_units, inversion_idx=inversion_idx)
+    import_options = {'channel_units': units, 'info': info, 'ignore_ref': ignore_ref,
+                      'allow_nominal_ctf_coils': allow_nominal_ctf_coils,
+                      'mri_to_head_mm': _affine_mm(affine, 'mri_to_head_mm'),
+                      'mne_head_to_head_mm': _affine_mm(head, 'mne_head_to_head_mm', rigid=True)}
+    mesh_options = {'stage': stage, 'orientation': orientation, 'fixed': fixed}
+    # Prepare common anatomical support before importing the gains. A retained vertex
+    # then refers to the same original location in every depth model.
+    return prepare_support(forwards, surfaces, output_dir, vertices, mesh_options,
+                           import_options, ForwardOperator.from_mne)
+
+
 def _spm_source_coordinates(inversion, mesh_fname, points, faces, normals):
     forward = inversion['forward']
     registered = inversion['datareg']

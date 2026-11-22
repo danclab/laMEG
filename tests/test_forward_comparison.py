@@ -14,6 +14,7 @@ class TwoLayerSurfaces:
     """Two layers in the order used by the existing reconstructions."""
 
     n_layers = 2
+    forward_support = None
 
     def get_layer_names(self):
         """Surface order used for layer comparisons."""
@@ -146,11 +147,12 @@ def test_supplied_gain_attaches_after_setup_before_each_inversion(
         assert kwargs.get('inversion_idx', 0) == slot
         events.append(('setup', kwargs['layer_name']))
 
-    def attach(data_fname, layer_operator, inversion_idx, spm_instance):
+    def attach(data_fname, layer_operator, inversion_idx, spm_instance, mesh_fname):
         assert data_fname == 'data.mat' and spm_instance is runtime
         assert inversion_idx == slot
         assert len(layer_operator.layer_names) == 1
         name = layer_operator.layer_names[0]
+        assert mesh_fname == surfaces.get_mesh_path(name)
         events.append(('attach', name))
         attached[name] = layer_operator.gain.copy()
 
@@ -165,7 +167,7 @@ def test_supplied_gain_attaches_after_setup_before_each_inversion(
 
     native_fn = 'coregister' if device == 'squid' else 'opm_headmodel'
     monkeypatch.setattr(laminar, native_fn, setup)
-    monkeypatch.setattr(laminar, '_attach_layer_forward', attach)
+    monkeypatch.setattr(laminar, 'attach_forward_operator', attach)
     monkeypatch.setattr(laminar, 'invert_' + method.lower(), invert)
     f_val, cv_err = laminar.model_comparison(
         fids if device == 'squid' else None, 'data.mat', surfaces, method=method,
@@ -194,7 +196,7 @@ def test_invalid_second_layer_fails_before_any_dataset_change(monkeypatch, input
     setup = Mock(side_effect=AssertionError('a bad mesh must fail before native setup'))
     attach = Mock(side_effect=AssertionError('a bad mesh must fail before attaching gains'))
     monkeypatch.setattr(laminar, 'coregister', setup)
-    monkeypatch.setattr(laminar, '_attach_layer_forward', attach)
+    monkeypatch.setattr(laminar, 'attach_forward_operator', attach)
     with pytest.raises(ValueError):
         laminar.model_comparison({}, 'data.mat', surfaces, forward_operator=operator)
     setup.assert_not_called()
@@ -226,8 +228,9 @@ def test_conflicting_inversion_slots_fail_before_setup(monkeypatch, input_forwar
 
 
 @pytest.mark.parametrize('prior, message', [(1, 'undefined direction'), (3, 'outside')])
+@pytest.mark.parametrize('sliding', [False, True])
 def test_seeded_msp_requires_a_defined_column_on_every_layer(
-        monkeypatch, input_forward, prior, message):
+        monkeypatch, input_forward, prior, message, sliding):
     """Reject an invalid explicit patch prior before building any forward model."""
     surfaces, operator = input_forward
     normals = operator.orientations_head.copy()
@@ -242,8 +245,12 @@ def test_seeded_msp_requires_a_defined_column_on_every_layer(
     setup = Mock(side_effect=AssertionError('invalid prior must fail before setup'))
     monkeypatch.setattr(laminar, 'coregister', setup)
     with pytest.raises(ValueError, match=message):
-        laminar.model_comparison({}, 'data.mat', surfaces, method='MSP',
-                                 forward_operator=operator, invert_kwargs={'priors': [prior]})
+        if sliding:
+            laminar.sliding_window_model_comparison(prior, {}, 'data.mat', surfaces,
+                                                    forward_operator=operator)
+        else:
+            laminar.model_comparison({}, 'data.mat', surfaces, method='MSP',
+                                     forward_operator=operator, invert_kwargs={'priors': [prior]})
     setup.assert_not_called()
 
 
@@ -254,4 +261,87 @@ def test_layer_names_must_match_surfaces(monkeypatch, input_forward):
     monkeypatch.setattr(laminar, 'coregister', setup)
     with pytest.raises(ValueError, match='layer names'):
         laminar.model_comparison({}, 'data.mat', surfaces, forward_operator=operator.layer('pial'))
+    setup.assert_not_called()
+
+
+@pytest.mark.parametrize('device, slot', [('squid', 2), ('opm', 0)])
+def test_sliding_uses_named_gain_once_for_all_windows(monkeypatch, input_forward, device, slot):
+    """Each layer gets its matching signed gain, inversion slot and common time grid."""
+    surfaces, operator = input_forward
+    windows = np.array([[-10., 10.], [10., 30.]])
+    events = []
+    attached = {}
+    # Preflight checks vertex 41 at its compact index 1. The public inverse
+    # must still receive 41 so it can map the original anatomical ID itself.
+    original_prior = 41
+    support = Mock()
+    support.map_indices.return_value = np.array([1])
+    surfaces.forward_support = support
+
+    def setup(*_args, **kwargs):
+        assert kwargs.get('inversion_idx', 0) == slot
+        events.append(('setup', kwargs['layer_name']))
+
+    def attach(_dataset, layer, inversion_idx, _spm, mesh_fname):
+        name = layer.layer_names[0]
+        assert inversion_idx == slot and mesh_fname == surfaces.get_mesh_path(name)
+        attached[name] = layer
+        events.append(('attach', name))
+
+    def invert(prior, _dataset, _surfaces, layer_name, **kwargs):
+        assert prior == original_prior and kwargs['inversion_idx'] == slot
+        assert kwargs['n_spatial_modes'] == 'all'
+        assert 'forward_operator' not in kwargs
+        if layer_name == 'white':
+            np.testing.assert_array_equal(kwargs['wois'], windows)
+        events.append(('invert', layer_name))
+        return attached[layer_name].gain[:, 1], windows
+
+    monkeypatch.setattr(laminar, 'coregister' if device == 'squid' else 'opm_headmodel', setup)
+    monkeypatch.setattr(laminar, 'attach_forward_operator', attach)
+    monkeypatch.setattr(laminar, 'invert_sliding_window_msp', invert)
+    options = {'inversion_idx': slot}
+    evidence, actual_windows = laminar.sliding_window_model_comparison(
+        original_prior, {}, 'data.mat', surfaces, device=device, invert_kwargs=options,
+        forward_operator=operator)
+    mapped, call_options = support.map_indices.call_args
+    np.testing.assert_array_equal(mapped[0], [original_prior])
+    assert call_options == {'multilayer': False}
+    assert events == [('setup', 'pial'), ('attach', 'pial'), ('invert', 'pial'),
+                      ('setup', 'white'), ('attach', 'white'), ('invert', 'white')]
+    # The mock inverse uses signed sensor values as distinct window scores.
+    # Local vertex 1 has global gain columns 1 and 4 in the two layer blocks.
+    np.testing.assert_array_equal(evidence, operator.gain[:, [1, 4]].T)
+    np.testing.assert_array_equal(actual_windows, windows)
+    assert options == {'inversion_idx': slot}
+
+
+def test_sliding_rejects_window_misalignment(monkeypatch):
+    """Model evidence from different time intervals cannot share a result column."""
+    windows = np.array([[5., 15.], [15., 25.]])
+    # Reversed intervals keep the array shape unchanged while assigning the
+    # second layer's scores to the wrong times.
+    mock = Mock(side_effect=[([1., 2.], windows), ([3., 4.], windows[::-1])])
+    monkeypatch.setattr(laminar, 'coregister', Mock())
+    monkeypatch.setattr(laminar, 'invert_sliding_window_msp', mock)
+    with pytest.raises(ValueError, match="windows differ for layer 'white'"):
+        laminar.sliding_window_model_comparison(1, {}, 'data.mat', TwoLayerSurfaces())
+
+
+@pytest.mark.parametrize('sliding', [False, True])
+def test_excluded_original_prior_stops_native_comparison_before_setup(monkeypatch, sliding):
+    """The native solver must respect the common anatomical support too."""
+    surfaces = TwoLayerSurfaces()
+    surfaces.forward_support = Mock()
+    # A native single-shell run can reuse surfaces restricted for BEM. Both
+    # solvers must reject the same excluded seed before either modifies the slot.
+    surfaces.forward_support.map_indices.side_effect = ValueError("Vertex 3 excluded from pial.")
+    setup = Mock(side_effect=AssertionError('a missing prior must fail before registration'))
+    monkeypatch.setattr(laminar, 'coregister', setup)
+    with pytest.raises(ValueError, match='Vertex 3 excluded'):
+        if sliding:
+            laminar.sliding_window_model_comparison(3, {}, 'data.mat', surfaces)
+        else:
+            laminar.model_comparison({}, 'data.mat', surfaces, method='MSP',
+                                     invert_kwargs={'priors': [3]})
     setup.assert_not_called()

@@ -59,6 +59,42 @@ def mat_string(dataset):
     return ''.join(chr(c) for c in chars.ravel()).rstrip('\x00 ')
 
 
+def good_meg_channels(header, with_units=False):
+    """Read good MEG labels, optionally paired with units, from the active data montage."""
+    meg_types = {'MEG', 'MEGMAG', 'MEGGRAD', 'MEGPLANAR'}
+    # SPM uses Mind=0 for the acquisition channels. A positive Mind selects a
+    # one-based montage with its own channel names, units and bad-channel flags.
+    if not isinstance(header, h5py.File):
+        montage = getattr(header, 'montage', None)
+        active = int(getattr(montage, 'Mind', 0))
+        model = np.atleast_1d(montage.M).ravel()[active - 1] if active else header
+        good = (ch for ch in np.atleast_1d(model.channels).ravel()
+                if not ch.bad and ch.type.upper() in meg_types)
+        return tuple((ch.label, ch.units) if with_units else ch.label for ch in good)
+
+    channels = header['D/channels']
+    active = int(np.asarray(header.get('D/montage/Mind', 0)).item())
+    if active:
+        channels = header['D/montage/M/channels']
+        if isinstance(channels, h5py.Dataset):
+            channels = header[channels[()].ravel()[active - 1]]
+
+    # MATLAB struct-array fields contain object references for multiple channels.
+    # A single-channel struct can store the field directly.
+    def values(key, read):
+        field = channels[key]
+        if h5py.check_dtype(ref=field.dtype) is not None:
+            return [read(header[ref]) for ref in field[()].ravel()]
+        return [read(field)]
+
+    names = values('label', mat_string)
+    rows = zip(names, values('units', mat_string)) if with_units else names
+    kinds = values('type', mat_string)
+    bads = values('bad', lambda item: item[()].item())
+    return tuple(row for row, kind, bad in zip(rows, kinds, bads)
+                 if not bad and kind.upper() in meg_types)
+
+
 def cell_strings(cells):
     """Decode a cell array of character vectors as loaded by scipy.io.loadmat."""
     return tuple(str(np.asarray(value).item()) for value in cells.ravel())
