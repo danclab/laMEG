@@ -14,10 +14,7 @@ import numpy as np
 def _get_bigbrain_boundaries(surf_set, columns):
     """Load BigBrain cumulative laminar boundaries for selected columns."""
     if columns is None:
-        return np.asarray(
-            surf_set.get_bigbrain_layer_boundaries(),
-            dtype=float,
-        )
+        return np.asarray(surf_set.get_bigbrain_layer_boundaries(), dtype=float)
 
     pial = surf_set.load("pial", stage="ds")
     pial_vertices = np.asarray(pial.darrays[0].data)
@@ -38,9 +35,7 @@ def _get_bigbrain_boundaries(surf_set, columns):
         )
 
     return np.asarray(
-        surf_set.get_bigbrain_layer_boundaries(
-            subj_coord=pial_vertices[column_idx]
-        ),
+        surf_set.get_bigbrain_layer_boundaries(subj_coord=pial_vertices[column_idx]),
         dtype=float,
     )
 
@@ -57,92 +52,45 @@ def _bigbrain_edges(bb_boundaries, source_depth):
         )
 
     n_columns = bb_boundaries.shape[1]
-    edges = np.empty(
-        (n_columns, 7),
-        dtype=float,
-    )
+    edges = np.empty((n_columns, 7), dtype=float)
     edges[:, 0] = 0.0
     edges[:, 1:] = bb_boundaries.T
 
     tolerance = 1e-8
-    valid_columns = np.all(
-        np.isfinite(edges),
-        axis=1,
-    )
-    valid_columns &= np.all(
-        edges >= source_depth[0] - tolerance,
-        axis=1,
-    )
-    valid_columns &= np.all(
-        edges <= source_depth[-1] + tolerance,
-        axis=1,
-    )
+    valid_columns = np.all(np.isfinite(edges), axis=1)
+    valid_columns &= np.all(edges >= source_depth[0] - tolerance, axis=1)
+    valid_columns &= np.all(edges <= source_depth[-1] + tolerance, axis=1)
 
     # Remove only tiny floating-point endpoint excursions for columns that
     # otherwise contain finite, in-range boundaries.
-    candidate_idx = np.flatnonzero(
-        valid_columns
-    )
+    candidate_idx = np.flatnonzero(valid_columns)
     if candidate_idx.size:
-        edges[candidate_idx] = np.clip(
-            edges[candidate_idx],
-            source_depth[0],
-            source_depth[-1],
-        )
+        edges[candidate_idx] = np.clip(edges[candidate_idx], source_depth[0], source_depth[-1])
 
-    lamina_thickness = np.full(
-        (n_columns, 6),
-        np.nan,
-        dtype=float,
-    )
+    lamina_thickness = np.full((n_columns, 6), np.nan, dtype=float)
     if candidate_idx.size:
-        candidate_thickness = np.diff(
-            edges[candidate_idx],
-            axis=1,
-        )
-        monotonic = np.all(
-            candidate_thickness > 0,
-            axis=1,
-        )
+        candidate_thickness = np.diff(edges[candidate_idx], axis=1)
+        monotonic = np.all(candidate_thickness > 0, axis=1)
         valid_columns[candidate_idx] &= monotonic
 
-        valid_idx = candidate_idx[
-            monotonic
-        ]
+        valid_idx = candidate_idx[monotonic]
         if valid_idx.size:
-            lamina_thickness[valid_idx] = np.diff(
-                edges[valid_idx],
-                axis=1,
-            )
+            lamina_thickness[valid_idx] = np.diff(edges[valid_idx], axis=1)
 
     edges[~valid_columns, :] = np.nan
 
-    return (
-        edges,
-        lamina_thickness,
-        valid_columns,
-    )
+    return edges, lamina_thickness, valid_columns
 
 
 def compute_bigbrain_laminar_weights(surf_set, columns=None):
     """Implement BigBrain layer-to-lamina weight computation."""
-    source_depth = (
-        1.0
-        - np.asarray(
-            surf_set.layer_spacing,
-            dtype=float,
-        )
-    )
+    source_depth = 1.0 - np.asarray(surf_set.layer_spacing, dtype=float)
 
     if source_depth.ndim != 1:
-        raise ValueError(
-            "`surf_set.layer_spacing` must be one-dimensional."
-        )
+        raise ValueError("`surf_set.layer_spacing` must be one-dimensional.")
 
     if source_depth.size < 2:
-        raise ValueError(
-            "At least two reconstructed layers are required."
-        )
+        raise ValueError("At least two reconstructed layers are required.")
 
     if np.any(np.diff(source_depth) <= 0):
         raise ValueError(
@@ -150,36 +98,17 @@ def compute_bigbrain_laminar_weights(surf_set, columns=None):
             "from pial (0) to white (1)."
         )
 
-    bb_boundaries = _get_bigbrain_boundaries(
-        surf_set,
-        columns,
-    )
-    (
-        edges,
-        lamina_thickness,
-        valid_columns,
-    ) = _bigbrain_edges(
-        bb_boundaries,
-        source_depth,
-    )
+    bb_boundaries = _get_bigbrain_boundaries(surf_set, columns)
+
+    (edges, lamina_thickness, valid_columns) = _bigbrain_edges(bb_boundaries, source_depth)
 
     n_columns = edges.shape[0]
     n_layers = source_depth.size
-    weights = np.full(
-        (n_columns, 6, n_layers),
-        np.nan,
-        dtype=float,
-    )
+    weights = np.full((n_columns, 6, n_layers), np.nan, dtype=float)
 
-    n_invalid = int(
-        np.count_nonzero(
-            ~valid_columns
-        )
-    )
+    n_invalid = int(np.count_nonzero(~valid_columns))
     if n_invalid == n_columns:
-        raise ValueError(
-            "No cortical columns have valid BigBrain laminar boundaries."
-        )
+        raise ValueError("No cortical columns have valid BigBrain laminar boundaries.")
     if n_invalid:
         warnings.warn(
             "BigBrain mapping unavailable for "
@@ -191,20 +120,9 @@ def compute_bigbrain_laminar_weights(surf_set, columns=None):
             stacklevel=2,
         )
 
-    valid_edges = edges[
-        valid_columns
-    ]
-    valid_thickness = lamina_thickness[
-        valid_columns
-    ]
-    valid_weights = np.zeros(
-        (
-            int(np.count_nonzero(valid_columns)),
-            6,
-            n_layers,
-        ),
-        dtype=float,
-    )
+    valid_edges = edges[valid_columns]
+    valid_thickness = lamina_thickness[valid_columns]
+    valid_weights = np.zeros((int(np.count_nonzero(valid_columns)), 6, n_layers, ), dtype=float)
 
     # Integrate the piecewise-linear depth profile analytically.
     #
@@ -225,48 +143,24 @@ def compute_bigbrain_laminar_weights(surf_set, columns=None):
         upper_depth = source_depth[layer_idx + 1]
         interval_width = upper_depth - lower_depth
 
-        overlap_lower = np.maximum(
-            lamina_lower,
-            lower_depth,
-        )
-        overlap_upper = np.minimum(
-            lamina_upper,
-            upper_depth,
-        )
+        overlap_lower = np.maximum(lamina_lower, lower_depth)
+        overlap_upper = np.minimum(lamina_upper, upper_depth)
 
         active = overlap_upper > overlap_lower
-        overlap_width = np.where(
-            active,
-            overlap_upper - overlap_lower,
-            0.0,
-        )
+        overlap_width = np.where(active, overlap_upper - overlap_lower, 0.0)
         squared_difference = np.where(
             active,
             overlap_upper ** 2 - overlap_lower ** 2,
             0.0,
         )
 
-        left_integral = (
-            upper_depth * overlap_width
-            - 0.5 * squared_difference
-        ) / interval_width
-        right_integral = (
-            0.5 * squared_difference
-            - lower_depth * overlap_width
-        ) / interval_width
+        left_integral = (upper_depth * overlap_width - 0.5 * squared_difference) / interval_width
+        right_integral = (0.5 * squared_difference - lower_depth * overlap_width ) / interval_width
 
-        valid_weights[:, :, layer_idx] += (
-            left_integral
-            / valid_thickness
-        )
-        valid_weights[:, :, layer_idx + 1] += (
-            right_integral
-            / valid_thickness
-        )
+        valid_weights[:, :, layer_idx] += (left_integral / valid_thickness)
+        valid_weights[:, :, layer_idx + 1] += (right_integral / valid_thickness)
 
-    weights[
-        valid_columns
-    ] = valid_weights
+    weights[valid_columns] = valid_weights
 
     return edges, weights
 
@@ -314,8 +208,4 @@ def surface_to_laminae(layer_data, weights):
 
         return np.einsum("cal,lc...->ac...", weights, layer_data, optimize=True)
 
-    raise ValueError(
-        "`weights` must have shape "
-        "(lamina, layer) or "
-        "(column, lamina, layer)."
-    )
+    raise ValueError("`weights` must have shape (lamina, layer) or (column, lamina, layer).")
