@@ -143,6 +143,8 @@ sphinx_gallery_conf = {
     "doc_module": ("laMEG",),
     'examples_dirs': ['../tutorials'],   # Path to your tutorials
     'gallery_dirs': ['auto_tutorials'],  # Path to where you want to store the generated output
+    # Offer the executed comparison with both figures embedded in the notebook download.
+    'copyfile_regex': r'^tutorial_10_single_shell_vs_bem\.ipynb$',
     'filename_pattern': 'tutorial_',
     'within_subsection_order': FileNameSortKey,
     'min_reported_time': 0,
