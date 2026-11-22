@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Comparing layers with a precomputed MEG forward &#8212; laMEG 0.2.1 documentation</title>
+    <title>Using a precomputed MEG forward &#8212; laMEG 0.2.1 documentation</title>
   
   
   
@@ -148,7 +148,7 @@
     
                     <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="#">
-                        Comparing layers with a precomputed MEG forward
+                        Using a precomputed MEG forward
                       </a>
                     </li>
                 
@@ -280,7 +280,7 @@ document.write(`
     
                     <li class="nav-item current active">
                       <a class="nav-link nav-internal" href="#">
-                        Comparing layers with a precomputed MEG forward
+                        Using a precomputed MEG forward
                       </a>
                     </li>
                 
@@ -389,7 +389,7 @@ document.write(`
         <i class="fa-solid fa-home"></i>
       </a>
     </li>
-    <li class="breadcrumb-item active" aria-current="page">Comparing layers with a precomputed MEG forward</li>
+    <li class="breadcrumb-item active" aria-current="page">Using a precomputed MEG forward</li>
   </ul>
 </nav>
 </div>
@@ -406,25 +406,123 @@ document.write(`
 <div id="searchbox"></div>
                 <article class="bd-article" role="main">
                   
-  <section id="comparing-layers-with-a-precomputed-meg-forward">
-<h1>Comparing layers with a precomputed MEG forward<a class="headerlink" href="#comparing-layers-with-a-precomputed-meg-forward" title="Permalink to this heading">#</a></h1>
-<p>Pass a <code class="docutils literal notranslate"><span class="pre">ForwardOperator</span></code> to <code class="docutils literal notranslate"><span class="pre">model_comparison</span></code> to run EBB or MSP with signed,
-fixed-orientation lead fields computed by another solver. The operator holds
-one column per vertex, grouped by layer, and one row per named MEG channel.
-The results follow the layer order of the supplied <code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet</span></code>.</p>
+  <section id="using-a-precomputed-meg-forward">
+<h1>Using a precomputed MEG forward<a class="headerlink" href="#using-a-precomputed-meg-forward" title="Permalink to this heading">#</a></h1>
+<p>Pass the same <code class="docutils literal notranslate"><span class="pre">forward_operator</span></code> to a direct inversion, a sliding-window
+inversion, or a layer comparison. It holds one gain row per named MEG channel
+and one signed column per vertex, grouped by layer. Each analysis writes to
+its SPM inversion slot. For comparisons between solvers, give each run its
+own writable copy of the same recording in a separate directory.</p>
+<section id="mne-bem-and-native-single-shell-on-the-same-vertices">
+<h2>MNE BEM and native single-shell on the same vertices<a class="headerlink" href="#mne-bem-and-native-single-shell-on-the-same-vertices" title="Permalink to this heading">#</a></h2>
+<p>Use <code class="docutils literal notranslate"><span class="pre">prepare_mne_forward</span></code> with the original laMEG surfaces and one MNE
+forward per layer, supplied as a dictionary of layer names to MNE Forward
+objects or FIF paths. laMEG checks the registered source positions and prepares
+a surface set containing the anatomical locations retained at every depth. For example, if MNE excludes a pial vertex outside
+the inner skull, its matching white vertex is also omitted from the prepared
+surfaces. Use those surfaces for both solvers. For coincident positions that
+make matching ambiguous, supply the source-space and vertex IDs via <code class="docutils literal notranslate"><span class="pre">vertices</span></code>.</p>
+<p>The example compares seeded MSP across layers and time windows for a CTF
+recording. <code class="docutils literal notranslate"><span class="pre">reference</span></code> is an SPM dataset already coregistered to the
+original multilayer mesh. <code class="docutils literal notranslate"><span class="pre">info</span></code> is the original MNE acquisition Info,
+including the reference channels used to compute the compensated forwards.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lameg.forward</span> <span class="kn">import</span> <span class="n">prepare_mne_forward</span>
+<span class="kn">from</span> <span class="nn">lameg.laminar</span> <span class="kn">import</span> <span class="n">sliding_window_model_comparison</span>
+
+<span class="k">def</span> <span class="nf">compare_solver_windows</span><span class="p">(</span><span class="n">forwards</span><span class="p">,</span> <span class="n">surfaces</span><span class="p">,</span> <span class="n">reference</span><span class="p">,</span> <span class="n">info</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span>
+                           <span class="n">bem_copy</span><span class="p">,</span> <span class="n">native_copy</span><span class="p">,</span> <span class="n">fids</span><span class="p">,</span> <span class="n">vertex</span><span class="p">,</span> <span class="n">spm</span><span class="p">):</span>
+    <span class="c1"># Take the intersection across layers once. Both solvers will then use the same</span>
+    <span class="c1"># cortical locations, even if the BEM excluded a vertex from only one layer.</span>
+    <span class="n">prepared</span> <span class="o">=</span> <span class="n">prepare_mne_forward</span><span class="p">(</span>
+        <span class="n">forwards</span><span class="p">,</span> <span class="n">surfaces</span><span class="p">,</span> <span class="n">output_dir</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">reference</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="n">info</span><span class="p">,</span>
+        <span class="n">ignore_ref</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">allow_nominal_ctf_coils</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">options</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span>
+        <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm</span><span class="p">,</span> <span class="n">viz</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">invert_kwargs</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">wois</span><span class="o">=</span><span class="p">[[</span><span class="o">-</span><span class="mi">50</span><span class="p">,</span> <span class="o">-</span><span class="mi">25</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">25</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">25</span><span class="p">]],</span> <span class="n">patch_size</span><span class="o">=</span><span class="mi">5</span><span class="p">),</span>
+    <span class="p">)</span>
+    <span class="c1"># vertex is the original within-layer ID. Each call maps it to the kept</span>
+    <span class="c1"># vertex before running MSP in the specified windows.</span>
+    <span class="n">bem</span> <span class="o">=</span> <span class="n">sliding_window_model_comparison</span><span class="p">(</span>
+        <span class="n">vertex</span><span class="p">,</span> <span class="n">fids</span><span class="p">,</span> <span class="n">bem_copy</span><span class="p">,</span> <span class="n">prepared</span><span class="o">.</span><span class="n">surfaces</span><span class="p">,</span>
+        <span class="n">forward_operator</span><span class="o">=</span><span class="n">prepared</span><span class="o">.</span><span class="n">operator</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Use SPM&#39;s native gain on the same prepared surfaces and an independent copy</span>
+    <span class="c1"># of the recording so that this run preserves the BEM inversion on bem_copy.</span>
+    <span class="n">single_shell</span> <span class="o">=</span> <span class="n">sliding_window_model_comparison</span><span class="p">(</span>
+        <span class="n">vertex</span><span class="p">,</span> <span class="n">fids</span><span class="p">,</span> <span class="n">native_copy</span><span class="p">,</span> <span class="n">prepared</span><span class="o">.</span><span class="n">surfaces</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">bem</span><span class="p">,</span> <span class="n">single_shell</span><span class="p">,</span> <span class="n">prepared</span><span class="o">.</span><span class="n">manifest</span>
+</pre></div>
+</div>
+<p>Each result is a pair containing the layer-by-window free energies and the
+window bounds in milliseconds. Rows follow <code class="docutils literal notranslate"><span class="pre">surfaces.get_layer_names()</span></code>.
+Supply the seed using its zero-based
+within-layer vertex ID on the <strong>original</strong> mesh. If the seed is excluded,
+laMEG raises an error. It maps a retained seed to the corresponding row on
+the prepared mesh automatically. Direct inversions on the combined mesh
+accept MSP priors in original layer-major order. Use
+<code class="docutils literal notranslate"><span class="pre">prepared.support.original_vertices</span></code> to map compact source rows within
+each layer back to anatomical vertex IDs. The JSON file at
+<code class="docutils literal notranslate"><span class="pre">prepared.manifest</span></code> records the vertex correspondence and exclusions.</p>
+<p>For this example the SPM recipient uses CTF head coordinates. Preparation
+reads the MRI registration and channel units from the SPM header, and obtains
+the MNE-to-CTF head transform from the acquisition Info. For other coordinate
+frames, supply the measured transform explicitly. The example enables nominal
+CTF coil matching because MNE uses nominal pickup positions and this SPM file
+has measured positions for the same recording. Strict sensor matching is the
+default. With this option, each nominal pickup must match a unique group of
+measured coils within 0.15 mm. Each channel’s signed response, including its
+reference weights, is compared at each group with absolute tolerance 1e-9 and
+relative tolerance 1e-5. For compensated CTF acquisitions, <code class="docutils literal notranslate"><span class="pre">ignore_ref=False</span></code>
+must match the setting used to compute the forward.</p>
+</section>
+<section id="direct-inversions">
+<h2>Direct inversions<a class="headerlink" href="#direct-inversions" title="Permalink to this heading">#</a></h2>
+<p>Direct inversions require a working dataset registered to the mesh you will
+invert, including any vertex exclusions. The example below registers
+<code class="docutils literal notranslate"><span class="pre">prepared.surfaces</span></code> in the working dataset before fitting EBBlayer. The
+default <code class="docutils literal notranslate"><span class="pre">layer_name=None</span></code> selects the combined multilayer mesh. For an
+individual layer, pass the same layer name and inversion slot to both
+registration and inversion. The layer-comparison functions perform this step
+internally for each candidate layer.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lameg.invert</span> <span class="kn">import</span> <span class="n">coregister</span><span class="p">,</span> <span class="n">invert_ebb_layer</span>
+
+<span class="k">def</span> <span class="nf">fit_multilayer_ebb</span><span class="p">(</span><span class="n">working_copy</span><span class="p">,</span> <span class="n">prepared</span><span class="p">,</span> <span class="n">fids</span><span class="p">,</span> <span class="n">spm</span><span class="p">):</span>
+    <span class="c1"># Register the combined mesh to this recording before fitting across layers.</span>
+    <span class="n">coregister</span><span class="p">(</span><span class="n">fids</span><span class="p">,</span> <span class="n">working_copy</span><span class="p">,</span> <span class="n">prepared</span><span class="o">.</span><span class="n">surfaces</span><span class="p">,</span> <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm</span><span class="p">,</span> <span class="n">viz</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="c1"># Rows of the returned reconstruction matrix follow the kept vertices of</span>
+    <span class="c1"># each layer in order. prepared.manifest records their original IDs.</span>
+    <span class="k">return</span> <span class="n">invert_ebb_layer</span><span class="p">(</span>
+        <span class="n">working_copy</span><span class="p">,</span> <span class="n">prepared</span><span class="o">.</span><span class="n">surfaces</span><span class="p">,</span> <span class="n">forward_operator</span><span class="o">=</span><span class="n">prepared</span><span class="o">.</span><span class="n">operator</span><span class="p">,</span>
+        <span class="n">woi</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">25</span><span class="p">,</span> <span class="mi">25</span><span class="p">],</span> <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm</span><span class="p">,</span> <span class="n">return_mu_matrix</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">viz</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p>The call returns free energy, cross-validation error, and the source
+reconstruction matrix. To identify an original cortical location from row
+<code class="docutils literal notranslate"><span class="pre">r</span></code> of the combined matrix, set <code class="docutils literal notranslate"><span class="pre">ids</span> <span class="pre">=</span> <span class="pre">prepared.support.original_vertices</span></code>
+and compute <code class="docutils literal notranslate"><span class="pre">layer_index,</span> <span class="pre">i</span> <span class="pre">=</span> <span class="pre">divmod(r,</span> <span class="pre">len(ids))</span></code>. The anatomical vertex
+is <code class="docutils literal notranslate"><span class="pre">ids[i]</span></code> on <code class="docutils literal notranslate"><span class="pre">prepared.surfaces.get_layer_names()[layer_index]</span></code>. Keep
+<code class="docutils literal notranslate"><span class="pre">source_support.json</span></code> with results exported for later analysis.</p>
+<p>The same <code class="docutils literal notranslate"><span class="pre">forward_operator</span></code> keyword works with <code class="docutils literal notranslate"><span class="pre">invert_ebb</span></code>, <code class="docutils literal notranslate"><span class="pre">invert_ebb_layer</span></code>, <code class="docutils literal notranslate"><span class="pre">invert_msp</span></code>,
+and their three <code class="docutils literal notranslate"><span class="pre">invert_sliding_window_*</span></code> counterparts. A supplied operator
+is installed before spatial-mode preparation and is used for all time windows
+in that inversion. SPM keeps the attached gain in that slot. Keep its
+<code class="docutils literal notranslate"><span class="pre">lameg_gain_*.mat</span></code> cache beside the dataset.</p>
+</section>
 <section id="native-spm-round-trip">
 <h2>Native SPM round trip<a class="headerlink" href="#native-spm-round-trip" title="Permalink to this heading">#</a></h2>
 <p>This example takes a donor SPM dataset with a previously computed multilayer gain
-and an independent working copy of the same recording. Both datasets must use
-the same head registration, sensor response and good MEG channels. Keep the
-donor’s gain cache beside its header. As with native comparison, use a writable
-working copy because SPM updates its inversion slot for each candidate layer.
-Use a separate dataset directory for each simultaneous run. Keep the generated
-<code class="docutils literal notranslate"><span class="pre">lameg_gain_*.mat</span></code> files with the dataset for subsequent use in SPM.</p>
+and an independent working copy of the same recording. Both must use the same
+head registration, sensor response and good MEG channels. Keep the donor’s
+gain cache beside its header.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lameg.forward</span> <span class="kn">import</span> <span class="n">ForwardOperator</span>
 <span class="kn">from</span> <span class="nn">lameg.laminar</span> <span class="kn">import</span> <span class="n">model_comparison</span>
 
 <span class="k">def</span> <span class="nf">compare_saved_forward</span><span class="p">(</span><span class="n">donor</span><span class="p">,</span> <span class="n">working_copy</span><span class="p">,</span> <span class="n">surfaces</span><span class="p">,</span> <span class="n">fids</span><span class="p">,</span> <span class="n">vertex</span><span class="p">,</span> <span class="n">spm</span><span class="p">):</span>
+    <span class="c1"># Read the gain referenced by the donor, including its channel order and</span>
+    <span class="c1"># dipole signs, before selecting the matching layer for each inversion.</span>
     <span class="n">operator</span> <span class="o">=</span> <span class="n">ForwardOperator</span><span class="o">.</span><span class="n">from_spm</span><span class="p">(</span>
         <span class="n">donor</span><span class="p">,</span> <span class="n">surfaces</span><span class="o">.</span><span class="n">get_mesh_path</span><span class="p">(),</span> <span class="n">surfaces</span><span class="o">.</span><span class="n">get_layer_names</span><span class="p">()</span>
     <span class="p">)</span>
@@ -441,6 +539,23 @@ preserves those columns. Use <code class="docutils literal notranslate"><span cl
 selecting sites for oriented-source comparisons, including the vertices in a
 patch.</p>
 </section>
+<section id="importing-mne-forwards-with-known-vertex-correspondence">
+<h2>Importing MNE forwards with known vertex correspondence<a class="headerlink" href="#importing-mne-forwards-with-known-vertex-correspondence" title="Permalink to this heading">#</a></h2>
+<p>Use <code class="docutils literal notranslate"><span class="pre">ForwardOperator.from_mne</span></code> directly when all requested vertices are
+present and the correspondence is already known. Each row of <code class="docutils literal notranslate"><span class="pre">vertices</span></code>
+gives the MNE source-space index and vertex ID for one vertex in single-layer
+GIfTI order. For example, <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">42)</span></code> identifies vertex 42 in the second source
+space. Supply a single array if the mapping is identical across layers, or a
+dictionary keyed by layer name if it differs. Pass the recording’s good MEG
+channel names and physical units as an ordered mapping. The importer projects
+free-orientation gains onto the signed dipole directions in the GIfTI and
+scales each channel to its recorded unit per nA m.</p>
+<p>Both coordinate transforms take and return points in millimetres.
+<code class="docutils literal notranslate"><span class="pre">mri_to_head_mm</span></code> maps native GIfTI MRI coordinates into the recipient SPM
+head frame. <code class="docutils literal notranslate"><span class="pre">mne_head_to_head_mm</span></code> maps MNE head coordinates into the same
+frame. A coregistered native operator provides <code class="docutils literal notranslate"><span class="pre">native.mri_to_head_mm</span></code> and
+<code class="docutils literal notranslate"><span class="pre">dict(zip(native.channel_names,</span> <span class="pre">native.channel_units))</span></code>.</p>
+</section>
 <section id="external-solvers">
 <h2>External solvers<a class="headerlink" href="#external-solvers" title="Permalink to this heading">#</a></h2>
 <p>Construct <code class="docutils literal notranslate"><span class="pre">ForwardOperator</span></code> directly with a physical gain in each channel’s
@@ -455,7 +570,7 @@ before processing the first layer. It checks the recipient’s sensor response
 and reads the installed gain back through SPM before inversion.</p>
 <dl class="py class">
 <dt class="sig sig-object py" id="lameg.forward.ForwardOperator">
-<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lameg.forward.</span></span><span class="sig-name descname"><span class="pre">ForwardOperator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_units</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requested_mri_mm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">effective_head_mm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientations_head</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_to_head_mm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_geometry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provenance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_undefined_gain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.forward.ForwardOperator" title="Permalink to this definition">#</a></dt>
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">lameg.forward.</span></span><span class="sig-name descname"><span class="pre">ForwardOperator</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_units</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requested_mri_mm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">effective_head_mm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientations_head</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_to_head_mm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_geometry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provenance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_undefined_gain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_nominal_ctf_coils</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.forward.ForwardOperator" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Unprojected channels × sources gain in each channel’s physical units per nA m.</p>
 <p>Columns follow consecutive layer blocks in <cite>layer_names</cite>, each in the
@@ -473,10 +588,17 @@ signed unit vectors <cite>coilori</cite>, and the channel-by-coil transfer matri
 explicitly to preserve legacy nonzero gain columns with missing
 directions. <cite>orientation_defined</cite> identifies sources usable for
 oriented-source comparisons. Input arrays are shared; treat them as
-immutable for the lifetime of this operator and its layer views.</p>
+immutable for the lifetime of this operator and its layer views.
+<cite>allow_nominal_ctf_coils</cite> opts into matching nominal CTF pickup coils
+to measured coils from the same acquisition when attaching to SPM.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="lameg.forward.ForwardOperator.__init__">
-<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_units</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requested_mri_mm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">effective_head_mm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientations_head</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_to_head_mm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_geometry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provenance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_undefined_gain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#lameg.forward.ForwardOperator.__init__" title="Permalink to this definition">#</a></dt>
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">gain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_units</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_names</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">requested_mri_mm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">effective_head_mm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientations_head</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_to_head_mm</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">faces</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensor_geometry</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">provenance</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_undefined_gain</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_nominal_ctf_coils</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="headerlink" href="#lameg.forward.ForwardOperator.__init__" title="Permalink to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="lameg.forward.ForwardOperator.allow_nominal_ctf_coils">
+<span class="sig-name descname"><span class="pre">allow_nominal_ctf_coils</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">bool</span></em><em class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">False</span></em><a class="headerlink" href="#lameg.forward.ForwardOperator.allow_nominal_ctf_coils" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -503,6 +625,29 @@ immutable for the lifetime of this operator and its layer views.</p>
 <dt class="sig sig-object py" id="lameg.forward.ForwardOperator.faces">
 <span class="sig-name descname"><span class="pre">faces</span></span><em class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">ndarray</span></em><a class="headerlink" href="#lameg.forward.ForwardOperator.faces" title="Permalink to this definition">#</a></dt>
 <dd></dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="lameg.forward.ForwardOperator.from_mne">
+<em class="property"><span class="pre">classmethod</span><span class="w"> </span></em><span class="sig-name descname"><span class="pre">from_mne</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">forwards</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_fname</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vertices</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">channel_units</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_to_head_mm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mne_head_to_head_mm</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_ref</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_nominal_ctf_coils</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.forward.ForwardOperator.from_mne" title="Permalink to this definition">#</a></dt>
+<dd><p>Import precomputed MNE-Python MEG forwards on an oriented laMEG GIfTI.</p>
+<p><cite>forwards</cite> maps layer names in GIfTI block order to MNE Forward objects
+or FIF paths. <cite>vertices</cite> maps each within-layer GIfTI vertex to an
+integer (MNE source-space index, vertex ID) pair. Pass a single
+(n_columns, 2) array or one array per layer keyed by name. Every
+requested position must be present; extra MNE sources may be omitted.</p>
+<p><cite>channel_units</cite> maps the recipient’s good MEG labels to physical units
+in the desired row order. For compensated forwards supply the complete
+acquisition <cite>info</cite> and explicitly confirm the original solve used
+<cite>ignore_ref=False</cite>. The FIF does not record this setting.
+Free-orientation gains are projected onto the signed GIfTI directions.
+Fixed-orientation gains require collinear dipoles at defined vertices.</p>
+<p>Supply the GIfTI MRI-to-recipient-head affine and the rigid MNE-head-
+to-recipient-head transform explicitly. Both map millimetres to
+millimetres. The latter applies to both sources and sensor coils.
+For matching CTF acquisitions, <cite>allow_nominal_ctf_coils=True</cite>
+permits small differences between nominal and measured coil geometry
+during SPM attachment (see the precomputed forwards guide).</p>
+</dd></dl>
 
 <dl class="py method">
 <dt class="sig sig-object py" id="lameg.forward.ForwardOperator.from_spm">
@@ -634,15 +779,20 @@ head coordinates separately from the original MRI points.</p>
   </div>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#mne-bem-and-native-single-shell-on-the-same-vertices">MNE BEM and native single-shell on the same vertices</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#direct-inversions">Direct inversions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#native-spm-round-trip">Native SPM round trip</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#importing-mne-forwards-with-known-vertex-correspondence">Importing MNE forwards with known vertex correspondence</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-solvers">External solvers</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.ForwardOperator"><code class="docutils literal notranslate"><span class="pre">ForwardOperator</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.ForwardOperator.__init__"><code class="docutils literal notranslate"><span class="pre">ForwardOperator.__init__()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.ForwardOperator.allow_nominal_ctf_coils"><code class="docutils literal notranslate"><span class="pre">ForwardOperator.allow_nominal_ctf_coils</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.ForwardOperator.allow_undefined_gain"><code class="docutils literal notranslate"><span class="pre">ForwardOperator.allow_undefined_gain</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.ForwardOperator.channel_names"><code class="docutils literal notranslate"><span class="pre">ForwardOperator.channel_names</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.ForwardOperator.channel_units"><code class="docutils literal notranslate"><span class="pre">ForwardOperator.channel_units</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.ForwardOperator.effective_head_mm"><code class="docutils literal notranslate"><span class="pre">ForwardOperator.effective_head_mm</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.ForwardOperator.faces"><code class="docutils literal notranslate"><span class="pre">ForwardOperator.faces</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.ForwardOperator.from_mne"><code class="docutils literal notranslate"><span class="pre">ForwardOperator.from_mne()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.ForwardOperator.from_spm"><code class="docutils literal notranslate"><span class="pre">ForwardOperator.from_spm()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.ForwardOperator.gain"><code class="docutils literal notranslate"><span class="pre">ForwardOperator.gain</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.ForwardOperator.layer"><code class="docutils literal notranslate"><span class="pre">ForwardOperator.layer()</span></code></a></li>
