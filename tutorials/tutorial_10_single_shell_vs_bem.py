@@ -19,7 +19,7 @@ import tempfile
 from IPython.display import Image
 import base64
 
-from lameg.forward import ForwardOperator, prepare_mne_forward
+from lameg.forward import ForwardOperator, compute_mne_forward
 from lameg.invert import attach_forward_operator, coregister#, invert_ebb
 from lameg.simulate import run_current_density_simulation
 from lameg.laminar import model_comparison
@@ -143,22 +143,6 @@ plt.show()
 #    :alt: Inner-skull BEM boundary on three MRI sections of sub-104
 
 # %%
-# We'll compute the lead field at every vertex on each downsampled surface. MNE computes three dipole components per location. laMEG projects them onto the same fixed cortical directions used by the single-shell model.
-
-forwards = {}
-for layer in surf_set.get_layer_names():
-    mesh = surf_set.load(layer, stage='ds', orientation='link_vector', fixed=True)
-    points = apply_trans(native_to_ras, mesh.agg_data('pointset')) / 1000
-    # MNE requires a direction for each discrete point even when computing all three components.
-    directions = np.tile([0., 0., 1.], (len(points), 1))
-    src = mne.setup_volume_source_space(pos={'rr': points, 'nn': directions})
-    forward = mne.make_forward_solution(info, trans, src, bem_solution, meg=True, eeg=False,
-                                        mindist=0., ignore_ref=False)
-    forwards[layer] = os.path.join(tmp_dir, f'{layer}-fwd.fif')
-    mne.write_forward_solution(forwards[layer], forward, overwrite=True)
-    del forward
-
-# %%
 # Coregister subject's data using the multilayer mesh
 
 # Coregister data to multilayer mesh
@@ -172,15 +156,12 @@ coregister(
 )
 
 # %%
-# A vertex outside the skull at either depth drops out of both models. laMEG matches the shared locations and keeps their original cortical vertex numbers.
+# We'll use the BEM solution to compute the gain on each cortical surface. laMEG projects the lead fields onto the link vectors and keeps the vertices that MNE retained at every depth.
 
-prepared = prepare_mne_forward(
-    forwards,
-    surf_set,
-    tmp_dir,
+prepared = compute_mne_forward(
+    surf_set, bem_solution, info, trans,
     reference=base_fname,
-    info=info,
-    ignore_ref=False,
+    output_dir=tmp_dir,
     allow_nominal_ctf_coils=True
 )
 bem = prepared.operator

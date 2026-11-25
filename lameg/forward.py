@@ -3,8 +3,10 @@
 from collections.abc import Mapping
 from dataclasses import dataclass, replace
 import json
+from os import PathLike
 from pathlib import Path
 import re
+from tempfile import TemporaryDirectory
 from types import MappingProxyType
 
 import h5py
@@ -333,6 +335,78 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
                    orientations_head=orientations, mri_to_head_mm=affine, faces=faces,
                    sensor_geometry=sensors, provenance=provenance,
                    allow_nominal_ctf_coils=allow_nominal_ctf_coils)
+
+
+def compute_mne_forward(surfaces, bem_solution, info, trans, *, reference, output_dir,
+                        inversion_idx=0, stage='ds', orientation='link_vector', fixed=True,
+                        mne_head_to_head_mm=None, allow_nominal_ctf_coils=False):
+    """Compute a MEG forward on a LayerSurfaceSet using an existing MNE BEM solution.
+
+    Supply the original surfaces, the MNE conductor solution (object or FIF path),
+    the acquisition Info including reference channels, and its MNE head/MRI
+    transform. The coregistered SPM dataset in `reference` supplies the good
+    channels, units and native MRI registration for the specified inversion slot.
+    Outside the registered CTF workflow, supply the rigid MNE-head to SPM-head
+    transform in mm via `mne_head_to_head_mm`. Nominal CTF coils require the
+    same explicit opt-in as in `prepare_mne_forward`.
+
+    Returns the same prepared surfaces, operator, support and manifest as
+    `prepare_mne_forward`. Their files are kept under `output_dir`. Free-orientation
+    layer FIFs are temporary. Source locations outside the inner skull are
+    handled on common support across layers, preserving the original vertex IDs.
+    """
+    import mne  # pylint: disable=import-outside-toplevel
+    from ._forward_registration import mne_registration  # pylint: disable=import-outside-toplevel
+    from ._mne_forward import ComputedLayer  # pylint: disable=import-outside-toplevel
+
+    # Read the registration before the potentially expensive BEM solves. The
+    # import below will check the actual MNE positions against this registration.
+    units, affine, head = mne_registration(reference, info, None, mne_head_to_head_mm, None,
+                                           inversion_idx=inversion_idx)
+    if getattr(surfaces, 'forward_support', None) is not None:
+        raise ValueError("Pass the original surfaces, before common source support preparation.")
+    mesh_options = {'stage': stage, 'orientation': orientation, 'fixed': fixed}
+
+    # LayerSurfaceSet.create maps FreeSurfer surface RAS into scanner RAS
+    # with orig.mgz's two voxel transforms. Invert that mapping for MNE.
+    orig = nib.load(str(Path(surfaces.mri_file).with_name('orig.mgz')))
+    native_to_ras = orig.header.get_vox2ras_tkr() @ np.linalg.inv(orig.affine)
+
+    # Read a supplied BEM file once for all layers. Each source space below is
+    # discrete: its vertex IDs are exactly the original GIfTI row indices.
+    bem_file = str(bem_solution) if isinstance(bem_solution, (str, PathLike)) else None
+    if bem_file is not None:
+        bem_solution = mne.read_bem_solution(bem_file)
+    # Keep the solver and BEM in the operator's provenance after the FIFs are removed.
+    origin = (f"make_forward_solution, subject {surfaces.subj_id}, "
+              f"BEM: {bem_file or 'supplied conductor solution'}, mindist=0 mm, ignore_ref=False")
+    directory = Path(output_dir)
+    directory.mkdir(parents=True, exist_ok=True)
+    with TemporaryDirectory(prefix='mne-solve-', dir=str(directory)) as work:
+        forwards, vertices = {}, {}
+        for index, layer in enumerate(surfaces.get_layer_names()):
+            points, _, _ = _mesh_arrays(surfaces.get_mesh_path(layer_name=layer, **mesh_options))
+            positions = nib.affines.apply_affine(native_to_ras, points) / 1000  # mm -> m
+            # MNE requires a unit normal even for a free Cartesian solve. The
+            # importer projects those three components onto the signed GIfTI vector.
+            normals = np.zeros_like(positions)
+            normals[:, 2] = 1.
+            src = mne.setup_volume_source_space(pos={'rr': positions, 'nn': normals})
+            fwd = mne.make_forward_solution(info, trans, src, bem_solution, meg=True, eeg=False,
+                                            mindist=0., ignore_ref=False)
+            # Spool each full gain matrix separately so peak memory does not
+            # include all layers' free-orientation matrices simultaneously.
+            filename = str(Path(work) / f'{index}-fwd.fif')
+            mne.write_forward_solution(filename, fwd)
+            forwards[layer] = ComputedLayer(filename, origin)
+            del fwd
+            ids = np.arange(len(points))
+            vertices[layer] = np.column_stack((np.zeros_like(ids), ids))
+
+        return prepare_mne_forward(
+            forwards, surfaces, directory, channel_units=units, mri_to_head_mm=affine,
+            mne_head_to_head_mm=head, info=info, vertices=vertices, ignore_ref=False,
+            allow_nominal_ctf_coils=allow_nominal_ctf_coils, **mesh_options)
 
 
 def prepare_mne_forward(forwards, surfaces, output_dir, *, reference=None, channel_units=None,
