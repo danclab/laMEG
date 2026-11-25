@@ -216,7 +216,7 @@ single_shell = ForwardOperator.from_spm(
 models = [('Single shell', single_shell), ('BEM', bem)]
 
 # %%
-# Simulating a signal on the white matter surface
+# Simulating a signal
 # ---------------------------
 #
 # We're going to simulate 1s of a 20Hz sine wave with a dipole moment of 1nAm
@@ -242,9 +242,6 @@ plt.show()
 # .. image:: ../_static/tutorial_10_sim_signal.png
 #    :width: 600
 #    :alt:
-
-# %%
-# We'll simulate a white matter source in the right inferior temporal cortex.
 
 # Vertex to simulate activity at
 sim_vertex=44523
@@ -307,61 +304,17 @@ plt.show()
 #    :alt: Single-shell and BEM sensor fields for the same white matter dipole
 
 # %%
-# BEM simulation
-# --------------------------------
-#
-# We'll use the BEM to project this source to the sensors. SPM scales the noise to the mean, across sensors, of the signal's standard deviation over the whole epoch.
+# BEM simulation in each layer with model comparison across layers using each forward model
+# -----------------------------------------------------------------------------------------
+# Simulate on each layer using BEM, and for each simulation, run model comparison across all layers. Once using the single shell model and once using the BEM
 
 # Select the BEM gain in the SPM recording used by the simulator.
 attach_forward_operator(base_fname, bem, 0, spm, mesh_fname)
-
-# Simulate at a vertex on the pial surface
-white_vertex = prepared.surfaces.get_multilayer_vertex('white', int(column))
-prefix = f'sim_{sim_vertex}_white_'
 
 # Size of simulated patch of activity (mm)
 sim_patch_size = 5
 # SNR of simulated data (dB)
 SNR = -5
-
-# Generate simulated data
-white_sim_fname = run_current_density_simulation(
-    base_fname,
-    prefix,
-    white_vertex,
-    sim_signal,
-    dipole_moment,
-    sim_patch_size,
-    SNR,
-    viz=False,
-    spm_instance=spm
-)
-
-# %%
-# Model comparison (pial - white matter)
-# --------------------------------------
-#
-# We'll fit a pial model and a white matter model to the same simulated recording with each forward. The empirical Bayesian beamformer (EBB) estimates source activity across the whole retained surface, without a prior on the simulation vertex.
-
-white_F = {}
-for name, forward in models:
-    F, _ = model_comparison(
-        fid_coords, white_sim_fname, surfaces,
-        forward_operator=forward,
-        forward_kwargs={'iskull_fname': skull_fname},
-        invert_kwargs={'patch_size': 5, 'n_temp_modes': 4},
-        viz=False, spm_instance=spm
-    )
-    white_F[name] = F
-
-# Layers are ordered from pial to white matter.
-for name, F in white_F.items():
-    print(f'{name}: F(pial) - F(white) = {F[0] - F[-1]:+.2f}')
-
-# %%
-# BEM simulation in each layer with model comparison across layers using each forward model
-# -----------------------------------------------------------------------------------------
-# Simulate on each layer using BEM, and for each simulation, run model comparison across all layers. Once using the single shell model and once using the BEM
 
 # Rows are simulated layers and columns are evaluated layers.
 all_layerF = {
@@ -370,28 +323,24 @@ all_layerF = {
 }
 
 for l, layer in enumerate(layer_names):
-    if layer == 'white':
-        # Reuse the white matter simulation and fits from the previous cell.
-        layer_F = white_F
-    else:
-        print(f'Simulating on layer {l} ({layer})')
-        l_vertex = surfaces.get_multilayer_vertex(layer, column)
+    print(f'Simulating on layer {l} ({layer})')
+    l_vertex = surfaces.get_multilayer_vertex(layer, column)
 
-        l_sim_fname = run_current_density_simulation(
-            base_fname, f'sim_{sim_vertex}_{l}_', l_vertex,
-            sim_signal, dipole_moment, sim_patch_size, SNR,
+    l_sim_fname = run_current_density_simulation(
+        base_fname, f'sim_{sim_vertex}_{l}_', l_vertex,
+        sim_signal, dipole_moment, sim_patch_size, SNR,
+        viz=False, spm_instance=spm
+    )
+    layer_F = {}
+    for name, forward in models:
+        F, _ = model_comparison(
+            fid_coords, l_sim_fname, surfaces,
+            forward_operator=forward,
+            forward_kwargs={'iskull_fname': skull_fname},
+            invert_kwargs={'patch_size': 5, 'n_temp_modes': 4},
             viz=False, spm_instance=spm
         )
-        layer_F = {}
-        for name, forward in models:
-            F, _ = model_comparison(
-                fid_coords, l_sim_fname, surfaces,
-                forward_operator=forward,
-                forward_kwargs={'iskull_fname': skull_fname},
-                invert_kwargs={'patch_size': 5, 'n_temp_modes': 4},
-                viz=False, spm_instance=spm
-            )
-            layer_F[name] = F
+        layer_F[name] = F
 
     for name, F in layer_F.items():
         all_layerF[name][l, :] = F
