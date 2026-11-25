@@ -11,7 +11,7 @@ We'll simulate a 20 Hz signal at each of the 11 cortical depths in sub-104 using
 #
 # Run this notebook from the laMEG ``tutorials`` directory with the `test data <https://osf.io/x4zd3/download>`_ in ``../test_data``. Install the FEM extra with ``pip install -e '.[fem]'`` from the repository root and build the `DUNEuro Python bindings <https://www.medizin.uni-muenster.de/duneuro/startseite.html>`_ for the notebook environment. The FEM also requires a `SimNIBS CHARM mesh <https://simnibs.github.io/simnibs/build/html/documentation/command_line/charm.html>`_ for the same subject.
 #
-# For this example, run ``charm sub-104 ../fs/sub-104/mri/orig.nii`` once from ``test_data/sub-104`` in your SimNIBS environment. This puts the tetrahedral mesh in ``m2m_sub-104/sub-104.msh`` and gives it the same native MRI coordinates as the laMEG surfaces. Inspect the segmentation in CHARM’s ``results.html``. If you already have a CHARM mesh in this coordinate frame, set ``charm_fname`` below to its location.
+# For this example, run ``charm sub-104 ../fs/sub-104/mri/orig.nii --forcesform`` once from ``test_data/sub-104`` in your SimNIBS environment. The qform is unset in this T1, so we use the sform that the notebook reads for its MRI coordinates. CHARM writes the mesh to ``m2m_sub-104/sub-104.msh``. Inspect the segmentation in CHARM’s ``results.html``. If you already have a CHARM mesh in this coordinate frame, set ``charm_fname`` below to its location.
 
 import os
 import shutil
