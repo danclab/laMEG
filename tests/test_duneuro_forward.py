@@ -1,0 +1,124 @@
+"""Test DUNEuro source identity, frame changes and physical channel gains."""
+from dataclasses import replace
+import json
+from pathlib import Path
+from types import SimpleNamespace
+
+import numpy as np
+import pytest
+
+from lameg import _duneuro
+from lameg._forward_support import ForwardSupport
+from lameg.forward import ForwardOperator, compute_duneuro_forward
+from lameg.surf import LayerSurfaceSet
+from tests.test_forward import _mesh
+
+
+@pytest.fixture(name='registration')
+def make_registration(tmp_path):
+    """Two signed laminar meshes after an independent BEM support reduction."""
+    # The first triangle survives the FEM mask; the last vertex is in CSF at
+    # pial depth only. Vertex 2's direction is undefined in both GIfTIs.
+    (tmp_path / 'example').mkdir()
+    surfaces = LayerSurfaceSet('example', 2, subjects_dir=str(tmp_path))
+    Path(surfaces.laminar_surf_dir).mkdir(parents=True)
+    pial = np.array([[0., 0., 12.], [8., 0., 12.], [0., 8., 12.], [8., 8., 12.]])
+    white = pial - [0., 0., 3.]
+    directions = np.array([[1., 0., 0.], [-1., 0., 0.], [0., 0., 0.], [0., 1., 0.]])
+    faces = np.array([[0, 1, 2], [1, 3, 2]])
+    native = np.vstack((pial, white))
+    for layer, points in zip(surfaces.get_layer_names(), (pial, white)):
+        _mesh(surfaces.get_mesh_path(layer), points, faces, directions)
+    _mesh(surfaces.get_mesh_path(), native, np.vstack((faces, faces + len(pial))),
+          np.tile(directions, (2, 1)))
+    surfaces.forward_support = ForwardSupport(
+        7, np.array([1, 2, 4, 5]), {'pial': [0, 6], 'white': [3]})
+
+    # Rotation and translation are intentional. A copied single-shell effective
+    # location would shift every FEM source, while transforming a direction as
+    # a point would give it part of the translation.
+    mri_to_head = np.array([[1., 0., 0., 11.], [0., 0., -1., -4.],
+                            [0., 1., 0., 7.], [0., 0., 0., 1.]])
+    head = native @ mri_to_head[:3, :3].T + mri_to_head[:3, 3]
+    moments = np.tile(directions, (2, 1)) @ mri_to_head[:3, :3].T
+    geometry = {
+        'coilpos': np.array([[0.12, 0.04, 0.08], [0.14, 0.07, 0.11], [0.16, 0.06, 0.13]]),
+        'coilori': np.eye(3),
+        # Third coil is inactive; the other two contribute signed weights to
+        # both channels, including a gradiometer in reciprocal metres.
+        'tra': np.array([[1., -0.25, 0.], [-50., 50., 0.]])}
+    gain = np.arange(16.).reshape(2, 8)
+    gain[:, [2, 6]] = 0.
+    reference = ForwardOperator(
+        gain, ('B', 'A'), ('fT', 'fT/cm'), ('pial', 'white'), native, head + [0., 0., 0.5],
+        moments, mri_to_head, faces, geometry, 'single shell')
+    return surfaces, reference
+
+
+def test_fem_frames_channels_and_common_support(tmp_path, registration, monkeypatch):
+    """Retain anatomical IDs and compare all three solvers on identical columns."""
+    surfaces, reference = registration
+    mri_to_fem = np.array([[0., -1., 0., 20.], [1., 0., 0., 10.],
+                           [0., 0., 1., -14.], [0., 0., 0., 1.]])
+    native = reference.requested_mri_mm
+    fem_m = (native @ mri_to_fem[:3, :3].T + mri_to_fem[:3, 3]) / 1000.
+    head_to_fem = mri_to_fem @ np.linalg.inv(reference.mri_to_head_mm)
+    geom = reference.sensor_geometry
+    mesh = SimpleNamespace(conductivities={2: 0.33})
+    monkeypatch.setattr(_duneuro, 'read_charm_mesh', lambda *args, **kwargs: mesh)
+
+    def compartments(model, positions):
+        assert model is mesh
+        np.testing.assert_allclose(positions, fem_m, atol=1e-14)
+        return np.array([2, 2, 2, 3, 2, 2, 2, 2])  # CHARM GM=2, CSF=3
+
+    def physical_gain(model, positions, moments, coils, normals, weights):
+        assert model is mesh
+        # Two defined dipoles per layer reach the solver. The zero-link source
+        # keeps its anatomical index and receives a zero gain in each model.
+        defined = [0, 1, 4, 5]
+        np.testing.assert_allclose(positions, fem_m[defined])
+        np.testing.assert_allclose(moments,
+                                   reference.orientations_head[defined] @ head_to_fem[:3, :3].T)
+        np.testing.assert_allclose(coils, geom['coilpos'][:2] @ head_to_fem[:3, :3].T
+                                   + head_to_fem[:3, 3] / 1000.)
+        np.testing.assert_allclose(normals, geom['coilori'][:2] @ head_to_fem[:3, :3].T)
+        np.testing.assert_array_equal(weights, geom['tra'][:, :2])
+        return np.array([[2., -3., 4., -5.], [6., -7., 8., -9.]])
+
+    monkeypatch.setattr(_duneuro, 'source_compartments', compartments)
+    monkeypatch.setattr(_duneuro, 'solve_forward', physical_gain)
+    with pytest.warns(UserWarning, match='Using 3 of 7'):
+        fem = compute_duneuro_forward(
+            surfaces, tmp_path / 'example.msh', reference=reference, output_dir=tmp_path,
+            conductivities={2: 0.33}, mri_to_fem_mm=mri_to_fem)
+    # The SI gain was per A m. Conversion to fT per nA m gives 10^6, and
+    # fT/cm per nA m gives 10^4 for the second row (T/m from the solver).
+    expected = [[2e6, -3e6, 0., 4e6, -5e6, 0.], [6e4, -7e4, 0., 8e4, -9e4, 0.]]
+    np.testing.assert_allclose(fem.operator.gain, expected)
+    assert fem.operator.channel_names == reference.channel_names
+    assert fem.operator.channel_units == reference.channel_units
+    kept = [0, 1, 2, 4, 5, 6]
+    np.testing.assert_allclose(fem.operator.effective_head_mm,
+                               reference.effective_head_mm[kept] - [0., 0., 0.5])
+    np.testing.assert_array_equal(fem.support.original_vertices, [1, 2, 4])
+    np.testing.assert_array_equal(fem.support.map_indices([4, 8], multilayer=True), [2, 3])
+    with pytest.raises(ValueError, match='excluded'):
+        fem.support.map_indices([5])
+    # Restrict two independent comparison models, keeping their own gains and
+    # physical positions. All three must match the same combined and layer meshes.
+    bem = replace(reference, gain=2 * reference.gain, provenance='BEM')
+    for source in (reference, bem):
+        fitted = fem.restrict_operator(source)
+        np.testing.assert_array_equal(fitted.gain, source.gain[:, kept])
+        np.testing.assert_array_equal(fitted.effective_head_mm, source.effective_head_mm[kept])
+        fitted.validate_mesh(None, fem.surfaces.get_mesh_path())
+    fem.operator.validate_mesh('white', fem.surfaces.get_mesh_path('white'))
+    report = json.loads(fem.manifest.read_text(encoding='utf-8'))
+    assert report['excluded_by_layer'] == {'pial': [0, 5, 6], 'white': [3]}
+    assert report['original_vertices'] == [1, 2, 4]
+    # A matrix whose channel/column counts happen to match is insufficient.
+    # A different source order is rejected even on an equal-sized input mesh.
+    reordered = replace(reference, requested_mri_mm=reference.requested_mri_mm[::-1])
+    with pytest.raises(ValueError, match='positions'):
+        fem.restrict_operator(reordered)

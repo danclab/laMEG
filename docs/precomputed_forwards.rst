@@ -169,6 +169,50 @@ head frame. ``mne_head_to_head_mm`` maps MNE head coordinates into the same
 frame. A coregistered native operator provides ``native.mri_to_head_mm`` and
 ``dict(zip(native.channel_names, native.channel_units))``.
 
+DUNEuro FEM on the same cortical layers
+---------------------------------------
+
+Tutorial 10 uses the subject's CHARM mesh to simulate each cortical depth
+with FEM. Install the Gmsh reader with ``pip install -e '.[fem]'`` from the
+laMEG checkout. Build the
+`DUNEuro Python bindings <https://www.medizin.uni-muenster.de/duneuro/startseite.html>`_
+with tetrahedral continuous Galerkin support for the Python interpreter running
+the notebook. Verify that ``import duneuropy`` succeeds in that environment.
+For an MPI-enabled DUNE build, initialize its matching MPI runtime first
+(e.g., ``from mpi4py import MPI``). Serial builds can run directly.
+Whole-head calculations need memory for the volume solver and its transfer
+matrix, which stores one double per active pickup and FEM degree of freedom.
+SPM performs the simulations and inversions.
+
+Pass a registered operator on the input surfaces as the reference. For CTF,
+Tutorial 10 uses the measured SPM coil positions and the recording's signed
+channel and reference weights. The solver uses the CHARM tetrahedra and the
+`SimNIBS isotropic tissue conductivities <https://simnibs.github.io/simnibs/build/html/documentation/conductivity.html>`_.
+Supply a tag-to-conductivity mapping in S/m to override them. If CHARM's T1
+and the laMEG GIfTIs use different scanner coordinates, supply their measured
+rigid registration in millimetres as ``mri_to_fem_mm``.
+
+.. code-block:: python
+
+    from lameg.forward import compute_duneuro_forward
+
+    # The single-shell and BEM operators here already share the input meshes.
+    prepared = compute_duneuro_forward(
+        surfaces, charm_fname, reference=single_shell, output_dir=tmp_dir
+    )
+    fem = prepared.operator
+    bem = prepared.restrict_operator(bem)
+    single_shell = prepared.restrict_operator(single_shell)
+    surfaces = prepared.surfaces
+
+The fitted patch-based St. Venant model uses the signed cortical link vectors.
+DUNEuro currently marks this source model experimental.
+A column must lie in CHARM gray matter at every requested depth and belong to
+a surviving cortical triangle. This can remove substantial portions of the
+cortex at the pial or white boundary. Inspect the count and the original
+vertex IDs in ``prepared.manifest`` when interpreting a comparison. The
+simulator and all three inversions in Tutorial 10 use this final surface set.
+
 External solvers
 ----------------
 

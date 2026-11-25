@@ -38,6 +38,9 @@ setup(
         "jupyterlab-widgets==1.1.7",
         "k3d==2.14.5"
     ],
+    # The compiled duneuro-py module is installed separately. Only FEM users
+    # need meshio to read the subject's CHARM tetrahedra and tissue labels.
+    extras_require={'fem': ['meshio==5.3.4']},
     classifiers=[
         'Intended Audience :: Science/Research',
         'Intended Audience :: Developers',

@@ -5,7 +5,6 @@ from dataclasses import dataclass, replace
 import json
 from os import PathLike
 from pathlib import Path
-import re
 from tempfile import TemporaryDirectory
 from types import MappingProxyType
 
@@ -14,6 +13,7 @@ import nibabel as nib
 import numpy as np
 from scipy.io import loadmat
 
+from ._forward_units import MEG_UNIT, si_gain_scale
 from ._gain_cache import (cell_strings, gain_reference, inversion_slot, mat_string,
                           validate_slot_index, verified_gain)
 from ._mat_sparse import h5_to_csc
@@ -154,8 +154,7 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
             raise ValueError("allow_nominal_ctf_coils must be a boolean.")
         names = _labels(self.channel_names, 'channel_names')
         units = _labels(self.channel_units, 'channel_units', unique=False)
-        if len(units) != len(names) or any(
-                not re.fullmatch(r'(?:[fpnuµμm]?T)(?:/(?:m|cm|mm))?', u) for u in units):
+        if len(units) != len(names) or any(not MEG_UNIT.fullmatch(u) for u in units):
             raise ValueError("Each channel requires a physical MEG field or gradient unit.")
         layers = _labels(self.layer_names, 'layer_names')
         gain = _numeric(self.gain, (len(names), None), 'gain')
@@ -407,6 +406,104 @@ def compute_mne_forward(surfaces, bem_solution, info, trans, *, reference, outpu
             forwards, surfaces, directory, channel_units=units, mri_to_head_mm=affine,
             mne_head_to_head_mm=head, info=info, vertices=vertices, ignore_ref=False,
             allow_nominal_ctf_coils=allow_nominal_ctf_coils, **mesh_options)
+
+
+def compute_duneuro_forward(surfaces, mesh_fname, *, reference, output_dir, conductivities=None,
+                            mri_to_fem_mm=None, stage='ds', orientation='link_vector', fixed=True):
+    """Compute fixed-orientation MEG gains on CHARM gray matter with duneuro-py.
+
+    `surfaces` may be the original LayerSurfaceSet or the output surfaces of
+    `compute_mne_forward`. Supply a registered `ForwardOperator` on those
+    surfaces as `reference`, e.g. the native SPM single-shell operator. Its
+    sensor coils, signed channel weights, channel units and MRI registration
+    define the recording. The FEM dipoles use the requested GIfTI vertices.
+
+    `mesh_fname` is the subject's CHARM tetrahedral mesh in mm.
+    The default conductivities are SimNIBS's standard isotropic values for
+    CHARM tags 1–10. To use a different conductor, pass `conductivities`
+    mapping every volume tissue tag present in the mesh to its conductivity
+    in S/m. Supply the rigid transform from the GIfTI native MRI frame to
+    CHARM's T1 world coordinates in `mri_to_fem_mm` (mm to mm). Omitting
+    it assumes both already use the same physical scanner-RAS coordinates.
+
+    Returns a prepared operator, GIfTIs and original vertex IDs. The fitted
+    continuous Galerkin solve uses a patch-based St. Venant dipole at its
+    requested position. Retained cortical columns lie in gray matter (CHARM
+    tag 2) at every depth and belong to a surviving cortical triangle, so
+    the same surfaces can be used for patch smoothing. Call the result's
+    `restrict_operator` on another operator on the input surfaces to compare
+    gains on the identical locations.
+    """
+    from . import _duneuro  # pylint: disable=import-outside-toplevel
+    from ._forward_support import prepare_subset  # pylint: disable=import-outside-toplevel
+
+    if not isinstance(reference, ForwardOperator):
+        raise TypeError("reference must be a registered ForwardOperator on the input surfaces.")
+    layers = tuple(surfaces.get_layer_names())
+    if reference.layer_names != layers:
+        raise ValueError("Reference layer names and order must match the input surfaces.")
+    mesh_options = {'stage': stage, 'orientation': orientation, 'fixed': fixed}
+    reference.validate_mesh(None, surfaces.get_mesh_path(**mesh_options))
+
+    # CHARM lives in the subject's MRI frame. Take anatomical locations from
+    # the GIfTI registration, independently of any displacements the reference
+    # solver applied. Transform coil pickup points from head metres separately.
+    native_to_fem = _affine_mm(np.eye(4) if mri_to_fem_mm is None else mri_to_fem_mm,
+                               'mri_to_fem_mm', rigid=True)
+    head_to_fem = _affine_mm(native_to_fem @ np.linalg.inv(reference.mri_to_head_mm),
+                             'head_to_fem_mm', rigid=True)
+    sources = nib.affines.apply_affine(native_to_fem, reference.requested_mri_mm) / 1000.
+    mesh = _duneuro.read_charm_mesh(mesh_fname, conductivities)
+    tissues = _duneuro.source_compartments(mesh, sources).reshape(len(layers), reference.n_columns)
+    masks = {name: tissue == 2 for name, tissue in zip(layers, tissues)}
+
+    # Skip pickups absent from every recorded row. Keep all active reference
+    # coils: their signed coefficients implement the acquisition compensation.
+    sensors = reference.sensor_geometry
+    active = np.any(sensors['tra'] != 0, axis=0)
+    coils = nib.affines.apply_affine(head_to_fem, sensors['coilpos'][active] * 1000.) / 1000.
+    rotation = head_to_fem[:3, :3]
+    coil_dirs = sensors['coilori'][active] @ rotation.T
+    scales = np.array([si_gain_scale(unit) for unit in reference.channel_units])[:, None]
+
+    def make_operator(prepared_surfaces, retained):
+        # The input operator is layer-major. The same retained vertex indices
+        # select consecutive pial-to-white gain blocks in the new operator.
+        columns = np.concatenate([i * reference.n_columns + retained for i in range(len(layers))])
+        native = reference.requested_mri_mm[columns]
+        orientations = reference.orientations_head[columns]
+        defined = np.any(orientations != 0, axis=1)
+        # A GIfTI can have an undefined (zero) link vector. Its signed moment
+        # gives zero field. Never replace it with an arbitrary unit dipole.
+        if np.any(defined):
+            gain = _duneuro.solve_forward(mesh, sources[columns[defined]],
+                                          orientations[defined] @ rotation.T,
+                                          coils, coil_dirs, sensors['tra'][:, active])
+            if gain.shape != (len(scales), np.count_nonzero(defined)):
+                raise ValueError("DUNEuro gain rows or columns differ from the requested geometry.")
+            gain *= scales
+        else:
+            gain = np.empty((len(scales), 0))
+        if not np.all(defined):
+            complete = np.zeros((len(scales), len(columns)))
+            complete[:, defined] = gain
+            gain = complete
+
+        _, faces, _ = _mesh_arrays(prepared_surfaces.get_mesh_path(layer_name=layers[0],
+                                                                   **mesh_options))
+        origin = json.dumps({'solver': 'DUNEuro fitted tetrahedral CG FEM',
+                             'source_model': 'patch_based_venant', 'mesh': str(mesh_fname),
+                             'conductivities_S_per_m': {str(k): float(v)
+                                                        for k, v in mesh.conductivities.items()},
+                             'mri_to_fem_mm': native_to_fem.tolist()}, sort_keys=True)
+        return ForwardOperator(
+            gain=gain, channel_names=reference.channel_names, channel_units=reference.channel_units,
+            layer_names=layers, requested_mri_mm=native, orientations_head=orientations,
+            effective_head_mm=nib.affines.apply_affine(reference.mri_to_head_mm, native),
+            mri_to_head_mm=reference.mri_to_head_mm, faces=faces, sensor_geometry=sensors,
+            provenance=origin, allow_nominal_ctf_coils=reference.allow_nominal_ctf_coils)
+
+    return prepare_subset(surfaces, masks, output_dir, mesh_options, make_operator)
 
 
 def prepare_mne_forward(forwards, surfaces, output_dir, *, reference=None, channel_units=None,

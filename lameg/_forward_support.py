@@ -2,7 +2,7 @@
 from collections.abc import Mapping
 from contextlib import ExitStack
 from copy import copy
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 import json
 from pathlib import Path
 import shutil
@@ -50,8 +50,10 @@ class ForwardSupport:
         if np.any(compact < 0):
             missing = int(local.ravel()[np.flatnonzero(compact < 0)[0]])
             omitted = [k for k, ids in self.excluded_by_layer.items() if missing in ids]
+            reason = (f"for {', '.join(omitted)}" if omitted
+                      else "because no cortical face survives there")
             raise ValueError(f"Original cortical vertex {missing} is excluded from the forward "
-                             f"for {', '.join(omitted)} and cannot be used as a prior.")
+                             f"{reason} and cannot be used as a prior.")
         # The inferred layer block now starts at a multiple of the retained count.
         return layers * len(self.original_vertices) + compact
 
@@ -63,6 +65,29 @@ class PreparedForward:
     operator: 'ForwardOperator'
     support: ForwardSupport
     manifest: Path
+    _input_surfaces: 'LayerSurfaceSet' = field(default=None, repr=False)
+    _mesh_options: dict = field(default_factory=dict, repr=False)
+
+    def restrict_operator(self, operator):
+        """Select these exact cortical columns from another gain on the input surfaces.
+
+        This is useful after FEM tissue checks exclude some of a BEM's vertices.
+        A solver keeps its own effective positions, directions, units and coils.
+        """
+        if self._input_surfaces is None or operator.layer_names != self.operator.layer_names:
+            raise ValueError("Expected a forward defined on the preparation's input layers.")
+        operator.validate_mesh(None, self._input_surfaces.get_mesh_path(**self._mesh_options))
+        # The support IDs always index the original anatomy. The input gain may
+        # already have been compacted by an earlier preparation (e.g. MNE).
+        keep = map_surface_vertices(self._input_surfaces, self.support.original_vertices)
+        if len(keep) == operator.n_columns:
+            return operator
+        columns = np.concatenate([i * operator.n_columns + keep
+                                  for i in range(len(operator.layer_names))])
+        return replace(operator, gain=operator.gain[:, columns], faces=self.operator.faces,
+                       requested_mri_mm=operator.requested_mri_mm[columns],
+                       effective_head_mm=operator.effective_head_mm[columns],
+                       orientations_head=operator.orientations_head[columns])
 
 
 def map_surface_vertices(surf_set, indices, *, multilayer=False):
@@ -147,7 +172,7 @@ def _subset_gifti(mesh, retained):
     mapped = lookup[triangles]
     faces.data = mapped[(mapped >= 0).all(axis=1)].astype(triangles.dtype)
     if faces.data.size == 0:
-        raise ValueError("No cortical triangles remain on the common MNE source support.")
+        raise ValueError("No cortical triangles remain on the common source support.")
     # Preserve the supplied signed dipole direction at each vertex. Recomputing normals
     # on the cropped mesh could rotate a dipole at the new boundary.
     vertices.data = vertices.data[retained]
@@ -200,41 +225,79 @@ def prepare_support(forwards, surfaces, output_dir, vertices, mesh_options, opti
     # Use the surface set's anatomical layer order when assembling the gain blocks.
     forwards = {name: forwards[name] for name in layers}
     meshes, maps, masks = _match_layers(forwards, surfaces, vertices, mesh_options, options)
-    sizes = {len(mask) for mask in masks.values()}
-    if len(sizes) != 1:
-        raise ValueError("The original cortical layers have different numbers of vertices.")
-    original_count = sizes.pop()
-    # Take the intersection in anatomical vertex order. If the pial forward dropped
-    # a location, remove its white and intermediate counterparts from the comparison.
-    retained = np.flatnonzero(np.logical_and.reduce(list(masks.values())))
+    def import_retained(prepared, retained):
+        selected = {name: keys[retained] for name, keys in maps.items()}
+        return importer(forwards, prepared.get_mesh_path(**mesh_options), vertices=selected,
+                        **options)
+
+    return prepare_subset(surfaces, masks, output_dir, mesh_options, import_retained,
+                          solver='MNE', meshes=meshes)
+
+
+def _write_surfaces(surfaces, prepared, meshes, retained, input_count, mesh_options):
+    """Apply one anatomical column selection to the individual and multilayer GIfTIs."""
+    for name, mesh in meshes.items():
+        nib.save(_subset_gifti(mesh, retained),
+                 prepared.get_mesh_path(layer_name=name, **mesh_options))
+    # The combined GIfTI has separate vertices for each depth. Offset the same
+    # retained IDs into each original block to reproduce the per-layer ordering.
+    combined = nib.load(surfaces.get_mesh_path(**mesh_options))
+    selected = np.concatenate([i * input_count + retained for i in range(len(meshes))])
+    target = prepared.get_mesh_path(**mesh_options)
+    nib.save(_subset_gifti(combined, selected), target)
+
+
+def prepare_subset(surfaces, masks, output_dir, mesh_options, make_operator, *,
+                   solver='DUNEuro', meshes=None):
+    """Intersect layer masks, write consistent meshes, then build a gain on retained vertices."""
+    layers = surfaces.get_layer_names()
+    if set(masks) != set(layers):
+        raise ValueError("Source masks must cover every cortical layer.")
+    if meshes is None:
+        meshes = {name: nib.load(surfaces.get_mesh_path(layer_name=name, **mesh_options))
+                  for name in layers}
+    input_count = len(meshes[layers[0]].agg_data('pointset'))
+    for name in layers:
+        if (np.asarray(masks[name]).dtype != bool or np.shape(masks[name]) != (input_count,)
+                or len(meshes[name].agg_data('pointset')) != input_count):
+            raise ValueError("Expected one boolean mask per layer in the input mesh order.")
+    available = np.logical_and.reduce([masks[name] for name in layers])
+    parent = getattr(surfaces, '__dict__', {}).get('forward_support')
+    input_ids = np.arange(input_count) if parent is None else parent.original_vertices
+    original_count = input_count if parent is None else parent.original_n_columns
+    # Exclusions from successive models refer to the original cortical numbering.
+    # Keep the specific depth where a location was lost, even though the vertex
+    # is removed at every depth to compare gains on identical supports.
+    omitted = {name: input_ids[~masks[name]].tolist() for name in layers}
+    excluded = {name: sorted(set(omitted[name]).union(
+        parent.excluded_by_layer[name] if parent else [])) for name in layers}
+    isolated = []
+    if solver == 'DUNEuro':
+        # The GM mask can leave isolated points with no cortical neighbourhood
+        # for patch simulation or smoothing. Retain vertices on surviving faces.
+        faces = meshes[layers[0]].agg_data('triangle')
+        connected = np.zeros(input_count, dtype=bool)
+        connected[faces[available[faces].all(axis=1)]] = True
+        isolated = input_ids[available & ~connected].tolist()
+        available &= connected
+    retained = np.flatnonzero(available)
     if retained.size == 0:
-        raise ValueError("The MNE forwards have no common cortical vertices.")
-    # Record where each omission arose. A white vertex removed solely to match
-    # its missing pial counterpart still counts as an omission of the pial forward.
-    excluded = {name: np.flatnonzero(~mask).tolist() for name, mask in masks.items()}
-    retained.setflags(write=False)
-    support = ForwardSupport(original_count, retained, excluded)
-    maps = {name: keys[retained] for name, keys in maps.items()}
+        raise ValueError(f"The {solver} forwards have no common cortical vertices on a mesh face.")
+    original_ids = input_ids[retained]
+    original_ids.setflags(write=False)
+    support = ForwardSupport(original_count, original_ids, excluded)
     directory = Path(output_dir).resolve()
     directory.mkdir(parents=True, exist_ok=True)
     with ExitStack() as rollback:
         # Keep each preparation and its later SPM smoothing files in their own directory.
         # If validation fails, remove only this attempt's files.
-        work = Path(mkdtemp(prefix='mne-forward-', dir=str(directory)))
+        work = Path(mkdtemp(prefix=f'{solver.lower()}-forward-', dir=str(directory)))
         rollback.callback(shutil.rmtree, work)
         prepared = copy(surfaces)
         prepared.laminar_surf_dir = str(work)
         prepared.forward_support = support
-        for name, mesh in meshes.items():
-            nib.save(_subset_gifti(mesh, retained),
-                     prepared.get_mesh_path(layer_name=name, **mesh_options))
-        # The combined GIfTI has separate vertices for each depth. Offset the same
-        # retained IDs into each original block to reproduce the per-layer ordering.
-        combined = nib.load(surfaces.get_mesh_path(**mesh_options))
-        selected = np.concatenate([i * original_count + retained for i in range(len(layers))])
-        target = prepared.get_mesh_path(**mesh_options)
-        nib.save(_subset_gifti(combined, selected), target)
-        operator = importer(forwards, target, vertices=maps, **options)
+        _write_surfaces(surfaces, prepared, meshes, retained, input_count, mesh_options)
+        operator = make_operator(prepared, retained)
         # Validate the combined gain against each saved GIfTI, since layer model
         # comparisons register those individual files with SPM.
         for name in layers:
@@ -243,13 +306,18 @@ def prepare_support(forwards, surfaces, output_dir, vertices, mesh_options, opti
         # row can still be located on the original cortex in a later analysis.
         manifest = work / 'source_support.json'
         report = {'subject': surfaces.subj_id, 'mesh_options': mesh_options, 'layer_names': layers,
-                  'original_n_columns': original_count, 'original_vertices': retained.tolist(),
+                  'original_n_columns': original_count, 'original_vertices': original_ids.tolist(),
                   'excluded_by_layer': excluded}
+        if solver == 'DUNEuro':
+            report.update(solver=solver, excluded_by_tissue=omitted,
+                          vertices_without_faces=isolated)
+            if parent is not None:
+                report['input_manifest'] = str(Path(surfaces.laminar_surf_dir) / manifest.name)
         manifest.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
         if len(retained) != original_count:
             counts = ', '.join(f"{name}: {len(ids)}" for name, ids in excluded.items() if ids)
             warnings.warn(f"Using {len(retained)} of {original_count} original cortical vertices "
-                          f"at every depth. Vertices omitted by MNE ({counts}). See {manifest}.",
+                          f"at every depth after {solver} preparation ({counts}). See {manifest}.",
                           UserWarning, stacklevel=3)
         rollback.pop_all()
-    return PreparedForward(prepared, operator, support, manifest)
+    return PreparedForward(prepared, operator, support, manifest, surfaces, dict(mesh_options))
