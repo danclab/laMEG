@@ -10,13 +10,18 @@ own writable copy of the same recording in a separate directory.
 MNE BEM and native single-shell on the same vertices
 ----------------------------------------------------
 
-Use ``prepare_mne_forward`` with the original laMEG surfaces and one MNE
-forward per layer, supplied as a dictionary of layer names to MNE Forward
-objects or FIF paths. laMEG checks the registered source positions and prepares
-a surface set containing the anatomical locations retained at every depth. For example, if MNE excludes a pial vertex outside
+If you have an MNE BEM solution, use ``compute_mne_forward`` to solve on the
+original laMEG surfaces. After coregistering the SPM reference to the multilayer
+mesh, pass the BEM solution, acquisition Info and MNE head/MRI transform as in
+Tutorial 10. If you already have a forward for each layer, use
+``prepare_mne_forward`` with a dictionary of layer names to MNE Forward objects
+or FIF paths, as in the example below. Both functions check the registered
+source positions and prepare a surface set containing the anatomical locations
+retained at every depth. For example, if MNE excludes a pial vertex outside
 the inner skull, its matching white vertex is also omitted from the prepared
 surfaces. Use those surfaces for both solvers. For coincident positions that
-make matching ambiguous, supply the source-space and vertex IDs via ``vertices``.
+make matching ambiguous when importing existing forwards, supply the source-space
+and vertex IDs via ``vertices``.
 
 The example compares seeded MSP across layers and time windows for a CTF
 recording. ``reference`` is an SPM dataset already coregistered to the

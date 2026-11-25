@@ -1,6 +1,7 @@
 """Map MNE source indices and project their gain onto signed laMEG orientations."""
 
 from collections.abc import Mapping
+from dataclasses import dataclass
 from os import PathLike
 
 import mne
@@ -136,8 +137,18 @@ def _same_sensors(first, second):
         first[k], second[k], atol=atol, rtol=1e-7) for k, atol in tolerances.items())
 
 
+@dataclass(frozen=True)
+class ComputedLayer:
+    """A temporary layer FIF and the source of its gain after the file is removed."""
+
+    filename: str
+    origin: str
+
+
 def load_forward(source, layer):
     """Read a single layer while retaining the gain's origin for provenance."""
+    if isinstance(source, ComputedLayer):
+        return mne.read_forward_solution(source.filename, verbose=False), source.origin
     if isinstance(source, (str, PathLike)):
         return mne.read_forward_solution(str(source), verbose=False), str(source)
     if isinstance(source, mne.Forward):
