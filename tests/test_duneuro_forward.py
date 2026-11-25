@@ -6,6 +6,7 @@ from types import SimpleNamespace
 
 import numpy as np
 import pytest
+from scipy.io import savemat
 
 from lameg import _duneuro
 from lameg._forward_support import ForwardSupport
@@ -55,8 +56,30 @@ def make_registration(tmp_path):
     return surfaces, reference
 
 
-def test_fem_frames_channels_and_common_support(tmp_path, registration, monkeypatch):
-    """Retain anatomical IDs and compare all three solvers on identical columns."""
+def _recording_header(tmp_path, sensor_geometry, mri_to_head):
+    """Write just the coregistration, good channels and SI pickup geometry to disk."""
+    # The recording rows are B, A. SPM's physical sensor table uses the
+    # opposite order, so the reader must match the signed weights by label.
+    channels = np.array([('B', 'MEGMAG', 'fT', 0), ('A', 'MEGGRAD', 'fT/cm', 0)],
+                        dtype=[('label', 'O'), ('type', 'O'), ('units', 'O'), ('bad', 'O')])
+    geometry = dict(sensor_geometry)
+    geometry.update(label=np.array(['A', 'B'], dtype=object),
+                    chanunit=np.array(['T/m', 'T'], dtype=object), unit='m', coordsys='ctf',
+                    tra=geometry['tra'][::-1])
+    registered = {'datareg': {'modality': 'MEG', 'fromMNI': mri_to_head},
+                  'mesh': {'Affine': np.eye(4)},
+                  'forward': {'modality': 'MEG', 'siunits': 1, 'sensors': geometry}}
+    # Slot 0 is empty. Slot 1 has no gainmat, source tessellation or forward
+    # channel list (SPM creates that list when it calculates the gain).
+    path = tmp_path / 'recording.mat'
+    savemat(path, {'D': {'channels': channels, 'other': {'inv': [{}, registered]}}})
+    return path
+
+
+@pytest.mark.parametrize('from_recording', [True, False], ids=['spm_header', 'operator'])
+def test_fem_frames_channels_and_common_support(tmp_path, registration, monkeypatch,
+                                                from_recording):
+    """A gain-free SPM header and a comparison operator produce the same physical gains."""
     surfaces, reference = registration
     mri_to_fem = np.array([[0., -1., 0., 20.], [1., 0., 0., 10.],
                            [0., 0., 1., -14.], [0., 0., 0., 1.]])
@@ -88,10 +111,13 @@ def test_fem_frames_channels_and_common_support(tmp_path, registration, monkeypa
 
     monkeypatch.setattr(_duneuro, 'source_compartments', compartments)
     monkeypatch.setattr(_duneuro, 'solve_forward', physical_gain)
+    options = ({'reference': _recording_header(tmp_path, geom, reference.mri_to_head_mm),
+                'inversion_idx': 1}
+               if from_recording else {'reference': reference})
     with pytest.warns(UserWarning, match='Using 3 of 7'):
         fem = compute_duneuro_forward(
-            surfaces, tmp_path / 'example.msh', reference=reference, output_dir=tmp_path,
-            conductivities={2: 0.33}, mri_to_fem_mm=mri_to_fem)
+            surfaces, tmp_path / 'example.msh', output_dir=tmp_path,
+            conductivities={2: 0.33}, mri_to_fem_mm=mri_to_fem, **options)
     # The SI gain was per A m. Conversion to fT per nA m gives 10^6, and
     # fT/cm per nA m gives 10^4 for the second row (T/m from the solver).
     expected = [[2e6, -3e6, 0., 4e6, -5e6, 0.], [6e4, -7e4, 0., 8e4, -9e4, 0.]]

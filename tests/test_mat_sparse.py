@@ -9,7 +9,7 @@ from lameg._source_io import (
     _h5_matrix_from_object, _h5_matrix_rows_from_object, _h5_matrix_shape_from_object,
 )
 from lameg.invert import _read_inversion_results
-from lameg.forward import _mat_matrix
+from lameg._forward_registration import _mat_matrix
 
 
 def _store(parent, name, array, declared=True):

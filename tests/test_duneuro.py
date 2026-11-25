@@ -9,8 +9,9 @@ import numpy as np
 import pytest
 
 from lameg import _duneuro
-from lameg.forward import ForwardOperator, compute_duneuro_forward
+from lameg.forward import compute_duneuro_forward
 from lameg.surf import LayerSurfaceSet, _concatenate_surfaces, _create_surf_gifti
+from tests.test_duneuro_forward import _recording_header
 
 
 def _write_volume(path, points_mm, tetrahedra, tags):
@@ -178,7 +179,7 @@ def test_real_duneuro_spherical_meg(sphere_path):
 
 
 def test_real_layer_operator_matches_spherical_gain(tmp_path, sphere_path):
-    """Follow a two-layer GIfTI through tissue checks, FEM and physical channel scaling."""
+    """Compute the analytic two-layer case directly from the recording, surfaces and FEM."""
     (tmp_path / 'example').mkdir()
     surfaces = LayerSurfaceSet('example', 2, subjects_dir=str(tmp_path))
     Path(surfaces.laminar_surf_dir).mkdir(parents=True)
@@ -199,11 +200,11 @@ def test_real_layer_operator_matches_spherical_gain(tmp_path, sphere_path):
                 'tra': np.array([[1., -0.25], [50., -50.]])}
     points = np.vstack((pial, white))
     moments = np.tile(links, (2, 1))
-    registration = ForwardOperator(np.zeros((2, 6)), ('B', 'A'), ('fT', 'fT/cm'),
-                                   ('pial', 'white'), points, points, moments, np.eye(4),
-                                   face, geometry, 'synthetic spherical registration')
-    prepared = compute_duneuro_forward(surfaces, sphere_path, reference=registration,
-                                       output_dir=tmp_path)
+    # The sphere and sensors share one coordinate frame, so the MRI-to-head
+    # transform is the identity. The header has no gain or other forward operator.
+    recording = _recording_header(tmp_path, geometry, np.eye(4))
+    prepared = compute_duneuro_forward(surfaces, sphere_path, reference=recording,
+                                       inversion_idx=1, output_dir=tmp_path)
     distance = np.linalg.norm(coils[:, None] - points[None] / 1000., axis=2)
     signed_depth = moments[:, 1] * points[:, 2] / 1000.
     ideal_coils = -1e-7 * signed_depth[None, :] / distance**3

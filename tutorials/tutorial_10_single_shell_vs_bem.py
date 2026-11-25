@@ -148,10 +148,25 @@ surfaces = prepared.surfaces
 print(f'{bem.n_columns:,} of {surf_set.get_vertices_per_layer():,} vertices retained per surface')
 
 # %%
+# Building the FEM forward model
+# ------------------------------
+#
+# The CHARM mesh supplies the tissue compartments. The coregistered recording supplies the measured CTF coil positions and channel weights. DUNEuro computes the field for a unit dipole along each signed link vector. The FEM uses `SimNIBS tissue conductivities <https://simnibs.github.io/simnibs/build/html/documentation/conductivity.html>`_ in S/m. We keep the cortical columns whose dipoles are in gray matter at every depth and use those same columns for all three models.
+
+fem_prepared = compute_duneuro_forward(
+    surfaces, charm_fname, reference=base_fname, output_dir=tmp_dir,
+)
+fem = fem_prepared.operator
+bem = fem_prepared.restrict_operator(bem)
+surfaces = fem_prepared.surfaces
+layer_names = surfaces.get_layer_names()
+n_layers = len(layer_names)
+
+# %%
 # Building the single-shell forward model
 # ---------------------------------------
 #
-# We'll compute the single-shell gain on the cortical vertices retained by the BEM. SPM also gives us the measured CTF coil geometry and channel weights we'll use for the FEM.
+# We'll compute the single-shell gain on the shared cortical surfaces for comparison.
 
 coregister(
     fid_coords, base_fname, surfaces,
@@ -169,21 +184,6 @@ single_shell = ForwardOperator.from_spm(
     base_fname, surfaces.get_mesh_path(), surfaces.get_layer_names(), allow_undefined_gain=True
 )
 
-# %%
-# Building the FEM forward model
-# ------------------------------
-#
-# The CHARM mesh supplies the tissue compartments. DUNEuro computes the field at the measured CTF coils for a unit dipole along each signed link vector. The FEM uses `SimNIBS tissue conductivities <https://simnibs.github.io/simnibs/build/html/documentation/conductivity.html>`_ in S/m. We keep the cortical columns whose dipoles are in gray matter at every depth and use those same columns for all three models.
-
-fem_prepared = compute_duneuro_forward(
-    surfaces, charm_fname, reference=single_shell, output_dir=tmp_dir,
-)
-fem = fem_prepared.operator
-bem = fem_prepared.restrict_operator(bem)
-single_shell = fem_prepared.restrict_operator(single_shell)
-surfaces = fem_prepared.surfaces
-layer_names = surfaces.get_layer_names()
-n_layers = len(layer_names)
 models = [('FEM', fem), ('BEM', bem), ('Single shell', single_shell)]
 print(f'All three models use {fem.n_columns:,} cortical vertices per layer.')
 
@@ -278,11 +278,8 @@ plt.show()
 # Simulating each layer with FEM
 # ------------------------------
 #
-# We'll register the recording to the final shared mesh and attach the multilayer FEM gain. For each simulated depth we'll then fit all 11 candidate layers with each forward model, using one noisy recording for the three fits.
+# We'll attach the multilayer FEM gain to the recording, which is already registered to the shared mesh. For each simulated depth we'll then fit all 11 candidate layers with each forward model, using one noisy recording for the three fits.
 
-coregister(
-    fid_coords, base_fname, surfaces, iskull_fname=skull_fname, viz=False, spm_instance=spm
-)
 attach_forward_operator(base_fname, fem, 0, spm, surfaces.get_mesh_path())
 
 sim_patch_size = 5  # mm

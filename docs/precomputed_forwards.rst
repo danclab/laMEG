@@ -184,9 +184,10 @@ Whole-head calculations need memory for the volume solver and its transfer
 matrix, which stores one double per active pickup and FEM degree of freedom.
 SPM performs the simulations and inversions.
 
-Pass a registered operator on the input surfaces as the reference. For CTF,
-Tutorial 10 uses the measured SPM coil positions and the recording's signed
-channel and reference weights. The solver uses the CHARM tetrahedra and the
+Pass the coregistered SPM recording as ``reference``. This supplies the
+MRI-to-head transform, physical coil geometry and channel weights. The
+``LayerSurfaceSet`` supplies the positions and signed dipole directions.
+The solver uses the CHARM tetrahedra and the
 `SimNIBS isotropic tissue conductivities <https://simnibs.github.io/simnibs/build/html/documentation/conductivity.html>`_.
 Supply a tag-to-conductivity mapping in S/m to override them. If CHARM's T1
 and the laMEG GIfTIs use different scanner coordinates, supply their measured
@@ -195,14 +196,14 @@ rigid registration in millimetres as ``mri_to_fem_mm``.
 .. code-block:: python
 
     from lameg.forward import compute_duneuro_forward
+    from lameg.invert import coregister
 
-    # The single-shell and BEM operators here already share the input meshes.
+    # Run coregister once for this recording if it has not yet been registered.
+    coregister(fid_coords, base_fname, surf_set, iskull_fname=skull_fname, spm_instance=spm)
     prepared = compute_duneuro_forward(
-        surfaces, charm_fname, reference=single_shell, output_dir=tmp_dir
+        surf_set, charm_fname, reference=base_fname, output_dir=tmp_dir
     )
     fem = prepared.operator
-    bem = prepared.restrict_operator(bem)
-    single_shell = prepared.restrict_operator(single_shell)
     surfaces = prepared.surfaces
 
 The fitted patch-based St. Venant model uses the signed cortical link vectors.

@@ -13,10 +13,11 @@ import nibabel as nib
 import numpy as np
 from scipy.io import loadmat
 
+from ._forward_registration import (fem_recording_geometry, index_labels, mat_strings,
+                                    spm_sensor_geometry)
 from ._forward_units import MEG_UNIT, si_gain_scale
 from ._gain_cache import (cell_strings, gain_reference, inversion_slot, mat_string,
                           validate_slot_index, verified_gain)
-from ._mat_sparse import h5_to_csc
 
 
 def _labels(values, name, unique=True):
@@ -63,6 +64,19 @@ def _directions(native, mri_to_head_mm):
     # Normalization preserves the mesh polarity. An exactly zero input remains undefined.
     lengths = np.linalg.norm(vectors, axis=1, keepdims=True)
     return np.divide(vectors, lengths, out=np.zeros_like(vectors), where=lengths > 0)
+
+
+def _sensor_geometry(geo, n_channels):
+    """Validate the physical pickups and how their fields combine into recorded channels."""
+    coils = _numeric(geo['coilpos'], (None, 3), 'coilpos')
+    coilori = _numeric(geo['coilori'], coils.shape, 'coilori')
+    if not np.allclose(np.linalg.norm(coilori, axis=1), 1, atol=1e-5, rtol=0):
+        raise ValueError("Sensor coil orientations must be unit vectors.")
+    # Each recorded channel may combine several pickups, including signed reference coils.
+    tra = _numeric(geo['tra'], (n_channels, len(coils)), 'tra')
+    if not np.all(np.any(tra != 0, axis=1)):
+        raise ValueError("Each sensor channel must have a nonzero coil weight.")
+    return MappingProxyType({'coilpos': coils, 'coilori': coilori, 'tra': tra})
 
 
 def _mesh_arrays(path):
@@ -179,18 +193,7 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
         if faces.dtype.kind not in 'iu' or faces.min() < 0 or faces.max() >= self.n_columns:
             raise ValueError("faces must index a single cortical layer, starting at zero.")
         set_field('faces', faces)
-        geo = self.sensor_geometry
-        coils = _numeric(geo['coilpos'], (None, 3), 'coilpos')
-        coilori = _numeric(geo['coilori'], coils.shape, 'coilori')
-        if not np.allclose(np.linalg.norm(coilori, axis=1), 1, atol=1e-5, rtol=0):
-            raise ValueError("Sensor coil orientations must be unit vectors.")
-        # A channel can combine several physical pickups, including reference coils with signed
-        # weights. Each row of tra must describe the same channel as its corresponding gain row.
-        tra = _numeric(geo['tra'], (len(names), len(coils)), 'tra')
-        if not np.all(np.any(tra != 0, axis=1)):
-            raise ValueError("Each sensor channel must have a nonzero coil weight.")
-        set_field('sensor_geometry', MappingProxyType({
-            'coilpos': coils, 'coilori': coilori, 'tra': tra}))
+        set_field('sensor_geometry', _sensor_geometry(self.sensor_geometry, len(names)))
         if not isinstance(self.provenance, str) or not self.provenance.strip():
             raise ValueError("Give the forward solver and source of the gain as provenance.")
 
@@ -269,7 +272,7 @@ class ForwardOperator:  # pylint: disable=too-many-instance-attributes
             gain, cache_labels, fields = _read_gain_cache(cache, expected_hash)
         # Use labels to recover the physical channel represented by each row, even when the
         # cache and recording contain the same number of channels in different orders.
-        rows = _index_labels(cache_labels, metadata['channel_names'])
+        rows = index_labels(cache_labels, metadata['channel_names'])
         if gain.shape != (len(cache_labels), len(points)):
             raise ValueError("SPM gain shape differs from the cortical mesh or channel labels.")
         if cache_labels != metadata['channel_names']:
@@ -408,15 +411,36 @@ def compute_mne_forward(surfaces, bem_solution, info, trans, *, reference, outpu
             allow_nominal_ctf_coils=allow_nominal_ctf_coils, **mesh_options)
 
 
-def compute_duneuro_forward(surfaces, mesh_fname, *, reference, output_dir, conductivities=None,
-                            mri_to_fem_mm=None, stage='ds', orientation='link_vector', fixed=True):
+def _fem_geometry(reference, inversion_idx, mesh_path, layers):
+    """Read recording geometry or reuse the geometry of an operator on the input surfaces."""
+    if isinstance(reference, (str, PathLike)):
+        names, units, sensors, affine = fem_recording_geometry(reference, inversion_idx)
+        # Validate the raw sensor table before handing any coil to the compiled solver.
+        # These pickups come from the recording, so nominal CTF matching is unnecessary.
+        return names, units, _sensor_geometry(sensors, len(names)), affine, False
+    if not isinstance(reference, ForwardOperator):
+        raise TypeError("reference must be a registered SPM dataset or ForwardOperator.")
+    validate_slot_index(inversion_idx)
+    if reference.layer_names != layers:
+        raise ValueError("Reference layer names and order must match the input surfaces.")
+    reference.validate_mesh(None, mesh_path)
+    return (reference.channel_names, reference.channel_units, reference.sensor_geometry,
+            reference.mri_to_head_mm, reference.allow_nominal_ctf_coils)
+
+
+def compute_duneuro_forward(surfaces, mesh_fname, *, reference, output_dir, inversion_idx=0,
+                            conductivities=None, mri_to_fem_mm=None, stage='ds',
+                            orientation='link_vector', fixed=True):
     """Compute fixed-orientation MEG gains on CHARM gray matter with duneuro-py.
 
-    `surfaces` may be the original LayerSurfaceSet or the output surfaces of
-    `compute_mne_forward`. Supply a registered `ForwardOperator` on those
-    surfaces as `reference`, e.g. the native SPM single-shell operator. Its
-    sensor coils, signed channel weights, channel units and MRI registration
-    define the recording. The FEM dipoles use the requested GIfTI vertices.
+    Supply the coregistered SPM recording (the .mat filename) as `reference`.
+    The zero-based `inversion_idx` selects its MEG registration. The header
+    supplies the physical coils, signed channel weights, recorded units and
+    MRI-to-head transform. No existing gain matrix is required. Dipole
+    positions and signed directions come from the supplied LayerSurfaceSet
+    in the same native MRI frame. It can be the original surface set or the
+    surfaces returned by a previous forward preparation. A registered
+    `ForwardOperator` on the input surfaces is also accepted as `reference`.
 
     `mesh_fname` is the subject's CHARM tetrahedral mesh in mm.
     The default conductivities are SimNIBS's standard isotropic values for
@@ -437,41 +461,44 @@ def compute_duneuro_forward(surfaces, mesh_fname, *, reference, output_dir, cond
     from . import _duneuro  # pylint: disable=import-outside-toplevel
     from ._forward_support import prepare_subset  # pylint: disable=import-outside-toplevel
 
-    if not isinstance(reference, ForwardOperator):
-        raise TypeError("reference must be a registered ForwardOperator on the input surfaces.")
-    layers = tuple(surfaces.get_layer_names())
-    if reference.layer_names != layers:
-        raise ValueError("Reference layer names and order must match the input surfaces.")
+    layers = _labels(surfaces.get_layer_names(), 'layer_names')
     mesh_options = {'stage': stage, 'orientation': orientation, 'fixed': fixed}
-    reference.validate_mesh(None, surfaces.get_mesh_path(**mesh_options))
+    mesh_path = surfaces.get_mesh_path(**mesh_options)
+    names, units, sensors, mri_to_head, nominal = _fem_geometry(
+        reference, inversion_idx, mesh_path, layers)
 
-    # CHARM lives in the subject's MRI frame. Take anatomical locations from
-    # the GIfTI registration, independently of any displacements the reference
-    # solver applied. Transform coil pickup points from head metres separately.
+    # The supplied GIfTI defines the layer order, positions and signed dipoles.
+    # Read it independently of any source mesh or solver positions stored in SPM.
+    points, _, normals, _ = _layer_mesh(mesh_path, layers)
+    points = _numeric(points, (None, 3), 'source MRI positions')
+    normals = _numeric(normals, points.shape, 'source directions')
+    n_columns = len(points) // len(layers)
+    mri_to_head = _affine_mm(mri_to_head, 'mri_to_head_mm', rigid=True)
+    head_directions = _directions(normals, mri_to_head)
+    # Transform the sources from native MRI mm and the pickups from head metres
+    # into the same CHARM frame. Translations affect positions only.
     native_to_fem = _affine_mm(np.eye(4) if mri_to_fem_mm is None else mri_to_fem_mm,
                                'mri_to_fem_mm', rigid=True)
-    head_to_fem = _affine_mm(native_to_fem @ np.linalg.inv(reference.mri_to_head_mm),
-                             'head_to_fem_mm', rigid=True)
-    sources = nib.affines.apply_affine(native_to_fem, reference.requested_mri_mm) / 1000.
+    head_to_fem = native_to_fem @ np.linalg.inv(mri_to_head)
+    sources = nib.affines.apply_affine(native_to_fem, points) / 1000.
     mesh = _duneuro.read_charm_mesh(mesh_fname, conductivities)
-    tissues = _duneuro.source_compartments(mesh, sources).reshape(len(layers), reference.n_columns)
+    tissues = _duneuro.source_compartments(mesh, sources).reshape(len(layers), n_columns)
     masks = {name: tissue == 2 for name, tissue in zip(layers, tissues)}
 
     # Skip pickups absent from every recorded row. Keep all active reference
     # coils: their signed coefficients implement the acquisition compensation.
-    sensors = reference.sensor_geometry
     active = np.any(sensors['tra'] != 0, axis=0)
     coils = nib.affines.apply_affine(head_to_fem, sensors['coilpos'][active] * 1000.) / 1000.
     rotation = head_to_fem[:3, :3]
     coil_dirs = sensors['coilori'][active] @ rotation.T
-    scales = np.array([si_gain_scale(unit) for unit in reference.channel_units])[:, None]
+    scales = np.array([si_gain_scale(unit) for unit in units])[:, None]
 
     def make_operator(prepared_surfaces, retained):
-        # The input operator is layer-major. The same retained vertex indices
-        # select consecutive pial-to-white gain blocks in the new operator.
-        columns = np.concatenate([i * reference.n_columns + retained for i in range(len(layers))])
-        native = reference.requested_mri_mm[columns]
-        orientations = reference.orientations_head[columns]
+        # The combined GIfTI has consecutive pial-to-white vertex blocks. Select
+        # the same retained cortical locations at every depth for the gain matrix.
+        columns = np.concatenate([i * n_columns + retained for i in range(len(layers))])
+        native = points[columns]
+        orientations = head_directions[columns]
         defined = np.any(orientations != 0, axis=1)
         # A GIfTI can have an undefined (zero) link vector. Its signed moment
         # gives zero field. Never replace it with an arbitrary unit dipole.
@@ -497,11 +524,11 @@ def compute_duneuro_forward(surfaces, mesh_fname, *, reference, output_dir, cond
                                                         for k, v in mesh.conductivities.items()},
                              'mri_to_fem_mm': native_to_fem.tolist()}, sort_keys=True)
         return ForwardOperator(
-            gain=gain, channel_names=reference.channel_names, channel_units=reference.channel_units,
+            gain=gain, channel_names=names, channel_units=units,
             layer_names=layers, requested_mri_mm=native, orientations_head=orientations,
-            effective_head_mm=nib.affines.apply_affine(reference.mri_to_head_mm, native),
-            mri_to_head_mm=reference.mri_to_head_mm, faces=faces, sensor_geometry=sensors,
-            provenance=origin, allow_nominal_ctf_coils=reference.allow_nominal_ctf_coils)
+            effective_head_mm=nib.affines.apply_affine(mri_to_head, native),
+            mri_to_head_mm=mri_to_head, faces=faces, sensor_geometry=sensors,
+            provenance=origin, allow_nominal_ctf_coils=nominal)
 
     return prepare_subset(surfaces, masks, output_dir, mesh_options, make_operator)
 
@@ -573,20 +600,12 @@ def _spm_source_coordinates(inversion, mesh_fname, points, faces, normals):
 
 
 def _spm_sensors(header, forward, labels):
-    sensors = forward['sensors']
-    rows = _index_labels(_mat_strings(header, sensors['label']), labels)
-    if mat_string(sensors['unit']) != 'm':
-        raise ValueError("Expected SPM's physical sensor coil coordinates in metres.")
-    sensor_units = _mat_strings(header, sensors['chanunit'])
-    if any(sensor_units[i] not in ('T', 'T/m') for i in rows):
-        raise ValueError("Expected SI-calibrated MEG sensor coil weights.")
-    geometry = {'coilpos': sensors['coilpos'][()].T, 'coilori': sensors['coilori'][()].T,
-                'tra': _mat_matrix(sensors['tra'])[rows, :]}
+    geometry = spm_sensor_geometry(forward, labels)
     # The forward sensor table describes SI pickup geometry. Recorded data can be in fT
     # or other physical units. Retrieve these units independently by channel label.
     channels = header['D/channels']
-    data_rows = _index_labels(_mat_strings(header, channels['label']), labels)
-    units = _mat_strings(header, channels['units'])
+    data_rows = index_labels(mat_strings(channels['label']), labels)
+    units = mat_strings(channels['units'])
     return geometry, tuple(units[i] for i in data_rows)
 
 
@@ -597,7 +616,7 @@ def _spm_registration(data_fname, inversion_idx, mesh_fname, points, faces, norm
             raise ValueError("Requested inversion_idx is absent from the SPM header.")
         forward = inversion['forward']
         affine, effective = _spm_source_coordinates(inversion, mesh_fname, points, faces, normals)
-        labels = _mat_strings(header, forward['channels'])
+        labels = mat_strings(forward['channels'])
         geometry, units = _spm_sensors(header, forward, labels)
         scale = float(forward['scale'][()].item())
         if not np.isfinite(scale) or scale <= 0:
@@ -652,32 +671,15 @@ def _restore_external(fields, metadata, rows, scale, points):
                                        'tra': fields['tra'][rows]}
 
 
-def _mat_strings(header, cells):
-    return tuple(mat_string(header[ref]) for ref in cells[()].ravel())
-
-
-def _index_labels(available, required):
-    lookup = {name: i for i, name in enumerate(available)}
-    if len(lookup) != len(available) or not set(required).issubset(lookup):
-        raise ValueError("Channel labels are duplicated or missing in the SPM files.")
-    return [lookup[name] for name in required]
-
-
 def _read_gain_cache(cache, expected_hash):
     if h5py.is_hdf5(str(cache)):
         with h5py.File(str(cache), 'r') as header:
             if expected_hash is not None:
                 raise ValueError("Expected a laMEG version-1 MATLAB v5 external gain cache.")
-            return np.asarray(header['G']).T, _mat_strings(header, header['label']), {}
+            return np.asarray(header['G']).T, mat_strings(header['label']), {}
     keys = ['G', 'label']
     if expected_hash is not None:
         keys += ['requested_m', 'positions_m', 'normals', 'provenance', 'channel_units',
                  'coilpos', 'coilori', 'tra', 'format_version', 'allow_nominal_ctf_coils']
     fields = loadmat(str(cache), variable_names=keys)
     return fields.pop('G'), cell_strings(fields.pop('label')), fields
-
-
-def _mat_matrix(node):
-    if isinstance(node, h5py.Dataset):
-        return node[()].T
-    return h5_to_csc(node).toarray()
