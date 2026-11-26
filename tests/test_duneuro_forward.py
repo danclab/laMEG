@@ -18,8 +18,8 @@ from tests.test_forward import _mesh
 @pytest.fixture(name='registration')
 def make_registration(tmp_path):
     """Two signed laminar meshes after an independent BEM support reduction."""
-    # The first triangle survives the FEM mask; the last vertex is in CSF at
-    # pial depth only. Vertex 2's direction is undefined in both GIfTIs.
+    # The first triangle survives each FEM mask. The last column fails one
+    # check at one depth. Vertex 2's direction is undefined in both GIfTIs.
     (tmp_path / 'example').mkdir()
     surfaces = LayerSurfaceSet('example', 2, subjects_dir=str(tmp_path))
     Path(surfaces.laminar_surf_dir).mkdir(parents=True)
@@ -76,9 +76,49 @@ def _recording_header(tmp_path, sensor_geometry, mri_to_head):
     return path
 
 
+def _mock_source_locations(monkeypatch, mesh, fem_m, native_tag):
+    """Exercise both independent source checks before the pickup solve."""
+    def compartments(model, positions):
+        assert model is mesh
+        np.testing.assert_allclose(positions, fem_m, atol=1e-14)
+        tags = np.full(len(positions), 2)
+        if native_tag is None:
+            tags[3] = 3  # Last pial vertex lies in CSF.
+        return tags
+
+    def native_tags(model, positions):
+        assert model is mesh
+        # A pial tissue exclusion makes its white counterpart ineligible too.
+        # Neither search nor transfer should see an undefined dipole moment.
+        indices = [0, 1, 4, 5] if native_tag is None else [0, 1, 3, 4, 5, 7]
+        np.testing.assert_allclose(positions, fem_m[indices], atol=1e-14)
+        tags = np.full(len(indices), 2)
+        if native_tag is not None:
+            tags[-1] = native_tag  # DUNEuro failed to confirm GM at white depth.
+        return tags
+
+    monkeypatch.setattr(_duneuro, 'source_compartments', compartments)
+    monkeypatch.setattr(_duneuro, 'native_source_tags', native_tags)
+
+
+def _assert_exclusions(report, native_tag):
+    # The last input-mesh vertex has original anatomical ID 5.
+    # Keep the source of the exclusion separate from inherited BEM exclusions.
+    if native_tag is None:
+        assert report['excluded_by_layer'] == {'pial': [0, 5, 6], 'white': [3]}
+        assert report['excluded_by_tissue'] == {'pial': [5], 'white': []}
+        assert report['excluded_by_native_search'] == {'pial': [], 'white': []}
+    else:
+        assert report['excluded_by_layer'] == {'pial': [0, 6], 'white': [3, 5]}
+        assert report['excluded_by_tissue'] == {'pial': [], 'white': []}
+        assert report['excluded_by_native_search'] == {'pial': [], 'white': [5]}
+    assert report['vertices_without_faces'] == []
+
+
+@pytest.mark.parametrize('native_tag', [None, 0, 3], ids=['pial_csf', 'native_miss', 'native_csf'])
 @pytest.mark.parametrize('from_recording', [True, False], ids=['spm_header', 'operator'])
 def test_fem_frames_channels_and_common_support(tmp_path, registration, monkeypatch,
-                                                from_recording):
+                                                from_recording, native_tag):
     """A gain-free SPM header and a comparison operator produce the same physical gains."""
     surfaces, reference = registration
     mri_to_fem = np.array([[0., -1., 0., 20.], [1., 0., 0., 10.],
@@ -89,11 +129,6 @@ def test_fem_frames_channels_and_common_support(tmp_path, registration, monkeypa
     geom = reference.sensor_geometry
     mesh = SimpleNamespace(conductivities={2: 0.33}, tetrahedra=np.array([[0, 1, 2, 3]]))
     monkeypatch.setattr(_duneuro, 'read_charm_mesh', lambda *args, **kwargs: mesh)
-
-    def compartments(model, positions):
-        assert model is mesh
-        np.testing.assert_allclose(positions, fem_m, atol=1e-14)
-        return np.array([2, 2, 2, 3, 2, 2, 2, 2])  # CHARM GM=2, CSF=3
 
     def physical_gain(model, positions, moments, coils, normals, weights, *,
                       n_jobs, output_dir, verbose):
@@ -111,7 +146,7 @@ def test_fem_frames_channels_and_common_support(tmp_path, registration, monkeypa
         np.testing.assert_array_equal(weights, geom['tra'][:, :2])
         return np.array([[2., -3., 4., -5.], [6., -7., 8., -9.]])
 
-    monkeypatch.setattr(_duneuro, 'source_compartments', compartments)
+    _mock_source_locations(monkeypatch, mesh, fem_m, native_tag)
     monkeypatch.setattr(_duneuro, 'solve_forward', physical_gain)
     options = ({'reference': _recording_header(tmp_path, geom, reference.mri_to_head_mm),
                 'inversion_idx': 1}
@@ -143,7 +178,7 @@ def test_fem_frames_channels_and_common_support(tmp_path, registration, monkeypa
         fitted.validate_mesh(None, fem.surfaces.get_mesh_path())
     fem.operator.validate_mesh('white', fem.surfaces.get_mesh_path('white'))
     report = json.loads(fem.manifest.read_text(encoding='utf-8'))
-    assert report['excluded_by_layer'] == {'pial': [0, 5, 6], 'white': [3]}
+    _assert_exclusions(report, native_tag)
     assert report['original_vertices'] == [1, 2, 4]
     # A matrix whose channel/column counts happen to match is insufficient.
     # A different source order is rejected even on an equal-sized input mesh.

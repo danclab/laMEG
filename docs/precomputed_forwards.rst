@@ -218,11 +218,20 @@ multiple workers from a standalone Python or Jupyter process.
 
 The fitted patch-based St. Venant model uses the signed cortical link vectors.
 DUNEuro currently marks this source model experimental.
-A column must lie in CHARM gray matter at every requested depth and belong to
-a surviving cortical triangle. This can remove substantial portions of the
-cortex at the pial or white boundary. Inspect the count and the original
-vertex IDs in ``prepared.manifest`` when interpreting a comparison. The
-simulator and all three inversions in Tutorial 10 use this final surface set.
+Before computing any pickup transfer matrices, laMEG locates the cortical
+positions in CHARM gray matter (tissue tag 2). It checks candidate dipoles
+with DUNEuro's own element search on a separate copy of the grid. On a
+nonconvex mesh this search can fail even for a position inside a gray-matter
+tetrahedron. laMEG releases the search grid before building the forward solver.
+
+A column must pass the checks at every requested depth and belong to a
+surviving cortical triangle. This can remove substantial portions of the
+cortex at the pial or white boundary. The file at ``prepared.manifest``
+lists original vertex IDs by depth. ``excluded_by_tissue`` records the
+anatomical tissue exclusions. ``excluded_by_native_search`` records
+positions where DUNEuro could not confirm gray matter. ``vertices_without_faces``
+lists remaining vertices that lost all their triangles. The simulator and
+all three inversions in Tutorial 10 use the same retained cortical columns.
 
 External solvers
 ----------------

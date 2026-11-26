@@ -247,8 +247,33 @@ def _write_surfaces(surfaces, prepared, meshes, retained, input_count, mesh_opti
     nib.save(_subset_gifti(combined, selected), target)
 
 
+def _native_exclusions(native_rejections, masks, input_ids):
+    """Translate native search failures into original per-layer cortical vertex IDs."""
+    if native_rejections is None:
+        return {name: [] for name in masks}
+    if set(native_rejections) != set(masks):
+        raise ValueError("Native search masks must cover every cortical layer.")
+    native = {}
+    for name, rejected in native_rejections.items():
+        rejected = np.asarray(rejected)
+        if (rejected.dtype != bool or rejected.shape != input_ids.shape
+                or np.any(rejected & masks[name])):
+            raise ValueError("Native search rejections must identify excluded input vertices.")
+        native[name] = input_ids[rejected].tolist()
+    return native
+
+
+def _fem_vertices_on_faces(available, faces, input_ids):
+    """Keep available columns that can be used for patch simulation and smoothing."""
+    # A retained triangle must still have all three original corners. Every other
+    # available vertex is isolated after intersecting the masks across depths.
+    connected = np.zeros_like(available)
+    connected[faces[available[faces].all(axis=1)]] = True
+    return connected, input_ids[available & ~connected].tolist()
+
+
 def prepare_subset(surfaces, masks, output_dir, mesh_options, make_operator, *,
-                   solver='DUNEuro', meshes=None):
+                   solver='DUNEuro', meshes=None, native_rejections=None):
     """Intersect layer masks, write consistent meshes, then build a gain on retained vertices."""
     layers = surfaces.get_layer_names()
     if set(masks) != set(layers):
@@ -271,18 +296,18 @@ def prepare_subset(surfaces, masks, output_dir, mesh_options, make_operator, *,
     omitted = {name: input_ids[~masks[name]].tolist() for name in layers}
     excluded = {name: sorted(set(omitted[name]).union(
         parent.excluded_by_layer[name] if parent else [])) for name in layers}
+    native = _native_exclusions(native_rejections, masks, input_ids)
+    native_count = sum(map(len, native.values()))
+    native_message = (f" The native gray-matter check rejected {native_count} of the candidate "
+                      "dipoles." if native_count else "")
     isolated = []
     if solver == 'DUNEuro':
-        # The GM mask can leave isolated points with no cortical neighbourhood
-        # for patch simulation or smoothing. Retain vertices on surviving faces.
-        faces = meshes[layers[0]].agg_data('triangle')
-        connected = np.zeros(input_count, dtype=bool)
-        connected[faces[available[faces].all(axis=1)]] = True
-        isolated = input_ids[available & ~connected].tolist()
-        available &= connected
+        available, isolated = _fem_vertices_on_faces(
+            available, meshes[layers[0]].agg_data('triangle'), input_ids)
     retained = np.flatnonzero(available)
     if retained.size == 0:
-        raise ValueError(f"The {solver} forwards have no common cortical vertices on a mesh face.")
+        raise ValueError(f"The {solver} forwards have no common cortical vertices on a mesh face."
+                         f"{native_message}")
     original_ids = input_ids[retained]
     original_ids.setflags(write=False)
     support = ForwardSupport(original_count, original_ids, excluded)
@@ -309,15 +334,19 @@ def prepare_subset(surfaces, masks, output_dir, mesh_options, make_operator, *,
                   'original_n_columns': original_count, 'original_vertices': original_ids.tolist(),
                   'excluded_by_layer': excluded}
         if solver == 'DUNEuro':
-            report.update(solver=solver, excluded_by_tissue=omitted,
-                          vertices_without_faces=isolated)
+            # Keep the anatomical tissue test separate from the solver's lookup.
+            # A native search can fail for a point inside a gray-matter tetrahedron.
+            tissue = {name: sorted(set(omitted[name]).difference(native[name])) for name in layers}
+            report.update(solver=solver, excluded_by_tissue=tissue,
+                          excluded_by_native_search=native, vertices_without_faces=isolated)
             if parent is not None:
                 report['input_manifest'] = str(Path(surfaces.laminar_surf_dir) / manifest.name)
         manifest.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
         if len(retained) != original_count:
             counts = ', '.join(f"{name}: {len(ids)}" for name, ids in excluded.items() if ids)
             warnings.warn(f"Using {len(retained)} of {original_count} original cortical vertices "
-                          f"at every depth after {solver} preparation ({counts}). See {manifest}.",
+                          f"at every depth after {solver} preparation ({counts})."
+                          f"{native_message} See {manifest}.",
                           UserWarning, stacklevel=3)
         rollback.pop_all()
     return PreparedForward(prepared, operator, support, manifest, surfaces, dict(mesh_options))

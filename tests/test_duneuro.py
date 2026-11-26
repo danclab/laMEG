@@ -63,6 +63,60 @@ def test_unrecognized_tissue_requires_explicit_conductivity(tmp_path):
     assert mesh.conductivities == {42: 0.19}
 
 
+def test_native_search_on_nonconvex_mesh(tmp_path):
+    """Match native source projection on the inside edge of a U-shaped conductor."""
+    pytest.importorskip('duneuropy', reason='requires the compiled DUNEuro Python binding')
+    # Seven 10 mm cubes form a connected U. Split each cube into six tetrahedra.
+    # A walk between the two arms can hit the external boundary across the gap.
+    cubes = np.array([(0, 0, 0), (0, 1, 0), (0, 2, 0), (1, 0, 0),
+                      (2, 0, 0), (2, 1, 0), (2, 2, 0)])
+    offsets = [np.vstack(([0, 0, 0], np.cumsum(order, axis=0)))
+               for order in permutations(np.eye(3, dtype=int))]
+    corners = cubes[None, :, None, :] + np.array(offsets)[:, None, :, :]
+    points_mm, ids = np.unique(corners.reshape(-1, 3), axis=0, return_inverse=True)
+    points_mm = points_mm.astype(float) * 10.
+    tets = ids.reshape(-1, 4)
+    inverted = np.linalg.det(points_mm[tets[:, 1:]] - points_mm[tets[:, :1]]) < 0
+    tets[inverted, :2] = tets[inverted, 1::-1]
+    # Distinct tissue labels remain distinguishable with equal conductivities.
+    tags = np.full(len(tets), 2)
+    tags[1] = 8
+    path = tmp_path / 'u-shaped.msh'
+    _write_volume(path, points_mm, tets, tags)
+    mesh = _duneuro.read_charm_mesh(path, {2: 0.33, 8: 0.33})
+    sources = mesh.points_m[mesh.tetrahedra[[0, 1, 9]]].mean(axis=1)
+    np.testing.assert_array_equal(_duneuro.source_compartments(mesh, sources), [2, 8, 2])
+
+    # The third point is a true tetrahedron centroid. The legacy native solver
+    # raises the same edge-hopping error as on a CHARM head. Take the outcome
+    # from the installed solver so an improved locator can retain this dipole.
+    expected = [2, 8, 2]
+    try:
+        _duneuro.solve_forward(mesh, sources[2:], np.array([[1., 0., 0.]]),
+                               np.array([[0.05, 0.03, 0.04]]), np.array([[0., 0., 1.]]), np.eye(1))
+    except RuntimeError as exc:
+        if 'coordinate is outside of the grid, or grid is not convex' not in str(exc):
+            raise
+        expected[2] = 0
+    np.testing.assert_array_equal(_duneuro.native_source_tags(mesh, sources), expected)
+
+
+def test_native_search_propagates_other_errors(monkeypatch):
+    """A failed native allocation must abort rather than exclude a cortical column."""
+    mesh = SimpleNamespace(points_m=np.eye(4, 3), tetrahedra=np.array([[0, 1, 2, 3]]),
+                           tissue_tags=np.array([2]), conductivities={2: 0.33})
+
+    def fail_lookup(_dipole):
+        raise RuntimeError('native allocation failed')
+
+    stats = SimpleNamespace(conductivity=fail_lookup)
+    dune = SimpleNamespace(DipoleStatistics3D=lambda _config: stats,
+                           Dipole3d=lambda position, moment: (position, moment))
+    monkeypatch.setattr(_duneuro, '_bindings', lambda: dune)
+    with pytest.raises(RuntimeError, match='native allocation failed'):
+        _duneuro.native_source_tags(mesh, np.array([[0.25, 0.25, 0.25]]))
+
+
 def test_missing_python_binding(monkeypatch):
     """Give a Python-specific setup error when the optional extension is absent."""
     monkeypatch.setitem(sys.modules, 'duneuropy', None)
@@ -243,10 +297,13 @@ def test_real_layer_operator_matches_spherical_gain(tmp_path, sphere_path, monke
     # Each channel uses both pickups, with positive and negative weights.
     # Splitting the coils across two independent drivers must preserve every
     # dipole's gain, including the compensation applied across the two groups.
-    def unexpected_local_driver():
+    def unexpected_local_driver(*_args):
         pytest.fail('The parallel solve loaded the native binding in the parent process.')
 
-    monkeypatch.setattr(_duneuro, '_bindings', unexpected_local_driver)
+    # Screening can query native dipole statistics in the parent. The expensive
+    # transfer solves and their native MEEG drivers still belong to the workers.
+    dune = _duneuro._bindings()  # pylint: disable=protected-access
+    monkeypatch.setattr(dune, 'MEEGDriver3d', unexpected_local_driver)
     parallel_dir = tmp_path / 'parallel'
     parallel = compute_duneuro_forward(surfaces, sphere_path, reference=recording,
                                        inversion_idx=1, output_dir=parallel_dir, n_jobs=2)

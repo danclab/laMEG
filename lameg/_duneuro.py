@@ -157,6 +157,61 @@ def _driver_config(mesh):
     }
 
 
+def native_source_tags(mesh, source_rr_m):
+    """Return the CHARM tag found by DUNEuro at each point, or zero on a failed lookup."""
+    tags = np.zeros(len(source_rr_m), dtype=mesh.tissue_tags.dtype)
+    if tags.size == 0:
+        return tags
+    dune = _bindings()
+    if not hasattr(dune, 'DipoleStatistics3D'):
+        raise ImportError("Install a duneuro-py build exposing DipoleStatistics3D to "
+                          "check source locations before computing the MEG transfer matrix.")
+
+    # The statistics object calls the same element search as the fitted St. Venant
+    # source model. Encode each tissue's CHARM tag in its diagonal tensor here:
+    # equal physical conductivities would otherwise make two tissues indistinguishable.
+    # Give this query its own configuration so that the subsequent FEM solve
+    # gets the mesh's physical conductivities.
+    config = _driver_config(mesh)
+    config['volume_conductor']['tensors']['conductivities'] = np.array(
+        sorted(mesh.conductivities), dtype=float)
+    statistics = dune.DipoleStatistics3D(config)
+    for index, position in enumerate(source_rr_m):
+        # Only the position enters this query. The actual simulation uses the
+        # signed cortical link vector supplied to the forward calculation.
+        dipole = dune.Dipole3d(position.tolist(), [1., 0., 0.])
+        try:
+            tensor = statistics.conductivity(dipole)
+        except RuntimeError as exc:
+            # An edge walk can hit the boundary of a nonconvex head even for a
+            # point that VTK placed inside a tetrahedron. Propagate other errors.
+            if 'coordinate is outside of the grid, or grid is not convex' in str(exc):
+                continue
+            raise
+        tag = tensor[0][0]
+        if tag not in mesh.conductivities:
+            raise ValueError(f"DUNEuro returned an unexpected tissue tag {tag}.")
+        tags[index] = tag
+    return tags
+
+
+def fem_source_masks(mesh, tissues, source_rr_m, directions, layers, verbose=False):
+    """Intersect CHARM gray matter and DUNEuro's native lookup for modelled dipoles."""
+    gray = tissues == 2
+    # Gains use common cortical columns. A column already outside GM at another
+    # layer cannot reach the transfer solve. Zero moments need no native source.
+    defined = np.any(directions != 0, axis=1).reshape(gray.shape)
+    candidates = defined & gray.all(axis=0)
+    rejected = np.zeros_like(gray)
+    if candidates.any():
+        if verbose:
+            print(f'Checking {candidates.sum():,} candidate dipoles with the DUNEuro '
+                  'element search before the pickup solve.', flush=True)
+        rejected[candidates] = native_source_tags(mesh, source_rr_m[candidates.ravel()]) != 2
+    masks = dict(zip(layers, gray & ~rejected))
+    return masks, dict(zip(layers, rejected))
+
+
 def _primary_field(positions, moments, coils, projections):
     """Analytic dipole field along each pickup axis, without the common mu0/(4 pi) factor."""
     delta = coils[None, :, :] - positions[:, None, :]
@@ -186,6 +241,13 @@ def _pickup_fields(mesh, source_rr_m, source_nn, coil_rr_m, coil_nn, verbose=Fal
     transfer, _ = driver.computeMEGTransferMatrix(
         {'solver': {'reduction': 1e-10, 'numberOfThreads': 1}, 'numberOfThreads': 1})
 
+    yield from _project_sources(driver, transfer, source_rr_m, source_nn, coil_rr_m, coil_nn,
+                                verbose=verbose)
+
+
+def _project_sources(driver, transfer, source_rr_m, source_nn, coil_rr_m, coil_nn, verbose=False):
+    """Project signed dipoles using the transfer matrix built by this same native driver."""
+    dune = _bindings()
     # Match the 20-mm St Venant reference length to our mesh's SI coordinates.
     # The patch is assembled from the closest node's neighboring tetrahedra of
     # the same conductivity as the containing cell, without moving the dipole.
@@ -198,7 +260,7 @@ def _pickup_fields(mesh, source_rr_m, source_nn, coil_rr_m, coil_nn, verbose=Fal
     # DUNEuro builds a whole-grid neighborhood map on each call to applyMEGTransfer.
     # Reuse that map for more dipoles. The Python binding returns a list of lists
     # of floats, so bound both the dipole count and the total number of returned values.
-    batch_size = min(4096, max(1, (2 ** 21) // len(coils)))
+    batch_size = min(4096, max(1, (2 ** 21) // len(coil_rr_m)))
     if verbose:
         print(f'Applying the transfer matrix to {len(source_rr_m):,} dipoles.', flush=True)
     for start in range(0, len(source_rr_m), batch_size):
@@ -208,7 +270,7 @@ def _pickup_fields(mesh, source_rr_m, source_nn, coil_rr_m, coil_nn, verbose=Fal
         native_fields, timings = driver.applyMEGTransfer(transfer, dipoles, config)
         secondary = np.asarray(native_fields)
         del native_fields, timings, dipoles
-        if secondary.shape != (stop - start, len(coils)) or not np.isfinite(secondary).all():
+        if secondary.shape != (stop - start, len(coil_rr_m)) or not np.isfinite(secondary).all():
             raise ValueError("DUNEuro returned an invalid dipole-by-coil field.")
 
         # Keep the 3-D dipole-to-pickup displacement arrays small. The primary

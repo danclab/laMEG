@@ -458,8 +458,9 @@ def compute_duneuro_forward(surfaces, mesh_fname, *, reference, output_dir, inve
     Returns a prepared operator, GIfTIs and original vertex IDs. The fitted
     continuous Galerkin solve uses a patch-based St. Venant dipole at its
     requested position. Retained cortical columns lie in gray matter (CHARM
-    tag 2) at every depth and belong to a surviving cortical triangle, so
-    the same surfaces can be used for patch smoothing. Call the result's
+    tag 2) at every depth and belong to a surviving cortical triangle. Before
+    the pickup solve, DUNEuro must also locate each defined dipole in gray
+    matter. The manifest records which lookup excluded each vertex. Call the result's
     `restrict_operator` on another operator on the input surfaces to compare
     gains on the identical locations.
     """
@@ -494,7 +495,8 @@ def compute_duneuro_forward(surfaces, mesh_fname, *, reference, output_dir, inve
         print(f'Locating {len(sources):,} dipoles in {len(mesh.tetrahedra):,} tetrahedra.',
               flush=True)
     tissues = _duneuro.source_compartments(mesh, sources).reshape(len(layers), n_columns)
-    masks = {name: tissue == 2 for name, tissue in zip(layers, tissues)}
+    masks, native_rejections = _duneuro.fem_source_masks(
+        mesh, tissues, sources, head_directions, layers, verbose=verbose)
 
     # Skip pickups absent from every recorded row. Keep all active reference
     # coils: their signed coefficients implement the acquisition compensation.
@@ -542,7 +544,8 @@ def compute_duneuro_forward(surfaces, mesh_fname, *, reference, output_dir, inve
             mri_to_head_mm=mri_to_head, faces=faces, sensor_geometry=sensors,
             provenance=origin, allow_nominal_ctf_coils=nominal)
 
-    return prepare_subset(surfaces, masks, output_dir, mesh_options, make_operator)
+    return prepare_subset(surfaces, masks, output_dir, mesh_options, make_operator,
+                          native_rejections=native_rejections)
 
 
 def prepare_mne_forward(forwards, surfaces, output_dir, *, reference=None, channel_units=None,
