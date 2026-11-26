@@ -56,6 +56,18 @@ def make_registration(tmp_path):
     return surfaces, reference
 
 
+def test_mixed_layer_sizes_before_loading_charm(tmp_path, registration):
+    """Report an already cropped single-layer file before any FEM work is needed."""
+    surfaces, reference = registration
+    # The combined mesh has four columns. Simulate a white surface left over
+    # from a preparation that retained only its first triangle.
+    points = reference.layer('white').requested_mri_mm[:3]
+    _mesh(surfaces.get_mesh_path('white'), points, [[0, 1, 2]], np.ones((3, 3)))
+    with pytest.raises(ValueError, match='white mesh .* has 3 vertices.*4 vertices per layer'):
+        compute_duneuro_forward(surfaces, tmp_path / 'unread.msh', reference=reference,
+                                output_dir=tmp_path)
+
+
 def _recording_header(tmp_path, sensor_geometry, mri_to_head):
     """Write just the coregistration, good channels and SI pickup geometry to disk."""
     # The recording rows are B, A. SPM's physical sensor table uses the

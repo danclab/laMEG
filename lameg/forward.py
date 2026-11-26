@@ -428,6 +428,20 @@ def _fem_geometry(reference, inversion_idx, mesh_path, layers):
             reference.mri_to_head_mm, reference.allow_nominal_ctf_coils)
 
 
+def _fem_layer_images(surfaces, layers, mesh_options, n_columns):
+    """Read the individual layer meshes before building the CHARM conductor."""
+    images = {}
+    for layer in layers:
+        path = surfaces.get_mesh_path(layer_name=layer, **mesh_options)
+        image = nib.load(path)
+        count = len(image.agg_data('pointset'))
+        if count != n_columns:
+            raise ValueError(f"{layer} mesh {path} has {count} vertices, but the combined "
+                             f"mesh has {n_columns} vertices per layer.")
+        images[layer] = image
+    return images
+
+
 def compute_duneuro_forward(surfaces, mesh_fname, *, reference, output_dir, inversion_idx=0,
                             conductivities=None, mri_to_fem_mm=None, stage='ds',
                             orientation='link_vector', fixed=True, n_jobs=1, verbose=False):
@@ -480,6 +494,9 @@ def compute_duneuro_forward(surfaces, mesh_fname, *, reference, output_dir, inve
     points = _numeric(points, (None, 3), 'source MRI positions')
     normals = _numeric(normals, points.shape, 'source directions')
     n_columns = len(points) // len(layers)
+    # The gain is computed in combined-mesh order, then written against these
+    # per-layer images. Catch a mixed full-size and reduced mesh before the solve.
+    images = _fem_layer_images(surfaces, layers, mesh_options, n_columns)
     mri_to_head = _affine_mm(mri_to_head, 'mri_to_head_mm', rigid=True)
     head_directions = _directions(normals, mri_to_head)
     # Transform the sources from native MRI mm and the pickups from head metres
@@ -545,7 +562,7 @@ def compute_duneuro_forward(surfaces, mesh_fname, *, reference, output_dir, inve
             provenance=origin, allow_nominal_ctf_coils=nominal)
 
     return prepare_subset(surfaces, masks, output_dir, mesh_options, make_operator,
-                          native_rejections=native_rejections)
+                          meshes=images, native_rejections=native_rejections)
 
 
 def prepare_mne_forward(forwards, surfaces, output_dir, *, reference=None, channel_units=None,

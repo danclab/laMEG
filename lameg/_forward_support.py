@@ -153,12 +153,17 @@ def _full_source_ids(forward, points, head, explicit, layer):
 
 
 def _subset_gifti(mesh, retained):
-    """Filter oriented GIfTI geometry, retaining data-array and coordinate-system metadata."""
-    vertices, = mesh.get_arrays_from_intent('NIFTI_INTENT_POINTSET')
-    faces, = mesh.get_arrays_from_intent('NIFTI_INTENT_TRIANGLE')
-    normals, = mesh.get_arrays_from_intent('NIFTI_INTENT_VECTOR')
+    """Build a filtered GIfTI while keeping the input image in its original vertex order."""
     if len(mesh.darrays) != 3:
         raise ValueError("Expected a laMEG surface with position, triangle and direction arrays.")
+    # Callers can reuse the same loaded image with another anatomical mask. Give
+    # the output its own array headers before replacing their data and dimensions.
+    # The indexing below creates new payloads, so no full-mesh data copy is needed.
+    subset = copy(mesh)
+    subset.darrays = [copy(array) for array in mesh.darrays]
+    vertices, = subset.get_arrays_from_intent('NIFTI_INTENT_POINTSET')
+    faces, = subset.get_arrays_from_intent('NIFTI_INTENT_TRIANGLE')
+    normals, = subset.get_arrays_from_intent('NIFTI_INTENT_VECTOR')
     if normals.data.shape != vertices.data.shape or len(retained) > len(vertices.data):
         raise ValueError("Invalid laMEG surface geometry or signed directions.")
     triangles = faces.data
@@ -179,9 +184,9 @@ def _subset_gifti(mesh, retained):
     normals.data = normals.data[retained]
     # The GIfTI header stores dimensions separately from the array payload. Update
     # both so readers see the reduced shapes and can use the original coordinate metadata.
-    for array in mesh.darrays:
+    for array in subset.darrays:
         array.dims = list(array.data.shape)
-    return mesh
+    return subset
 
 
 def _match_layers(forwards, surfaces, vertices, mesh_options, options):
