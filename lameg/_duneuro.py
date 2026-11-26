@@ -150,7 +150,10 @@ def _driver_config(mesh):
                         'conductivities': np.array([mesh.conductivities[t] for t in tissue_ids])}
         },
         'solver': {'verbose': 0},
-        'meg': {'type': 'physical', 'intorderadd': 3}
+        # Older DUNEuro builds cache a mesh-sized flux integral for every
+        # pickup when the coils are registered. The transfer solve needs each
+        # integral only once, so assemble it on demand on the full mesh.
+        'meg': {'type': 'physical', 'intorderadd': 3, 'cache': {'enable': False}}
     }
 
 
@@ -173,10 +176,11 @@ def solve_forward(mesh, source_rr_m, source_nn, coil_rr_m, coil_nn, channel_weig
     coils = [dune.FieldVector3D(p.tolist()) for p in coil_rr_m]
     projections = [[dune.FieldVector3D(n.tolist())] for n in coil_nn]
     driver.setCoilsAndProjections(coils, projections)
-    # Each parallel transfer solve allocates a separate mesh-scale solver. Use
-    # one worker so a many-core host does not exhaust RAM on a full CHARM head.
+    # Each parallel transfer solve allocates mesh-sized work arrays. Older
+    # bindings read the worker count from solver; newer ones read it here
+    # at the top level. Set both when solving on a full CHARM head.
     transfer, _ = driver.computeMEGTransferMatrix(
-        {'solver': {'reduction': 1e-10}, 'numberOfThreads': 1})
+        {'solver': {'reduction': 1e-10, 'numberOfThreads': 1}, 'numberOfThreads': 1})
 
     # Match the 20-mm St Venant reference length to our mesh's SI coordinates.
     # The patch is assembled from the closest node's neighboring tetrahedra of
@@ -185,7 +189,8 @@ def solve_forward(mesh, source_rr_m, source_nn, coil_rr_m, coil_nn, channel_weig
                     'restrict': True, 'numberOfMoments': 3, 'mixedMoments': True,
                     'referenceLength': 0.020, 'relaxationFactor': 1e-6,
                     'weightingExponent': 1, 'quadratureRuleOrder': 2}
-    config = {'source_model': source_model, 'post_process_meg': False}
+    # A St. Venant worker also needs a mesh-wide element-neighborhood map.
+    config = {'source_model': source_model, 'post_process_meg': False, 'numberOfThreads': 1}
     gain = np.empty((channel_weights.shape[0], len(source_rr_m)))
     for start in range(0, len(source_rr_m), 256):
         block = slice(start, start + 256)

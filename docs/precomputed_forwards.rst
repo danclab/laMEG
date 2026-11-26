@@ -182,6 +182,8 @@ For an MPI-enabled DUNE build, initialize its matching MPI runtime first
 (e.g., ``from mpi4py import MPI``). Serial builds can run directly.
 Whole-head calculations need memory for the volume solver and its transfer
 matrix, which stores one double per active pickup and FEM degree of freedom.
+laMEG assembles each pickup's flux integral on demand and uses one solver
+worker so that these mesh-sized work arrays can be reused.
 SPM performs the simulations and inversions.
 
 Pass the coregistered SPM recording as ``reference``. This supplies the

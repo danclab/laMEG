@@ -88,6 +88,8 @@ def test_primary_secondary_and_signed_coil_response(monkeypatch):
 
         def __init__(self, config):
             assert config['element_type'] == 'tetrahedron'
+            # Older bindings otherwise allocate one mesh-sized flux integral per pickup.
+            assert config['meg']['cache']['enable'] is False
 
         def setCoilsAndProjections(self, points, projections):  # pylint: disable=invalid-name
             """Check the coil positions and the direction of each projection."""
@@ -96,6 +98,7 @@ def test_primary_secondary_and_signed_coil_response(monkeypatch):
 
         def computeMEGTransferMatrix(self, config):  # pylint: disable=invalid-name
             """Record each expensive transfer solve independently of the dipoles."""
+            assert config['numberOfThreads'] == config['solver']['numberOfThreads'] == 1
             transfers.append(config)
             return np.ones((2, 5)), {}
 
@@ -103,6 +106,7 @@ def test_primary_secondary_and_signed_coil_response(monkeypatch):
             """Use signed, nonzero volume-current responses to test the total field."""
             assert np.asarray(transfer).size == 10
             assert 'source_model' in config
+            assert config['numberOfThreads'] == 1
             return [moment[0] * np.array([20., -35.]) for _, moment in dipoles], {}
 
     def dipole(position, moment=None):
