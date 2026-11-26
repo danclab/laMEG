@@ -152,9 +152,11 @@ print(f'{bem.n_columns:,} of {surf_set.get_vertices_per_layer():,} vertices reta
 # ------------------------------
 #
 # The CHARM mesh supplies the tissue compartments. The coregistered recording supplies the measured CTF coil positions and channel weights. DUNEuro computes the field for a unit dipole along each signed link vector. The FEM uses `SimNIBS tissue conductivities <https://simnibs.github.io/simnibs/build/html/documentation/conductivity.html>`_ in S/m. We keep the cortical columns whose dipoles are in gray matter at every depth and use those same columns for all three models.
+#
+# We'll use one solver worker and print progress. If your allocation has a second core, memory for a second solver and temporary disk space in ``tmp_dir``, you can pass ``n_jobs=2`` to split the pickups between two workers.
 
 fem_prepared = compute_duneuro_forward(
-    surfaces, charm_fname, reference=base_fname, output_dir=tmp_dir,
+    surfaces, charm_fname, reference=base_fname, output_dir=tmp_dir, verbose=True,
 )
 fem = fem_prepared.operator
 bem = fem_prepared.restrict_operator(bem)

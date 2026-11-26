@@ -430,7 +430,7 @@ def _fem_geometry(reference, inversion_idx, mesh_path, layers):
 
 def compute_duneuro_forward(surfaces, mesh_fname, *, reference, output_dir, inversion_idx=0,
                             conductivities=None, mri_to_fem_mm=None, stage='ds',
-                            orientation='link_vector', fixed=True):
+                            orientation='link_vector', fixed=True, n_jobs=1, verbose=False):
     """Compute fixed-orientation MEG gains on CHARM gray matter with duneuro-py.
 
     Supply the coregistered SPM recording (the .mat filename) as `reference`.
@@ -450,6 +450,11 @@ def compute_duneuro_forward(surfaces, mesh_fname, *, reference, output_dir, inve
     CHARM's T1 world coordinates in `mri_to_fem_mm` (mm to mm). Omitting
     it assumes both already use the same physical scanner-RAS coordinates.
 
+    Set `n_jobs` to the number of independent pickup groups to solve concurrently.
+    The default of one uses a single driver. Each additional process has its own
+    FEM grid and solver. Parallel runs also use scratch space under `output_dir`.
+    Set `verbose=True` for progress messages.
+
     Returns a prepared operator, GIfTIs and original vertex IDs. The fitted
     continuous Galerkin solve uses a patch-based St. Venant dipole at its
     requested position. Retained cortical columns lie in gray matter (CHARM
@@ -461,6 +466,7 @@ def compute_duneuro_forward(surfaces, mesh_fname, *, reference, output_dir, inve
     from . import _duneuro  # pylint: disable=import-outside-toplevel
     from ._forward_support import prepare_subset  # pylint: disable=import-outside-toplevel
 
+    _duneuro.validate_n_jobs(n_jobs)
     layers = _labels(surfaces.get_layer_names(), 'layer_names')
     mesh_options = {'stage': stage, 'orientation': orientation, 'fixed': fixed}
     mesh_path = surfaces.get_mesh_path(**mesh_options)
@@ -481,7 +487,12 @@ def compute_duneuro_forward(surfaces, mesh_fname, *, reference, output_dir, inve
                                'mri_to_fem_mm', rigid=True)
     head_to_fem = native_to_fem @ np.linalg.inv(mri_to_head)
     sources = nib.affines.apply_affine(native_to_fem, points) / 1000.
+    if verbose:
+        print(f'Reading CHARM mesh {mesh_fname}.', flush=True)
     mesh = _duneuro.read_charm_mesh(mesh_fname, conductivities)
+    if verbose:
+        print(f'Locating {len(sources):,} dipoles in {len(mesh.tetrahedra):,} tetrahedra.',
+              flush=True)
     tissues = _duneuro.source_compartments(mesh, sources).reshape(len(layers), n_columns)
     masks = {name: tissue == 2 for name, tissue in zip(layers, tissues)}
 
@@ -503,9 +514,10 @@ def compute_duneuro_forward(surfaces, mesh_fname, *, reference, output_dir, inve
         # A GIfTI can have an undefined (zero) link vector. Its signed moment
         # gives zero field. Never replace it with an arbitrary unit dipole.
         if np.any(defined):
-            gain = _duneuro.solve_forward(mesh, sources[columns[defined]],
-                                          orientations[defined] @ rotation.T,
-                                          coils, coil_dirs, sensors['tra'][:, active])
+            gain = _duneuro.solve_forward(
+                mesh, sources[columns[defined]], orientations[defined] @ rotation.T,
+                coils, coil_dirs, sensors['tra'][:, active], n_jobs=n_jobs,
+                output_dir=output_dir, verbose=verbose)
             if gain.shape != (len(scales), np.count_nonzero(defined)):
                 raise ValueError("DUNEuro gain rows or columns differ from the requested geometry.")
             gain *= scales

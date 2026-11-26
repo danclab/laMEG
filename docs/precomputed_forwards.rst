@@ -182,8 +182,8 @@ For an MPI-enabled DUNE build, initialize its matching MPI runtime first
 (e.g., ``from mpi4py import MPI``). Serial builds can run directly.
 Whole-head calculations need memory for the volume solver and its transfer
 matrix, which stores one double per active pickup and FEM degree of freedom.
-laMEG assembles each pickup's flux integral on demand and uses one solver
-worker so that these mesh-sized work arrays can be reused.
+laMEG assembles each pickup's flux integral on demand. By default, one
+worker solves all pickups and reuses the same FEM grid and solver.
 SPM performs the simulations and inversions.
 
 Pass the coregistered SPM recording as ``reference``. This supplies the
@@ -203,10 +203,18 @@ rigid registration in millimetres as ``mri_to_fem_mm``.
     # Run coregister once for this recording if it has not yet been registered.
     coregister(fid_coords, base_fname, surf_set, iskull_fname=skull_fname, spm_instance=spm)
     prepared = compute_duneuro_forward(
-        surf_set, charm_fname, reference=base_fname, output_dir=tmp_dir
+        surf_set, charm_fname, reference=base_fname, output_dir=tmp_dir, verbose=True
     )
     fem = prepared.operator
     surfaces = prepared.surfaces
+
+``verbose=True`` reports which stage is running. If your allocation has spare
+cores and memory, try ``n_jobs=2`` to solve two groups of pickups concurrently.
+Each worker needs memory for its own grid and solver. Parallel runs also write
+temporary pickup fields under ``output_dir``. Choose a disk-backed directory
+with eight bytes per active pickup per evaluated dipole for these fields,
+plus space for shared inputs. With an MPI-enabled DUNE build, launch
+multiple workers from a standalone Python or Jupyter process.
 
 The fitted patch-based St. Venant model uses the signed cortical link vectors.
 DUNEuro currently marks this source model experimental.

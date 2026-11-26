@@ -76,12 +76,18 @@ def test_primary_secondary_and_signed_coil_response(monkeypatch):
     # in normal CI, independently of the mesh reader and the compiled solver.
     mesh = SimpleNamespace(points_m=np.eye(4, 3), tetrahedra=np.array([[0, 1, 2, 3]]),
                            tissue_tags=np.array([2]), conductivities={2: 0.33})
-    source = np.array([[0., 0., 0.02], [0., 0., 0.02]])
-    directions = np.array([[1., 0., 0.], [-1., 0., 0.]])
+    # Use enough dipoles to cross the primary-field memory limit. The native
+    # solver can still share one mesh-wide source model across all of them.
+    source = np.tile([0., 0., 0.02], (514, 1))
+    directions = np.tile([1., 0., 0.], (len(source), 1))
+    # This sign pattern also crosses each 256-dipole boundary at a different phase.
+    directions[1::3, 0] = -1.
     coils = np.array([[0., 0., 0.12], [0., 0., 0.10]])
     coil_directions = np.array([[0., 1., 0.], [0., -1., 0.]])
     weights = np.array([[1., -0.5], [0., 1.]])
     transfers = []
+    applications = []
+    primary_sizes = []
 
     class Driver:
         """Return a known projected volume-current kernel for each signed dipole."""
@@ -107,6 +113,7 @@ def test_primary_secondary_and_signed_coil_response(monkeypatch):
             assert np.asarray(transfer).size == 10
             assert 'source_model' in config
             assert config['numberOfThreads'] == 1
+            applications.append(len(dipoles))
             return [moment[0] * np.array([20., -35.]) for _, moment in dipoles], {}
 
     def dipole(position, moment=None):
@@ -116,13 +123,29 @@ def test_primary_secondary_and_signed_coil_response(monkeypatch):
 
     binding = SimpleNamespace(MEEGDriver3d=Driver, FieldVector3D=np.asarray, Dipole3d=dipole)
     monkeypatch.setattr(_duneuro, '_bindings', lambda: binding)
+    primary_field = _duneuro._primary_field  # pylint: disable=protected-access
+
+    def primary_in_blocks(positions, moments, pickups, projections):
+        primary_sizes.append(len(positions))
+        return primary_field(positions, moments, pickups, projections)
+
+    monkeypatch.setattr(_duneuro, '_primary_field', primary_in_blocks)
     actual = _duneuro.solve_forward(mesh, source, directions, coils, coil_directions, weights)
     # Direct Biot–Savart at 0.10 m and 0.08 m gives projected kernels -100
     # and +156.25; subtract volume-current kernels +20 and -35 before applying
     # mu0/(4*pi). Reversing the signed dipole reverses both contributions.
-    expected_coils = 1e-7 * np.array([[-120., 120.], [191.25, -191.25]])
-    np.testing.assert_allclose(actual, weights @ expected_coils, rtol=1e-12, atol=1e-18)
+    expected_coils = 1e-7 * np.array([[-120.], [191.25]]) * directions[:, 0]
+    expected = weights @ expected_coils
+    np.testing.assert_allclose(actual, expected, rtol=1e-12, atol=1e-18)
     assert len(transfers) == 1
+    assert applications == [len(source)]
+    assert sum(primary_sizes) == len(source) and max(primary_sizes) < len(source)
+    # Requiring an explicit positive worker count prevents an accidental request
+    # for one full FEM driver per visible core (joblib's meaning of -1).
+    for invalid_count in (0, -1, True, 1.5):
+        with pytest.raises(ValueError, match='n_jobs'):
+            _duneuro.solve_forward(mesh, source, directions, coils, coil_directions, weights,
+                                   n_jobs=invalid_count)
 
 
 def _write_sphere(path):
@@ -182,7 +205,7 @@ def test_real_duneuro_spherical_meg(sphere_path):
     assert abs(gain[1, 1]) < 0.12 * primary_tangential
 
 
-def test_real_layer_operator_matches_spherical_gain(tmp_path, sphere_path):
+def test_real_layer_operator_matches_spherical_gain(tmp_path, sphere_path, monkeypatch):
     """Compute the analytic two-layer case directly from the recording, surfaces and FEM."""
     (tmp_path / 'example').mkdir()
     surfaces = LayerSurfaceSet('example', 2, subjects_dir=str(tmp_path))
@@ -216,3 +239,18 @@ def test_real_layer_operator_matches_spherical_gain(tmp_path, sphere_path):
     np.testing.assert_allclose(prepared.operator.gain, expected, rtol=0.05, atol=0)
     np.testing.assert_array_equal(prepared.support.original_vertices, [0, 1, 2])
     prepared.operator.validate_mesh(None, prepared.surfaces.get_mesh_path())
+
+    # Each channel uses both pickups, with positive and negative weights.
+    # Splitting the coils across two independent drivers must preserve every
+    # dipole's gain, including the compensation applied across the two groups.
+    def unexpected_local_driver():
+        pytest.fail('The parallel solve loaded the native binding in the parent process.')
+
+    monkeypatch.setattr(_duneuro, '_bindings', unexpected_local_driver)
+    parallel_dir = tmp_path / 'parallel'
+    parallel = compute_duneuro_forward(surfaces, sphere_path, reference=recording,
+                                       inversion_idx=1, output_dir=parallel_dir, n_jobs=2)
+    np.testing.assert_allclose(parallel.operator.gain, prepared.operator.gain,
+                               rtol=1e-6, atol=1e-10)
+    # Temporary pickup fields and shared arrays are only needed during the solve.
+    assert list(parallel_dir.iterdir()) == [Path(parallel.surfaces.laminar_surf_dir)]

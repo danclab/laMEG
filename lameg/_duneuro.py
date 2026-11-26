@@ -167,9 +167,11 @@ def _primary_field(positions, moments, coils, projections):
                      projections) / radii**3
 
 
-def solve_forward(mesh, source_rr_m, source_nn, coil_rr_m, coil_nn, channel_weights):
-    """Return channels x signed sources in physical SI units per A m using one transfer matrix."""
+def _pickup_fields(mesh, source_rr_m, source_nn, coil_rr_m, coil_nn, verbose=False):
+    """Yield (source slice, pickup x source field in T per A m) from one native driver."""
     dune = _bindings()
+    if verbose:
+        print(f'Building DUNEuro conductor for {len(coil_rr_m):,} physical pickups.', flush=True)
     driver = dune.MEEGDriver3d(_driver_config(mesh))
     # Each physical pickup has one projection direction. The signed channel
     # montage (including compensation) is applied after adding its primary field.
@@ -179,6 +181,8 @@ def solve_forward(mesh, source_rr_m, source_nn, coil_rr_m, coil_nn, channel_weig
     # Each parallel transfer solve allocates mesh-sized work arrays. Older
     # bindings read the worker count from solver; newer ones read it here
     # at the top level. Set both when solving on a full CHARM head.
+    if verbose:
+        print(f'Computing the transfer matrix for {len(coils):,} pickups.', flush=True)
     transfer, _ = driver.computeMEGTransferMatrix(
         {'solver': {'reduction': 1e-10, 'numberOfThreads': 1}, 'numberOfThreads': 1})
 
@@ -191,18 +195,53 @@ def solve_forward(mesh, source_rr_m, source_nn, coil_rr_m, coil_nn, channel_weig
                     'weightingExponent': 1, 'quadratureRuleOrder': 2}
     # A St. Venant worker also needs a mesh-wide element-neighborhood map.
     config = {'source_model': source_model, 'post_process_meg': False, 'numberOfThreads': 1}
-    gain = np.empty((channel_weights.shape[0], len(source_rr_m)))
-    for start in range(0, len(source_rr_m), 256):
-        block = slice(start, start + 256)
-        positions, moments = source_rr_m[block], source_nn[block]
-        dipoles = [dune.Dipole3d(p.tolist(), n.tolist()) for p, n in zip(positions, moments)]
-        secondary, _ = driver.applyMEGTransfer(transfer, dipoles, config)
-        secondary = np.asarray(secondary)
-        if secondary.shape != (len(dipoles), len(coils)) or not np.isfinite(secondary).all():
+    # DUNEuro builds a whole-grid neighborhood map on each call to applyMEGTransfer.
+    # Reuse that map for more dipoles. The Python binding returns a list of lists
+    # of floats, so bound both the dipole count and the total number of returned values.
+    batch_size = min(4096, max(1, (2 ** 21) // len(coils)))
+    if verbose:
+        print(f'Applying the transfer matrix to {len(source_rr_m):,} dipoles.', flush=True)
+    for start in range(0, len(source_rr_m), batch_size):
+        stop = min(start + batch_size, len(source_rr_m))
+        dipoles = [dune.Dipole3d(p.tolist(), n.tolist())
+                   for p, n in zip(source_rr_m[start:stop], source_nn[start:stop])]
+        native_fields, timings = driver.applyMEGTransfer(transfer, dipoles, config)
+        secondary = np.asarray(native_fields)
+        del native_fields, timings, dipoles
+        if secondary.shape != (stop - start, len(coils)) or not np.isfinite(secondary).all():
             raise ValueError("DUNEuro returned an invalid dipole-by-coil field.")
-        # DUNEuro integrates +sigma*grad(u), whereas the physical volume
-        # current is -sigma*grad(u). With distances in m and moments in A m,
-        # mu0/(4 pi) converts their difference into tesla at each pickup.
-        primary = _primary_field(positions, moments, coil_rr_m, coil_nn)
-        gain[:, block] = channel_weights @ ((primary - secondary).T * 1e-7)
+
+        # Keep the 3-D dipole-to-pickup displacement arrays small. The primary
+        # and volume-current terms have opposite signs; mu0/(4 pi) gives tesla.
+        for first in range(start, stop, 256):
+            block = slice(first, min(first + 256, stop))
+            primary = _primary_field(source_rr_m[block], source_nn[block], coil_rr_m, coil_nn)
+            primary -= secondary[first - start:block.stop - start]
+            primary *= 1e-7
+            yield block, primary.T
+        del secondary
+        if verbose:
+            print(f'Projected {stop:,} of {len(source_rr_m):,} dipoles.', flush=True)
+
+
+def validate_n_jobs(n_jobs):
+    """Reject implicit all-core counts before loading a full FEM mesh."""
+    if (isinstance(n_jobs, (bool, np.bool_)) or not isinstance(n_jobs, (int, np.integer))
+            or n_jobs < 1):
+        raise ValueError("n_jobs must be a positive integer.")
+
+
+def solve_forward(mesh, source_rr_m, source_nn, coil_rr_m, coil_nn, channel_weights, *,
+                  n_jobs=1, output_dir=None, verbose=False):
+    """Return channels x signed sources in physical SI units per A m."""
+    validate_n_jobs(n_jobs)
+    workers = min(n_jobs, len(coil_rr_m))
+    if workers > 1:
+        from ._duneuro_parallel import solve_parallel  # pylint: disable=import-outside-toplevel
+        return solve_parallel(mesh, source_rr_m, source_nn, coil_rr_m, coil_nn, channel_weights,
+                              workers, output_dir, pickup_fields=_pickup_fields, verbose=verbose)
+
+    gain = np.empty((channel_weights.shape[0], len(source_rr_m)))
+    for block, fields in _pickup_fields(mesh, source_rr_m, source_nn, coil_rr_m, coil_nn, verbose):
+        gain[:, block] = channel_weights @ fields
     return gain

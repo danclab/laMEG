@@ -87,7 +87,7 @@ def test_fem_frames_channels_and_common_support(tmp_path, registration, monkeypa
     fem_m = (native @ mri_to_fem[:3, :3].T + mri_to_fem[:3, 3]) / 1000.
     head_to_fem = mri_to_fem @ np.linalg.inv(reference.mri_to_head_mm)
     geom = reference.sensor_geometry
-    mesh = SimpleNamespace(conductivities={2: 0.33})
+    mesh = SimpleNamespace(conductivities={2: 0.33}, tetrahedra=np.array([[0, 1, 2, 3]]))
     monkeypatch.setattr(_duneuro, 'read_charm_mesh', lambda *args, **kwargs: mesh)
 
     def compartments(model, positions):
@@ -95,7 +95,9 @@ def test_fem_frames_channels_and_common_support(tmp_path, registration, monkeypa
         np.testing.assert_allclose(positions, fem_m, atol=1e-14)
         return np.array([2, 2, 2, 3, 2, 2, 2, 2])  # CHARM GM=2, CSF=3
 
-    def physical_gain(model, positions, moments, coils, normals, weights):
+    def physical_gain(model, positions, moments, coils, normals, weights, *,
+                      n_jobs, output_dir, verbose):
+        assert (n_jobs, output_dir, verbose) == (2, tmp_path, True)
         assert model is mesh
         # Two defined dipoles per layer reach the solver. The zero-link source
         # keeps its anatomical index and receives a zero gain in each model.
@@ -117,7 +119,7 @@ def test_fem_frames_channels_and_common_support(tmp_path, registration, monkeypa
     with pytest.warns(UserWarning, match='Using 3 of 7'):
         fem = compute_duneuro_forward(
             surfaces, tmp_path / 'example.msh', output_dir=tmp_path,
-            conductivities={2: 0.33}, mri_to_fem_mm=mri_to_fem, **options)
+            conductivities={2: 0.33}, mri_to_fem_mm=mri_to_fem, n_jobs=2, verbose=True, **options)
     # The SI gain was per A m. Conversion to fT per nA m gives 10^6, and
     # fT/cm per nA m gives 10^4 for the second row (T/m from the solver).
     expected = [[2e6, -3e6, 0., 4e6, -5e6, 0.], [6e4, -7e4, 0., 8e4, -9e4, 0.]]
