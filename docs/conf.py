@@ -144,7 +144,7 @@ sphinx_gallery_conf = {
     'examples_dirs': ['../tutorials'],   # Path to your tutorials
     'gallery_dirs': ['auto_tutorials'],  # Path to where you want to store the generated output
     # Offer the editable notebook with the three-model comparison.
-    'copyfile_regex': r'^tutorial_10_single_shell_vs_bem\.ipynb$',
+    'copyfile_regex': r'^tutorial_10_single_shell_vs_bem_vs_fem\.ipynb$',
     'filename_pattern': 'tutorial_',
     'within_subsection_order': FileNameSortKey,
     'min_reported_time': 0,
