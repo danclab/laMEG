@@ -7,6 +7,7 @@ import nibabel as nib
 import numpy as np
 import pytest
 
+from lameg._forward_support import prepare_subset
 from lameg.forward import ForwardOperator, prepare_mne_forward
 from tests.test_forward import _mesh
 from tests.test_mne_forward import make_mne_example  # pylint: disable=unused-import
@@ -93,6 +94,58 @@ def test_common_support_vertices(support_data, tmp_path):
     with pytest.raises(ValueError, match='original surfaces'):
         prepare_mne_forward(restricted, prepared.surfaces, tmp_path, **inputs)
 
+
+
+def test_retry_with_preloaded_layer_geometry(support_data, tmp_path):
+    """An aborted preparation and its retry use the same full-sized anatomical images."""
+    surfaces, forwards, options = support_data
+    meshes, original_xml = {}, {}
+    keys = options['vertices']
+    masks = {name: keys[:, 1] != 0 for name in surfaces.get_layer_names()}
+    retained = np.flatnonzero(keys[:, 1] != 0)
+    for name in masks:
+        mesh = nib.load(surfaces.get_mesh_path(name))
+        # GIfTI identifies arrays by intent. Check an unusual array order and
+        # non-default metadata on the actual inputs and on the saved outputs.
+        mesh.darrays.reverse()
+        mesh.meta = nib.gifti.GiftiMetaData.from_dict({'Layer': name})
+        points, = mesh.get_arrays_from_intent('pointset')
+        points.meta = nib.gifti.GiftiMetaData.from_dict({'Units': 'mm'})
+        points.coordsys.xform[0, 3] = 3.5
+        meshes[name] = mesh
+        original_xml[name] = mesh.to_xml()
+
+    output_dir = tmp_path / 'prepared'
+
+    def failed_transfer(_surfaces, _retained):
+        raise RuntimeError("Transfer solve failed")
+
+    with pytest.raises(RuntimeError, match='Transfer solve failed'):
+        prepare_subset(surfaces, masks, output_dir, {}, failed_transfer, meshes=meshes)
+    assert not list(output_dir.iterdir())
+
+    def import_operator(prepared, selected):
+        np.testing.assert_array_equal(selected, retained)
+        layer_forwards = {name: forwards[name] for name in prepared.get_layer_names()}
+        return ForwardOperator.from_mne(layer_forwards, prepared.get_mesh_path(),
+                                        **dict(options, vertices=keys[selected]))
+
+    with pytest.warns(UserWarning, match='Using 6 of 8'):
+        result = prepare_subset(surfaces, masks, output_dir, {}, import_operator, meshes=meshes)
+    for name, original in meshes.items():
+        # The serialized image checks all arrays, dimensions, original order,
+        # metadata and transforms, including after the second preparation.
+        assert original.to_xml() == original_xml[name]
+        reduced = nib.load(result.surfaces.get_mesh_path(name))
+        assert [a.intent for a in reduced.darrays] == [a.intent for a in original.darrays]
+        assert reduced.meta.metadata == original.meta.metadata
+        points, = reduced.get_arrays_from_intent('pointset')
+        source, = original.get_arrays_from_intent('pointset')
+        assert points.meta.metadata == source.meta.metadata
+        np.testing.assert_array_equal(points.coordsys.xform, source.coordsys.xform)
+        assert points.dims == list(source.data[retained].shape)
+        np.testing.assert_array_equal(points.data, source.data[retained])
+        result.operator.validate_mesh(name, result.surfaces.get_mesh_path(name))
 
 
 def test_unknown_and_ambiguous_grid(support_data, tmp_path):

@@ -1,30 +1,22 @@
 """Sensor rows, physical units and pickup coils for MNE-Python MEG forwards."""
 
-import re
-
 import numpy as np
 from mne.forward._make_forward import _create_meg_coils
 from mne.io.compensator import get_current_comp, make_compensator
 from mne.io.constants import FIFF, FWD
 
+from ._forward_units import si_gain_scale
+
 
 def _row_scale(channel, unit):
     """Convert SI gain per A m to the requested channel unit per nA m."""
-    match = re.fullmatch(r'([fpnuµμm]?)T(?:/(m|cm|mm))?', unit)
-    if match is None:
-        raise ValueError(f"Unsupported MEG channel unit {unit!r}.")
-    prefix, length = match.groups()
+    scale = si_gain_scale(unit)
     # Use the recorded physical unit to distinguish field from field gradient. CTF axial
     # gradiometers can report the difference between pickups in field units.
-    expected = FIFF.FIFF_UNIT_T if length is None else FIFF.FIFF_UNIT_T_M
+    expected = FIFF.FIFF_UNIT_T_M if '/' in unit else FIFF.FIFF_UNIT_T
     if channel['unit'] != expected:
         raise ValueError(f"Unit {unit!r} differs in dimension from {channel['ch_name']}.")
-    field_unit = {'': 1, 'm': 1e-3, 'u': 1e-6, 'µ': 1e-6, 'μ': 1e-6,
-                  'n': 1e-9, 'p': 1e-12, 'f': 1e-15}[prefix]
-    length_unit = {None: 1, 'm': 1, 'cm': 1e-2, 'mm': 1e-3}[length]
-    # A 1 nA m source has a moment of 1e-9 A m. Express its predicted SI field in the
-    # recording's unit: for fT/cm a gradient in T/m is multiplied by 1e15 times 0.01.
-    return 1e-9 * length_unit / field_unit
+    return scale
 
 
 def _device_to_head(info):
