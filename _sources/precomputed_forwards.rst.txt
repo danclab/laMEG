@@ -169,6 +169,70 @@ head frame. ``mne_head_to_head_mm`` maps MNE head coordinates into the same
 frame. A coregistered native operator provides ``native.mri_to_head_mm`` and
 ``dict(zip(native.channel_names, native.channel_units))``.
 
+DUNEuro FEM on the same cortical layers
+---------------------------------------
+
+Tutorial 10 uses the subject's CHARM mesh to simulate each cortical depth
+with FEM. Install the Gmsh reader with ``pip install -e '.[fem]'`` from the
+laMEG checkout. Build the
+`DUNEuro Python bindings <https://www.medizin.uni-muenster.de/duneuro/startseite.html>`_
+with tetrahedral continuous Galerkin support for the Python interpreter running
+the notebook. Verify that ``import duneuropy`` succeeds in that environment.
+For an MPI-enabled DUNE build, initialize its matching MPI runtime first
+(e.g., ``from mpi4py import MPI``). Serial builds can run directly.
+Whole-head calculations need memory for the volume solver and its transfer
+matrix, which stores one double per active pickup and FEM degree of freedom.
+laMEG assembles each pickup's flux integral on demand. By default, one
+worker solves all pickups and reuses the same FEM grid and solver.
+SPM performs the simulations and inversions.
+
+Pass the coregistered SPM recording as ``reference``. This supplies the
+MRI-to-head transform, physical coil geometry and channel weights. The
+``LayerSurfaceSet`` supplies the positions and signed dipole directions.
+The solver uses the CHARM tetrahedra and the
+`SimNIBS isotropic tissue conductivities <https://simnibs.github.io/simnibs/build/html/documentation/conductivity.html>`_.
+Supply a tag-to-conductivity mapping in S/m to override them. If CHARM's T1
+and the laMEG GIfTIs use different scanner coordinates, supply their measured
+rigid registration in millimetres as ``mri_to_fem_mm``.
+
+.. code-block:: python
+
+    from lameg.forward import compute_duneuro_forward
+    from lameg.invert import coregister
+
+    # Run coregister once for this recording if it has not yet been registered.
+    coregister(fid_coords, base_fname, surf_set, iskull_fname=skull_fname, spm_instance=spm)
+    prepared = compute_duneuro_forward(
+        surf_set, charm_fname, reference=base_fname, output_dir=tmp_dir, verbose=True
+    )
+    fem = prepared.operator
+    surfaces = prepared.surfaces
+
+``verbose=True`` reports which stage is running. If your allocation has spare
+cores and memory, try ``n_jobs=2`` to solve two groups of pickups concurrently.
+Each worker needs memory for its own grid and solver. Parallel runs also write
+temporary pickup fields under ``output_dir``. Choose a disk-backed directory
+with eight bytes per active pickup per evaluated dipole for these fields,
+plus space for shared inputs. With an MPI-enabled DUNE build, launch
+multiple workers from a standalone Python or Jupyter process.
+
+The fitted patch-based St. Venant model uses the signed cortical link vectors.
+DUNEuro currently marks this source model experimental.
+Before computing any pickup transfer matrices, laMEG locates the cortical
+positions in CHARM gray matter (tissue tag 2). It checks candidate dipoles
+with DUNEuro's own element search on a separate copy of the grid. On a
+nonconvex mesh this search can fail even for a position inside a gray-matter
+tetrahedron. laMEG releases the search grid before building the forward solver.
+
+A column must pass the checks at every requested depth and belong to a
+surviving cortical triangle. This can remove substantial portions of the
+cortex at the pial or white boundary. The file at ``prepared.manifest``
+lists original vertex IDs by depth. ``excluded_by_tissue`` records the
+anatomical tissue exclusions. ``excluded_by_native_search`` records
+positions where DUNEuro could not confirm gray matter. ``vertices_without_faces``
+lists remaining vertices that lost all their triangles. The simulator and
+all three inversions in Tutorial 10 use the same retained cortical columns.
+
 External solvers
 ----------------
 

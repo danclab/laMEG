@@ -574,6 +574,39 @@ head coordinates separately from the original MRI points.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="lameg.forward.compute_duneuro_forward">
+<span class="sig-prename descclassname"><span class="pre">lameg.forward.</span></span><span class="sig-name descname"><span class="pre">compute_duneuro_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surfaces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mesh_fname</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inversion_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">conductivities</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mri_to_fem_mm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ds'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_jobs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.forward.compute_duneuro_forward" title="Permalink to this definition">#</a></dt>
+<dd><p>Compute fixed-orientation MEG gains on CHARM gray matter with duneuro-py.</p>
+<p>Supply the coregistered SPM recording (the .mat filename) as <cite>reference</cite>.
+The zero-based <cite>inversion_idx</cite> selects its MEG registration. The header
+supplies the physical coils, signed channel weights, recorded units and
+MRI-to-head transform. No existing gain matrix is required. Dipole
+positions and signed directions come from the supplied LayerSurfaceSet
+in the same native MRI frame. It can be the original surface set or the
+surfaces returned by a previous forward preparation. A registered
+<cite>ForwardOperator</cite> on the input surfaces is also accepted as <cite>reference</cite>.</p>
+<p><cite>mesh_fname</cite> is the subject’s CHARM tetrahedral mesh in mm.
+The default conductivities are SimNIBS’s standard isotropic values for
+CHARM tags 1–10. To use a different conductor, pass <cite>conductivities</cite>
+mapping every volume tissue tag present in the mesh to its conductivity
+in S/m. Supply the rigid transform from the GIfTI native MRI frame to
+CHARM’s T1 world coordinates in <cite>mri_to_fem_mm</cite> (mm to mm). Omitting
+it assumes both already use the same physical scanner-RAS coordinates.</p>
+<p>Set <cite>n_jobs</cite> to the number of independent pickup groups to solve concurrently.
+The default of one uses a single driver. Each additional process has its own
+FEM grid and solver. Parallel runs also use scratch space under <cite>output_dir</cite>.
+Set <cite>verbose=True</cite> for progress messages.</p>
+<p>Returns a prepared operator, GIfTIs and original vertex IDs. The fitted
+continuous Galerkin solve uses a patch-based St. Venant dipole at its
+requested position. Retained cortical columns lie in gray matter (CHARM
+tag 2) at every depth and belong to a surviving cortical triangle. Before
+the pickup solve, DUNEuro must also locate each defined dipole in gray
+matter. The manifest records which lookup excluded each vertex. Call the result’s
+<cite>restrict_operator</cite> on another operator on the input surfaces to compare
+gains on the identical locations.</p>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="lameg.forward.compute_mne_forward">
 <span class="sig-prename descclassname"><span class="pre">lameg.forward.</span></span><span class="sig-name descname"><span class="pre">compute_mne_forward</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">surfaces</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bem_solution</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">info</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">trans</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reference</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_dir</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inversion_idx</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stage</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'ds'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">orientation</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'link_vector'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fixed</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mne_head_to_head_mm</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">allow_nominal_ctf_coils</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="headerlink" href="#lameg.forward.compute_mne_forward" title="Permalink to this definition">#</a></dt>
 <dd><p>Compute a MEG forward on a LayerSurfaceSet using an existing MNE BEM solution.</p>
@@ -4335,6 +4368,7 @@ or segmentation has not yet been completed.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.ForwardOperator.validate_mesh"><code class="docutils literal notranslate"><span class="pre">ForwardOperator.validate_mesh()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.compute_duneuro_forward"><code class="docutils literal notranslate"><span class="pre">compute_duneuro_forward()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.compute_mne_forward"><code class="docutils literal notranslate"><span class="pre">compute_mne_forward()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.prepare_mne_forward"><code class="docutils literal notranslate"><span class="pre">prepare_mne_forward()</span></code></a></li>
 </ul>

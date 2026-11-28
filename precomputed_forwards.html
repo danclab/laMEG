@@ -561,6 +561,64 @@ head frame. <code class="docutils literal notranslate"><span class="pre">mne_hea
 frame. A coregistered native operator provides <code class="docutils literal notranslate"><span class="pre">native.mri_to_head_mm</span></code> and
 <code class="docutils literal notranslate"><span class="pre">dict(zip(native.channel_names,</span> <span class="pre">native.channel_units))</span></code>.</p>
 </section>
+<section id="duneuro-fem-on-the-same-cortical-layers">
+<h2>DUNEuro FEM on the same cortical layers<a class="headerlink" href="#duneuro-fem-on-the-same-cortical-layers" title="Permalink to this heading">#</a></h2>
+<p>Tutorial 10 uses the subject’s CHARM mesh to simulate each cortical depth
+with FEM. Install the Gmsh reader with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">-e</span> <span class="pre">'.[fem]'</span></code> from the
+laMEG checkout. Build the
+<a class="reference external" href="https://www.medizin.uni-muenster.de/duneuro/startseite.html">DUNEuro Python bindings</a>
+with tetrahedral continuous Galerkin support for the Python interpreter running
+the notebook. Verify that <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">duneuropy</span></code> succeeds in that environment.
+For an MPI-enabled DUNE build, initialize its matching MPI runtime first
+(e.g., <code class="docutils literal notranslate"><span class="pre">from</span> <span class="pre">mpi4py</span> <span class="pre">import</span> <span class="pre">MPI</span></code>). Serial builds can run directly.
+Whole-head calculations need memory for the volume solver and its transfer
+matrix, which stores one double per active pickup and FEM degree of freedom.
+laMEG assembles each pickup’s flux integral on demand. By default, one
+worker solves all pickups and reuses the same FEM grid and solver.
+SPM performs the simulations and inversions.</p>
+<p>Pass the coregistered SPM recording as <code class="docutils literal notranslate"><span class="pre">reference</span></code>. This supplies the
+MRI-to-head transform, physical coil geometry and channel weights. The
+<code class="docutils literal notranslate"><span class="pre">LayerSurfaceSet</span></code> supplies the positions and signed dipole directions.
+The solver uses the CHARM tetrahedra and the
+<a class="reference external" href="https://simnibs.github.io/simnibs/build/html/documentation/conductivity.html">SimNIBS isotropic tissue conductivities</a>.
+Supply a tag-to-conductivity mapping in S/m to override them. If CHARM’s T1
+and the laMEG GIfTIs use different scanner coordinates, supply their measured
+rigid registration in millimetres as <code class="docutils literal notranslate"><span class="pre">mri_to_fem_mm</span></code>.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">lameg.forward</span> <span class="kn">import</span> <span class="n">compute_duneuro_forward</span>
+<span class="kn">from</span> <span class="nn">lameg.invert</span> <span class="kn">import</span> <span class="n">coregister</span>
+
+<span class="c1"># Run coregister once for this recording if it has not yet been registered.</span>
+<span class="n">coregister</span><span class="p">(</span><span class="n">fid_coords</span><span class="p">,</span> <span class="n">base_fname</span><span class="p">,</span> <span class="n">surf_set</span><span class="p">,</span> <span class="n">iskull_fname</span><span class="o">=</span><span class="n">skull_fname</span><span class="p">,</span> <span class="n">spm_instance</span><span class="o">=</span><span class="n">spm</span><span class="p">)</span>
+<span class="n">prepared</span> <span class="o">=</span> <span class="n">compute_duneuro_forward</span><span class="p">(</span>
+    <span class="n">surf_set</span><span class="p">,</span> <span class="n">charm_fname</span><span class="p">,</span> <span class="n">reference</span><span class="o">=</span><span class="n">base_fname</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="n">tmp_dir</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+<span class="n">fem</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">operator</span>
+<span class="n">surfaces</span> <span class="o">=</span> <span class="n">prepared</span><span class="o">.</span><span class="n">surfaces</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">verbose=True</span></code> reports which stage is running. If your allocation has spare
+cores and memory, try <code class="docutils literal notranslate"><span class="pre">n_jobs=2</span></code> to solve two groups of pickups concurrently.
+Each worker needs memory for its own grid and solver. Parallel runs also write
+temporary pickup fields under <code class="docutils literal notranslate"><span class="pre">output_dir</span></code>. Choose a disk-backed directory
+with eight bytes per active pickup per evaluated dipole for these fields,
+plus space for shared inputs. With an MPI-enabled DUNE build, launch
+multiple workers from a standalone Python or Jupyter process.</p>
+<p>The fitted patch-based St. Venant model uses the signed cortical link vectors.
+DUNEuro currently marks this source model experimental.
+Before computing any pickup transfer matrices, laMEG locates the cortical
+positions in CHARM gray matter (tissue tag 2). It checks candidate dipoles
+with DUNEuro’s own element search on a separate copy of the grid. On a
+nonconvex mesh this search can fail even for a position inside a gray-matter
+tetrahedron. laMEG releases the search grid before building the forward solver.</p>
+<p>A column must pass the checks at every requested depth and belong to a
+surviving cortical triangle. This can remove substantial portions of the
+cortex at the pial or white boundary. The file at <code class="docutils literal notranslate"><span class="pre">prepared.manifest</span></code>
+lists original vertex IDs by depth. <code class="docutils literal notranslate"><span class="pre">excluded_by_tissue</span></code> records the
+anatomical tissue exclusions. <code class="docutils literal notranslate"><span class="pre">excluded_by_native_search</span></code> records
+positions where DUNEuro could not confirm gray matter. <code class="docutils literal notranslate"><span class="pre">vertices_without_faces</span></code>
+lists remaining vertices that lost all their triangles. The simulator and
+all three inversions in Tutorial 10 use the same retained cortical columns.</p>
+</section>
 <section id="external-solvers">
 <h2>External solvers<a class="headerlink" href="#external-solvers" title="Permalink to this heading">#</a></h2>
 <p>Construct <code class="docutils literal notranslate"><span class="pre">ForwardOperator</span></code> directly with a physical gain in each channel’s
@@ -788,6 +846,7 @@ head coordinates separately from the original MRI points.</p>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#direct-inversions">Direct inversions</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#native-spm-round-trip">Native SPM round trip</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#importing-mne-forwards-with-known-vertex-correspondence">Importing MNE forwards with known vertex correspondence</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#duneuro-fem-on-the-same-cortical-layers">DUNEuro FEM on the same cortical layers</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#external-solvers">External solvers</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.ForwardOperator"><code class="docutils literal notranslate"><span class="pre">ForwardOperator</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#lameg.forward.ForwardOperator.__init__"><code class="docutils literal notranslate"><span class="pre">ForwardOperator.__init__()</span></code></a></li>

@@ -170,18 +170,18 @@ The examples can be browsed directly on `Github <https://github.com/danclab/laME
 
 .. raw:: html
 
-    <div class="sphx-glr-thumbcontainer" tooltip="We&#x27;ll simulate a 20 Hz burst on the white matter surface of sub-104. Can we tell which surface ...">
+    <div class="sphx-glr-thumbcontainer" tooltip="We&#x27;ll simulate a 20 Hz signal at each of the 11 cortical depths in sub-104 using a finite eleme...">
 
 .. only:: html
 
-  .. image:: /auto_tutorials/images/thumb/sphx_glr_tutorial_10_single_shell_vs_bem_thumb.png
+  .. image:: /auto_tutorials/images/thumb/sphx_glr_tutorial_10_single_shell_vs_bem_vs_fem_thumb.png
     :alt:
 
-  :ref:`sphx_glr_auto_tutorials_tutorial_10_single_shell_vs_bem.py`
+  :ref:`sphx_glr_auto_tutorials_tutorial_10_single_shell_vs_bem_vs_fem.py`
 
 .. raw:: html
 
-      <div class="sphx-glr-thumbnail-title">Laminar model comparison with single-shell and BEM forward models</div>
+      <div class="sphx-glr-thumbnail-title">Laminar model comparison with FEM, BEM, and single-shell forward models</div>
     </div>
 
 
@@ -202,7 +202,7 @@ The examples can be browsed directly on `Github <https://github.com/danclab/laME
    /auto_tutorials/tutorial_07_anatomy_inference_accuracy
    /auto_tutorials/tutorial_08_opm_data
    /auto_tutorials/tutorial_09_sliding_window_ebb_layer
-   /auto_tutorials/tutorial_10_single_shell_vs_bem
+   /auto_tutorials/tutorial_10_single_shell_vs_bem_vs_fem
 
 
 .. only:: html
