@@ -1,5 +1,5 @@
 """
-Laminar model comparison with FEM, BEM and single-shell forward models
+Laminar model comparison with FEM, BEM, and single-shell forward models
 ======================================================================
 
 We'll simulate a 20 Hz signal at each of the 11 cortical depths in sub-104 using a finite element model (FEM). Can we recover the simulated depth with a FEM, a boundary element model (BEM) or a single-shell model? We'll fit the three models to the same noisy recording at each depth, using the free-energy comparison from `Tutorial 02 <https://danclab.github.io/laMEG/auto_tutorials/tutorial_02_model_comparison_free_energy.html>`_ and `Bonaiuto et al. (2018) <https://doi.org/10.1016/j.neuroimage.2017.11.068>`_.
@@ -22,11 +22,11 @@ import duneuropy
 import meshio
 
 import matplotlib.pyplot as plt
-import matlab
 import mne
 import nibabel as nib
 import numpy as np
 import spm_standalone
+import matlab
 from mne.transforms import Transform, apply_trans
 
 from lameg.forward import ForwardOperator, compute_duneuro_forward, compute_mne_forward
